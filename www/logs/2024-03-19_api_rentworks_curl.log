@@ -1,0 +1,7 @@
+2024-03-19 11:37 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-0561", "VehicleStatus":"Non-Rev", "OdometerOut":"180190", "FuelLevelOut":"8", "Company":"", "LocationOut":"OPSPS", "LocationDue":"ASPS", "DateTimeOut":"2024-03-19T11:37", "DateTimeDue":"2024-03-19T11:37", "Driver":"Armando Santos", "DueDetails":"pruebas"}'
+ 

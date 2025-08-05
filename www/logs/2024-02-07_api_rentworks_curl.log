@@ -1,0 +1,14 @@
+2024-02-07 3:27 pm
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-3094", "VehicleStatus":"Non-Rev", "OdometerOut":"79112", "FuelLevelOut":"8", "Company":"", "LocationOut":"OPSPS", "LocationDue":"OPSPS", "DateTimeOut":"2024-02-07T15:27", "DateTimeDue":"2024-02-07T15:27", "Driver":"Persy Enrique Mendoza Galo", "DueDetails":"prueba en safi"}'
+ 
+2024-02-07 3:30 pm
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"90712", "VehicleStatus":"Taller de AC", "LocationIn":"OPSPS", "DateTimeIn":"2024-02-07T15:30", "OdometerIn":"79112", "FuelLevelIn":"8", "DueDetails":"prueba en safiregreso"}'
+ 

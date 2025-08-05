@@ -1,0 +1,61 @@
+html,
+body {
+  height: 100%;
+}
+
+body {
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-align: center;
+  align-items: center;
+  padding-top: 40px;
+  padding-bottom: 40px;
+  background-color: #374140 !important; /*#f5f5f5;*/
+}
+
+
+.idioma a {
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.idioma a:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.login-titulo {
+  color: #a29464;
+ 
+}
+
+
+.form-signin {
+  width: 100%;
+  max-width: 420px;
+  padding: 15px;
+  margin: auto;
+  color: #A3A3A3;
+}
+
+.login-box-msg {
+  margin: 0;
+  padding: 0 20px 20px;
+  text-align: center;
+}
+
+
+.bd-placeholder-img {
+  font-size: 1.125rem;
+  text-anchor: middle;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+@media (min-width: 768px) {
+  .bd-placeholder-img-lg {
+    font-size: 3.5rem;
+  }
+}

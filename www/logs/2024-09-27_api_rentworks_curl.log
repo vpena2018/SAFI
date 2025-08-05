@@ -1,0 +1,7 @@
+2024-09-27 1:34 pm
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"", "VehicleStatus":"Non-Rev", "LocationIn":"ASPS", "DateTimeIn":"2024-09-27T13:34", "OdometerIn":"180190", "FuelLevelIn":"8", "DueDetails":"pruebas"}'
+ 

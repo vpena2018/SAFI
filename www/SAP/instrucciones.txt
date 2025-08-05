@@ -1,0 +1,16 @@
+1. Descomprimir el contenido en el directoio raiz C:\
+
+2. el PHP requiere los redistribuibles de microsoft visual C 2015-2019 https://aka.ms/vs/16/release/VC_redist.x64.exe
+
+3. abrir los archivos C:\DEV\www\sincronizar.php y C:\DEV\www\sincronizar_ordenes.php  e ingresar la informacion de usuario y contraseña a la base de datos de SAP
+
+4. Crear tareas programadas (en lapsos no menores de cada 5 minutos) para ejecutar los archivos sincronizadores de la siguiente manera:
+
+Para sincronizar las los productos, vehiculos, clientes y proveedores desde SAP al el sistema de flotas:
+C:\DEV\php7\php.exe C:\DEV\www\sincronizar.php -c C:DEV\php7
+
+Para sincronizar los documentos: ordenes compra, facturas del sistema de flotas a SAP:
+C:\DEV\php7\php.exe C:\DEV\www\sincronizar_ordenes.php -c C:DEV\php7
+
+
+

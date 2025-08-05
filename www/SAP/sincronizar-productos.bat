@@ -1,0 +1,1 @@
+C:\DEV\php\php.exe C:\DEV\www\SAP\DEV\www\sincronizar.php -c C:DEV\php

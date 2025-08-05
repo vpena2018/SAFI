@@ -1,0 +1,7 @@
+2024-04-03 3:31 pm
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/repairorder' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"RequestType":"CreateRepairOrder", "Product":"VEHICLES", "UnitNumber":"EA-0001", "CurrentOdometer":"300000000", "CurrentLocation":"", "DateTimeOpened":"2024-04-03T15:31", "DateTimeDue":"2024-04-03T15:31", "FleetStatus":"Taller de mantenimiento", "RepairType":"Mantenimiento Taller Interno", "RepairSummary":"", "RepairShopName":"", "Notes":""}'
+ 

@@ -1,0 +1,21 @@
+2024-03-07 2:11 pm
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-0561", "VehicleStatus":"Non-Rev", "OdometerOut":"30000", "FuelLevelOut":"8", "Company":"", "LocationOut":"OPSPS", "LocationDue":"ASPS", "DateTimeOut":"2024-03-07T14:11", "DateTimeDue":"2024-03-07T14:11", "Driver":"Romel Rolando Bueso Bueso", "DueDetails":"pruebas"}'
+ 
+2024-03-07 2:23 pm
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"", "VehicleStatus":"Non-Rev", "LocationIn":"ASPS", "DateTimeIn":"2024-03-07T14:23", "OdometerIn":"3000000", "FuelLevelIn":"8", "DueDetails":"pruebas"}'
+ 
+2024-03-07 2:30 pm
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-0561", "VehicleStatus":"Non-Rev", "OdometerOut":"180901", "FuelLevelOut":"8", "Company":"", "LocationOut":"OPSPS", "LocationDue":"ASPS", "DateTimeOut":"2024-03-07T14:30", "DateTimeDue":"2024-03-07T14:30", "Driver":"Romel Rolando Bueso Bueso", "DueDetails":"pruebas"}'
+ 

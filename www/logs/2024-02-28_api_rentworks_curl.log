@@ -1,0 +1,133 @@
+2024-02-28 9:21 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-0561", "VehicleStatus":"Non-Rev", "OdometerOut":"156181", "FuelLevelOut":"8", "Company":"", "LocationOut":"OPSPS", "LocationDue":"ASPS", "DateTimeOut":"2024-02-28T09:21", "DateTimeDue":"2024-02-28T09:21", "Driver":"Romel Rolando Bueso Bueso", "DueDetails":"pruebas"}'
+ 
+2024-02-28 9:21 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-0561", "VehicleStatus":"Non-Rev", "OdometerOut":"156181", "FuelLevelOut":"1", "Company":"", "LocationOut":"OPSPS", "LocationDue":"ASPS", "DateTimeOut":"2024-02-28T09:21", "DateTimeDue":"2024-02-28T09:21", "Driver":"Romel Rolando Bueso Bueso", "DueDetails":"pruebas"}'
+ 
+2024-02-28 9:21 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-0561", "VehicleStatus":"Non-Rev", "OdometerOut":"156190", "FuelLevelOut":"8", "Company":"", "LocationOut":"OPSPS", "LocationDue":"ASPS", "DateTimeOut":"2024-02-28T09:21", "DateTimeDue":"2024-02-28T09:21", "Driver":"Romel Rolando Bueso Bueso", "DueDetails":"pruebas"}'
+ 
+2024-02-28 9:23 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-0561", "VehicleStatus":"Non-Rev", "OdometerOut":"156190", "FuelLevelOut":"8", "Company":"", "LocationOut":"OPSPS", "LocationDue":"ASPS", "DateTimeOut":"2024-02-28T09:23", "DateTimeDue":"2024-02-28T09:23", "Driver":"Romel Rolando Bueso Bueso", "DueDetails":"pruebas"}'
+ 
+2024-02-28 9:24 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"", "VehicleStatus":"Non-Rev", "LocationIn":"ASPS", "DateTimeIn":"2024-02-28T09:24", "OdometerIn":"156190", "FuelLevelIn":"8", "DueDetails":"pruebas"}'
+ 
+2024-02-28 9:30 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-3094", "VehicleStatus":"Taller de pintura", "OdometerOut":"79147", "FuelLevelOut":"0", "Company":"CENTRO DE DIRECCION AUTOMOTRIZ", "LocationOut":"OPSPS", "LocationDue":"OPSPS", "DateTimeOut":"2024-02-28T09:30", "DateTimeDue":"2024-02-28T09:30", "Driver":"Romel Rolando Bueso Bueso", "DueDetails":"pruebas"}'
+ 
+2024-02-28 9:31 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"91523", "VehicleStatus":"Available", "LocationIn":"OPSPS", "DateTimeIn":"2024-02-28T09:31", "OdometerIn":"79147", "FuelLevelIn":"0", "DueDetails":"pruebas"}'
+ 
+2024-02-28 9:34 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-3094", "VehicleStatus":"Non-Rev", "OdometerOut":"79147", "FuelLevelOut":"0", "Company":"CENTRO DE DIRECCION AUTOMOTRIZ", "LocationOut":"OPSPS", "LocationDue":"OPSPS", "DateTimeOut":"2024-02-28T09:34", "DateTimeDue":"2024-02-28T09:34", "Driver":"Romel Rolando Bueso Bueso", "DueDetails":"pruebas"}'
+ 
+2024-02-28 9:35 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"91524", "VehicleStatus":"Taller de pintura", "LocationIn":"OPSPS", "DateTimeIn":"2024-02-28T09:35", "OdometerIn":"79147", "FuelLevelIn":"0", "DueDetails":"pruebasse entrego al taller"}'
+ 
+2024-02-28 10:10 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-3094", "VehicleStatus":"Taller de pintura", "OdometerOut":"74145", "FuelLevelOut":"0", "Company":"TALLER DE PINTURAS LISFER/CLAUDIA MARIA CABRERA RODRIGUEZ", "LocationOut":"OPSPS", "LocationDue":"OPSPS", "DateTimeOut":"2024-02-28T10:10", "DateTimeDue":"2024-02-28T10:10", "Driver":"Romel Rolando Bueso Bueso", "DueDetails":"pruebas"}'
+ 
+2024-02-28 10:12 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"91529", "VehicleStatus":"Taller de AC", "LocationIn":"OPSPS", "DateTimeIn":"2024-02-28T10:12", "OdometerIn":"74145", "FuelLevelIn":"0", "DueDetails":"pruebas"}'
+ 
+2024-02-28 10:38 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-3094", "VehicleStatus":"Talleres externos", "OdometerOut":"74145", "FuelLevelOut":"0", "Company":"TALLER DE PINTURAS LISFER/CLAUDIA MARIA CABRERA RODRIGUEZ", "LocationOut":"OPSPS", "LocationDue":"OPSPS", "DateTimeOut":"2024-02-28T10:38", "DateTimeDue":"2024-02-28T10:38", "Driver":"Romel Rolando Bueso Bueso", "DueDetails":"test"}'
+ 
+2024-02-28 10:40 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"91532", "VehicleStatus":"Refuel", "LocationIn":"OPSPS", "DateTimeIn":"2024-02-28T10:40", "OdometerIn":"74145", "FuelLevelIn":"0", "DueDetails":"testpruebas"}'
+ 
+2024-02-28 4:32 pm
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-3045", "VehicleStatus":"Non-Rev", "OdometerOut":"89400", "FuelLevelOut":"8", "Company":"", "LocationOut":"OPSPS", "LocationDue":"ASPS", "DateTimeOut":"2024-02-28T16:32", "DateTimeDue":"2024-02-28T16:32", "Driver":"Romel Rolando Bueso Bueso", "DueDetails":""}'
+ 
+2024-02-28 4:33 pm
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"91553", "VehicleStatus":"Taller de AC", "LocationIn":"ASPS", "DateTimeIn":"2024-02-28T16:33", "OdometerIn":"89400", "FuelLevelIn":"8", "DueDetails":""}'
+ 
+2024-02-28 4:34 pm
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-3045", "VehicleStatus":"Non-Rev", "OdometerOut":"89400", "FuelLevelOut":"8", "Company":"", "LocationOut":"ASPS", "LocationDue":"OPSPS", "DateTimeOut":"2024-02-28T16:34", "DateTimeDue":"2024-02-28T16:34", "Driver":"Romel Rolando Bueso Bueso", "DueDetails":""}'
+ 
+2024-02-28 4:34 pm
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"91554", "VehicleStatus":"Refuel", "LocationIn":"OPSPS", "DateTimeIn":"2024-02-28T16:34", "OdometerIn":"89400", "FuelLevelIn":"4", "DueDetails":""}'
+ 
+2024-02-28 4:36 pm
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-3045", "VehicleStatus":"Refuel", "OdometerOut":"89400", "FuelLevelOut":"4", "Company":"DISTRIBUIDORA PANTING ZELAYA SA DE CV", "LocationOut":"OPSPS", "LocationDue":"OPSPS", "DateTimeOut":"2024-02-28T16:36", "DateTimeDue":"2024-02-28T16:36", "Driver":"Romel Rolando Bueso Bueso", "DueDetails":""}'
+ 
+2024-02-28 4:38 pm
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"91555", "VehicleStatus":"Available", "LocationIn":"OPSPS", "DateTimeIn":"2024-02-28T16:38", "OdometerIn":"89400", "FuelLevelIn":"8", "DueDetails":""}'
+ 

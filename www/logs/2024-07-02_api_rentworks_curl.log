@@ -1,0 +1,14 @@
+2024-07-02 9:07 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/repairorder' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"RequestType":"CreateRepairOrder", "Product":"VEHICLES", "UnitNumber":"EA-0001", "CurrentOdometer":"156000", "CurrentLocation":"", "DateTimeOpened":"2024-07-02T09:07", "DateTimeDue":"2024-07-02T09:07", "FleetStatus":"Taller de mantenimiento", "RepairType":"Mantenimiento Taller Interno", "RepairSummary":"", "RepairShopName":"", "Notes":""}'
+ 
+2024-07-02 11:22 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/repairorder' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"RequestType":"CreateRepairOrder", "Product":"VEHICLES", "UnitNumber":"EA-0561", "CurrentOdometer":"156000", "CurrentLocation":"", "DateTimeOpened":"2024-07-02T11:22", "DateTimeDue":"2024-07-02T11:22", "FleetStatus":"Taller de mantenimiento", "RepairType":"Mantenimiento Taller Interno", "RepairSummary":"", "RepairShopName":"", "Notes":""}'
+ 

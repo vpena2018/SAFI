@@ -1,0 +1,1 @@
+C:\DEV\php7\php.exe C:\DEV\www\sincronizar_ordenes.php -c C:DEV\php7

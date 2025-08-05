@@ -1,0 +1,5 @@
+[23-Feb-2024 13:54:16 America/Chicago] PHP Fatal error:  Uncaught Error: Call to undefined function es_nulo() in /var/www/html/servicio_fotos.php:64
+Stack trace:
+#0 {main}
+  thrown in /var/www/html/servicio_fotos.php on line 64
+[23-Feb-2024 13:54:17 America/Chicago] PHP Parse error:  syntax error, unexpected '/', expecting case (T_CASE) or default (T_DEFAULT) or '}' in /var/www/html/include/framework.php on line 1295

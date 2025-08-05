@@ -1,0 +1,14 @@
+2024-11-18 10:36 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-3940", "VehicleStatus":"Non-Rev", "OdometerOut":"160000", "FuelLevelOut":"8", "Company":"", "LocationOut":"OPSPS", "LocationDue":"ASPS", "DateTimeOut":"2024-11-18T10:36", "DateTimeDue":"2024-11-18T10:36", "Driver":"Jose Daniel Gonzales Carcamo", "DueDetails":"prueba "}'
+ 
+2024-11-18 11:32 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"103171", "VehicleStatus":"Non-Rev", "LocationIn":"ASPS", "DateTimeIn":"2024-11-18T11:32", "OdometerIn":"", "FuelLevelIn":"0", "DueDetails":"prueba "}'
+ 
