@@ -358,7 +358,7 @@ if ($accion=="302") {
     	<hr>
   	 </div>
   
-	<p class="login-box-msg">Ingrese sus datos</p>
+	<p class="login-box-msg">Ingrese sus datosss</p>
 
   <div class="form-label-group">
     <input type="text" id="user" name="user" class="form-control" placeholder="" autocomplete="off" required autofocus>
