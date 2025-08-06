@@ -5,6 +5,7 @@ if (isset($_REQUEST['a'])) { $accion = ($_REQUEST['a']); } else	{$accion ="" ;}
 
 require_once ('include/framework.php');
 
+
 // GUARDAR ARCHIVO
 if ($accion =="g") {
     $stud_arr[0]["pcode"] = 0;
