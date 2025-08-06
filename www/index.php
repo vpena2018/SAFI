@@ -383,8 +383,6 @@ if ($accion=="302") {
 
 
 
-
-
 <div id="login2" class="card oculto">
   <div class="card-body login-card-body">	
   
