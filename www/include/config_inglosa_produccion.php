@@ -38,9 +38,18 @@ define("app_email_port", "587");
 
 
 define("app_enviar_email", true);
+define('app_logs_folder', 'C:/DEV-git/SAFI/www/logs/');
 
 // Logs
-define("app_logs_folder", "/var/www/html/logs/");
+//define("app_logs_folder", "/var/www/html/logs/");
+
+/*if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+    define('app_logs_folder', 'C:/DEV-git/SAFI/www/logs/');
+} else {
+    define('app_logs_folder', '/var/www/html/logs/');
+}*/
+
+
 define("app_log_logins", true);
 define("app_log_email_errors", true);
 

@@ -14,7 +14,7 @@
 define("app_empresa", "INGLOSA");
 
 define("app_host", "http://localhost/");
-define("app_dir", "c:/dev/www/reportes/");
+define("app_dir", "c:/DEV-git/www/reportes/");
 
 
 $ip_scan="http://localhost:8082/"; 
@@ -35,7 +35,7 @@ define("app_email_port", "587");
 define("app_enviar_email", false);
 
 // Logs
-define("app_logs_folder", "c:/dev/www/logs/");
+define("app_logs_folder", "c:/DEV-git/SAFI/www/logs/");
 define("app_log_logins", true);
 define("app_log_email_errors", true);
 
