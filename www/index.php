@@ -374,13 +374,12 @@ if ($accion=="302") {
   <a href="#" id="login-btn" class="btn btn-primary btn-block" onclick="login();  return false;">Ingresar</a>
 
 	<p>&nbsp;</p>
+
 	
 	
 <footer class=""> <a href="#" class="" onclick="recover_show();  return false;">Recuperar contraseña</a></footer>
  </div> 
 </div> 
-
-
 
 
 
