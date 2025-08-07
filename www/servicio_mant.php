@@ -241,7 +241,7 @@ if ($accion=="ec") {
 
                     
                   } else {
-                      $salida.= campo('id_estado', $etiqueta,'select2',valores_combobox_db('servicio_estado',$row["id_estado"],'nombre',' ','','...'),' ',' required ',''); 
+                      $salida.= campo('id_estado', $etiqueta,'select2',valores_combobox_db('servicio_estado',$row["id_estado"],'nombre',' where estado<2 ','','...'),' ',' required ',''); 
                       $salida.= campo("observaciones","Observaciones",'textarea','',' ',' rows="4" ');
                       $salida.= campo("fecha","Fecha Promesa",'date','',' ','  ');
                   }
