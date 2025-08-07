@@ -1021,9 +1021,144 @@ function campo_combustible($nombre,$valor,$adicional=""){
 
 
 
+function campo_upload_varias($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solicitud="",$columna1=3,$columna2=9,$mostrar_upload="NO",$preview=false) 
+{
+    $salida="";
+   
+   
+     {  //upload
+         $etiquetaArchivo="";
+        if ($valor<>"") {
+          $etiquetaArchivo="Mostrar Archivo";
+        }
+       
+        if ($etiqueta!="") {       
+             $salida.= '
+             <div class="form-group"><label  class="control-label col-sm-'.$columna1.'">'.$etiqueta.'</label>
+             <div class=" col-sm-'.$columna2.'">';
+        }
+
+        // $salida .= '<div class="form-group"><label class="outside-label">'.$etiqueta.'</label>';
+        $n=$nombre;
+   
+        if ($valor<>"") {
+          $salida.= '   <a id="link'.$nombre.'" href="#" onclick="mostrar_foto(\''.$valor.'\',\'#UPL'.$n.'\',\''.$nombre.'\'); return false;" ><i class="fa fa-image"></i> <span  id="lk'.$nombre.'">'.$etiquetaArchivo.'</span></a> ';  
+        //   $salida.= ' &nbsp;&nbsp;&nbsp;  <a id="linkdel'.$nombre.'" href="#" onclick="borrar_foto(\''.$n.'\',\''.$nombre.'\'); return false;" ><i class="fa fa-trash-alt"></i> <span  id="lkdel'.$nombre.'">Clear Field</span></a> ';  
+        
+         } else {$salida.= '<span id="lk'.$nombre.'"></span>';}
+        
+      if ($valor=="" or $mostrar_upload=="SI")  {
+          
+             if ($mostrar_upload=="SI")  {
+            
+            $salida.=' 
+         &nbsp;&nbsp;&nbsp;    
+     <a href="#" class="btn btn-default" onclick="return false;" data-toggle="collapse" data-target="#UPL'.$n.'"><i class="fa fa-cloud-upload-alt"></i></a>
+     <div id="UPL'.$n.'" class="collapse">
+   <br>
+     ';         
+        }
+   
+        
+        
+        
+        $salida.= '<div class="row"> 
+               
+               <div id="colbtn_'.$nombre.'" class="col-sm-4">
+               <span class="btn btn-primary fileinput-button">
+               <i class="fa fa-cloud-upload-alt"></i>
+               <span>Subir Fotos</span>
+               <input id="fileupload_'.$nombre.'" type="file" name="files[]" multiple>
+               </span>
+               </div>
+               
+               <input id="'.$nombre.'" name="'.$nombre.'" value="'.$valor.'"  type="hidden"  />
+               
+               <div class=" col-sm-4">
+                   <div id="progress_'.$nombre.'" class="progress">
+                       <div class="progress-bar progress-bar-success"></div>
+                   </div>
+                  
+                   <div id="files_'.$nombre.'" ></div>
+               </div>
+               
+               
+     
+           </div>
+           <div id="crt_foto'.$nombre.'"> </div>
+           
+           ';
+           
+             if ($mostrar_upload=="SI")  {  $salida.='  </div>    ';   
+             }    
+        }
+   //   'use strict';
+             $salida .= "<script>        
+                       $(function () {
+                        
+                                
+                               
+                               $('#fileupload_$nombre').fileupload({
+                               url: 'plugins/fileupload/',
+                               dataType: 'json',
+                               singleFileUploads: false,
+                               acceptFileTypes: /(\.|\/)(gif|jpe?g|png|doc|docx|pdf|txt|xls|xlsx)$/i,
+                               maxFileSize: 20971520,
+                               maxNumberOfFiles: 30,
+                               disableVideoPreview: true,
+                               disableAudioPreview: true,
+                               disableImagePreview: true,
+                               previewThumbnail: false,
+                               
+                               done: function (e, data) {
+                                     
+                                   $.each(data.result.files, function (index, file) {
+         
+                                      
+                                     
+   
+                                    //    $('#$nombre').val(file.name);
+                                                              
+                                    //    $('#files_$nombre').text('Guardado');
+                                    //    $('#lk$nombre').html(file.name);
+                                    console.log(file.name,'$nombre'); 
+                                    insp_guardar_foto(file.name,'$nombre');
+         ";
+                                      
+                                      
+         if ($preview==true) {
+           $salida .= "  $('#crt_foto$nombre').html('<img src=\"'+file.url+'\"  class=\"img-responsive img-thumbnail\" />'); ";
+          }  
+   
+            $salida .= "                           
+                                                  
+           
+                                   });
+                               },
+                               progressall: function (e, data) {
+                                $('#colbtn_$nombre').hide();
+                                   var progress = parseInt(data.loaded / data.total * 100, 10);
+                                   $('#progress_$nombre .progress-bar').css(
+                                       'width',
+                                       progress + '%'
+                                   );
+                               }
+                           }).prop('disabled', !$.support.fileInput)
+                               .parent().addClass($.support.fileInput ? undefined : 'disabled');
+                               
+                       });
+                       
+                       
+                       </script>" ;
+     }                  
+                       
+    if ($etiqueta!="") { $salida .= '</div></div>' ;}                   
+    return $salida;       
+}
 
 
-function campo_upload($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solicitud="",$columna1=3,$columna2=9,$mostrar_upload="NO",$preview=false) {
+function campo_upload($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solicitud="",$columna1=3,$columna2=9,$mostrar_upload="NO",$preview=false) 
+{
     $salida="";
    
    
@@ -1069,7 +1204,7 @@ function campo_upload($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solicitud=""
                <span class="btn btn-secondary fileinput-button">
                <i class="fa fa-cloud-upload-alt"></i>
                <span>Subir Foto</span>
-               <input id="fileupload_'.$nombre.'" type="file" name="files[]" >
+               <input id="fileupload_'.$nombre.'" type="file" name="files[]">
                </span>
                </div>
                
@@ -1102,10 +1237,10 @@ function campo_upload($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solicitud=""
                                $('#fileupload_$nombre').fileupload({
                                url: 'plugins/fileupload/',
                                dataType: 'json',
-                               singleFileUploads: true,
+                               singleFileUploads: false,
                                acceptFileTypes: /(\.|\/)(gif|jpe?g|png|doc|docx|pdf|txt|xls|xlsx)$/i,
                                maxFileSize: 20971520,
-                               maxNumberOfFiles: 1,
+                               maxNumberOfFiles: 30,
                                disableVideoPreview: true,
                                disableAudioPreview: true,
                                disableImagePreview: true,
@@ -1115,14 +1250,14 @@ function campo_upload($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solicitud=""
                                      
                                    $.each(data.result.files, function (index, file) {
          
-                                     // console.log(file); 
+                                      
                                      
    
                                     //    $('#$nombre').val(file.name);
                                                               
                                     //    $('#files_$nombre').text('Guardado');
                                     //    $('#lk$nombre').html(file.name);
-                                    
+                                    console.log(file.name,'$nombre'); 
                                     insp_guardar_foto(file.name,'$nombre');
          ";
                                       
@@ -1155,7 +1290,7 @@ function campo_upload($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solicitud=""
                        
     if ($etiqueta!="") { $salida .= '</div></div>' ;}                   
     return $salida;       
-   }
+}
 
 
 
@@ -1164,7 +1299,9 @@ function campo_upload($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solicitud=""
 
 
 
-//***********************************************************
+
+
+   //***********************************************************
 //***********************************************************
 //***********************************************************
 //***********************************************************
