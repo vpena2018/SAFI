@@ -1121,7 +1121,7 @@ function campo_upload_varias($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solic
                                                               
                                     //    $('#files_$nombre').text('Guardado');
                                     //    $('#lk$nombre').html(file.name);
-                                    console.log(file.name,'$nombre'); 
+                                    //console.log(file.name,'$nombre'); 
                                     insp_guardar_foto(file.name,'$nombre');
          ";
                                       
@@ -1257,7 +1257,7 @@ function campo_upload($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solicitud=""
                                                               
                                     //    $('#files_$nombre').text('Guardado');
                                     //    $('#lk$nombre').html(file.name);
-                                    console.log(file.name,'$nombre'); 
+                                    //console.log(hola file.name,'$nombre'); 
                                     insp_guardar_foto(file.name,'$nombre');
          ";
                                       

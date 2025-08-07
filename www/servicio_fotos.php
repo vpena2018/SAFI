@@ -145,21 +145,21 @@ if ($result!=false){
     if ($elestado<22) {
      
 
-         echo '<div class="row"><div class="col-12">';
+/*          echo '<div class="row"><div class="col-12">';
          echo '<div class="ins_varias_foto_div">';
          echo campo_upload_varias("ins_foto0","Adjuntar Fotos o Documentos",'upload','', '  ','',3,9,'NO',false );
          echo "</div></div></div>";
-         echo "<hr>";
+         echo "<hr>"; */
 
     $a=1;
-    //  while ($a <= 1) {
-    //      echo '<div class="row"><div class="col-12">';
-    //      echo '<div class="ins_foto_div">';
-    //      echo campo_upload("ins_foto".$a,"Adjuntar Foto o Documento",'upload','', '  ','',3,9,'NO',false );
-    //      echo "</div></div></div>";
-    //      echo "<hr>";
-    //      $a++;
-    //  }
+      while ($a <= 10) {
+          echo '<div class="row"><div class="col-12">';
+          echo '<div class="ins_foto_div">';
+          echo campo_upload("ins_foto".$a,"Adjuntar Foto o Documento",'upload','', '  ','',3,9,'NO',false );
+          echo "</div></div></div>";
+          echo "<hr>";
+          $a++;
+      }
     }
 
     ?>    
@@ -191,7 +191,7 @@ if ($result!=false){
 		} else {mytoast('error',json[0].pmsg,3000) ; }
 		  
 	})
-	  .done(function() {	serv_cambiartab('nav_fotos');  })
+	  .done(function() {	/*serv_cambiartab('nav_fotos');*/  })
 	  .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
 	  .always(function() {	  });
     
