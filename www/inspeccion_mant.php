@@ -166,28 +166,6 @@ if ($accion=="g") {
           $tipodoc=intval($_REQUEST["tipo_doc"]);
       }
 
-      //informacion de encuesta de satifaccion 
-      if (isset($_REQUEST["encuesta_respuesta"])){
-          $encuesta_excelente=0; 
-          $encuesta_bueno=0;
-          $encuesta_malo=0;      
-          $encuesta_respuesta=$_REQUEST["encuesta_respuesta"];      
-          switch ($encuesta_respuesta){
-                case "excelente";
-                    $encuesta_excelente=1;
-                    break;
-                case "bueno";
-                    $encuesta_bueno=1;
-                    break;                 
-                case "malo";
-                    $encuesta_malo=1;
-                    break;                                  
-          }
-          $sqlcampos.= " , encuesta_excelente =".$encuesta_excelente;
-          $sqlcampos.= " , encuesta_bueno =".$encuesta_bueno; 
-          $sqlcampos.= " , encuesta_malo =".$encuesta_malo;
-      }      
-
       if (isset($_REQUEST["tipo_doc"])) { $sqlcampos.= " , tipo_doc =".GetSQLValue($_REQUEST["tipo_doc"],"int"); }    
       // if (isset($_REQUEST["fecha_hora_inicio"])) { $sqlcampos.= " , fecha_hora_inicio =".GetSQLValue($_REQUEST["fecha_hora_inicio"],"text"); } 
       // if (isset($_REQUEST["fecha_hora_final"])) { $sqlcampos.= " , fecha_hora_final =".GetSQLValue($_REQUEST["fecha_hora_final"],"text"); } 
@@ -604,11 +582,6 @@ if (isset($row["chasis"])) {$chasis= $row["chasis"]; } else {$chasis= "";}
 if (isset($row["fecha_auditado"])) {$fecha_auditado= $row["fecha_auditado"]; } else {$fecha_auditado= date('Y-m-d');}
 if (isset($row["id_usuario_auditado"])) {$id_usuario_auditado= $row["id_usuario_auditado"]; } else {$id_usuario_auditado= "0";}
 if (isset($row["observaciones_adpc"])) {$observaciones_adpc= $row["observaciones_adpc"]; } else {$observaciones_adpc= "";}
-
-if (isset($row["encuesta_excelente"])) {$encuesta_excelente=$row["encuesta_excelente"] ; } else {$encuesta_excelente= 0;}
-if (isset($row["encuesta_bueno"])) {$encuesta_bueno=$row["encuesta_bueno"]; } else {$encuesta_bueno= 0;}
-if (isset($row["encuesta_malo"])) {$encuesta_malo=$row["encuesta_malo"]; } else {$encuesta_malo= 0;}
-if (isset($row["encuesta"])) {$encuesta= $row["encuesta_comentario"]; } else {$encuesta= "";}
 
 //********* */
 if ($nuevoreg==true) {
@@ -1553,57 +1526,15 @@ if ($tipo_inspeccion=='2'){ // TALLER
             }    
         }
         ?>        
+
         <div class="card-body">   
           <div class="row"> 
             <div class="col-md">     
                  <?php echo campo("observaciones_adpc","Observaciones ADPC",$oculto,$observaciones_adpc,' ',' rows="5" '.$disable_sec6 .$obadpc_requerido);?>  
             </div>
           </div>
-        </div>
-        
-        <?php
-           if ($tipo_inspeccion=='2' && $tipo_doc=='2' && !es_nulo($encuesta_cliente) && $id_estado<=1 ){ 
-               $disable_sec8=' ';              
-           }else{
-               $disable_sec8=' disabled="disabled" ';
-           }
-        ?>    
+        </div>     
 
-              <div class="col-md">               
-                  <h5 class="row justify-content-center">¿Cómo calificaría los servicios brindados?</h5>   
-                  <div class="row justify-content-center" >
-                        <div class="form-check form-check-inline">                              
-                              <input class="form-check-input" type="radio" name="encuesta_respuesta" value="excelente" <?php echo ($encuesta_excelente==1) ?'checked':'unchecked';?> <?php echo $disable_sec8 ?>>
-                              <image src="img/excelente.png">
-                              <div>
-                                 <h6>Excelente</h6>                                                           
-                              </div>
-                              
-                        </div>              
-                        <div class="form-check form-check-inline">                      
-                              <input class="form-check-input" type="radio" name="encuesta_respuesta" value="bueno" <?php echo ($encuesta_bueno==1) ?'checked':'unchecked';?> <?php echo $disable_sec8 ?>>
-                              <image src="img/regular.png">  
-                              <div>
-                                 <h6>Regular</h6>                                                           
-                              </div>
-                        </div>    
-                        <div class="form-check form-check-inline">                                           
-                              <input class="form-check-input" type="radio" name="encuesta_respuesta" value="malo" <?php echo ($encuesta_malo==1) ?'checked':'unchecked';?> <?php echo $disable_sec8 ?>>                                                      
-                              <image src="img/malo.png">
-                              <div>
-                                 <h6>Malo</h6>                                                           
-                              </div>
-                        </div>    
-                  </div>
-              </div>
-              <div class="card-body">   
-                <div class="row"> 
-                  <div class="col-md">     
-                      <?php echo campo("encuesta","Comentaro Encuesta","textarea",$encuesta,' ',' rows="3" '.$disable_sec8 .' ');?>  
-                  </div>
-                </div>
-              </div>                  
-    
   </fieldset>
 </form> 
 
