@@ -50,7 +50,7 @@ if ($accion =="g") {
 
 
 
-    foto_reducir_tamano(app_dir."s3_inglosa/". urldecode($_REQUEST["arch"]));
+    foto_reducir_tamano(app_dir."uploa_d/". urldecode($_REQUEST["arch"]));
 
 
 
