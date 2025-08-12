@@ -96,7 +96,7 @@ if ($accion =="d") {
 
     if ($cod<>'' or $arch<>'') {
 
-    borrar_foto_directorio($cid,$cod,"inspeccion");
+    borrar_foto_directorio($cid,$cod,$arch,"inspeccion");
 
     $result = sql_delete("DELETE FROM inspeccion_foto 
                             WHERE id_inspeccion=$cid 
@@ -315,7 +315,7 @@ if ($result!=false){
    $puede_agregar_varias=true;
     $puede_agregar_fotos=true;
 
-    if ($elestado>1)  {$puede_agregar_fotos=false; }
+    //if ($elestado>1)  {$puede_agregar_fotos=false; }
 
     if ($puede_agregar_fotos==true) {     
 
@@ -332,7 +332,7 @@ if ($result!=false){
         }else{
                  $a=1;
 
-     while ($a <= 1) {
+     while ($a <= 10) {
 
          echo '<div class="row"><div class="col-12">';
          echo '<div class="ins_foto_div">';
@@ -361,7 +361,7 @@ if ($result!=false){
     function insp_guardar_foto(arch,campo){
 
 
-
+        var puede_agregar_varias = <?= $puede_agregar_varias ? 'true' : 'false' ?>;
      var datos= { a: "g", cid: $("#cid").val(), pid: $("#pid").val() , arch: encodeURI(arch)} ;
 
         
@@ -404,7 +404,7 @@ if ($result!=false){
 
 	})
 
-	  .done(function() {	insp_cambiartab('nav_fotos');  })
+	  .done(function() { if(puede_agregar_varias){insp_cambiartab('nav_fotos');}	  })
 
 	  .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
 

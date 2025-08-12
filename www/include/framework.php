@@ -1729,14 +1729,22 @@ function foto_reducir_tamano($archivo){
     }
 }
 
-function borrar_foto_directorio($cid,$cod, $tipo) {
+function borrar_foto_directorio($cid,$cod,$arch, $tipo) {
+
+         $filtro="";
+        if($cod=="") {
+            $filtro=$arch;
+        }else{
+            $filtro=$cod;
+        }
+            
 
            if($tipo=="averia") {
-            $result_arch=sql_select("SELECT id,archivo FROM averia_foto WHERE  id_maestro=$cid $cod  LIMIT 1");
+            $result_arch=sql_select("SELECT id,archivo FROM averia_foto WHERE  id_maestro=$cid $filtro  LIMIT 1");
            }else if($tipo=="inspeccion") {
-            $result_arch=sql_select("SELECT id,archivo FROM inspeccion_foto WHERE id_inspeccion=$cid $cod  LIMIT 1");
+            $result_arch=sql_select("SELECT id,archivo FROM inspeccion_foto WHERE id_inspeccion=$cid $filtro  LIMIT 1");
            }else if($tipo=="servicio") {    
-            $result_arch=sql_select("SELECT id,archivo FROM servicio_foto WHERE id_servicio=$cid $cod LIMIT 1");
+            $result_arch=sql_select("SELECT id,archivo FROM servicio_foto WHERE id_servicio=$cid $filtro LIMIT 1");
            }
 
         if ($result_arch -> num_rows > 0) {

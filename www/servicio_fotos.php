@@ -39,7 +39,7 @@ if ($accion =="d") {
     if (isset($_REQUEST['cod'])) { $cod = "and id=".GetSQLValue(urldecode($_REQUEST["cod"]),"text"); } else	{$cod ="" ;}
     if ($cod<>'' or $arch<>'') {
 
-        borrar_foto_directorio($cid,$cod,"servicio");
+        borrar_foto_directorio($cid,$cod,$arch,"servicio");
 
     $result = sql_delete("DELETE FROM servicio_foto 
                             WHERE id_servicio=$cid 
@@ -158,10 +158,11 @@ if ($result!=false){
          echo campo_upload_varias("ins_foto0","Adjuntar Fotos o Documentos",'upload','', '  ','',3,9,'NO',false );
          echo "</div></div></div>";
          echo "<hr>"; 
+         
 
         }else{
                   $a=1;
-      while ($a <= 1) {
+      while ($a <= 10) {
           echo '<div class="row"><div class="col-12">';
           echo '<div class="ins_foto_div">';
           echo campo_upload("ins_foto".$a,"Adjuntar Foto o Documento",'upload','', '  ','',3,9,'NO',false );
@@ -180,7 +181,7 @@ if ($result!=false){
 
 <script> 
     function insp_guardar_foto(arch,campo){
-
+var puede_agregar_varias = <?= $puede_agregar_varias ? 'true' : 'false' ?>;
      var datos= { a: "g", cid: $("#cid").val(), pid: $("#pid").val() , arch: encodeURI(arch)} ;
         
 
@@ -202,7 +203,7 @@ if ($result!=false){
 		} else {mytoast('error',json[0].pmsg,3000) ; }
 		  
 	})
-	  .done(function() {	serv_cambiartab('nav_fotos');  })
+	  .done(function() { if(puede_agregar_varias){serv_cambiartab('nav_fotos');}})
 	  .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
 	  .always(function() {	  });
     
