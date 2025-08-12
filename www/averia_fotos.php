@@ -40,6 +40,9 @@ if ($accion =="d") {
     if (isset($_REQUEST['arch'])) { $arch = "and archivo=".GetSQLValue(urldecode($_REQUEST["arch"]),"text"); } else	{$arch ="" ;}
     if (isset($_REQUEST['cod'])) { $cod = "and id=".GetSQLValue(urldecode($_REQUEST["cod"]),"text"); } else	{$cod ="" ;}
     if ($cod<>'' or $arch<>'') {
+
+     borrar_foto_directorio($cid,"averia_foto");
+
       $result = sql_delete("DELETE FROM averia_foto 
                             WHERE id_maestro=$cid
                             $arch
@@ -47,6 +50,9 @@ if ($accion =="d") {
                            
                             LIMIT 1
                             ");
+
+     
+
     } else {$result==false;}
     
 
@@ -143,30 +149,47 @@ if ($result!=false){
     <?php
 
     $puede_agregar=true;
+    $puede_agregar_varias=true;
+
      $estado_actual= get_dato_sql('averia',"id_estado"," where id=$cid"); 
      if (intval($estado_actual)>2) {
+
+        if ($puede_agregar_varias==true) {
+
        if (!tiene_permiso(153)) {
         $puede_agregar=false;
        }
      }
+    }
 
      if ($puede_agregar==true) { 
 
+            if (!tiene_permiso(182)) {
+                $puede_agregar_varias=false;
+            }
+
+        if ($puede_agregar_varias==true) {
             echo '<div class="row"><div class="col-12">';
             echo '<div class="ins_foto_div">';
             echo campo_upload_varias("ins_foto0","Adjuntar Fotos o Documentos",'upload','', '  ','',3,9,'NO',false );
             echo "</div></div></div>";
             echo "<hr>"; 
+        }else{
 
-/*          $a=1;
-        while ($a <= 10) {
-            echo '<div class="row"><div class="col-12">';
-            echo '<div class="ins_foto_div">';
-            echo campo_upload("ins_foto".$a,"Adjuntar Foto o Documento",'upload','', '  ','',3,9,'NO',false );
-            echo "</div></div></div>";
-            echo "<hr>";
-            $a++;
-        }  */
+            $a=1;
+            while ($a <= 1) {
+                echo '<div class="row"><div class="col-12">';
+                echo '<div class="ins_foto_div">';
+                echo campo_upload("ins_foto".$a,"Adjuntar Foto o Documento",'upload','', '  ','',3,9,'NO',false );
+                echo "</div></div></div>";
+                echo "<hr>";
+                $a++;
+            } 
+        }
+
+
+
+ 
     }
       
       ?>    
@@ -310,7 +333,6 @@ Swal.fire({
 }
 
 function borrar_fotodb(codid){
-
 var datos= { a: "d", cid: $("#cid").val(), pid: $("#pid").val() , cod: codid} ;
   
 

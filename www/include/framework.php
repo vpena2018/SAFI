@@ -1729,6 +1729,27 @@ function foto_reducir_tamano($archivo){
     }
 }
 
+function borrar_foto_directorio($cid, $tabla){
+//averia_foto
+           $result_arch=sql_select("SELECT id,archivo FROM $tabla WHERE id_maestro=$cid LIMIT 1");
+
+        if ($result_arch -> num_rows > 0) {
+            $row = $result_arch -> fetch_assoc();
+            $filename = $row['archivo'];
+
+            $path1 = 'uploa_d/' . $filename;
+            $path2 = 'uploa_d/thumbnail/' . $filename;
+
+            if (file_exists($path1)) {
+                unlink($path1);
+            }
+
+            if (file_exists($path2)) {
+                unlink($path2);
+            }
+        }
+}
+
 
 function get_array_tiendas(){
 	global $conn;
