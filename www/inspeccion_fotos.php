@@ -96,18 +96,13 @@ if ($accion =="d") {
 
     if ($cod<>'' or $arch<>'') {
 
-
+    borrar_foto_directorio($cid,$cod,"inspeccion");
 
     $result = sql_delete("DELETE FROM inspeccion_foto 
-
                             WHERE id_inspeccion=$cid 
-
                             $arch
-
                             $cod
-
                             LIMIT 1
-
                             ");
 
  } else {$result==false;}
@@ -320,7 +315,7 @@ if ($result!=false){
    $puede_agregar_varias=true;
     $puede_agregar_fotos=true;
 
-    //if ($elestado>1)  {$puede_agregar_fotos=false; }
+    if ($elestado>1)  {$puede_agregar_fotos=false; }
 
     if ($puede_agregar_fotos==true) {     
 
