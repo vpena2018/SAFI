@@ -39,6 +39,8 @@ if ($accion =="d") {
     if (isset($_REQUEST['cod'])) { $cod = "and id=".GetSQLValue(urldecode($_REQUEST["cod"]),"text"); } else	{$cod ="" ;}
     if ($cod<>'' or $arch<>'') {
 
+        borrar_foto_directorio($cid,"servicio");
+
     $result = sql_delete("DELETE FROM servicio_foto 
                             WHERE id_servicio=$cid 
                             $arch

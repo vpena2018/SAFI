@@ -1729,9 +1729,15 @@ function foto_reducir_tamano($archivo){
     }
 }
 
-function borrar_foto_directorio($cid, $tabla){
-//averia_foto
-           $result_arch=sql_select("SELECT id,archivo FROM $tabla WHERE id_maestro=$cid LIMIT 1");
+function borrar_foto_directorio($cid, $tipo) {
+
+           if($tipo=="averia") {
+            $result_arch=sql_select("SELECT id,archivo FROM averia_foto WHERE id_maestro=$cid LIMIT 1");
+           }else if($tipo=="inspeccion") {
+            $result_arch=sql_select("SELECT id,archivo FROM inspeccion_foto WHERE id_inspeccion=$cid LIMIT 1");
+           }else if($tipo=="servicio") {    
+            $result_arch=sql_select("SELECT id,archivo FROM servicio_foto WHERE id_servicio=$cid LIMIT 1");
+           }
 
         if ($result_arch -> num_rows > 0) {
             $row = $result_arch -> fetch_assoc();
