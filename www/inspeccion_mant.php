@@ -210,10 +210,8 @@ if ($accion=="g") {
 
      if (isset($_REQUEST["tipo_inspeccion_especial"])) { $sqlcampos.= " , tipo_inspeccion_especial =".GetSQLValue($_REQUEST["tipo_inspeccion_especial"],"int"); }
 
-     if (isset($_REQUEST["observaciones_adpc"])) { $sqlcampos.= " , observaciones_adpc =".GetSQLValue($_REQUEST["observaciones_adpc"],"text"); } 
-        
-     if (isset($_REQUEST["encuenta"])) { $sqlcampos.= " , encuesta_comentario =".GetSQLValue($_REQUEST["encuesta_comentario"],"text"); } 
-  
+     if (isset($_REQUEST["observaciones_adpc"])) { $sqlcampos.= " , observaciones_adpc =".GetSQLValue($_REQUEST["observaciones_adpc"],"text"); }        
+      
      $actualizarkm=false;//ojo no quitar . por si esta modificando 
      $enviar_orden_email=false;
      $lbl_estado="Borrador";
@@ -232,7 +230,7 @@ if ($accion=="g") {
             if (!es_nulo($cid)) { 
               $valida_fotos=get_dato_sql("inspeccion_foto","COUNT(*)"," WHERE id_inspeccion=".$cid);
               if (es_nulo($valida_fotos) or $valida_fotos<=9){
-                  $stud_arr[0]["pmsg"] =" Le faltan las 10 fotos requeridas para completar la Hoja de Inspeccion"; 
+                  $stud_arr[0]["pmsg"] ="Son 10 fotos las requeridas para completar la Hoja de Inspeccion, le faltan las ".(10-$valida_fotos)." fotos"; 
                   salida_json($stud_arr);
                   exit; 
               }                          
@@ -650,7 +648,7 @@ $valida_km=0;
 $km_permitido=0;
 $CodigoAlterno=0;
 $nombre_cliente="";
-$encuesta_cliente="";
+
 if (!es_nulo($id_producto)){  
     $CodigoAlterno=get_dato_sql("producto","COUNT(*)"," WHERE left(codigo_alterno,7)='EA-0000' and id=".$id_producto);
     if (!es_nulo($CodigoAlterno)){
@@ -666,13 +664,6 @@ if (!es_nulo($id_producto)){
        $cliente=0;
     }       
 }
-if (!es_nulo($cliente_id)){  
-   ///Valido el vehiculo con el cliente
-   $encuesta_cliente=substr(get_dato_sql("entidad","codigo_alterno"," WHERE id=".$cliente_id),0,4);    
-   if ($encuesta_cliente=="CCN-") {
-      $encuesta_cliente="";
-   }
-}   
 
 // cargar orden inspeccion anterior
 if ( !es_nulo($id_producto)) {
