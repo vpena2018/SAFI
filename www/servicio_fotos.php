@@ -39,7 +39,7 @@ if ($accion =="d") {
     if (isset($_REQUEST['cod'])) { $cod = "and id=".GetSQLValue(urldecode($_REQUEST["cod"]),"text"); } else	{$cod ="" ;}
     if ($cod<>'' or $arch<>'') {
 
-        borrar_foto_directorio($cid,$cod,"servicio");
+        borrar_foto_directorio($cid,$cod,$arch,"servicio");
 
     $result = sql_delete("DELETE FROM servicio_foto 
                             WHERE id_servicio=$cid 
@@ -181,7 +181,7 @@ if ($result!=false){
 
 <script> 
     function insp_guardar_foto(arch,campo){
-
+var puede_agregar_varias = <?= $puede_agregar_varias ? 'true' : 'false' ?>;
      var datos= { a: "g", cid: $("#cid").val(), pid: $("#pid").val() , arch: encodeURI(arch)} ;
         
 
