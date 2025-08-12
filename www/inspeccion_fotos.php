@@ -315,7 +315,7 @@ if ($result!=false){
    $puede_agregar_varias=true;
     $puede_agregar_fotos=true;
 
-    //if ($elestado>1)  {$puede_agregar_fotos=false; }
+    if ($elestado>1)  {$puede_agregar_fotos=false; }
 
     if ($puede_agregar_fotos==true) {     
 
