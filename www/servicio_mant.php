@@ -756,8 +756,8 @@ if ($elcodigo<>"") {
                 if ($resultsms->num_rows > 0) {    
                   $rowsms = $resultsms -> fetch_assoc();    
                   
-                 
-                  $sms_mensaje="HERTZ Estimado cliente. Los trabajos realizados al vehículo ".$rowsms["codigo_alterno"]." han sido finalizados y se encuentra listo para la entrega, te esperamos en el taller para su retiro";          
+                  //$sms_mensaje="HERTZ Estimado cliente. Los trabajos realizados al vehículo ".$rowsms["codigo_alterno"]." han sido finalizados y se encuentra listo para la entrega, te esperamos en el taller para su retiro";          
+                  $sms_mensaje="HERTZ Estimado cliente el vehículo ".$rowsms["codigo_alterno"]." ya terminó los trabajos de taller. En este momento, el auto se encuentra en el área de lavado. En aproximadamente 40 minutos podrá pasar a recogerlo.";          
                   $sms_numero=trim($rowsms["cliente_contacto_telefono"]);
                   $sms_numero=str_replace('-','', $sms_numero);
                   $sms_numero=str_replace(' ','', $sms_numero);
