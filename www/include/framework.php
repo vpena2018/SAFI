@@ -1764,6 +1764,72 @@ function borrar_foto_directorio($cid,$cod,$arch, $tipo) {
         }
 }
 
+function borrar_foto_directorio2($cid, $cod, $arch, $tipo) {
+    try {
+        $filtro = ($cod === "") ? $arch : $cod;
+        $metodo= "Metodo: borrar_foto_directorio2 ";
+
+        // Determinar la consulta adecuada según el tipo
+        switch ($tipo) {
+            case "averia":
+                $query = "SELECT id, archivo FROM averia_foto WHERE id_maestro=$cid $filtro LIMIT 1";
+                break;
+            case "inspeccion":
+                $query = "SELECT id, archivo FROM inspeccion_foto WHERE id_inspeccion=$cid $filtro LIMIT 1";
+                break;
+            case "servicio":
+                $query = "SELECT id, archivo FROM servicio_foto WHERE id_servicio=$cid $filtro LIMIT 1";
+                break;
+            default:
+                throw new \Exception("Tipo inválido: $tipo");
+        }
+
+        $result_arch = sql_select($query);
+        if (! $result_arch) {
+            throw new \Exception("Error SQL: $query");
+        }
+
+        if ($result_arch->num_rows > 0) {
+            $row = $result_arch->fetch_assoc();
+            $filename = $row['archivo'];
+
+            $path1 = 'uploa_d/' . $filename;
+            $path2 = 'uploa_d/thumbnail/' . $filename;
+
+            /*$path1 = 'uploa_d/' . $filename;
+            $path2 = 'uploa_d/thumbnailll/' . $filename;*/
+
+            if (file_exists($path1)) {
+                if (!unlink($path1)) {
+                        $err = error_get_last();
+                        throw new \Exception("$metodo,Error al borrar '$path1': " . ($err['message'] ?? 'desconocido'));
+                    }
+            }else{
+                file_put_contents(app_logs_folder.date("Y-m-d")."_Framework.log","$metodo,Ruta no existe: $path1", FILE_APPEND );
+            }
+
+            if (file_exists($path2)) {
+                if (!unlink($path2)) {
+                        $err = error_get_last();
+                        throw new \Exception("$metodo, Error al borrar '$path2': " . ($err['message'] ?? 'desconocido'));
+                    }
+            }else{
+                file_put_contents(app_logs_folder.date("Y-m-d")."_Framework.log","$metodo,Ruta no existe: $path2", FILE_APPEND );
+            }
+
+            return true;
+
+            
+        }
+    } catch (\Exception $e) {
+        file_put_contents(app_logs_folder.date("Y-m-d")."_Framework.log",$e->getMessage(). PHP_EOL, FILE_APPEND );
+        return false;
+    }
+
+    return true;
+}
+
+
 
 function get_array_tiendas(){
 	global $conn;
