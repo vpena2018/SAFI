@@ -40,18 +40,24 @@ if ($accion =="d") {
     if (isset($_REQUEST['cod'])) { $cod = "and id=".GetSQLValue(urldecode($_REQUEST["cod"]),"text"); } else	{$cod ="" ;}
     if ($cod<>'' or $arch<>'') {
 
-     borrar_foto_directorio($cid,$cod,$arch,"averia");
+     $borrado_directorio=borrar_foto_directorio2($cid,$cod,$arch,"averia");
 
+     if($borrado_directorio)
+     {
+    
       $result = sql_delete("DELETE FROM averia_foto 
                             WHERE id_maestro=$cid
                             $arch
                             $cod
                             LIMIT 1
                             ");
+        if (!$result) {
+            file_put_contents(app_logs_folder.date("Y-m-d")."_averia_fotos.log","Error en sql Delete averia_foto". PHP_EOL, FILE_APPEND );
+        }
 
-     
-
-    } else {$result==false;}
+     }
+    } else 
+    {$result==false;}
     
 
     if ($result!=false){
