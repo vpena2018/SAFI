@@ -876,13 +876,7 @@ case 73:// 	Reporte de averias
                 ,tec2.nombre as tecnombre2
                 ,tec3.nombre as tecnombre3 
                 ,tec4.nombre as tecnombre4                
-                ,(
-                    SELECT  
-                    sum(ifnull(servicio_detalle.cantidad,0)*ifnull(servicio_detalle.precio_costo,0) ) as costo  
-                    FROM servicio_detalle
-                    WHERE servicio_detalle.id_servicio=servicio.id
-                    AND servicio_detalle.estado <>4
-                ) AS total_costo
+                ,sd.total_costo
                 
                 FROM servicio
                 LEFT OUTER JOIN producto ON (servicio.id_producto=producto.id)
@@ -894,7 +888,16 @@ case 73:// 	Reporte de averias
                 LEFT OUTER JOIN usuario tec1 on (servicio.id_tecnico1=tec1.id) 
                 LEFT OUTER JOIN usuario tec2 on (servicio.id_tecnico2=tec2.id)
                 LEFT OUTER JOIN usuario tec3 on (servicio.id_tecnico3=tec3.id)   
-                LEFT OUTER JOIN usuario tec4 on (servicio.id_tecnico3=tec4.id)                                                             
+                LEFT OUTER JOIN usuario tec4 on (servicio.id_tecnico3=tec4.id) 
+                LEFT JOIN (
+                SELECT
+                    id_servicio,
+                    SUM(IFNULL(cantidad, 0) * IFNULL(precio_costo, 0)) AS total_costo
+                FROM servicio_detalle
+                WHERE estado <> 4
+                GROUP BY id_servicio
+                ) AS sd ON sd.id_servicio = servicio.id 
+
                 WHERE /*date(servicio.fecha_hora_final) BETWEEN '$fdesde' AND '$fhasta'*/
                 $where
                 order by servicio.fecha , servicio.id 
