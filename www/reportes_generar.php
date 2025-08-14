@@ -34,6 +34,7 @@ if (isset($_REQUEST['averia_deducible'])) { $averia_deducible = intval($_REQUEST
 if (isset($_REQUEST['id_tipo_averia'])) { $id_tipo_averia = intval($_REQUEST['id_tipo_averia']); } else   {$id_tipo_averia ='';}
 if (isset($_REQUEST['id_tipo_causa'])) { $id_tipo_causa = intval($_REQUEST['id_tipo_causa']); } else   {$id_tipo_causa ='';}
 if (isset($_REQUEST['id_tipo_revision'])) { $id_tipo_revision = intval($_REQUEST['id_tipo_revision']); } else   {$id_tipo_revision ='';}
+if (isset($_REQUEST['id_tipo_mant'])) { $id_tipo_mant = intval($_REQUEST['id_tipo_mant']); } else   {$id_tipo_mant ='';}
 
 if (isset($_REQUEST['actividad_repuesto'])) { $actividad_repuesto = intval($_REQUEST['actividad_repuesto']); } else   {$actividad_repuesto ='';}
 
@@ -852,6 +853,10 @@ case 73:// 	Reporte de averias
 
          if (!es_nulo($id_tipo_revision)) {
             $where.=' AND  servicio.id_tipo_revision='.$id_tipo_revision;
+         } 
+
+         if (!es_nulo($id_tipo_mant)) {
+            $where.=' AND  servicio.id_tipo_mant='.$id_tipo_mant;
          } 
 
          if (!es_nulo($id_estado_os) and $costo=='02') {
