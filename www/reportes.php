@@ -157,6 +157,13 @@ if ($accion=="v") {
                     </div>                   
                 </div>
 
+
+                <div id="reptipo_mant" class="row repfiltro  mb-1">
+                    <div class="col-sm">
+                        <?php  echo  campo('id_tipo_mant', 'Tipo de Mantenimiento','select2',valores_combobox_db('servicio_tipo_mant','','nombre',' ','','Todos'),' ','  ','');           ?>
+                    </div>                   
+                </div>
+
                 <div id="repaveria_coaseguro" class="row repfiltro  mb-1">
                     <div class="col-sm">
                         <?php  echo campo("averia_coaseguro","Coaseguro",'select',valores_combobox_texto('<option value="0">Todas</option><option value="01">Solo con Coaseguro</option><option value="02">Solo sin Coaseguro</option>',''),' ',' ');           ?>
@@ -305,10 +312,11 @@ function filtros_reporte(cod,objeto){
             //$("#repplaca").show();
             $("#repcliente").show();
             $("#reptipo_revision").show();
+            $("#reptipo_mant").show();
             $("#repmecanico").show();
             $("#repcosto").show();
             $("#repestado_os").show();
-            $("#repfechac").show();
+            $("#repfechac").show();              
 
         break;
 
