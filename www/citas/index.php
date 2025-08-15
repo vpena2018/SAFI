@@ -559,7 +559,6 @@ if ($accion=="cal2") {
 
 	   </div>
 
-
 	   <div class="row">
 	   	   <div class="col-sm mb-3">
 			  	<div class="form-label-group">
@@ -763,7 +762,7 @@ if ($accion=="cal2") {
 				lang: 'es',
 				format: 'YYYY-MM-DD',
 				disablePastDays: true,
-                disabledDaysOfWeek: [0, 6], 
+                //disabledDaysOfWeek: [0, 6], 
 				
 				
 
@@ -812,6 +811,7 @@ if ($accion=="cal2") {
 	
 
 			function cargar_calendario(calendar,resetear){
+				
 				d_diasno = [];
 				$('#fecha').val('');
 				$('#hora').val('');
@@ -833,7 +833,7 @@ if ($accion=="cal2") {
 							
 
 								cargando(false);
-								
+								debugger;
 								var fecha_actual;
 								var totdias=daysInMonth(m_actual,y_actual);
 								for (let i = 1; i <= totdias; i++) {
@@ -860,13 +860,13 @@ if ($accion=="cal2") {
 						if (resetear==true) {
 							calendar.reset({
 								defaultDate: fechadefault,				
-							disabledDaysOfWeek: [6], 
+							//disabledDaysOfWeek: [6], 
 							disableDates: d_diasno,
 						});
 						} else {							
 							calendar.reset({
 								defaultDate: fechadefault,
-													disabledDaysOfWeek: [6], 
+													//disabledDaysOfWeek: [6], 
 													disableDates: d_diasno,
 												});
 												
