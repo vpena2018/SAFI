@@ -24,7 +24,9 @@ function  cargar_detalle($cid,$tipo){
   $servicios_result = sql_select("SELECT servicio_detalle.* 
                             ,producto.horas
                             ,producto.tipo_mant
+                            ,user.nombre
                             FROM servicio_detalle 
+                            inner join usuario user on (servicio_detalle.id_usuario=user.id)
                             LEFT OUTER JOIN producto ON (servicio_detalle.id_producto=producto.id)
                             where servicio_detalle.id_servicio=$cid 
                             $filtro
@@ -34,7 +36,7 @@ function  cargar_detalle($cid,$tipo){
       if ($servicios_result->num_rows > 0) { 
         while ($detalle = $servicios_result -> fetch_assoc()) {
 
-          echo agregar_servicio_detalle($lin,$detalle["precio_venta"],$detalle["precio_costo"],$detalle["id_producto"],$detalle["producto_codigoalterno"],$detalle["producto_nombre"],$detalle["id"],$detalle["cantidad"],$detalle["producto_nota"],$detalle["estado"],$detalle["id_oc"],$detalle["id_ocobro"],$detalle["horas"],$detalle["horas_atender"],$detalle["tipo_mant"],$tipo,$detalle['existencia']);
+          echo agregar_servicio_detalle($lin,$detalle["precio_venta"],$detalle["precio_costo"],$detalle["id_producto"],$detalle["producto_codigoalterno"],$detalle["producto_nombre"],$detalle["id"],$detalle["cantidad"],$detalle["producto_nota"],$detalle["estado"],$detalle["id_oc"],$detalle["id_ocobro"],$detalle["horas"],$detalle["horas_atender"],$detalle["tipo_mant"],$tipo,$detalle['existencia'],$detalle['nombre']);
                 
           $lin++;
         
@@ -42,7 +44,7 @@ function  cargar_detalle($cid,$tipo){
   } 
 
 
-function agregar_servicio_detalle($vlin,$data_pv,$data_pc,$data_id,$data_alt,$data_desc,$det_id,$cantidad,$nota,$estado,$ocompra,$ocobro,$hora,$hora_atendido,$tipo_mant,$tipo,$existencia) {
+function agregar_servicio_detalle($vlin,$data_pv,$data_pc,$data_id,$data_alt,$data_desc,$det_id,$cantidad,$nota,$estado,$ocompra,$ocobro,$hora,$hora_atendido,$tipo_mant,$tipo,$existencia,$usuario_nombre) {
   $salidatxt="";
   $devueltoclass="";
   if ($estado==4) {$devueltoclass="texto-borrado";}
@@ -71,9 +73,18 @@ function agregar_servicio_detalle($vlin,$data_pv,$data_pc,$data_id,$data_alt,$da
 
   $salidatxt.='<td>'.$nota.'</td>';	
   $salidatxt.='<td>'.get_servicio_detalle_estado($estado).'</td>';
+  
   if ($existencia!=null){
       $salidatxt.='<td>'.$existencia.'</td>';
   }
+
+  if($tipo==3) {
+       $salidatxt.='<td align="center">'.$usuario_nombre.'</td>';
+  }
+
+    /*$salidatxt.='<td align="center">'.$usuario_nombre.'</td>';*/	
+
+
   // $salidatxt.='<td>'.formato_numero($data_pv,2).'</td> ';
   // $salidatxt.='<td>'.formato_numero($data_pc,2).'</td> ';
 
@@ -197,6 +208,39 @@ if ($accion=="ec") {
         if ($valor=="22" and !tiene_permiso(61)) { 	echo '<div class="card-body">';   echo'No tiene privilegios para accesar esta función';   echo '</div>';  exit;  }
         if ($valor=="7" and !tiene_permiso(77)) { 	echo '<div class="card-body">';   echo'No tiene privilegios para accesar esta función';   echo '</div>';  exit;  }
         
+        $serviciosPendientes="SELECT COUNT(*) servicios_pendientes FROM servicio_detalle WHERE id_servicio=$sid AND producto_tipo=2 and estado!=2";
+        $RepuestosPendientes="SELECT COUNT(*) repuestos_pendientes FROM servicio_detalle WHERE id_servicio=$sid AND producto_tipo=3 AND estado!=3;";
+        
+        $resultserviciosPendientes = sql_select($serviciosPendientes);
+        $row1 = mysqli_fetch_assoc($resultserviciosPendientes);
+        $serviciosPendientesValor = $row1['servicios_pendientes'];
+
+        $resultRepuestosPendientes = sql_select($RepuestosPendientes);
+        $row2 = mysqli_fetch_assoc($resultRepuestosPendientes);
+        $repuestosPendientesValor = $row2['repuestos_pendientes'];
+
+        if($serviciosPendientesValor>0)
+        {
+            echo '<div class="card-body p-2">';
+            echo '<span style="font-size:20px; color:red; font-weight:bold;">Actividades pendientes de Autorización: '.$serviciosPendientesValor.'</span>';
+            echo '</div>';
+        }
+
+        if($repuestosPendientesValor>0){
+
+           echo '<div class="card-body p-2">';
+            echo '<span style="font-size:20px; color:red; font-weight:bold;">Repuestos pendientes de Recibir: '.$repuestosPendientesValor.'</span>';
+           echo '</div>';
+        }
+
+        if($serviciosPendientesValor>0 or $repuestosPendientesValor>0)
+        {
+          exit;
+        }
+
+
+
+
 
         $result = sql_select("SELECT id_estado
           FROM servicio
@@ -1304,6 +1348,7 @@ if (!es_nulo($id_estado)){
                     <th>Horas Reales</th>
                     <th>Nota</th>
                     <th>Estado</th>
+                    <th>Usuario</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -1369,6 +1414,7 @@ if (!es_nulo($id_estado)){
                     <th>Nota</th>
                     <th>Estado</th>
                     <th>Inventario</th>
+                    
                     <th></th>
                   </tr>
                 </thead>

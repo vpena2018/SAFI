@@ -10,10 +10,16 @@ require_once ('include/framework.php');
 
 function permiso_serviciotipo($accion,$tipo,$estactual){
   $autorizado=false;
+  $AgregarRepuestos=true;
+  $agregarActividades=true;
 
   switch ($tipo) {
     case 2: //repuestos
-      if ($accion=="agr" and $estactual<22) {if (tiene_permiso(64)){$autorizado=true;}}
+      if ($accion=="agr" and $estactual<22 and $estactual!=1 and $estactual!=2 and $estactual!=20) 
+        {
+          if (tiene_permiso(64)){$autorizado=true;}
+        }
+
       if ($accion=="aut") {if (tiene_permiso(65)){$autorizado=true;}}
       if ($accion=="rec") {if (tiene_permiso(66)){$autorizado=true;}}
       if ($accion=="norec") {if (tiene_permiso(67)){$autorizado=true;}}
@@ -25,7 +31,10 @@ function permiso_serviciotipo($accion,$tipo,$estactual){
       break;
     
     case 3: //actividades
-      if ($accion=="agr" and $estactual<22) {if (tiene_permiso(62)){$autorizado=true;}}
+      if ($accion=="agr" and $estactual<22 and $estactual!=1 and $estactual!=2 and $estactual!=20) 
+        {
+          if (tiene_permiso(62)){$autorizado=true;}
+        }
       if ($accion=="aut") {if (tiene_permiso(63)){$autorizado=true;}}
       if ($accion=="atender") {if (tiene_permiso(100)){$autorizado=true;}}
       if ($accion=="realiza") {if (tiene_permiso(101)){$autorizado=true;}}
@@ -36,7 +45,7 @@ function permiso_serviciotipo($accion,$tipo,$estactual){
 
   if (!$autorizado) {
     echo '<div class="card-body">';
-    echo'No tiene privilegios para accesar esta función';
+    echo'No tiene privilegios para accesar esta función, U orden puede estar pendiente de aprobación';
       echo '</div>';
       exit;
       exit;
@@ -89,6 +98,7 @@ salida_json($stud_arr);
 
 function  cargar_detalle_dlg($cid,$tipo, $id_estado_actual,$id_estado_actual2=0){
     global $lin;
+    $id_usuario=$_SESSION['usuario_id'];
 
     $sql_estado=" estado=$id_estado_actual";
     if ($id_estado_actual2>0) {
@@ -100,7 +110,7 @@ function  cargar_detalle_dlg($cid,$tipo, $id_estado_actual,$id_estado_actual2=0)
       $filtro=" and (servicio_detalle.producto_tipo=$tipo )";
     }
   
-    $servicios_result = sql_select("SELECT * FROM servicio_detalle where id_servicio=$cid  $filtro and $sql_estado order by id ");
+    $servicios_result = sql_select("SELECT * FROM servicio_detalle where id_servicio=$cid and id_usuario=$id_usuario  $filtro and $sql_estado order by id ");
   
   
         if ($servicios_result->num_rows > 0) { 
