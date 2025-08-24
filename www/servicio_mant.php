@@ -208,39 +208,81 @@ if ($accion=="ec") {
         if ($valor=="22" and !tiene_permiso(61)) { 	echo '<div class="card-body">';   echo'No tiene privilegios para accesar esta función';   echo '</div>';  exit;  }
         if ($valor=="7" and !tiene_permiso(77)) { 	echo '<div class="card-body">';   echo'No tiene privilegios para accesar esta función';   echo '</div>';  exit;  }
         
-        $serviciosPendientes="SELECT COUNT(*) servicios_pendientes FROM servicio_detalle WHERE id_servicio=$sid AND producto_tipo=2 and estado!=2";
-        $RepuestosPendientes="SELECT COUNT(*) repuestos_pendientes FROM servicio_detalle WHERE id_servicio=$sid AND producto_tipo=3 AND estado!=3;";
-        
-        $resultserviciosPendientes = sql_select($serviciosPendientes);
+        $serviciosPendientes="SELECT producto_nombre  FROM servicio_detalle WHERE id_servicio=82 AND producto_tipo=3 AND estado!=2;";
+        $RepuestosPendientes="SELECT producto_nombre  FROM servicio_detalle WHERE id_servicio=82 AND producto_tipo=2 and estado!=3;";
+
+        // Inicializar arreglos
+        $serviciosArray = [];
+        $repuestosArray = [];
+
+        /*$resultserviciosPendientes = sql_select($serviciosPendientes);
         $row1 = mysqli_fetch_assoc($resultserviciosPendientes);
-        $serviciosPendientesValor = $row1['servicios_pendientes'];
+        $serviciosPendientesValor = $row1['producto_nombre'];
 
         $resultRepuestosPendientes = sql_select($RepuestosPendientes);
         $row2 = mysqli_fetch_assoc($resultRepuestosPendientes);
-        $repuestosPendientesValor = $row2['repuestos_pendientes'];
+        $repuestosPendientesValor = $row2['producto_nombre'];*/
 
-        if($serviciosPendientesValor>0)
+        
+        $resultserviciosPendientes = sql_select($serviciosPendientes);
+        $resultRepuestosPendientes = sql_select($RepuestosPendientes);
+        
+        // Llenar arreglo de actividades pendientes
+        while ($row = mysqli_fetch_assoc($resultserviciosPendientes)) {
+            $serviciosArray[] = $row['producto_nombre'];
+        }
+
+        // Llenar arreglo de repuestos pendientes
+        while ($row = mysqli_fetch_assoc($resultRepuestosPendientes)) {
+            $repuestosArray[] = $row['producto_nombre'];
+        }
+
+        $listaServicios = !empty($serviciosArray)
+    ? '<ul style="list-style-type: none; padding: 0; margin: 10px 0 0 0;">'
+        . implode('', array_map(fn($item) => '<li style="margin: 4px 0; color:#007b8f;">• '.$item.'</li>', $serviciosArray))
+      . '</ul>'
+    : '<p style="color:gray; margin:10px 0 0 0;">Ningún servicio pendiente</p>';
+
+$listaRepuestos = !empty($repuestosArray)
+    ? '<ul style="list-style-type: none; padding: 0; margin: 10px 0 0 0;">'
+        . implode('', array_map(fn($item) => '<li style="margin: 4px 0; color:#007b8f;">• '.$item.'</li>', $repuestosArray))
+      . '</ul>'
+    : '<p style="color:gray; margin:10px 0 0 0;">Ningún repuesto pendiente</p>';
+
+
+
+        if(!empty($serviciosArray))
         {
-            echo '<div class="card-body p-2">';
-            echo '<span style="font-size:20px; color:red; font-weight:bold;">Actividades pendientes de Autorización: '.$serviciosPendientesValor.'</span>';
-            echo '</div>';
+          echo '
+          <div class="card-body p-3" 
+              style="background: linear-gradient(135deg, #f9f9f9, #e0e0e0); 
+                    border-radius: 12px; 
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+              <span style="font-size: 22px; color: #333; font-weight: 600;">
+                  Detalle de Actividades pendientes de Autorización:
+              </span>
+              '.$listaServicios.'
+          </div></br>';
         }
 
-        if($repuestosPendientesValor>0){
+        if(!empty($repuestosArray)){
 
-           echo '<div class="card-body p-2">';
-            echo '<span style="font-size:20px; color:red; font-weight:bold;">Repuestos pendientes de Recibir: '.$repuestosPendientesValor.'</span>';
-           echo '</div>';
+            echo '
+            <div class="card-body p-3" 
+                style="background: linear-gradient(135deg, #f9f9f9, #e0e0e0); 
+                      border-radius: 12px; 
+                      box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+                <span style="font-size: 22px; color: #333; font-weight: 600;">
+                    Repuestos pendientes de Recibir:
+                </span>
+                '.$listaRepuestos.'
+            </div>';
         }
 
-        if($serviciosPendientesValor>0 or $repuestosPendientesValor>0)
+        if(!empty($serviciosArray) or !empty($repuestosArray))
         {
           exit;
         }
-
-
-
-
 
         $result = sql_select("SELECT id_estado
           FROM servicio
@@ -1315,7 +1357,10 @@ if (!es_nulo($id_estado)){
 
 
       <div class="card mb-3">
-        <div class="card-header  bg-secondary text-white ">
+        <div class="card-header  bg-secondary text-white " style="background: linear-gradient(135deg, #6c757d, #495057);
+            font-weight: 600; 
+            letter-spacing: 0.5px;
+            border-radius: 8px 8px 0 0;">
             Detalle Actividades            
             <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Compra Realizada','servicio_mant_repuesto.php?a=comprea&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Compra Realizada</a>
             <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Solicitud de Compra','servicio_mant_repuesto.php?a=solcomp&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Solicitud Compra</a>
@@ -1383,7 +1428,10 @@ if (!es_nulo($id_estado)){
 
 
       <div class="card mb-3">
-        <div class="card-header  bg-secondary text-white ">
+        <div class="card-header  bg-secondary text-white " style="background: linear-gradient(135deg, #6c757d, #495057);
+            font-weight: 600; 
+            letter-spacing: 0.5px;
+            border-radius: 8px 8px 0 0;">
            Repuestos 
   
            <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Devolver Repuesto','servicio_mant_repuesto.php?a=dev&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-minus"></i> Devolver</a>
