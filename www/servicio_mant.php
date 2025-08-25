@@ -250,6 +250,7 @@ $listaRepuestos = !empty($repuestosArray)
     : '<p style="color:gray; margin:10px 0 0 0;">Ningún repuesto pendiente</p>';
 
 
+    
 
         if(!empty($serviciosArray))
         {
