@@ -110,8 +110,8 @@ function  cargar_detalle_dlg($cid,$tipo, $id_estado_actual,$id_estado_actual2=0)
       $filtro=" and (servicio_detalle.producto_tipo=$tipo )";
     }
   
-    $servicios_result = sql_select("SELECT * FROM servicio_detalle where id_servicio=$cid and id_usuario=$id_usuario  $filtro and $sql_estado order by id ");
-  
+    //$servicios_result = sql_select("SELECT * FROM servicio_detalle where id_servicio=$cid and id_usuario=$id_usuario  $filtro and $sql_estado order by id ");
+    $servicios_result = sql_select("SELECT * FROM servicio_detalle where id_servicio=$cid  $filtro and $sql_estado order by id ");
   
         if ($servicios_result->num_rows > 0) { 
           while ($detalle = $servicios_result -> fetch_assoc()) {
