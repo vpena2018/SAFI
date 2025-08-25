@@ -208,8 +208,8 @@ if ($accion=="ec") {
         if ($valor=="22" and !tiene_permiso(61)) { 	echo '<div class="card-body">';   echo'No tiene privilegios para accesar esta función';   echo '</div>';  exit;  }
         if ($valor=="7" and !tiene_permiso(77)) { 	echo '<div class="card-body">';   echo'No tiene privilegios para accesar esta función';   echo '</div>';  exit;  }
         
-        $serviciosPendientes="SELECT producto_nombre  FROM servicio_detalle WHERE id_servicio=82 AND producto_tipo=3 AND estado!=2;";
-        $RepuestosPendientes="SELECT producto_nombre  FROM servicio_detalle WHERE id_servicio=82 AND producto_tipo=2 and estado!=3;";
+        $serviciosPendientes="SELECT producto_nombre  FROM servicio_detalle WHERE id_servicio=$sid AND producto_tipo=3 AND estado!=2;";
+        $RepuestosPendientes="SELECT producto_nombre  FROM servicio_detalle WHERE id_servicio=$sid AND producto_tipo=2 and estado!=3;";
 
         // Inicializar arreglos
         $serviciosArray = [];
