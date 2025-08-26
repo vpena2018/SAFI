@@ -42,7 +42,7 @@ if ($accion=="1") {
 
     $datos="";
     $result = sql_select("SELECT ventas.id, ventas.fecha, ventas.numero 
-    ,venta_estado.nombre AS elestado
+    ,ventas_estado.nombre AS elestado
     ,estado1.nombre AS elestado1
     ,estado2.nombre AS elestado2
     ,estado3.nombre AS elestado3
