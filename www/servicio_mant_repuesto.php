@@ -152,6 +152,10 @@ function  cargar_detalle_dlg($accion,$cid,$tipo, $id_estado_actual,$id_estado_ac
     $salidatxt.='<td>'.$data_desc.'</td> ';
     $salidatxt.='<td>'.$cantidad.'</td>';	
     $salidatxt.='<td>'.$nota.'</td>';	
+
+    
+
+
     $salidatxt.='<td>'.get_servicio_detalle_estado($estado).'</td>';	
     // $salidatxt.='<td>'.formato_numero($data_pv,2).'</td> ';
     // $salidatxt.='<td>'.formato_numero($data_pc,2).'</td> ';
