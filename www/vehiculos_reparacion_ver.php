@@ -42,6 +42,7 @@ if ($accion=="1") {
 
     $datos="";
     $result = sql_select("SELECT ventas.id, ventas.fecha, ventas.numero 
+    ,venta_estado.nombre AS elestado
     ,estado1.nombre AS elestado1
     ,estado2.nombre AS elestado2
     ,estado3.nombre AS elestado3
@@ -49,14 +50,13 @@ if ($accion=="1") {
     ,producto.codigo_alterno AS codvehiculo
     ,usuario.nombre AS elusuario    
         FROM ventas
-        LEFT OUTER JOIN producto ON (ventas.id_producto=producto.id)        
+        LEFT OUTER JOIN producto ON (ventas.id_producto=producto.id)    
+        LEFT OUTER JOIN ventas_estado ON (ventas.id_estado=ventas_estado.id)    
         LEFT OUTER JOIN ventas_estado estado1 ON (ventas.id_estado_pintura=estado1.id)
         LEFT OUTER JOIN ventas_estado estado2 ON (ventas.id_estado_interior=estado2.id)
         LEFT OUTER JOIN ventas_estado estado3 ON (ventas.id_estado_mecanica=estado3.id)
-        LEFT OUTER JOIN usuario ON (ventas.id_usuario=usuario.id)
-        
-    where 1=1
-  
+        LEFT OUTER JOIN usuario ON (ventas.id_usuario=usuario.id)        
+    where 1=1  
     $filtros
     order by ventas.fecha desc, ventas.id desc
      ");//limit $offset,".app_reg_por_pag
@@ -69,7 +69,8 @@ if ($accion=="1") {
                 <tr>
                     <th>Numero</th>
                     <th>Fecha</th>
-                    <th>Vehiculo</th>                    
+                    <th>Vehiculo</th>   
+                    <th>Estado</th>                                        
                     <th>Pintura</th>
                     <th>Interior</th>
                     <th>Mecanica</th>
@@ -86,6 +87,7 @@ if ($accion=="1") {
                 <td><a  href="#" onclick="abrir_ventas(\''.$row["id"].'\'); return false;" class="btn btn-sm btn-secondary">'.$row["numero"].'</a></td>
                 <td>'.formato_fecha_de_mysql($row["fecha"]).'</td>
                 <td>'.$row["codvehiculo"]. ' ' .$row["vehiculo"].'</td>
+                <td>'.$row["elestado"].'</td>
                 <td>'.$row["elestado1"].'</td>
                 <td>'.$row["elestado2"].'</td>
                 <td>'.$row["elestado3"].'</td>
