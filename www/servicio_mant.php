@@ -74,7 +74,7 @@ function agregar_servicio_detalle($vlin,$data_pv,$data_pc,$data_id,$data_alt,$da
   if (empty($nota)) {
     $salidatxt.='<td>sin nota</td>';	
 }else{
-    $salidatxt .= '<td><a href="#" onclick="popupWeb(\'Notass\', \'' . $nota . '\'); return false;">Ver nota</a></td>';
+    $salidatxt .= '<td><a href="#" onclick="popupWeb(\'Notas\', \'' . $nota . '\'); return false;">Ver nota</a></td>';
 }
 
 
