@@ -111,7 +111,7 @@ function  cargar_detalle_dlg($accion,$cid,$tipo, $id_estado_actual,$id_estado_ac
       $filtro=" and (servicio_detalle.producto_tipo=$tipo )";
     }
 
-    if($accion=="atender")
+    if($accion=="atender" || $accion=="realiza")
     {
       $servicios_result = sql_select("SELECT * FROM servicio_detalle where id_servicio=$cid and id_usuario=$id_usuario  $filtro and $sql_estado order by id ");
     }else{
