@@ -892,7 +892,7 @@ if ($accion =="aut" or $accion =="rec" or $accion =="norec" or $accion =="dev" o
 
   <div class="row">
           <div class="col">
-          <input type="text" id="notaFinal" maxlength="254" name="notaFinalInput" class="form-control mb-2" placeholder="Ingrese nota de prueba de carretera" style="display:none;">
+          <input type="text" id="notaFinal" maxlength="254" name="notaFinalInput" class="form-control mb-2" placeholder="Ingrese nota final de prueba de carretera" style="display:none;">
           <div id="servicio_botones_agregar_guardar3" class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top  ">
           
              <a href="#" onclick="procesar_servicio_estado('servicio_mant_repuesto.php?a=<?php echo $accion?>&g=1','formest_serv',<?php echo $tipo; ?>,'<?php echo$accion; ?>'); return false;" class="btn btn-primary mr-2 mb-2 xfrm" ><i class="fa fa-check "></i> <?php echo $botontxt?></a> 
@@ -919,7 +919,6 @@ var inputValor='';
   }); 
 
 
-
 if (values === undefined || values.length == 0) {
   mymodal('error',"Error","Debe seleccionar al menos un registro");
 } else {
@@ -930,7 +929,7 @@ if (values === undefined || values.length == 0) {
     if (alts.includes(buscarAlt)) {
         inputValor = $('#notaFinal').val().trim(); // .trim() elimina espacios al inicio/final
         if (inputValor == '') {
-            mymodal('warning',"Error","Por favor ingrese nota de prueba de carretera antes de continuar");
+            mymodal('warning',"Error","Por favor ingrese nota final de prueba de carretera antes de continuar");
             $('#notaFinal').focus();
             return false;
         }
