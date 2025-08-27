@@ -185,6 +185,20 @@ function popupWeb(titulo, contenidoHtml) {
     $('#ModalWindow2').modal('show');
 }
 
+function MostrarNotafinal(checkbox,accion) {
+	debugger;
+
+	if(accion=='realiza' && checkbox.alt=='ATM-01044')
+	{
+		if (checkbox.checked) {
+			$('#notaFinal').show();
+		} else {
+			$('#notaFinal').val('');
+			$('#notaFinal').hide(); 
+		}
+	}
+}
+
 
 
 

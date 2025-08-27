@@ -124,7 +124,7 @@ function  cargar_detalle_dlg($accion,$cid,$tipo, $id_estado_actual,$id_estado_ac
         if ($servicios_result->num_rows > 0) { 
           while ($detalle = $servicios_result -> fetch_assoc()) {
   
-            echo agregar_servicio_detalle_dlg($lin,$detalle["precio_venta"],$detalle["precio_costo"],$detalle["id_producto"],$detalle["producto_codigoalterno"],$detalle["producto_nombre"],$detalle["id"],$detalle["cantidad"],$detalle["producto_nota"],$detalle["estado"]);
+            echo agregar_servicio_detalle_dlg($lin,$detalle["precio_venta"],$detalle["precio_costo"],$detalle["id_producto"],$detalle["producto_codigoalterno"],$detalle["producto_nombre"],$detalle["id"],$detalle["cantidad"],$detalle["producto_nota"],$detalle["estado"],$accion);
                   
             $lin++;
           
@@ -134,14 +134,14 @@ function  cargar_detalle_dlg($accion,$cid,$tipo, $id_estado_actual,$id_estado_ac
     } 
   
   
-  function agregar_servicio_detalle_dlg($vlin,$data_pv,$data_pc,$data_id,$data_alt,$data_desc,$det_id,$cantidad,$nota,$estado) {
+  function agregar_servicio_detalle_dlg($vlin,$data_pv,$data_pc,$data_id,$data_alt,$data_desc,$det_id,$cantidad,$nota,$estado,$accion=""){
     $salidatxt="";
     $devueltoclass="";
     if ($estado==4) {$devueltoclass="texto-borrado";}
   
     $salidatxt.='<tr id="vdetli_'.$vlin.'" class="'.$devueltoclass.'"  data-cod="'.$data_id.'"  data-detid="'.$det_id.'" data-acc="">';
     // $salidatxt.='<li id="vdetli_'+vlin+'" class="list-group-item list-group-item-action d-sm-flex justify-content-between align-items-center" data-pv="'+data.pv+'" data-pc="'+data.pc+'" data-cod="'+data.id+'">';
-    $salidatxt.='<td> <input class="serv_chk_dlg" type="checkbox" value="'.$det_id.'" name="det_id[]"></td> ';
+    $salidatxt.='<td> <input class="serv_chk_dlg" alt="'.$data_alt.'" type="checkbox" value="'.$det_id.'" name="det_id[]" onclick="MostrarNotafinal(this, \''.$accion.'\')"></td>';
     
    $salidatxt.='<td><span class="badge badge-secondary">'.$data_alt.'</span>';
    // $salidatxt.='<input name="det_codigo[]"  value="'.$data_id.'"  type="hidden"  />'; 
@@ -283,6 +283,7 @@ if ($accion =="agr_g") {// guardar servicio o repuesto
         // ##### fin validar #####################
 
         $i=0;
+        $pruebasCarretera=0;
         foreach( $_REQUEST['det_codigo'] as $det_codigo ) {
 
           unset($tmpresult,$producto,$det_id,$codproducto,$tipoproducto,$cantproducto,$costoproducto,$precioproducto, $totalproducto);
@@ -333,6 +334,13 @@ if ($accion =="agr_g") {// guardar servicio o repuesto
          
                 $tmpsql.=",producto_tipo=".GetSQLValue($producto['tipo'],"int");
                 $tmpsql.=",producto_codigoalterno=".GetSQLValue($producto['codigo_alterno'],"text");
+
+                if ($producto['codigo_alterno'] === 'ATM-01044') {
+                    $pruebasCarretera++;
+                }
+
+
+
                 $tmpsql.=",producto_nombre=".GetSQLValue($producto['nombre'],"text");                                
         
                 array_push($sqldetalle, $tmpsql.$tmpsql2);
@@ -357,21 +365,57 @@ if ($accion =="agr_g") {// guardar servicio o repuesto
         }
     }
 
+
     $hayerrores=false;
-    foreach( $sqldetalle as $sqldet ) {
-        $result=sql_insert($sqldet);
-        if ($result==false){ $hayerrores=true;}
-        }	
+    $mensajeError='Se produjeron Errores al Guardar';
+    $pcode=1;//0 error, 1 ok
 
-          //  historial
-          sql_insert("INSERT INTO servicio_historial_estado
-          (id_servicio,  id_usuario,  nombre, fecha, observaciones)
-          VALUES ( $cid,  ".$_SESSION['usuario_id'].", 'Solicitud de Repuestos/servicios', NOW(), '')");
-  
-         
-        //enviar correo
-        //DESHABILITADO 4JULIO2022***  require_once ('correo_servicio_repuesto_solicitud.php');
+    /*verificamos pruebas de carretera existentes*/
+          $sql = "SELECT COUNT(*) AS totalPruebasCarretera 
+        FROM servicio_detalle 
+        WHERE id_servicio = $cid 
+          AND producto_codigoalterno = 'ATM-01044' 
+          AND (estado <= 8)";
 
+        $resultPruebasCarrtera = sql_select($sql);
+        $row = mysqli_fetch_assoc($resultPruebasCarrtera);
+
+        if($row['totalPruebasCarretera']>=1 && $pruebasCarretera>=1){
+
+            $hayerrores = true;
+            $pcode=0;
+            $mensajeError = "Existe una Prueba de carretera no realizada";
+
+        }else if($pruebasCarretera>1){
+
+            $hayerrores = true;
+            $pcode=0;
+            $mensajeError = "Solo se permite una Prueba de carretera";
+
+        }
+
+
+        if(!$hayerrores)
+        {
+          foreach( $sqldetalle as $sqldet ) {
+              $test=$pruebasCarretera;
+
+              $result=sql_insert($sqldet);
+              if ($result==false){ $hayerrores=true;}
+
+              }	
+
+                //  historial
+                sql_insert("INSERT INTO servicio_historial_estado
+                (id_servicio,  id_usuario,  nombre, fecha, observaciones)
+                VALUES ( $cid,  ".$_SESSION['usuario_id'].", 'Solicitud de Repuestos/servicios', NOW(), '')");
+        
+              
+              //enviar correo
+              //DESHABILITADO 4JULIO2022***  require_once ('correo_servicio_repuesto_solicitud.php');
+
+
+        }
 
 
     if ($hayerrores==false){
@@ -379,8 +423,8 @@ if ($accion =="agr_g") {// guardar servicio o repuesto
           $stud_arr[0]["pmsg"] ="Guardado";
           $stud_arr[0]["pcid"] = 1;
       } else {
-        $stud_arr[0]["pcode"] = 1;
-        $stud_arr[0]["pmsg"] ='Se produjeron Errores al Guardar';
+        $stud_arr[0]["pcode"] = $pcode;
+        $stud_arr[0]["pmsg"] =$mensajeError;
         $stud_arr[0]["pcid"] = 0;
       }
 
@@ -458,7 +502,6 @@ echo '<div id="agrrepuestos" class=" ">
  var vlin=1;
     function servicio_agregar_solicitud(tipo){
         var continuar=true;
-    
     
     
             if ($('#servicio_agr_servicio').val() == "" || $('#servicio_agr_servicio').val() == null){
@@ -707,6 +750,9 @@ if ($accion =="aut" or $accion =="rec" or $accion =="norec" or $accion =="dev" o
     
         $sql_detalle="";
         $sql_or="";
+
+        $sqlnotafinal="";
+        $sqlcodigoPruebaCarretera="";
     
         if (isset($_REQUEST['idet'])) {
             foreach ($_REQUEST['idet'] as $key => $value) {          
@@ -714,6 +760,11 @@ if ($accion =="aut" or $accion =="rec" or $accion =="norec" or $accion =="dev" o
               $sql_or=" or ";
             } 
          }
+
+        if (!empty($_REQUEST['notafinal']) && !empty($_REQUEST['codigonotafinal'])) {
+            $sqlnotafinal = $_REQUEST['notafinal'];
+            $sqlcodigoPruebaCarretera = $_REQUEST['codigonotafinal'];
+        }
 
          $sql_inventario="";
          //Salida Inventario
@@ -726,6 +777,11 @@ if ($accion =="aut" or $accion =="rec" or $accion =="norec" or $accion =="dev" o
          // Entrada Inventario
          if ($accion =="dev" and $tipo==2 ) {
             $sql_inventario=", SAP_tipo=59 ";
+         }
+
+         if($sqlnotafinal<>"" && $sqlcodigoPruebaCarretera=="ATM-01044") {
+            $tmpsql="update servicio_detalle set producto_nota='$sqlnotafinal'   WHERE 1=1  $sql_estado and id_servicio=$cid and producto_codigoalterno='$sqlcodigoPruebaCarretera'";
+            $result = sql_update($tmpsql);
          }
          
          $tmpsql="update servicio_detalle set estado=$id_estado_nuevo  $sql_inventario $sql_atender  WHERE ($sql_detalle)  $sql_estado and id_servicio=$cid ";
@@ -808,7 +864,7 @@ if ($accion =="aut" or $accion =="rec" or $accion =="norec" or $accion =="dev" o
       <table id="detalleul_servicio_dlg" class="table table-striped table-hover" style="width:100%">
         <thead>
           <tr>
-           <th><input type="checkbox"  onchange="servicio_marcar_todos(this,'detalleul_servicio_dlg'); "  ></th>
+           <th><input type="checkbox"  onchange="servicio_marcar_todos(this,'detalleul_servicio_dlg','<?= $accion ?>'); "  ></th>
             <th>Codigo</th>
             <th>Descripción</th>
             <th>Cantidad</th>
@@ -836,9 +892,10 @@ if ($accion =="aut" or $accion =="rec" or $accion =="norec" or $accion =="dev" o
 
   <div class="row">
           <div class="col">
+          <input type="text" id="notaFinal" maxlength="254" name="notaFinalInput" class="form-control mb-2" placeholder="Ingrese nota de prueba de carretera" style="display:none;">
           <div id="servicio_botones_agregar_guardar3" class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top  ">
           
-             <a href="#" onclick="procesar_servicio_estado('servicio_mant_repuesto.php?a=<?php echo $accion?>&g=1','formest_serv',<?php echo $tipo; ?>); return false;" class="btn btn-primary mr-2 mb-2 xfrm" ><i class="fa fa-check "></i> <?php echo $botontxt?></a> 
+             <a href="#" onclick="procesar_servicio_estado('servicio_mant_repuesto.php?a=<?php echo $accion?>&g=1','formest_serv',<?php echo $tipo; ?>,'<?php echo$accion; ?>'); return false;" class="btn btn-primary mr-2 mb-2 xfrm" ><i class="fa fa-check "></i> <?php echo $botontxt?></a> 
           
 
           </div>
@@ -848,25 +905,49 @@ if ($accion =="aut" or $accion =="rec" or $accion =="norec" or $accion =="dev" o
 
         <script>
             
-function procesar_servicio_estado(url,objeto,tipo){
+function procesar_servicio_estado(url,objeto,tipo,accion){
 
 var values=[];
+var alts = [];
+var inputValor='';
 //	$('.'+objeto+' input[type="checkbox"]').each(function() {
   $('.serv_chk_dlg').each(function() {
     if ($(this).is(":checked")) {
-      values.push(parseFloat($(this).val()));     
+      values.push(parseFloat($(this).val()));   
+      alts.push($(this).attr('alt'));  
     }
   }); 
+
+
 
 if (values === undefined || values.length == 0) {
   mymodal('error',"Error","Debe seleccionar al menos un registro");
 } else {
 
+  if(accion=="realiza")
+  {
+    var buscarAlt = "ATM-01044";//prueba de carretera
+    if (alts.includes(buscarAlt)) {
+        inputValor = $('#notaFinal').val().trim(); // .trim() elimina espacios al inicio/final
+        if (inputValor == '') {
+            mymodal('warning',"Error","Por favor ingrese nota de prueba de carretera antes de continuar");
+            $('#notaFinal').focus();
+            return false;
+        }
+
+        if (inputValor.length < 5 || inputValor.length > 255) {
+          mymodal('warning',"Error","El texto debe tener minimo 5 o maximo 255 caracteres");
+          $('#miInput').focus(); 
+          return false;
+      }
+    }
+}
 
   //$("#"+forma+" .xfrm").addClass("disabled");		
   cargando(true); 
   
-var datos={'idet':values};//$("#"+forma).serialize();
+var datos={'idet':values,'notafinal':inputValor,'codigonotafinal':buscarAlt};//$("#"+forma).serialize();
+
 
 var fullurl=url+'&cid='+$('#id').val()+'&tipo='+tipo; //+'&pid='+$('#id').val()
    $.post( fullurl,datos, function(json) {
@@ -895,14 +976,27 @@ var fullurl=url+'&cid='+$('#id').val()+'&tipo='+tipo; //+'&pid='+$('#id').val()
                
           
           }
-      } else {cargando(false);  mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar");}
+      } else {cargando(false);  mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar1");}
         
   })
     .done(function() {
      
     })
     .fail(function(xhr, status, error) {
-             cargando(false); mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar");
+             cargando(false); 
+             
+                 let mensajeError = '';
+    
+              if (xhr.responseText) {
+                  mensajeError = xhr.responseText; // texto devuelto por el servidor
+              } else if (error) {
+                  mensajeError = error; // error genérico
+              } else {
+                  mensajeError = 'Error desconocido';
+              }
+             
+             //mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar2");
+             mymodal('error',"Error",mensajeError);
     })
     .always(function() {
      

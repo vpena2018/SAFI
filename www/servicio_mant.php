@@ -1910,8 +1910,36 @@ function procesar_modificar_cmp(url,forma,adicional){
 
 
 
-function servicio_marcar_todos(objeto,tabla){
+function servicio_marcar_todos(objeto,tabla,accion){
+  
   $("#"+tabla+" input[type='checkbox']").prop('checked',  $(objeto).prop('checked'));
+
+      // Código a buscar
+    const codigoBuscado = "ATM-01044";
+    let encontrado = false;
+
+        $("#" + tabla + " tbody tr").each(function () {
+        let codigoCelda = $(this).find("td:eq(1)").text().trim(); // Columna 1 = segunda celda
+        if (codigoCelda === codigoBuscado) {
+            encontrado = true;
+            return false; // Rompe el loop
+        }
+    });
+
+        // Disparar acción según el resultado
+    if (encontrado && accion === 'realiza') {
+      if (objeto.checked) {
+        $('#notaFinal').show();
+
+      }else{
+        $('#notaFinal').val('');
+        $('#notaFinal').hide(); 
+      }
+    } else {
+        $('#notaFinal').val('');
+        $('#notaFinal').hide();
+    }
+
 	// $("#"+tabla+" input[type='checkbox']").checkboxradio();
 	// $("#"+tabla+" input[type='checkbox']").checkboxradio("refresh");
 
