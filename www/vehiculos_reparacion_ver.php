@@ -5,7 +5,7 @@ pagina_permiso(176);
 $accion ="";
 $tipo ="0";
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } 
-if (isset($_REQUEST['estado'])) { $id_estado = sanear_int($_REQUEST['estado']); } else {$id_estado="";}
+/*if (isset($_REQUEST['estado'])) { $id_estado = sanear_int($_REQUEST['estado']); } else {$id_estado="";}*/
 if (isset($_REQUEST['tipo'])) { $tipo = $_REQUEST['tipo']; } 
 
 if ($accion=="1") {
@@ -27,6 +27,8 @@ if ($accion=="1") {
     if (isset($_REQUEST['tienda'])) { $tmpval=sanear_int($_REQUEST['tienda']); if (!es_nulo($tmpval)){$filtros.=" and ventas.id_tienda = ".GetSQLValue($tmpval,'int') ;}   }
     if (isset($_REQUEST['interior'])) { $tmpval=sanear_int($_REQUEST['interior']); if (!es_nulo($tmpval)){$filtros.=" and ventas.id_estado_interior = ".GetSQLValue($tmpval,'int') ;}   }
     if (isset($_REQUEST['mecanica'])) { $tmpval=sanear_int($_REQUEST['mecanica']); if (!es_nulo($tmpval)){$filtros.=" and ventas.id_estado_mecanica = ".GetSQLValue($tmpval,'int') ;}   }      
+    if (isset($_REQUEST['estado'])) { $tmpval = sanear_int($_REQUEST['estado']); if (!es_nulo($tmpval)){$filtros.=" and ventas.id_estado = ".GetSQLValue($tmpval,'int') ;}   }   
+
     if ($tipo!="0"){
        $tmpval=sanear_int($_REQUEST['tipo']); if (!es_nulo($tmpval)){$filtros.=" and ventas.tipo_ventas_reparacion = ".GetSQLValue($tmpval,'int') ;}        
     }
@@ -165,15 +167,17 @@ if ($accion=="1") {
             ?>  
         </div>
         <div class="col-sm">
-              <?php 
-             echo campo("tipo","Estado del Vehiculo",'select',valores_combobox_texto('<option value="0">Todos</option><option value="1">Reparacion</option><option value="2">Venta</option>','1'),' ',' onkeypress="buscarfiltro(event,\'btn-filtro\');"');
-            ?>  
+             <?php 
+               echo campo("tipo","Estado del Vehiculo",'select',valores_combobox_texto('<option value="0">Todos</option><option value="1">Reparacion</option><option value="2">Venta</option>','1'),' ',' onkeypress="buscarfiltro(event,\'btn-filtro\');"');
+             ?>  
         </div>
+
         <div class="col-sm">
-              <?php 
-             echo campo("placa","Placa",'text','',' ',' onkeypress="buscarfiltro(event,\'btn-filtro\');"');
-            ?>  
-        </div>
+             <?php 
+               echo campo("estado","Estado de Venta",'select',valores_combobox_db('ventas_estado','','nombre',' where ventas_reparacion=2 ','','Todos'),' ',' onkeypress="buscarfiltro(event,\'btn-filtro\');"');
+             ?>       
+       </div>
+        
     </div>
 
     <div class="row"> 
