@@ -111,7 +111,8 @@ if ($accion=="g") {
         if (isset($_REQUEST["id_estado_interior"])) { $sqlcampos.= " , id_estado_interior =".GetSQLValue($_REQUEST["id_estado_interior"],"int"); } 
         if (isset($_REQUEST["id_estado_mecanica"])) { $sqlcampos.= " , id_estado_mecanica =".GetSQLValue($_REQUEST["id_estado_mecanica"],"int"); } 
         if (isset($_REQUEST["observaciones_reparacion"])) { $sqlcampos.= " , observaciones_reparacion =".GetSQLValue($_REQUEST["observaciones_reparacion"],"text"); } 
-        if (isset($_REQUEST["fecha_asignacion"])) { $sqlcampos.= " , fecha_asignacion =".GetSQLValue($_REQUEST["fecha_asignacion"],"date"); }                 
+        if (isset($_REQUEST["fecha_asignacion"])) { $sqlcampos.= " , fecha_asignacion =".GetSQLValue($_REQUEST["fecha_asignacion"],"date"); }      
+        if (isset($_REQUEST["fecha_promesa"])) { $sqlcampos.= " , fecha_promesa =".GetSQLValue($_REQUEST["fecha_promesa"],"date"); }                            
         if (isset($_REQUEST["foto"])) { $sqlcampos.= " , foto =".GetSQLValue($_REQUEST["foto"],"text"); } 
          
         $estadocompletar="";
@@ -162,6 +163,12 @@ if ($accion=="g") {
              if ($observaciones!=trim($_REQUEST['observaciones_reparacion'])){   
                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",99,'Modificacion de Observaciones', NOW(),'".$_REQUEST['observaciones_reparacion']."')"); 
+             }
+
+             $fecha_promesa=trim(get_dato_sql("ventas","fecha_promesa"," where id=".$cid));
+             if ($fecha_promesa!=trim($_REQUEST['fecha_promesa'])){   
+                sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
+                VALUES ( $cid,  ".$_SESSION['usuario_id'].",99,'Modificacion de Fecha de Promesa', NOW(),'".$_REQUEST['fecha_promesa']."')"); 
              }
              
             $sql="update ventas set ".$sqlcampos." where id=".$cid." limit 1";
@@ -257,6 +264,7 @@ if ($accion=="g") {
     if (isset($row["id_inspeccion"])) {$id_inspeccion=$row["id_inspeccion"]; } else {$id_inspeccion= "";}
     if (isset($row["id_estado"])) {$id_estado=$row["id_estado"]; } else {$id_estado= "";}
     if (isset($row["fecha_asignacion"])) {$fecha_asignacion= $row["fecha_asignacion"]; } else {$fecha_asignacion= "";}
+    if (isset($row["fecha_promesa"])) {$fecha_promesa= $row["fecha_promesa"]; } else {$fecha_promesa= "";}
     if (isset($row["reproceso"])) {$reproceso=$row["reproceso"]; } else {$reproceso="";}
     if (isset($row["foto"])) {$foto=$row["foto"]; } else {$foto="";}
     
@@ -293,6 +301,9 @@ if ($accion=="g") {
     </div>    
     <div class="col-md">
         <?php echo campo("fecha_asignacion","Fecha de Asignacion",'date',$fecha_asignacion,' ',' required '.$disable_sec1); ?>
+    </div>
+    <div class="col-md">
+        <?php echo campo("fecha_promesa","Fecha de Promesa",'date',$fecha_promesa,' ',' required '.$disable_sec1); ?>
     </div>
     <div class="col-md">
        <?php echo campo("id_inspeccion","Numero",'hidden',$id_inspeccion,' ',' '); ?>          

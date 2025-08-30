@@ -220,8 +220,8 @@ if ($accion=="ec") {
         if ($valor=="22" and !tiene_permiso(61)) { 	echo '<div class="card-body">';   echo'No tiene privilegios para accesar esta función';   echo '</div>';  exit;  }
         if ($valor=="7" and !tiene_permiso(77)) { 	echo '<div class="card-body">';   echo'No tiene privilegios para accesar esta función';   echo '</div>';  exit;  }
         
-        $serviciosPendientes="SELECT producto_nombre  FROM servicio_detalle WHERE id_servicio=$sid AND producto_tipo=3 AND estado!=9;";
-        $RepuestosPendientes="SELECT producto_nombre  FROM servicio_detalle WHERE id_servicio=$sid AND producto_tipo=2 and estado!=3;";
+        $serviciosPendientes="SELECT producto_nombre  FROM servicio_detalle WHERE id_servicio=$sid AND producto_tipo=3 AND estado not in(9,7);";
+        $RepuestosPendientes="SELECT producto_nombre  FROM servicio_detalle WHERE id_servicio=$sid AND producto_tipo=2 and estado not in(3,4,5);";
 
         // Inicializar arreglos
         $serviciosArray = [];
@@ -855,8 +855,8 @@ if ($elcodigo<>"") {
                 if ($resultsms->num_rows > 0) {    
                   $rowsms = $resultsms -> fetch_assoc();    
                   
-                 
-                  $sms_mensaje="HERTZ Estimado cliente. Los trabajos realizados al vehículo ".$rowsms["codigo_alterno"]." han sido finalizados y se encuentra listo para la entrega, te esperamos en el taller para su retiro";          
+                  //$sms_mensaje="HERTZ Estimado cliente. Los trabajos realizados al vehículo ".$rowsms["codigo_alterno"]." han sido finalizados y se encuentra listo para la entrega, te esperamos en el taller para su retiro";          
+                  $sms_mensaje="HERTZ Estimado cliente el vehículo ".$rowsms["codigo_alterno"]." ya terminó los trabajos de taller. En este momento, el auto se encuentra en el área de lavado. En aproximadamente 40 minutos podrá pasar a recogerlo.";          
                   $sms_numero=trim($rowsms["cliente_contacto_telefono"]);
                   $sms_numero=str_replace('-','', $sms_numero);
                   $sms_numero=str_replace(' ','', $sms_numero);
