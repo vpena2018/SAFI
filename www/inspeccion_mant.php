@@ -222,6 +222,7 @@ if ($accion=="g") {
      $valida_fotos="";
      $ParoPorRepuesto=""; 
      $EstadoReparacion="";
+     $ListoParaVenta="";
       if (isset($_REQUEST["gg_est"])) { 
         $nuevo_estado=intval($_REQUEST["gg_est"]);        
         if (!es_nulo($nuevo_estado)) {   
@@ -245,7 +246,15 @@ if ($accion=="g") {
                     salida_json($stud_arr);
                     exit;            
                   }
-              }                
+              }       
+               //Valida si el vehiculo esta en reparacion     
+               $ListoParaVenta=get_dato_sql("ventas","COUNT(*)"," WHERE tipo_ventas_reparacion=1 and id_estado=99 and id_producto=".intval($_REQUEST['id_producto']));  
+               if (!es_nulo($ListoParaVenta)){
+                    $stud_arr[0]["pmsg"]=" El vehiculo esta en proceso de reparacion, consultar con ADCP";
+                    salida_json($stud_arr);
+                    exit;    
+               }
+                     
               if ($tipodoc==2){                
                  $ParoPorRepuesto=get_dato_sql("servicio","COUNT(*)"," WHERE id_estado=7 AND (estado_paro_por_repuesto='I' or estado_paro_por_repuesto=null)  AND id_producto=".intval($_REQUEST['id_producto']));                 
                  $Oservicio=get_dato_sql("servicio","COUNT(*)"," WHERE id_estado not in (20,22,7) AND id_producto=".intval($_REQUEST['id_producto']));                 

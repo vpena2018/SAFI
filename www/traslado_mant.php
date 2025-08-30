@@ -91,7 +91,8 @@ if ($accion=="g") {
 			}			
 		}
 
-		if (isset($_REQUEST['cp'])) {//completar											
+		if (isset($_REQUEST['cp'])) {//completar	
+			$verror.=validar("Razón del Traslado",$_REQUEST['id_tipo_traslado2'], "int", true);										
 			$verror.=validar("Kilometraje",$_REQUEST['kilometraje_entrada'], "int", true);
 			if (!isset($_REQUEST['combustible_entrada'])){$verror.='Debe ingresar el Combustible<br>';}			
 	        $ks = intval($_REQUEST['ks']);
@@ -492,7 +493,7 @@ $modificar_salida=$nuevoreg;
             <div class="col-md-6">       
                 <?php 
 				if ($nuevoreg==true) {
-					echo campo("id_tipo_traslado","Razón del Traslado",'select',valores_combobox_db('orden_traslado_tipo',$id_tipo_traslado,'nombre',' ','',''),' ','  required ','','');
+					echo campo("id_tipo_traslado","Razón del Traslado",'select',valores_combobox_db('orden_traslado_tipo','','nombre',' ','','...'),' ','  required ','','');
 				} else {
 					echo campo("id_tipo_traslado_lbl","Razón del Traslado",'labelb',$id_tipo_traslado_lbl,'',' '); 
 				}
@@ -503,7 +504,7 @@ $modificar_salida=$nuevoreg;
             <div class="col-md-6">       
                 <?php 
 				if ($nuevoreg==false && $id_estado==2) {
-					echo campo("id_tipo_traslado2","Razón del Traslado",'select',valores_combobox_db('orden_traslado_tipo',$id_tipo_traslado2,'nombre',' ','',''),' ','  required ','','');
+					echo campo("id_tipo_traslado2","Razón del Traslado",'select',valores_combobox_db('orden_traslado_tipo','','nombre',' ','','...'),' ','  required ','','');
 				} else {
 					echo campo("id_tipo_traslado_lbl2","Razón del Traslado",'labelb',$id_tipo_traslado_lbl2,'',' '); 
 				}
