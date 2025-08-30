@@ -71,7 +71,19 @@ function agregar_servicio_detalle($vlin,$data_pv,$data_pc,$data_id,$data_alt,$da
       $salidatxt.='<td align="center">'.$hora_atendido.'</td>';
   }
 
-  $salidatxt.='<td>'.$nota.'</td>';	
+  if (empty($nota)) {
+    $salidatxt.='<td>sin nota</td>';	
+}else{
+    $salidatxt .= '<td><a href="#" onclick="popupWeb(\'Notas\', \'' . $nota . '\'); return false;">Ver nota</a></td>';
+}
+
+
+
+
+
+
+
+
   $salidatxt.='<td>'.get_servicio_detalle_estado($estado).'</td>';
   
   if ($existencia!=null){
@@ -260,7 +272,7 @@ $listaRepuestos = !empty($repuestosArray)
                     border-radius: 12px; 
                     box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
               <span style="font-size: 22px; color: #333; font-weight: 600;">
-                  Detalle de Actividades pendientes de Autorización:
+                  Detalle de Actividades pendientes de Realizar:
               </span>
               '.$listaServicios.'
           </div></br>';
