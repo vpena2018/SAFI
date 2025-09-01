@@ -43,7 +43,7 @@ if ($accion=="1") {
   
 
     $datos="";
-    $result = sql_select("SELECT ventas.id, ventas.fecha, ventas.numero, ventas.fecha_promesa
+    $result = sql_select("SELECT ventas.id,ventas.foto, ventas.fecha, ventas.numero, ventas.fecha_promesa
     ,ventas_estado.nombre AS elestado
     ,estado1.nombre AS elestado1
     ,estado2.nombre AS elestado2
@@ -73,6 +73,7 @@ if ($accion=="1") {
                     <th>Fecha</th>
                     <th>Fecha de Promesa</th>
                     <th>Vehiculo</th>   
+                    <th>Adjunto</th>
                     <th>Estado</th>                                        
                     <th>Pintura</th>
                     <th>Interior</th>
@@ -91,6 +92,7 @@ if ($accion=="1") {
                 <td>'.formato_fecha_de_mysql($row["fecha"]).'</td>
                 <td>'.formato_fecha_de_mysql($row["fecha_promesa"]).'</td>
                 <td>'.$row["codvehiculo"]. ' ' .$row["vehiculo"].'</td>
+                <td><a href="#" onclick="mostrar_foto(\''.$row["foto"].'\'); return false;">Ver adjunto</a></td>
                 <td>'.$row["elestado"].'</td>
                 <td>'.$row["elestado1"].'</td>
                 <td>'.$row["elestado2"].'</td>
@@ -253,6 +255,12 @@ if ($accion=="1") {
             );
            
     }
+
+    function mostrar_foto(imagen) {
+    $('#ModalWindowTitle').html('');
+    $('#ModalWindowBody').html('<img class="img-fluid" src="uploa_d/'+imagen+'">'); 
+    $('#ModalWindow').modal('show');
+}
 
     
 
