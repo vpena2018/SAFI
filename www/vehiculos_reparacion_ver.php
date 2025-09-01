@@ -267,10 +267,19 @@ if ($accion=="1") {
            
     }
 
-    function mostrar_foto(imagen) {
+    /*function mostrar_foto(imagen) {
+        debugger;
     $('#ModalWindowTitle').html('');
     $('#ModalWindowBody').html('<img class="img-fluid" src="uploa_d/'+imagen+'">'); 
     $('#ModalWindow').modal('show');
+}*/
+
+function mostrar_foto(imagen) {
+  Swal.fire({
+  imageUrl: 'uploa_d/'+imagen,
+
+}); 
+
 }
 
     

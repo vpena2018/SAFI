@@ -441,7 +441,11 @@ if ($foto=='')
         $fext = substr($foto, -3);
                 if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {               
                     echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3 float-left" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
-                    echo '<a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].'); return false;" ><i class="fa fa-eraser"></i> Borrar Foto</a>';
+                    
+                    if (tiene_permiso(183))  {
+                        echo '<a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].'); return false;" ><i class="fa fa-eraser"></i> Borrar Foto</a>';
+                    }
+                    
                 } else {
                     echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
                 }
@@ -518,6 +522,9 @@ function mostrar_foto(imagen) {
 }); 
 
 }
+
+
+
 
 function thumb_agregar(archivo){
 if (archivo!='' && archivo!=undefined) {
