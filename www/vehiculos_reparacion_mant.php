@@ -216,6 +216,52 @@ if ($accion=="g") {
 } // fin guardar datos
 
 
+// borrar ARCHIVO o foto
+if ($accion =="d") {
+
+    $result=false;
+    $stud_arr[0]["pcode"] = 0;
+    $stud_arr[0]["pmsg"] ="ERROR DB101";
+
+
+
+    if (isset($_REQUEST['arch'])) { $arch = "and archivo=".GetSQLValue(urldecode($_REQUEST["arch"]),"text"); } else	{$arch ="" ;}
+
+    if (isset($_REQUEST['cod'])) { $cod = "and id=".GetSQLValue(urldecode($_REQUEST["cod"]),"text"); } else	{$cod ="" ;}
+
+    if (isset($_REQUEST['cod'])) { $cid =GetSQLValue(urldecode($_REQUEST["cod"]),"text"); } else	{$cid ="" ;}
+    
+
+    if ($cid<>'') {
+
+    borrar_foto_directorio($cid,"","","vehiculos_reparacion");
+
+    /*$result = sql_delete("DELETE FROM inspeccion_foto 
+                            WHERE id_inspeccion=$cid 
+                            $arch
+                            $cod
+                            LIMIT 1
+                            ");*/
+
+ } else {
+    $result==false;
+        $stud_arr[0]["pcode"] = 0;
+        $stud_arr[0]["pmsg"] ="Error al borrar el archivo";
+}
+
+    if ($result!=false){
+
+        $stud_arr[0]["pcode"] = 1;
+
+        $stud_arr[0]["pmsg"] ="Borrado";
+
+    }
+  salida_json($stud_arr);
+
+    exit;
+}
+
+
 
 
 ?>
@@ -382,24 +428,25 @@ if ($foto=='')
     echo '<div class="row"> <div class="col-md" id="archivofoto">';
     echo campo_upload("foto","Adjuntar comprobante de pago",'upload','', '  ','',4,8,'NO',false );
     echo '</div>';
-    echo '<div class="col-md"></div><div class="" id="insp_fotos_thumbs"></div></div>';
+    /*echo '<div class="col-md"></div><div class="" id="insp_fotos_thumbs"></div></div>';*/
 }
 ?>
 
-<div class="col-md">
-<div class="" id="insp_fotos_thumbs">
-  <?php
-  if ($foto<>'') {
-     $fext = substr($foto, -3);
-            if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {               
-                echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3 float-left" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
-            } else {
-                echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
-            }
-  }
-  ?>
-</div>
-</div>
+    <div class="col-md">
+    <div class="" id="insp_fotos_thumbs">
+    <?php
+    if ($foto<>'') {
+        $fext = substr($foto, -3);
+                if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {               
+                    echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3 float-left" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
+                    echo '<a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].'); return false;" ><i class="fa fa-eraser"></i> Borrar Foto</a>';
+                } else {
+                    echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
+                }
+    }
+    ?>
+    </div>
+    </div>
 </div>
 				
 	<div class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top ">
@@ -609,6 +656,55 @@ $("#"+campo).load(url, function(response, status, xhr) {
 });
   
 }
+
+
+
+function borrar_fotodb(codid) {
+  var datos = {
+    a: "d",
+    cid: $("#cid").val(),
+    pid: $("#pid").val(),
+    cod: codid
+  };
+
+  Swal.fire({
+    title: 'Borrar Foto',
+    text: 'Desea Borrar la Foto o Documento adjunto?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Si',
+    cancelButtonText: 'No'
+  }).then((result) => {
+    if (result.value) {
+
+
+$.post( 'vehiculos_reparacion_mant.php',datos, function(response) {
+
+                if (response.length > 0) {
+                    if (response[0].pcode == 0) {
+                        mytoast('error',response[0].pmsg,3000) ;   
+                    }
+
+                    if (response[0].pcode == 1) {
+                        $(".foto_br"+codid).hide();
+                        mytoast('success',response[0].pmsg,3000) ;
+
+                    }
+
+                } else {mytoast('error',response[0].pmsg,3000) ; }
+            })
+
+            .done(function() {	  })
+
+            .fail(function(xhr, status, error) {         mytoast('error',response[0].pmsg,3000) ; 	  })
+
+            .always(function() {	  });
+    }
+  });
+}
+
 
 
 </script>
