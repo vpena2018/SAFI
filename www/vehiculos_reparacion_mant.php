@@ -373,21 +373,26 @@ if ($accion=="g") {
      </div>
 </div>
 
-<div class="row">
-<div class="col-md" id="archivofoto">
-  <?php  
-    
-    if ($foto=='') {  echo campo_upload("foto","Adjuntar comprobante de pago",'upload','', '  ','',4,8,'NO',false ); }                   
-  ?>
 
-</div>
+
+<div class="row">
+<?php
+if ($foto=='')
+{
+    echo '<div class="row"> <div class="col-md" id="archivofoto">';
+    echo campo_upload("foto","Adjuntar comprobante de pago",'upload','', '  ','',4,8,'NO',false );
+    echo '</div>';
+    echo '<div class="col-md"></div><div class="" id="insp_fotos_thumbs"></div></div>';
+}
+?>
+
 <div class="col-md">
 <div class="" id="insp_fotos_thumbs">
   <?php
   if ($foto<>'') {
      $fext = substr($foto, -3);
             if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {               
-                echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
+                echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3 float-left" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
             } else {
                 echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
             }
