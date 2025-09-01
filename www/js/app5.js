@@ -186,7 +186,7 @@ function popupWeb(titulo, contenidoHtml) {
 }
 
 function MostrarNotafinal(checkbox,accion) {
-	debugger;
+
 
 	if(accion=='realiza' && checkbox.alt=='ATM-01044')
 	{
@@ -296,6 +296,12 @@ function cargando(mostrar){
 
 
 function procesar(url,forma,adicional){
+
+	let flagFormaVentas=false;
+	if(forma=='forma_ventas')
+	{
+		flagFormaVentas=true;
+	}
 	// var validator =$("#frmreclamo").validate({
 	// 	rules: {			
 	// 				descripcion: {
@@ -335,6 +341,12 @@ function procesar(url,forma,adicional){
 		  
 	})
 	  .done(function() {
+
+		if(flagFormaVentas==true)
+		{
+			procesar_tabla_datatable('tablaver','tabla','vehiculos_reparacion_ver.php?a=1','Ventas de Vehiculos')
+			$('#ModalWindow2').modal('hide');
+		}
 	   
 	  })
 	  .fail(function(xhr, status, error) {

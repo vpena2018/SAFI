@@ -1758,6 +1758,10 @@ function borrar_foto_directorio($cid,$cod,$arch, $tipo) {
            }else{
                 $filename = $row['archivo'];
            }
+
+           if($filename=="" or $filename==null) {
+               return;
+            }
            
             $path1 = 'uploa_d/' . $filename;
             $path2 = 'uploa_d/thumbnail/' . $filename;

@@ -55,7 +55,10 @@ if (!tiene_permiso(168)) {
             if ($result -> num_rows > 0) { 
                 $row = $result -> fetch_assoc(); 
                 if ($row['id_estado']==99) {
+
+                    borrar_foto_directorio($cid,"","","vehiculos_reparacion");
                     sql_delete("DELETE FROM ventas where tipo_ventas_reparacion=1 and id=$cid limit 1");
+                    
                     $stud_arr[0]["pcode"] = 1;
                     $stud_arr[0]["pmsg"] ="Anulada";
                 } else {
@@ -236,12 +239,10 @@ if ($accion =="d") {
 
     borrar_foto_directorio($cid,"","","vehiculos_reparacion");
 
-    /*$result = sql_delete("DELETE FROM inspeccion_foto 
-                            WHERE id_inspeccion=$cid 
-                            $arch
-                            $cod
-                            LIMIT 1
-                            ");*/
+    $sql="UPDATE ventas SET foto=null where id=".$cid." limit 1";
+    $result = sql_update($sql);
+
+
 
  } else {
     $result==false;
@@ -313,8 +314,9 @@ if ($accion =="d") {
     if (isset($row["fecha_promesa"])) {$fecha_promesa= $row["fecha_promesa"]; } else {$fecha_promesa= "";}
     if (isset($row["reproceso"])) {$reproceso=$row["reproceso"]; } else {$reproceso="";}
     if (isset($row["foto"])) {$foto=$row["foto"]; } else {$foto="";}
+    if (isset($row["observaciones_reparacion"])) {$observaciones_reparacion=$row["observaciones_reparacion"]; } else {$observaciones_reparacion="";}
     
-    $observaciones_reparacion= "";
+    //$observaciones_reparacion= "";
     if ($id_estado=='' || $id_estado==99){
        $disable_sec1=' ';  
        $disable_sec2=' ';  
@@ -425,7 +427,7 @@ if ($accion =="d") {
 <?php
 if ($foto=='')
 {
-    echo '<div class="row"> <div class="col-md" id="archivofoto">';
+    echo '<div class="col-md" id="archivofoto">';
     echo campo_upload("foto","Adjuntar comprobante de pago",'upload','', '  ','',4,8,'NO',false );
     echo '</div>';
     /*echo '<div class="col-md"></div><div class="" id="insp_fotos_thumbs"></div></div>';*/
@@ -438,7 +440,7 @@ if ($foto=='')
     if ($foto<>'') {
         $fext = substr($foto, -3);
                 if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {               
-                    echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3 float-left" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
+                    echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3 float-left" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
                     echo '<a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].'); return false;" ><i class="fa fa-eraser"></i> Borrar Foto</a>';
                 } else {
                     echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
@@ -688,15 +690,19 @@ $.post( 'vehiculos_reparacion_mant.php',datos, function(response) {
                     }
 
                     if (response[0].pcode == 1) {
-                        $(".foto_br"+codid).hide();
+                        //$(".foto_br"+codid).hide();
+                        procesar_tabla_datatable('tablaver','tabla','vehiculos_reparacion_ver.php?a=1','Ventas de Vehiculos')
                         mytoast('success',response[0].pmsg,3000) ;
+                        abrir_ventas(codid);
 
                     }
 
                 } else {mytoast('error',response[0].pmsg,3000) ; }
             })
 
-            .done(function() {	  })
+            .done(function() {	  
+                
+            })
 
             .fail(function(xhr, status, error) {         mytoast('error',response[0].pmsg,3000) ; 	  })
 

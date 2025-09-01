@@ -87,12 +87,23 @@ if ($accion=="1") {
 
             if ($result -> num_rows>=app_reg_por_pag) {$haymas=1;  }
             while ($row = $result -> fetch_assoc()) {
+
+                $adjunto='<td>Sin adjunto</td>';
+
+                if($row["foto"]!=null)
+                    {
+                        $adjunto='<td><a href="#" onclick="mostrar_foto(\''.$row["foto"].'\'); return false;">Ver adjunto</a></td>';
+                    }
+
                 $datos.='<tr>
                 <td><a  href="#" onclick="abrir_ventas(\''.$row["id"].'\'); return false;" class="btn btn-sm btn-secondary">'.$row["numero"].'</a></td>
                 <td>'.formato_fecha_de_mysql($row["fecha"]).'</td>
                 <td>'.formato_fecha_de_mysql($row["fecha_promesa"]).'</td>
                 <td>'.$row["codvehiculo"]. ' ' .$row["vehiculo"].'</td>
-                <td><a href="#" onclick="mostrar_foto(\''.$row["foto"].'\'); return false;">Ver adjunto</a></td>
+                '.$adjunto.'
+
+
+
                 <td>'.$row["elestado"].'</td>
                 <td>'.$row["elestado1"].'</td>
                 <td>'.$row["elestado2"].'</td>
