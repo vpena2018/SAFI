@@ -1019,7 +1019,7 @@ function campo_combustible($nombre,$valor,$adicional=""){
 
 
 
-function campo_upload_varias_ventas($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solicitud="",$columna1=3,$columna2=9,$mostrar_upload="NO",$preview=false) 
+function campo_upload_foto_ventas($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solicitud="",$columna1=3,$columna2=9,$mostrar_upload="NO",$preview=false) 
 {
     $salida="";
    
@@ -1063,10 +1063,10 @@ function campo_upload_varias_ventas($nombre,$etiqueta,$tipo,$valor,$adicional,$i
         $salida.= '<div class="row"> 
                
                <div id="colbtn_'.$nombre.'" class="col-sm-4">
-               <span class="btn btn-primary fileinput-button">
+               <span class="btn btn-secondary fileinput-button">
                <i class="fa fa-cloud-upload-alt"></i>
-               <span>Subir Fotos</span>
-               <input id="fileupload_'.$nombre.'" type="file" name="files[]" multiple>
+               <span>Subir Foto</span>
+               <input id="fileupload_'.$nombre.'" type="file" name="files[]">
                </span>
                </div>
                
@@ -1105,7 +1105,7 @@ function campo_upload_varias_ventas($nombre,$etiqueta,$tipo,$valor,$adicional,$i
                                singleFileUploads: false,
                                acceptFileTypes: /(\.|\/)(gif|jpe?g|png|doc|docx|pdf|txt|xls|xlsx)$/i,
                                maxFileSize: 20971520,
-                               maxNumberOfFiles: 30,
+                               maxNumberOfFiles: 1,
                                disableVideoPreview: true,
                                disableAudioPreview: true,
                                disableImagePreview: true,

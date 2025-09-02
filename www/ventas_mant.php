@@ -638,14 +638,21 @@ if ($accion=="g") {
 <div class="tab-pane fade " id="nav_historial" role="tabpanel" ></div>
 
 <div class="tab-pane fade " id="nav_Fotos_venta" role="tabpanel" >
-        <?php echo 'hola mundo';
-         echo '<div class="row"><div class="col-12">';
-         echo '<div class="ins_varias_foto_div">';
-         echo campo_upload_varias_ventas("ins_foto0","Adjuntar Fotos",'upload','', '  ','',3,9,'NO',false );
-         echo "</div></div></div>";
-         echo "<hr>"; 
-        
-        ?>
+    <?php
+        $a=1;
+        while ($a <= 10) {
+            
+            echo 'hola mundo';
+            echo '<div class="row"><div class="col-12">';
+            echo '<div class="ins_varias_foto_div">';
+            echo campo_upload_foto_ventas("ins_foto".$a,"Adjuntar Fotos",'upload','', '  ','',3,9,'NO',false );
+            echo "</div></div></div>";
+            echo "<hr>"; 
+            $a++;
+            
+
+        }
+    ?>
         	
 </div>
 
