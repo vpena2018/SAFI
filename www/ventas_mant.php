@@ -91,6 +91,33 @@ if ($accion=="dfoto") {
    exit;  
 }
 
+if($accion=="gfoto")
+{
+    $stud_arr[0]["pcode"] = 0;
+    $stud_arr[0]["pmsg"] ="Error";
+    $stud_arr[0]["pcid"] = 0;
+    
+    
+    $cid=0;
+    if (isset($_REQUEST['cid'])) { $cid = intval($_REQUEST["cid"]); }   
+    if (isset($_REQUEST['arch'])) { $foto = sanear_string(trim($_REQUEST["arch"])); } else   {$foto ="";}   
+    
+     if (!es_nulo($foto) && !es_nulo($cid)){ 
+         sql_insert("INSERT INTO ventas_fotos (id_venta,  nombre_archivo,  principal,fecha)
+         VALUES ( $cid,  '$foto', 0, NOW())"); 
+
+         $stud_arr[0]["pcode"] = 1;
+         $stud_arr[0]["pmsg"] ="Foto guardada";     
+         $stud_arr[0]["pcid"] = $cid;     
+    }else{
+         $stud_arr[0]["pmsg"] ="Error al guardar la foto";     
+    } 
+    
+    salida_json($stud_arr);  
+    exit;  
+}
+
+
 
 // guardar Datos    ############################  
 if ($accion=="g") {
@@ -674,6 +701,36 @@ if (archivo!='' && archivo!=undefined) {
   }
 }
 
+    function insp_guardar_foto_ventas(arch,campo){
+     
+    var cid=$("#id").val();
+     var datos= { a: "gfoto", arch: encodeURI(arch),cid:cid} ;
+        debugger;
+
+ 	 $.post( 'ventas_mant.php',datos, function(json) {
+	 			
+		if (json.length > 0) {
+			if (json[0].pcode == 0) {
+				
+				mytoast('error',json[0].pmsg,3000) ;   
+			}
+			if (json[0].pcode == 1) {
+                $('#'+campo).val(arch);                
+                $('#files_'+campo).text('Guardado');
+                $('#lk'+campo).html(arch);
+               // thumb_agregar(arch);
+               thumb_agregar2(arch,campo);
+			
+			}
+		} else {mytoast('error',json[0].pmsg,3000) ; }
+		  
+	})
+	  .done(function() { alert('ok');  })
+	  .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
+	  .always(function() {	  }); 
+    
+    }
+
 
 function comb_actualizar_veh(){
    
@@ -768,7 +825,6 @@ function ventas_procesar(url,forma,adicional){
 }
 
 function ventas_cambiartab(eltab) {
-    debugger;
   var codigo= $('#id').val();
   var continuar=true;
   $('.tab-pane').hide();

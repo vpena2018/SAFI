@@ -1123,7 +1123,7 @@ function campo_upload_varias_ventas($nombre,$etiqueta,$tipo,$valor,$adicional,$i
                                     //    $('#files_$nombre').text('Guardado');
                                     //    $('#lk$nombre').html(file.name);
                                     //console.log(file.name,'$nombre'); 
-                                    insp_guardar_foto(file.name,'$nombre');
+                                    insp_guardar_foto_ventas(file.name,'$nombre');
          ";
                                       
                                       
