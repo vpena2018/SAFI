@@ -99,12 +99,15 @@ if($accion=="gfoto")
     
     
     $cid=0;
+
+    $is_main = isset($_POST['isMain']) ? intval($_POST['isMain']) : 0;
+
     if (isset($_REQUEST['cid'])) { $cid = intval($_REQUEST["cid"]); }   
     if (isset($_REQUEST['arch'])) { $foto = sanear_string(trim($_REQUEST["arch"])); } else   {$foto ="";}   
     
      if (!es_nulo($foto) && !es_nulo($cid)){ 
          sql_insert("INSERT INTO ventas_fotos (id_venta,  nombre_archivo,  principal,fecha)
-         VALUES ( $cid,  '$foto', 0, NOW())"); 
+         VALUES ( $cid,  '$foto', $is_main, NOW())"); 
 
          $stud_arr[0]["pcode"] = 1;
          $stud_arr[0]["pmsg"] ="Foto guardada";     
@@ -708,10 +711,10 @@ if (archivo!='' && archivo!=undefined) {
   }
 }
 
-    function insp_guardar_foto_ventas(arch,campo){
+    function insp_guardar_foto_ventas(arch,campo,isMain){
      
     var cid=$("#id").val();
-     var datos= { a: "gfoto", arch: encodeURI(arch),cid:cid} ;
+    var datos= { a: "gfoto", arch: encodeURI(arch),cid:cid,isMain:isMain}; ;
         debugger;
 
  	 $.post( 'ventas_mant.php',datos, function(json) {
@@ -726,7 +729,7 @@ if (archivo!='' && archivo!=undefined) {
                 $('#files_'+campo).text('Guardado');
                 $('#lk'+campo).html(arch);
                // thumb_agregar(arch);
-               thumb_agregar2(arch,campo);
+               //thumb_agregar2(arch,campo);
 			
 			}
 		} else {mytoast('error',json[0].pmsg,3000) ; }

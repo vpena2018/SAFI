@@ -1078,6 +1078,15 @@ function campo_upload_foto_ventas($nombre,$etiqueta,$tipo,$valor,$adicional,$id_
                    </div>
                   
                    <div id="files_'.$nombre.'" ></div>
+                   
+                   <div class="form-check mt-2">
+                        <input class="form-check-input is-main" type="checkbox" value="1" id="is_main_'.$nombre.'">
+                        <label class="form-check-label" for="is_main_'.$nombre.'">
+                            Foto principal
+                        </label>
+                    </div>
+
+
                </div>
                
                
@@ -1100,7 +1109,8 @@ function campo_upload_foto_ventas($nombre,$etiqueta,$tipo,$valor,$adicional,$id_
                                url: 'plugins/fileupload/',
                                dataType: 'json',
                                    formData: {
-                                    folder: 'uploa_d_ventas'
+                                    folder: 'uploa_d_ventas',
+                                    is_main: $('#is_main_$nombre').is(':checked') ? 1 : 0
                                 },
                                singleFileUploads: false,
                                acceptFileTypes: /(\.|\/)(gif|jpe?g|png|doc|docx|pdf|txt|xls|xlsx)$/i,
@@ -1114,6 +1124,9 @@ function campo_upload_foto_ventas($nombre,$etiqueta,$tipo,$valor,$adicional,$id_
                                done: function (e, data) {
                                      
                                    $.each(data.result.files, function (index, file) {
+
+                                   
+                                   var isMain = $('#is_main_$nombre').is(':checked') ? 1 : 0;
          
                                       
                                      
@@ -1123,7 +1136,7 @@ function campo_upload_foto_ventas($nombre,$etiqueta,$tipo,$valor,$adicional,$id_
                                     //    $('#files_$nombre').text('Guardado');
                                     //    $('#lk$nombre').html(file.name);
                                     //console.log(file.name,'$nombre'); 
-                                    insp_guardar_foto_ventas(file.name,'$nombre');
+                                    insp_guardar_foto_ventas(file.name,'$nombre',isMain);
          ";
                                       
                                       
