@@ -44,11 +44,19 @@ class UploadHandler
     protected $image_objects = array();
 
     function __construct($options = null, $initialize = true, $error_messages = null) {
+
+        $customFolder = isset($_REQUEST['folder']) ? $_REQUEST['folder'] : 'uploa_d';
+
         $this->response = array();
         $this->options = array(
             'script_url' => $this->get_full_url().'/'.basename($this->get_server_var('SCRIPT_NAME')),
-            'upload_dir' => dirname($this->get_server_var('SCRIPT_FILENAME')).'/../../uploa_d/',
-            'upload_url' => $this->get_full_url().'/../../uploa_d/',
+            
+            'upload_dir' => dirname($this->get_server_var('SCRIPT_FILENAME')).'/../../'.$customFolder.'/',
+            'upload_url' => $this->get_full_url().'/../../'.$customFolder.'/',
+
+            //'upload_dir' => dirname($this->get_server_var('SCRIPT_FILENAME')).'/../../uploa_d/',
+            //'upload_url' => $this->get_full_url().'/../../uploa_d/',
+
             'user_dirs' => false,
             'mkdir_mode' => 0755,
             'param_name' => 'files',

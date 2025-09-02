@@ -355,6 +355,9 @@ if ($accion=="g") {
       <li class="nav-item">
         <a class="nav-link " id="insp_tabhistorial" data-toggle="tab" href="#" onclick="ventas_cambiartab('nav_historial');"   role="tab"  >Historial</a>
       </li> 
+      <li class="nav-item">
+        <a class="nav-link " id="insp_tabFotos" data-toggle="tab" href="#" onclick="ventas_cambiartab('nav_Fotos_venta');"   role="tab"  >Fotos</a>
+      </li> 
     </ul>   
  </div>
 
@@ -607,6 +610,18 @@ if ($accion=="g") {
 <!-- HISTORIAL -->
 <div class="tab-pane fade " id="nav_historial" role="tabpanel" ></div>
 
+<div class="tab-pane fade " id="nav_Fotos_venta" role="tabpanel" >
+        <?php echo 'hola mundo';
+         echo '<div class="row"><div class="col-12">';
+         echo '<div class="ins_varias_foto_div">';
+         echo campo_upload_varias_ventas("ins_foto0","Adjuntar Fotos",'upload','', '  ','',3,9,'NO',false );
+         echo "</div></div></div>";
+         echo "<hr>"; 
+        
+        ?>
+        	
+</div>
+
 <!-- errores -->
 <div class="tab-pane fade mt-5 mb-5" id="nav_deshabilitado" role="tabpanel" ><div class="alert alert-warning" role="alert">Debe Guardar el documento para poder continuar con esta sección</div></div>
 
@@ -753,6 +768,7 @@ function ventas_procesar(url,forma,adicional){
 }
 
 function ventas_cambiartab(eltab) {
+    debugger;
   var codigo= $('#id').val();
   var continuar=true;
   $('.tab-pane').hide();
