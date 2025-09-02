@@ -678,7 +678,7 @@ function borrar_fotodb(codid) {
 
   Swal.fire({
     title: 'Borrar Foto',
-    text: 'Desea Borrar la Foto o Documento adjunto?',
+    text: 'Desea borrar la Foto o documento adjunto?',
     icon: 'question',
     showCancelButton: true,
     confirmButtonColor: '#3085d6',
