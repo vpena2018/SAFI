@@ -681,6 +681,29 @@ if ($accion=="g") {
 
     <div class="col-md" id="archivofotoventas">
     <?php
+ 
+        $sql="select id,nombre_archivo,fecha from ventas_fotos where id_venta=".GetSQLValue($id,"int")." order by id desc";
+        $result = sql_select($sql);
+
+        if ($result!=false){
+            if ($result -> num_rows > 0) {
+                while ($row = $result -> fetch_assoc()) {
+                    $fext = substr($row["nombre_archivo"], -3);
+                    $fecha = sanear_date($row['fecha']);
+                    if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {               
+                        echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$row["nombre_archivo"].'\',\'uploa_d_ventas/\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d_ventas/thumbnail/'.$row["nombre_archivo"].'" data-cod="'.$row["id"].'"></a> ';
+                        
+                        //if ($row["id_estado"]<=2 or tiene_permiso(150))  { echo '  <a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].'); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';}
+                                                                                                
+                    } else {
+                        echo '  <a href="uploa_d_ventas/'.$row["archivo"].'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$row["archivo"].'</a> ';
+                    }
+           
+                } 
+                
+            }
+        }
+
         $a=1;
         while ($a <= 10) {
             
@@ -729,9 +752,10 @@ function insp_guardar_foto(arch,campo){
 }
 
 
-function mostrar_foto(imagen) {
+function mostrar_foto(imagen,folder="uploa_d/") {
+    debugger;
   Swal.fire({
-  imageUrl: 'uploa_d/'+imagen,
+  imageUrl: folder+imagen,
 
 }); 
 
