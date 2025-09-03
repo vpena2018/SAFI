@@ -640,7 +640,14 @@ if ($accion=="g") {
 <!-- HISTORIAL -->
 <div class="tab-pane fade " id="nav_historial" role="tabpanel" ></div>
 
+
+
 <div class="tab-pane fade " id="nav_Fotos_venta" role="tabpanel" >
+    <div class="" id="insp_fotos_thumbs_ventas">
+
+    </div>
+
+    <div class="col-md" id="archivofotoventas">
     <?php
         $a=1;
         while ($a <= 10) {
@@ -656,7 +663,7 @@ if ($accion=="g") {
 
         }
     ?>
-        	
+    </div>
 </div>
 
 <!-- errores -->
@@ -711,6 +718,23 @@ if (archivo!='' && archivo!=undefined) {
   }
 }
 
+function thumb_agregar_foto_venta(archivo,campo){
+    var salida='';
+    if (archivo!='' && archivo!=undefined) {
+        
+   
+    var fext= archivo.substr(archivo.length - 3);
+
+   if (fext=='jpg' || fext=='peg' || fext=='png' || fext=='gif') {
+    salida='<a href="#" onclick="mostrar_foto(\''+archivo+'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d_ventas/thumbnail/'+archivo+'" ></a> ';
+   } else {
+    salida='<a href="uploa_d_ventas/'+archivo+'" target="_blank" class="img-thumbnail mb-3 mr-3" >'+archivo+'</a>';
+   }
+
+   $("#"+campo).closest('.ins_varias_foto_div').html(salida +'<a id="del_'+campo+'" href="#" onclick="insp_borrar_foto(\''+archivo+'\',\'del_'+campo+'\'); return false;" class="btn  btn-outline-secondary ml-3 "><i class="fa fa-eraser"></i> Borrar</a>');
+  }
+}
+
     function insp_guardar_foto_ventas(arch,campo,isMain){
      
     var cid=$("#id").val();
@@ -729,7 +753,7 @@ if (archivo!='' && archivo!=undefined) {
                 $('#files_'+campo).text('Guardado');
                 $('#lk'+campo).html(arch);
                // thumb_agregar(arch);
-               //thumb_agregar2(arch,campo);
+               thumb_agregar_foto_venta(arch,campo);
 			
 			}
 		} else {mytoast('error',json[0].pmsg,3000) ; }
