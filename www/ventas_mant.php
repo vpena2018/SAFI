@@ -127,17 +127,20 @@ if ($accion =="dfotoventas") {
 
     if (isset($_REQUEST['arch'])) { $arch =GetSQLValue(urldecode($_REQUEST["arch"]),"text"); } else	{$arch ="" ;}
     if (isset($_REQUEST['cod'])) { $cod = "and id=".GetSQLValue(urldecode($_REQUEST["cod"]),"text"); } else	{$cod ="" ;}
+
     if (isset($_REQUEST['cid'])) { $cid = intval($_REQUEST["cid"]); }  else	{$cid =0 ;}
 
     if ($cod<>'' or $arch<>'') {
 
-        borrar_foto_directorio($cid,$cod,$arch,"foto_ventas");
+    borrar_foto_directorio($cid,$cod,$arch,"foto_ventas");
 
     $result = sql_delete("DELETE FROM ventas_fotos 
                             WHERE id_venta=$cid 
                             and nombre_archivo=$arch 
                             LIMIT 1
                             ");
+
+
  } else {$result==false;}
     if ($result!=false){
 
@@ -673,13 +676,13 @@ if ($accion=="g") {
 <div class="tab-pane fade " id="nav_historial" role="tabpanel" ></div>
 
 
-
+<!-- fotos ventas -->
+ 
 <div class="tab-pane fade " id="nav_Fotos_venta" role="tabpanel" >
     <div class="" id="insp_fotos_thumbs_ventas">
-
     </div>
-
-    <div class="col-md" id="archivofotoventas">
+    <div class="row">
+    <div class="col-md-8" id="archivofotoventas">
     <?php
  
         $sql="select id,nombre_archivo,fecha from ventas_fotos where id_venta=".GetSQLValue($id,"int")." order by id desc";
@@ -693,7 +696,7 @@ if ($accion=="g") {
                     if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {               
                         echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$row["nombre_archivo"].'\',\'uploa_d_ventas/\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d_ventas/thumbnail/'.$row["nombre_archivo"].'" data-cod="'.$row["id"].'"></a> ';
                         
-                        //if ($row["id_estado"]<=2 or tiene_permiso(150))  { echo '  <a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].'); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';}
+                         echo '  <a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].',\''.$row["nombre_archivo"].'\'); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';
                                                                                                 
                     } else {
                         echo '  <a href="uploa_d_ventas/'.$row["archivo"].'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$row["archivo"].'</a> ';
@@ -707,7 +710,6 @@ if ($accion=="g") {
         $a=1;
         while ($a <= 10) {
             
-            echo 'hola mundo';
             echo '<div class="row"><div class="col-12">';
             echo '<div class="ins_varias_foto_div">';
             echo campo_upload_foto_ventas("ins_foto".$a,"Adjuntar Fotos",'upload','', '  ','',3,9,'NO',false );
@@ -719,6 +721,7 @@ if ($accion=="g") {
         }
     ?>
     </div>
+</div>
 </div>
 
 <!-- errores -->
@@ -753,7 +756,7 @@ function insp_guardar_foto(arch,campo){
 
 
 function mostrar_foto(imagen,folder="uploa_d/") {
-    debugger;
+
   Swal.fire({
   imageUrl: folder+imagen,
 
@@ -826,7 +829,14 @@ Swal.fire({
                 } else {mytoast('error',json[0].pmsg,3000) ; }
                 
             })
-            .done(function() {	  })
+            .done(function() {	abrir_ventas(cid); 
+                    setTimeout(function() {
+                        ventas_cambiartab('nav_Fotos_venta');
+                        $('#insp_tabFotos').tab('show');
+
+                    }, 50);
+                    mytoast('success','Borrado',3000) ; 
+            })
             .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
             .always(function() {	  });
 
@@ -834,11 +844,65 @@ Swal.fire({
 	});
 }
 
+function borrar_fotodb(codid,arch){
+
+    var cid=$("#id").val();
+    var datos= { a: "dfotoventas", cid: cid, pid: $("#pid").val() , cod: codid, arch: encodeURI(arch)} ;
+  
+
+Swal.fire({
+	  title: 'Borrar Foto',
+	  text:  'Desea Borrar la Foto o Documento adjunto?',
+	  icon: 'question',
+	  showCancelButton: true,
+	  confirmButtonColor: '#3085d6',
+	  cancelButtonColor: '#d33',
+	  confirmButtonText:  'Si',
+	  cancelButtonText:  'No'
+	}).then((result) => {
+	  if (result.value) {
+	    
+            $.post( 'ventas_mant.php',datos, function(json) {
+                
+                if (json.length > 0) {
+                    if (json[0].pcode == 0) {
+                        
+                        mytoast('error',json[0].pmsg,3000) ;   
+                    }
+                    if (json[0].pcode == 1) {
+                        
+                        $(".foto_br"+codid).hide();
+                        mytoast('success',json[0].pmsg,3000) ;
+                    
+                    }
+                } else {mytoast('error',json[0].pmsg,3000) ; }
+                
+            })
+            .done(function() {	  
+                abrir_ventas(cid); 
+                    setTimeout(function() {
+                        ventas_cambiartab('nav_Fotos_venta');
+                        $('#insp_tabFotos').tab('show');
+                    }, 50);
+
+                    mytoast('success','Borrado',3000) ; 
+            })
+            .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
+            .always(function() {	  });
+
+	  }
+	});
+
+
+
+
+}
+
     function insp_guardar_foto_ventas(arch,campo,isMain){
      
     var cid=$("#id").val();
     var datos= { a: "gfoto", arch: encodeURI(arch),cid:cid,isMain:isMain}; ;
-        debugger;
+    
 
  	 $.post( 'ventas_mant.php',datos, function(json) {
 	 			
@@ -858,7 +922,7 @@ Swal.fire({
 		} else {mytoast('error',json[0].pmsg,3000) ; }
 		  
 	})
-	  .done(function() { alert('ok');  })
+	  .done(function() { mytoast('success','Guardado',3000) ;   })
 	  .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
 	  .always(function() {	  }); 
     
