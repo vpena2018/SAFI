@@ -686,14 +686,22 @@ if ($accion=="g") {
     <?php
 
         $total_filas=0;
+        $principal=false;
  
-        $sql="select id,nombre_archivo,fecha from ventas_fotos where id_venta=".GetSQLValue($id,"int")." order by id desc";
+        $sql="select id,nombre_archivo,fecha,principal from ventas_fotos where id_venta=".GetSQLValue($id,"int")." order by id desc";
         $result = sql_select($sql);
 
         if ($result!=false){
             $total_filas = $result->num_rows;
             if ($result -> num_rows > 0) {
                 while ($row = $result -> fetch_assoc()) {
+
+                    $es_principal = (bool)$row["principal"];
+
+                    if($es_principal){
+                        $principal=true;
+                    }
+
                     $fext = substr($row["nombre_archivo"], -3);
                     $fecha = sanear_date($row['fecha']);
                     if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {               
@@ -715,7 +723,7 @@ if ($accion=="g") {
             
             echo '<div class="row"><div class="col-12">';
             echo '<div class="ins_varias_foto_div">';
-            echo campo_upload_foto_ventas("ins_foto".$a,"Adjuntar Fotos",'upload','', '  ','',3,9,'NO',false );
+            echo campo_upload_foto_ventas("ins_foto".$a,"Adjuntar Fotos",'upload','', '  ','',3,9,'NO',false,$principal );
             echo "</div></div></div>";
             echo "<hr>"; 
             $a++;

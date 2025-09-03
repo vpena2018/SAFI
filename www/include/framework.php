@@ -1019,7 +1019,7 @@ function campo_combustible($nombre,$valor,$adicional=""){
 
 
 
-function campo_upload_foto_ventas($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solicitud="",$columna1=3,$columna2=9,$mostrar_upload="NO",$preview=false) 
+function campo_upload_foto_ventas($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solicitud="",$columna1=3,$columna2=9,$mostrar_upload="NO",$preview=false,$principal=false) 
 {
     $salida="";
    
@@ -1079,7 +1079,7 @@ function campo_upload_foto_ventas($nombre,$etiqueta,$tipo,$valor,$adicional,$id_
                   
                    <div id="files_'.$nombre.'" ></div>
                    
-                   <div class="form-check mt-2">
+                   <div class="form-check mt-2 '.($principal ? 'd-none' : '').'">
                         <input class="form-check-input is-main" type="checkbox" value="1" id="is_main_'.$nombre.'">
                         <label class="form-check-label" for="is_main_'.$nombre.'">
                             Foto principal
