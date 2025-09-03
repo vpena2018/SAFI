@@ -687,8 +687,9 @@ if ($accion=="g") {
 
         $total_filas=0;
         $principal=false;
+        $principalEncontrada=false;
  
-        $sql="select id,nombre_archivo,fecha,principal from ventas_fotos where id_venta=".GetSQLValue($id,"int")." order by id desc";
+        $sql="select id,nombre_archivo,fecha,principal from ventas_fotos where id_venta=".GetSQLValue($id,"int")." order by principal desc";
         $result = sql_select($sql);
 
         if ($result!=false){
@@ -696,18 +697,28 @@ if ($accion=="g") {
             if ($result -> num_rows > 0) {
                 while ($row = $result -> fetch_assoc()) {
 
+                    $principalEncontrada=false;
                     $es_principal = (bool)$row["principal"];
 
                     if($es_principal){
                         $principal=true;
+                        $principalEncontrada=true;
                     }
 
                     $fext = substr($row["nombre_archivo"], -3);
                     $fecha = sanear_date($row['fecha']);
-                    if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {               
+                    if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif' or $fext=='JPG' or $fext=='PEG' or $fext=='PNG' or $fext=='GIF') {               
                         echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$row["nombre_archivo"].'\',\'uploa_d_ventas/\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d_ventas/thumbnail/'.$row["nombre_archivo"].'" data-cod="'.$row["id"].'"></a> ';
-                        
-                         echo '  <a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].',\''.$row["nombre_archivo"].'\'); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';
+                        echo '<a href="#" class="mr-5 foto_br'.$row["id"].'" 
+                                onclick="borrar_fotodb('.$row["id"].',\''.$row["nombre_archivo"].'\'); return false;">
+                                <i class="fa fa-eraser"></i> Borrar';
+
+                        if ($es_principal) {
+                            //echo ' <i class="fa fa-star" title="Foto Principal" style="color: gold;">principal</i>';
+                            echo ' <i class="fa fa-star" title="Foto de portada" style="color: #f0c651;">Foto de Portada</i>';
+                        }
+
+                        echo '</a>';
                                                                                                 
                     } else {
                         echo '  <a href="uploa_d_ventas/'.$row["archivo"].'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$row["archivo"].'</a> ';
@@ -845,7 +856,7 @@ Swal.fire({
                         ventas_cambiartab('nav_Fotos_venta');
                         $('#insp_tabFotos').tab('show');
 
-                    }, 50);
+                    }, 300);
                     mytoast('success','Borrado',3000) ; 
             })
             .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
@@ -894,7 +905,7 @@ Swal.fire({
                     setTimeout(function() {
                         ventas_cambiartab('nav_Fotos_venta');
                         $('#insp_tabFotos').tab('show');
-                    }, 50);
+                    }, 300);
 
                     mytoast('success','Borrado',3000) ; 
             })
@@ -933,7 +944,18 @@ Swal.fire({
 		} else {mytoast('error',json[0].pmsg,3000) ; }
 		  
 	})
-	  .done(function() { mytoast('success','Guardado',3000) ;   })
+	  .done(function() { 
+
+        abrir_ventas(cid); 
+        setTimeout(function() {
+            ventas_cambiartab('nav_Fotos_venta');
+
+            $('#insp_tabFotos').tab('show');
+        }, 300);
+
+        mytoast('success','Guardado',3000) ;   
+    
+    })
 	  .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
 	  .always(function() {	  }); 
     

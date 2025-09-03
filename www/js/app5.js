@@ -296,7 +296,7 @@ function cargando(mostrar){
 
 
 function procesar(url,forma,adicional){
-
+	debugger;
 	let flagFormaVentas=false;
 	if(forma=='forma_ventas')
 	{
@@ -344,7 +344,7 @@ function procesar(url,forma,adicional){
 
 		if(flagFormaVentas==true)
 		{
-			procesar_tabla_datatable('tablaver','tabla','vehiculos_reparacion_ver.php?a=1','Ventas de Vehiculos')
+			procesar_tabla_datatable('tablaver','tabla','ventas_vehiculos_ver.php?a=1','Ventas de Vehiculos')
 			$('#ModalWindow2').modal('hide');
 		}
 	   

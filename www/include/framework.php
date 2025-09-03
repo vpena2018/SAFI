@@ -1082,7 +1082,7 @@ function campo_upload_foto_ventas($nombre,$etiqueta,$tipo,$valor,$adicional,$id_
                    <div class="form-check mt-2 '.($principal ? 'd-none' : '').'">
                         <input class="form-check-input is-main" type="checkbox" value="1" id="is_main_'.$nombre.'">
                         <label class="form-check-label" for="is_main_'.$nombre.'">
-                            Foto principal
+                            Foto de portada
                         </label>
                     </div>
 
