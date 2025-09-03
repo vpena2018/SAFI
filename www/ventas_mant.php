@@ -682,7 +682,7 @@ if ($accion=="g") {
     <div class="" id="insp_fotos_thumbs_ventas">
     </div>
     <div class="row">
-    <div class="col-md-8" id="archivofotoventas">
+    <div class="col-md-10" id="archivofotoventas">
     <?php
  
         $sql="select id,nombre_archivo,fecha from ventas_fotos where id_venta=".GetSQLValue($id,"int")." order by id desc";
