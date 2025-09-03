@@ -684,11 +684,14 @@ if ($accion=="g") {
     <div class="row">
     <div class="col-md-10" id="archivofotoventas">
     <?php
+
+        $total_filas=0;
  
         $sql="select id,nombre_archivo,fecha from ventas_fotos where id_venta=".GetSQLValue($id,"int")." order by id desc";
         $result = sql_select($sql);
 
         if ($result!=false){
+            $total_filas = $result->num_rows;
             if ($result -> num_rows > 0) {
                 while ($row = $result -> fetch_assoc()) {
                     $fext = substr($row["nombre_archivo"], -3);
@@ -707,8 +710,8 @@ if ($accion=="g") {
             }
         }
 
-        $a=1;
-        while ($a <= 10) {
+        $a=$total_filas;
+        while ($a < 10) {
             
             echo '<div class="row"><div class="col-12">';
             echo '<div class="ins_varias_foto_div">';
