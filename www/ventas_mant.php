@@ -120,6 +120,38 @@ if($accion=="gfoto")
     exit;  
 }
 
+// borrar ARCHIVO de ventas
+if ($accion =="dfotoventas") {
+    $stud_arr[0]["pcode"] = 0;
+    $stud_arr[0]["pmsg"] ="ERROR DB102";
+
+    if (isset($_REQUEST['arch'])) { $arch =GetSQLValue(urldecode($_REQUEST["arch"]),"text"); } else	{$arch ="" ;}
+    if (isset($_REQUEST['cod'])) { $cod = "and id=".GetSQLValue(urldecode($_REQUEST["cod"]),"text"); } else	{$cod ="" ;}
+    if (isset($_REQUEST['cid'])) { $cid = intval($_REQUEST["cid"]); }  else	{$cid =0 ;}
+
+    if ($cod<>'' or $arch<>'') {
+
+        borrar_foto_directorio($cid,$cod,$arch,"foto_ventas");
+
+    $result = sql_delete("DELETE FROM ventas_fotos 
+                            WHERE id_venta=$cid 
+                            and nombre_archivo=$arch 
+                            LIMIT 1
+                            ");
+ } else {$result==false;}
+    if ($result!=false){
+
+        //TODO borrar archivo $arch
+
+        $stud_arr[0]["pcode"] = 1;
+        $stud_arr[0]["pmsg"] ="Borrado";
+    }
+
+  salida_json($stud_arr);
+    exit;
+
+}
+
 
 
 // guardar Datos    ############################  
@@ -731,8 +763,51 @@ function thumb_agregar_foto_venta(archivo,campo){
     salida='<a href="uploa_d_ventas/'+archivo+'" target="_blank" class="img-thumbnail mb-3 mr-3" >'+archivo+'</a>';
    }
 
-   $("#"+campo).closest('.ins_varias_foto_div').html(salida +'<a id="del_'+campo+'" href="#" onclick="insp_borrar_foto(\''+archivo+'\',\'del_'+campo+'\'); return false;" class="btn  btn-outline-secondary ml-3 "><i class="fa fa-eraser"></i> Borrar</a>');
+   $("#"+campo).closest('.ins_varias_foto_div').html(salida +'<a id="del_'+campo+'" href="#" onclick="insp_borrar_foto_venta(\''+archivo+'\',\'del_'+campo+'\'); return false;" class="btn  btn-outline-secondary ml-3 "><i class="fa fa-eraser"></i> Borrar</a>');
   }
+}
+
+
+
+function insp_borrar_foto_venta(arch,campo){
+
+    var cid=$("#id").val();
+    var datos= { a: "dfotoventas", cid: cid, pid: $("#pid").val() , arch: encodeURI(arch)} ;
+
+
+Swal.fire({
+	  title: 'Borrar Foto',
+	  text:  'Desea Borrar la Foto o Documento adjunto?',
+	  icon: 'question',
+	  showCancelButton: true,
+	  confirmButtonColor: '#3085d6',
+	  cancelButtonColor: '#d33',
+	  confirmButtonText:  'Si',
+	  cancelButtonText:  'No'
+	}).then((result) => {
+	  if (result.value) {
+	    
+            $.post( 'ventas_mant.php',datos, function(json) {
+                
+                if (json.length > 0) {
+                    if (json[0].pcode == 0) {
+                        
+                        mytoast('error',json[0].pmsg,3000) ;   
+                    }
+                    if (json[0].pcode == 1) {
+                        console.log('->'+campo);
+                        $("#"+campo).closest('.ins_foto_div').html('Eliminado');
+                    
+                    }
+                } else {mytoast('error',json[0].pmsg,3000) ; }
+                
+            })
+            .done(function() {	  })
+            .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
+            .always(function() {	  });
+
+	  }
+	});
 }
 
     function insp_guardar_foto_ventas(arch,campo,isMain){

@@ -1881,6 +1881,8 @@ function foto_reducir_tamano($archivo){
 
 function borrar_foto_directorio($cid,$cod,$arch, $tipo) {
 
+    
+
          $filtro="";
          $filename="";
         if($cod=="") {
@@ -1898,23 +1900,35 @@ function borrar_foto_directorio($cid,$cod,$arch, $tipo) {
             $result_arch=sql_select("SELECT id,archivo FROM servicio_foto WHERE id_servicio=$cid $filtro LIMIT 1");
            }else if($tipo=="vehiculos_reparacion") {    
             $result_arch=sql_select("SELECT foto FROM ventas WHERE id=$cid LIMIT 1");
+           }else if($tipo=="foto_ventas") {    
+            $result_arch=sql_select("SELECT nombre_archivo FROM ventas_fotos WHERE id_venta=$cid and nombre_archivo=$arch LIMIT 1");
            }
 
         if ($result_arch -> num_rows > 0) {
             $row = $result_arch -> fetch_assoc();
 
             if($tipo=="vehiculos_reparacion") {    
-            $filename = $row['foto'];
-           }else{
-                $filename = $row['archivo'];
-           }
+                $filename = $row['foto'];
+            }else if($tipo=="foto_ventas") {
+                    $filename = $row['nombre_archivo'];
+            }else
+            {
+                    $filename = $row['archivo'];
+            }
 
            if($filename=="" or $filename==null) {
                return;
             }
            
-            $path1 = 'uploa_d/' . $filename;
-            $path2 = 'uploa_d/thumbnail/' . $filename;
+            if($tipo=="foto_ventas"){
+                $path1 = 'uploa_d_ventas/' . $filename;
+                $path2 = 'uploa_d_ventas/thumbnail/' . $filename;
+
+            }else{
+                $path1 = 'uploa_d/' . $filename;
+                $path2 = 'uploa_d/thumbnail/' . $filename;
+            }
+
 
             if (file_exists($path1)) {
                 unlink($path1);
