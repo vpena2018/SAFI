@@ -296,7 +296,7 @@ function cargando(mostrar){
 
 
 function procesar(url,forma,adicional){
-	debugger;
+	
 	let flagFormaVentas=false;
 	if(forma=='forma_ventas')
 	{
