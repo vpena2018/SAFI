@@ -344,8 +344,8 @@ function procesar(url,forma,adicional){
 
 		if(flagFormaVentas==true)
 		{
-			procesar_tabla_datatable('tablaver','tabla','ventas_vehiculos_ver.php?a=1','Ventas de Vehiculos')
-			$('#ModalWindow2').modal('hide');
+			//procesar_tabla_datatable('tablaver','tabla','ventas_vehiculos_ver.php?a=1','Ventas de Vehiculos')
+			//$('#ModalWindow2').modal('hide');
 		}
 	   
 	  })
