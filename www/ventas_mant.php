@@ -155,6 +155,41 @@ if ($accion =="dfotoventas") {
 
 }
 
+if ($accion =="ufotoportadaventas") {
+
+    $stud_arr[0]["pcode"] = 0;
+    $stud_arr[0]["pmsg"] ="ERROR DB102";
+
+    if (isset($_REQUEST['arch'])) { $arch =GetSQLValue(urldecode($_REQUEST["arch"]),"text"); } else	{$arch ="" ;}
+    if (isset($_REQUEST['cod'])) { $cod = intval($_REQUEST["cod"]); } else	{$cod ="" ;}
+
+    if (isset($_REQUEST['cid'])) { $cid = intval($_REQUEST["cid"]); }  else	{$cid =0 ;}
+
+    if ($cod<>'' or $arch<>'') {
+
+            $sqlReset="update ventas_fotos set principal=0 where id_venta=".$cid."";
+            $sqlMarcar="update ventas_fotos set principal=1 where id=".$cod." and id_venta=".$cid."  limit 1";
+
+            $resultReset = sql_update($sqlReset);
+
+            $resulMarcar = sql_update($sqlMarcar);
+
+
+
+    }else {$result==false;}
+    if ($resultReset!=false and $resulMarcar!=false){
+
+        //TODO borrar archivo $arch
+
+        $stud_arr[0]["pcode"] = 1;
+        $stud_arr[0]["pmsg"] ="Actualizado";
+    }
+
+    salida_json($stud_arr);
+    exit;
+
+}
+
 
 
 // guardar Datos    ############################  
@@ -716,10 +751,13 @@ if ($accion=="g") {
                         if ($es_principal) {
                             //echo ' <i class="fa fa-star" title="Foto Principal" style="color: gold;">principal</i>';
                             echo ' <i class="fa fa-star" title="Foto de portada" style="color: #f0c651;">Foto de Portada</i>';
+                        }else{
+                                echo ' <a href="#" onclick="marcar_portada('.$row["id"].',\''.$row["nombre_archivo"].'\'); return false;">
+                                    <i class="far fa-star"></i> Marcar como portada
+                                </a>';
                         }
 
-                        echo '</a>';
-                                                                                                
+                        echo '</a>';                                                          
                     } else {
                         echo '  <a href="uploa_d_ventas/'.$row["archivo"].'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$row["archivo"].'</a> ';
                     }
@@ -908,6 +946,60 @@ Swal.fire({
                     }, 300);
 
                     mytoast('success','Borrado',3000) ; 
+            })
+            .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
+            .always(function() {	  });
+
+	  }
+	});
+
+
+
+
+}
+
+function marcar_portada(codid,arch){
+  
+
+    var cid=$("#id").val();
+    var datos= { a: "ufotoportadaventas", cid: cid, pid: $("#pid").val() , cod: codid, arch: encodeURI(arch)} ;
+  
+
+Swal.fire({
+	  title: '⭐Foto de portada',
+	  text:  'Desea Marcar la foto como portada?',
+	  showCancelButton: true,
+	  confirmButtonColor: '#3085d6',
+	  cancelButtonColor: '#d33',
+	  confirmButtonText:  'Si',
+	  cancelButtonText:  'No'
+	}).then((result) => {
+	  if (result.value) {
+	    
+            $.post( 'ventas_mant.php',datos, function(json) {
+                debugger;
+                if (json.length > 0) {
+                    if (json[0].pcode == 0) {
+                        
+                        mytoast('error',json[0].pmsg,3000) ;   
+                    }
+                    if (json[0].pcode == 1) {
+                        
+                        $(".foto_br"+codid).hide();
+                        mytoast('success',json[0].pmsg,3000) ;
+                    
+                    }
+                } else {mytoast('error',json[0].pmsg,3000) ; }
+                
+            })
+            .done(function() {	  
+                    abrir_ventas(cid); 
+                    setTimeout(function() {
+                        ventas_cambiartab('nav_Fotos_venta');
+                        $('#insp_tabFotos').tab('show');
+                    }, 300);
+
+                    mytoast('success','Actualizado',3000) ; 
             })
             .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
             .always(function() {	  });
