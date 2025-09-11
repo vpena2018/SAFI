@@ -256,9 +256,9 @@ if ($result!=false){
             $fecha = sanear_date($row['fecha']);             
             if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
                    //$url=getUrlImagen($row['archivo']);
-                   if ($fecha<='2024-12-31'){ 
+                   if ($fecha<='2024-12-31'){
                       //$archivo = shell_exec("aws s3 ls s3://inglosa --recursive 2>/dev/null | grep -m 1".$row['archivo']);
-                      echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto2(\''.$row["archivo"].'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3"  src="aws_bucket_s3/thumbnail/'.$row["archivo"].'" data-cod="'.$row["id"].'"></a> '; 
+                      echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto2(\''.$row["archivo"].'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="aws_bucket_s3/thumbnail/'.$row["archivo"].'" data-cod="'.$row["id"].'"></a> '; 
                       //echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto2(\''.$url.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="'.$url.'" data-cod="'.$row["id"].'"></a> '; 
                    }else{
                       echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$row["archivo"].'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$row["archivo"].'" data-cod="'.$row["id"].'"></a> '; 
