@@ -99,14 +99,23 @@ if ($accion =="mod_g") {
    
   if ($verror=="") {
   $sqlcampos="";
-  if (isset($_REQUEST["d_cod"])) { $sqlcampos.= "  id_producto =".GetSQLValue($_REQUEST["d_cod"],"int"); } 
+  if (isset($_REQUEST["d_cod"])) { $sqlcampos.= "  id_producto =".GetSQLValue($_REQUEST["d_cod"],"int"); }
+  
+  
+  $codigo_alterno = $producto['codigo_alterno'];
   
  { $sqlcampos.= " , producto_codigoalterno =".GetSQLValue($producto['codigo_alterno'],"text"); } 
  { $sqlcampos.= " , producto_nombre =".GetSQLValue($producto['nombre'],"text"); } 
  { $sqlcampos.= " , producto_tipo =".GetSQLValue($producto['tipo'],"int"); } 
 
   if (isset($_REQUEST["d_nota"])) { $sqlcampos.= " , producto_nota =".GetSQLValue($_REQUEST["d_nota"],"text"); } 
-  if (isset($_REQUEST["d_cant"])) { $sqlcampos.= " , cantidad =".GetSQLValue($_REQUEST["d_cant"],"double"); } 
+
+  if($codigo_alterno=="DESC AVERIA"){
+      $sqlcampos.= " , cantidad =-1";
+  }else{
+    if (isset($_REQUEST["d_cant"])) { $sqlcampos.= " , cantidad =".GetSQLValue($_REQUEST["d_cant"],"double"); } 
+  }
+
   if (isset($_REQUEST["d_pc"])) { $sqlcampos.= " , precio_costo =".GetSQLValue($_REQUEST["d_pc"],"double"); } 
   if (isset($_REQUEST["d_pv"])) { $sqlcampos.= " , precio_venta =".GetSQLValue($_REQUEST["d_pv"],"double"); } 
   // if (isset($_REQUEST["cobrable"])) { $sqlcampos.= " , cobrable =".GetSQLValue($_REQUEST["cobrable"],"int"); } 

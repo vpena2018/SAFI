@@ -269,9 +269,17 @@ if ($accion =="agr_g") {// guardar averia repuesto
                
                 $tmpsql.="id_producto=".GetSQLValue($codproducto,"int");
 
-                if(isset($cantproducto)){
-                    $tmpsql.=",cantidad=".GetSQLValue($cantproducto,"double");
+                $codigoalterno=$producto['codigo_alterno'];
+
+                if($codigoalterno=="DESC AVERIA"){
+                    $tmpsql.=",cantidad=-1";
+                }else{
+                  if(isset($cantproducto)){
+                      $tmpsql.=",cantidad=".GetSQLValue($cantproducto,"double");
+                  }
                 }
+
+
                 if(isset($costoproducto)){
                     $tmpsql.=",precio_costo=".GetSQLValue($costoproducto,"double");
                     }
@@ -284,7 +292,14 @@ if ($accion =="agr_g") {// guardar averia repuesto
                 $tmpsql.=",producto_nota=".GetSQLValue($nota,"text"); 
          
                 $tmpsql.=",producto_tipo=".GetSQLValue($producto['tipo'],"int");
+
+                
+
                 $tmpsql.=",producto_codigoalterno=".GetSQLValue($producto['codigo_alterno'],"text");
+
+
+                
+                
                 $tmpsql.=",producto_nombre=".GetSQLValue($producto['nombre'],"text");     
 
 
