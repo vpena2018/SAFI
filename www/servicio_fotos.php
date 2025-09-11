@@ -84,9 +84,9 @@ if (!es_nulo($insp)) {
                 $fecha = sanear_date($row['fecha']);
                 if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
                     if ($fecha<='2024-12-31'){
-                       echo '  <a href="#" onclick="mostrar_foto2(\''.$row["archivo"].'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" style="width: 180px; height: auto; src="aws_bucket_s3/thumbnail/'.$row["archivo"].'" data-cod="'.$row["id"].'"></a> ';
+                       echo '  <a href="#" onclick="mostrar_foto2(\''.$row["archivo"].'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" style="width: 180px; height: auto;" src="aws_bucket_s3/thumbnail/'.$row["archivo"].'" data-cod="'.$row["id"].'"></a> ';
                     }else{
-                       echo '  <a href="#" onclick="mostrar_foto(\''.$row["archivo"].'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" style="width: 180px; height: auto; src="uploa_d/thumbnail/'.$row["archivo"].'" data-cod="'.$row["id"].'"></a> ';
+                       echo '  <a href="#" onclick="mostrar_foto(\''.$row["archivo"].'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" style="width: 180px; height: auto;" src="uploa_d/thumbnail/'.$row["archivo"].'" data-cod="'.$row["id"].'"></a> ';
                     }   
                 } else {
                     echo '  <a href="uploa_d/'.$row["archivo"].'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$row["archivo"].'</a> ';
