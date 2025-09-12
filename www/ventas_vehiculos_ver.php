@@ -54,7 +54,8 @@ if ($accion=="1") {
     ,producto.nombre AS vehiculo
     ,producto.codigo_alterno AS codvehiculo
     ,usuario.nombre AS elusuario
-    ,ventas_impuestos.nombre as elimpuesto    
+    ,ventas_impuestos.nombre as elimpuesto 
+	 ,(SELECT COUNT(*) FROM ventas_fotos WHERE id_venta=ventas.id) fotos  
         FROM ventas
         LEFT OUTER JOIN producto ON (ventas.id_producto=producto.id)        
         LEFT OUTER JOIN ventas_estado ON (ventas.id_estado=ventas_estado.id)
@@ -80,7 +81,8 @@ if ($accion=="1") {
                     <th>Precio Maximo</th>
                     <th>Estado</th>
                     <th>Impuesto</th>
-                    <th>Creado</th>         
+                    <th>Creado</th> 
+                    <th>Fotos</th>        
                 </tr>
             </thead>
             <tbody id="tablabody">
@@ -89,6 +91,12 @@ if ($accion=="1") {
 
             if ($result -> num_rows>=app_reg_por_pag) {$haymas=1;  }
             while ($row = $result -> fetch_assoc()) {
+
+                $fotos = $row["fotos"];
+
+                // Definir color según el valor
+                $btnClass = ($fotos > 0) ? 'btn-success text-white' : 'btn-secondary';
+
                 $datos.='<tr>
                 <td><a  href="#" onclick="abrir_ventas(\''.$row["id"].'\'); return false;" class="btn btn-sm btn-secondary">'.$row["numero"].'</a></td>
                 <td>'.formato_fecha_de_mysql($row["fecha"]).'</td>
@@ -98,6 +106,7 @@ if ($accion=="1") {
                 <td>'.$row["elestado"].'</td>
                 <td>'.$row["elimpuesto"].'</td>
                 <td>'.$row["elusuario"].'</td>
+                <td><a  href="#" onclick="abrir_ventana_foto(\''.$row["id"].'\'); return false;" class="btn btn-sm ' . $btnClass . '">' .$fotos.'</a></td>
                 </tr>';               
                
             }
@@ -242,13 +251,23 @@ if ($accion=="1") {
             nuevo="S"
         }else{
             nuevo="N"
-        }        
+        }
+
         modalwindow2(
             'Registro Venta de Vehiculo',
             'ventas_mant.php?a=v&r='+nuevo+'&cid='+codigo
             );
            
     }
+
+function abrir_ventana_foto(codigo) {
+    abrir_ventas(codigo);
+
+    setTimeout(function () {
+        ventas_cambiartab('nav_Fotos_venta');
+        $('#insp_tabFotos').tab('show');
+    }, 300); // dale un poco más de tiempo
+}
 
     
 
