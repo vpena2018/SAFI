@@ -103,7 +103,34 @@ if($accion=="gfoto")
     $is_main = isset($_POST['isMain']) ? intval($_POST['isMain']) : 0;
 
     if (isset($_REQUEST['cid'])) { $cid = intval($_REQUEST["cid"]); }   
-    if (isset($_REQUEST['arch'])) { $foto = sanear_string(trim($_REQUEST["arch"])); } else   {$foto ="";}   
+    if (isset($_REQUEST['arch'])) 
+        { 
+
+            $foto_original = urldecode($_REQUEST['arch']);
+            $foto = str_replace(' ', '_', urldecode($_REQUEST["arch"]));
+
+
+
+
+            // Rutas originales
+            $ruta1 = 'uploa_d_ventas/' . $foto_original;
+            $ruta2 = 'uploa_d_ventas/thumbnail/' . $foto_original;
+
+            // Rutas nuevas
+            $nueva1 = 'uploa_d_ventas/' . $foto;
+            $nueva2 = 'uploa_d_ventas/thumbnail/' . $foto;
+
+            // Renombrar
+            if (file_exists($ruta1)) {
+                rename($ruta1, $nueva1);
+            }
+            if (file_exists($ruta2)) {
+                rename($ruta2, $nueva2);
+            }
+        
+        } else{$foto ="";}   
+
+
     
      if (!es_nulo($foto) && !es_nulo($cid)){ 
          sql_insert("INSERT INTO ventas_fotos (id_venta,  nombre_archivo,  principal,fecha)
@@ -977,7 +1004,7 @@ Swal.fire({
 	  if (result.value) {
 	    
             $.post( 'ventas_mant.php',datos, function(json) {
-                debugger;
+               
                 if (json.length > 0) {
                     if (json[0].pcode == 0) {
                         
@@ -1015,7 +1042,9 @@ Swal.fire({
     function insp_guardar_foto_ventas(arch,campo,isMain){
      
     var cid=$("#id").val();
-    var datos= { a: "gfoto", arch: encodeURI(arch),cid:cid,isMain:isMain}; ;
+    var datos= { a: "gfoto", arch: encodeURI(arch),cid:cid,isMain:isMain}; 
+
+    debugger;
     
 
  	 $.post( 'ventas_mant.php',datos, function(json) {
