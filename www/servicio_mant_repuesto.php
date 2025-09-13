@@ -700,8 +700,8 @@ if ($accion =="aut" or $accion =="rec" or $accion =="norec" or $accion =="dev" o
       if ($tipo==3){ $id_estado_actual2=6;}else{ $id_estado_actual2=11;}
       $id_estado_nuevo=7;
       $sql_estado=" and (estado=$id_estado_actual or estado=11 or estado=6)";
-      
-    }
+      if ($tipo==2){$id_estado_nuevo.=", SAP_sinc=null ";}
+    }  
 
     $sql_atender="";
     if ($accion =="atender" ) { 
@@ -824,14 +824,15 @@ if ($accion =="aut" or $accion =="rec" or $accion =="norec" or $accion =="dev" o
             // BUG: SAP 
         }
 
-        if ($accion =="solcomp"  ) {  //and $tipo==2   
+        if ($accion =="solcomp" or $accion=="comprea" ) {  //and $tipo==2   
           // enviar correo alerta
-          $tipo_movimiento_texto='Solicitud Compra';
+          if ($accion =="solcomp") {
+            $tipo_movimiento_texto='Solicitud Compra';
+          } else {
+            $tipo_movimiento_texto='Compra Realizada';
+          }
           require_once ('correo_servicio_repuesto_salida.php');
-
-      }
-
-       
+        }
     
       if ($result!=false){
     
