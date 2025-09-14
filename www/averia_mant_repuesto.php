@@ -257,7 +257,6 @@ if ($accion =="agr_g") {// guardar averia repuesto
     
              //Calculos
 
-                 
               $tmpsql="";$tmpsql2="";
    
  
@@ -329,7 +328,17 @@ if ($accion =="agr_g") {// guardar averia repuesto
     $hayerrores=false;
     foreach( $sqldetalle as $sqldet ) {
         $result=sql_insert($sqldet);
-        if ($result==false){ $hayerrores=true;}
+        if ($result==false)
+          { 
+            $hayerrores=true;
+          }else{
+
+            if (strpos($sqldet, 'DESC AVERIA') !== false) {
+              // La cadena contiene "DESC AVERIA"
+              require_once ('correo_averia_descuento_aviso.php');
+          } 
+
+          }
         }	
 
      recalcular_totales_averia($cid );
