@@ -423,11 +423,14 @@ $totalrepuestos=0;
             $nn=1;
              
             while ($row_fotos = $result_fotos -> fetch_assoc()) {
-
+                $fecha=$row_fotos["fecha"];
                 $fext = substr($row_fotos["archivo"], -3);
                 if ($fext=='jpg' or $fext=='peg' or $fext=='png' ) {
-                
-                    $image_file= 'uploa_d/thumbnail/'.$row_fotos["archivo"];  
+                    if ($fecha<='2025-03-31'){
+                        $image_file= 'uploa_d/thumbnail/'.$row_fotos["archivo"];  
+                    }else{
+                        $image_file= 'aws_bucket_s3/thumbnail/'.$row_fotos["archivo"];
+                    }
                    // $pdf->Image($image_file,'', '', 0, 0, '', '', '', false, 300, '', false, false, 0, false, false, false);
                    //$pdf->writeHTMLCell(150, '', 35, '', '<img src="uploa_d/'.$row_fotos["archivo"].'">', 0, 1, 0, true, 'C', true);
                    $pdf->writeHTMLCell($ancho_img, '', $pos_x,'', '<img src="uploa_d/'.$row_fotos["archivo"].'">', 0,$pn_ln, 0, true, 'C', true);
