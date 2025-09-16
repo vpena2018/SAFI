@@ -18,6 +18,8 @@ WHERE ave_detalle.id_maestro=$id_averia AND ave_detalle.id=$id_averia_detalle;")
                 if ($correo_servicio_result -> num_rows > 0) { 
                     $correo_row = $correo_servicio_result -> fetch_assoc(); 
 
+                    $fecha=formato_fecha_de_mysql($correo_row['fecha']);
+
 
                     $cuerpohtml = "
 <html>
@@ -45,7 +47,7 @@ WHERE ave_detalle.id_maestro=$id_averia AND ave_detalle.id=$id_averia_detalle;")
         </tr>
         <tr>
             <th style='text-align:left; color:#004080;'>Fecha</th>
-            <td>{$correo_row['fecha']}</td>
+            <td>{$fecha}</td>
         </tr>
         <tr style='background-color:#f9f9f9;'>
             <th style='text-align:left; color:#004080;'>Tienda</th>
@@ -73,7 +75,7 @@ WHERE ave_detalle.id_maestro=$id_averia AND ave_detalle.id=$id_averia_detalle;")
 
                 require_once ('include/correo.php');
                 enviar_correo_dev(
-                    'alexander.v211111@gmail.com;vpena@inglosa.com',
+                    'alexander.v211111@gmail.com',
                     'Aprobación de descuento',
                     $cuerpohtml,
                     $cuerpo_sinhtml
