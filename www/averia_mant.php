@@ -131,6 +131,24 @@ if ($accion=="ec") {
       if (isset($_REQUEST['eti'])) { $etiqueta = ($_REQUEST['eti']); } else	{exit ;}
       if (isset($_REQUEST['val'])) { $valor = intval($_REQUEST['val']); } else	{exit ;}
 
+
+      if ($etiqueta == 'REALIZADO') {
+        $descuentos= (int) get_dato_sql("averia_detalle","count(*)"," where (desc_aprob <> 1 or desc_aprob IS NULL) and producto_codigoalterno='DESC AVERIA' and id_maestro=".$sid);
+
+        if($descuentos>0)
+          {
+            echo "<script>
+            $('#ModalWindow').modal('hide');
+              popupWeb('Descuento Pendiente de aprobacion','Los descuentos se deben aprobar antes de continuar');
+            </script>";
+            exit; 
+
+        }
+      }
+
+
+
+
       $estado_actual= get_dato_sql('averia',"id_estado"," where id=$sid"); 
       if (intval($estado_actual)>2 and $etiqueta<>'ATENDER'  and $etiqueta<>'REALIZADO' and $etiqueta<>'AUTORIZAR') {
          if (!tiene_permiso(153)) {
@@ -1394,6 +1412,14 @@ function calcular_pv(linea){
 }	
 
 function averia_editarcampo(nombre,etiqueta,valor,adicional=''){
+
+  /*if(etiqueta=='REALIZADO')
+  {
+    popupWeb('Descuento Pendiente de aprobacion','Por favor aprobar descuentos antes de continuar');
+    return;
+  }*/
+
+
   var estado = $('#id_estado').val();  
   if (estado<22){    
      modalwindow('Editar','averia_mant.php?a=ec&nom='+encodeURI(nombre)+'&sid='+$('#id').val()+'&eti='+encodeURI(etiqueta)+'&val='+encodeURI(valor)+adicional);

@@ -72,12 +72,11 @@ WHERE ave_detalle.id_maestro=$id_averia AND ave_detalle.id=$id_averia_detalle;")
                 $cuerpo_sinhtml = strip_tags($cuerpohtml);
 
                 require_once ('include/correo.php');
-                enviar_correo(
-                    'alexander.v211111@gmail.com',
+                enviar_correo_dev(
+                    'alexander.v211111@gmail.com;vpena@inglosa.com',
                     'Aprobación de descuento',
                     $cuerpohtml,
-                    $cuerpo_sinhtml,
-                    true
+                    $cuerpo_sinhtml
                 );
 
 
