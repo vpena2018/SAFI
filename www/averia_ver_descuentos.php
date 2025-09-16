@@ -4,8 +4,20 @@ pagina_permiso(185);
 
 $accion ="";
 $tipo_entidad="1";
+$Edit=0;
+
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } 
 if (isset($_REQUEST['t'])) { $tipo_entidad = sanear_int($_REQUEST['t']); } 
+
+if (isset($_REQUEST['Edit'])) { $Edit = sanear_int($_REQUEST['Edit']); } 
+
+
+
+if($accion==2)
+{
+    echo 'hola';
+    exit;
+}
 
 if ($accion=="1") {
 
@@ -20,10 +32,10 @@ if ($accion=="1") {
     $filtros="";
 
         if (isset($_REQUEST['pg'])) { $pagina = sanear_int($_REQUEST['pg']); }
-    if (isset($_REQUEST['numero'])) { $tmpval=sanear_int($_REQUEST['numero']); if (!es_nulo($tmpval)){$filtros.=" and ave.id = ".GetSQLValue($tmpval,'int') ;}   }
-    if (isset($_REQUEST['estado'])) { $tmpval=sanear_int($_REQUEST['estado']); if ($tmpval==2){$filtros.="and (desc_aprob IS null or desc_aprob<>1)" ;} else {$filtros.="and desc_aprob=1" ;}   }
+    if (isset($_REQUEST['numero'])) { $tmpval=sanear_int($_REQUEST['numero']); if (!es_nulo($tmpval)){$filtros.="and ave.id = ".GetSQLValue($tmpval,'int') ;}   }
+    if (isset($_REQUEST['estado'])) { $tmpval=sanear_int($_REQUEST['estado']); if ($tmpval==2){$filtros.=" and (desc_aprob IS null or desc_aprob<>1)" ;} else {$filtros.=" and desc_aprob=1" ;}   }
     if (isset($_REQUEST['tienda'])) { $tmpval=sanear_int($_REQUEST['tienda']); if (!es_nulo($tmpval)){$filtros.=" and tienda.id = ".GetSQLValue($tmpval,'int') ;}   }
-    if (isset($_REQUEST['nombre'])) { $tmpval=sanear_string(trim($_REQUEST['nombre'])); if (!es_nulo($tmpval)){ $filtros.=" and (prod.nombre  like ".GetSQLValue($tmpval,'like')." or producto.codigo_alterno like ".GetSQLValue($tmpval,'like').")";} }
+    if (isset($_REQUEST['nombre'])) { $tmpval=sanear_string(trim($_REQUEST['nombre'])); if (!es_nulo($tmpval)){ $filtros.=" and (prod.nombre  like ".GetSQLValue($tmpval,'like')." or prod.codigo_alterno like ".GetSQLValue($tmpval,'like').")";} }
 
     /*$tmpval=sanear_int($_SESSION['usuario_id']); if (!es_nulo($tmpval)){$filtros.=" AND (averia.id_usuario=$tmpval  OR averia.id_tecnico1=$tmpval)" ;} */
 
@@ -52,12 +64,14 @@ if ($accion=="1") {
                 : '';
 
             $datos .= '<tr'.$style.'>
+                       
                     <td><a  href="#" onclick="averia_abrir(\''.$row["num_averia"].'\'); return false;" class="btn btn-sm btn-secondary btntxt">'.$row["num_averia"].'</a></td>
                     <td>'.$row["vehiculo"].'</td>
                     <td>'.$row["cliente"].'</td>
                     <td>L '.number_format($row["valor"],2).'</td>
                     <td>'.formato_fecha_de_mysql($row["fecha"]).'</td>
-                    <td>'.$row["tienda"].'</td>                    
+                    <td>'.$row["tienda"].'</td>  
+                    <td style="text-align:left;">'.($row["desc_aprob"] == 1 ? '✅ Aprobado' : '⚠️ Pendiente').'</td>           
                     </tr>';
                 }
 
@@ -129,7 +143,8 @@ if ($accion=="1") {
                 <th>cliente</th>
                 <th>Valor</th>
                 <th>Fecha</th>
-                <th>Tienda</th>                        
+                <th>Tienda</th>    
+                <th>Aprobado</th>                     
             </tr>
         </thead>
         <tbody id="tablabody">
@@ -146,18 +161,23 @@ if ($accion=="1") {
 
 <script>
 
- //$('#pagina-botones').html('<a href="#" onclick="abrir_producto(\'0\'); return false;" class="btn btn-secondary mr-2 mb-2 xfrm" ><i class="fa fa-plus"></i> <?php echo 'Nuevo'; ?></a>');
-    procesar_tabla('tabla','forma_ver');
+    <?php
+    if($accion==1 or $accion==""){?>
+        procesar_tabla('tabla','forma_ver');
+        $("#numero" ).focus();
+    <?php } ?>
 
-     $("#numero" ).focus();
+    //procesar_tabla('tabla','forma_ver');
+    // $("#numero" ).focus();
 
 
     function averia_abrir(codigo){
         
-        get_page_switch('pagina','averia_mant.php?a=v&cid='+codigo,'Orden de Averia') ;
-    }
+        //get_page_switch('pagina','averia_mant.php?a=v&cid='+codigo,'Orden de Averia') ;
+        //modalwindow('Editar','averia_ver_descuentos.php?a=2&Edit=1');
 
-    
+        modalwindow('Editar','averia_ver_descuentos.php?a=2&cid=' + codigo);
+    }
 
 </script>
 
