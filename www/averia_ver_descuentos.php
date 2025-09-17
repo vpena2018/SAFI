@@ -9,13 +9,136 @@ $Edit=0;
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } 
 if (isset($_REQUEST['t'])) { $tipo_entidad = sanear_int($_REQUEST['t']); } 
 
-if (isset($_REQUEST['Edit'])) { $Edit = sanear_int($_REQUEST['Edit']); } 
+$cid= isset($_POST['cid']) ? intval($_POST['cid']) : 0;
+
+
+if ($accion == "aprobar" && $cid > 0) {
+
+      $stud_arr[0]["pcode"] = 0;
+      $stud_arr[0]["pmsg"] ="ERROR";
+
+    $result=sql_update("UPDATE averia_detalle SET desc_aprob=1 WHERE id=".$cid);
+
+    if ($result == true) {
+
+      $stud_arr[0]["pcode"] = 1;
+      $stud_arr[0]["pmsg"] ="Descuento aprobado correctamente";
+      $stud_arr[0]["pcid"] = $cid;
+    }
+
+    salida_json($stud_arr);
+    exit;
+
+}
+
+if ($accion == "anular" && $cid > 0) {
+
+      $stud_arr[0]["pcode"] = 0;
+      $stud_arr[0]["pmsg"] ="ERROR";
+
+    $result=sql_update("UPDATE averia_detalle SET desc_aprob=1 WHERE id=".$cid);
+
+    if ($result == true) {
+
+      $stud_arr[0]["pcode"] = 1;
+      $stud_arr[0]["pmsg"] ="Descuento aprobado correctamente";
+      $stud_arr[0]["pcid"] = $cid;
+    }
+
+    salida_json($stud_arr);
+    exit;
+
+}
+
 
 
 
 if($accion==2)
-{
-    echo 'hola';
+{?>
+
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            Gestión de Avería
+        </div>
+        <div class="card-body">
+            <form id="form_accion_averia" method="post" onsubmit="return false;">
+                <input type="hidden" name="cid" value="<?php echo isset($_REQUEST['idDescuento']) ? intval($_REQUEST['idDescuento']) : 0; ?>">
+                
+                <div class="mb-3">
+                    <label><strong>Acciones disponibles:</strong></label>
+                </div>
+
+                <div class="d-flex justify-content-start">
+                    <button type="button" class="btn btn-success" style="margin-right:20px;" onclick="accionAveria('aprobar')">
+                        <i class="fa fa-check"></i> Aprobar
+                    </button>
+                    <button type="button" class="btn btn-danger" style="margin-right:20px;" onclick="accionAveria('anular')">
+                        <i class="fa fa-times"></i> Anular
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="cerrar_modal()">
+                        <i class="fa fa-ban"></i> Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script>
+    function accionAveria(accion) {
+        var cid = $("input[name='cid']").val();
+
+
+
+        // aquí puedes hacer un AJAX o redirigir, según tu flujo
+        if(accion=="aprobar"){
+            if(confirm("¿Seguro que desea aprobar el descuento de la avería "+cid+"?")){
+                $.post("averia_ver_descuentos.php", { a: "aprobar", cid: cid }, function(json){
+
+            if (json.length > 0) {
+			if (json[0].pcode == 0) {
+				cargando(false);
+				mytoast('error',json[0].pmsg,3000) ;   
+			}
+			if (json[0].pcode == 1) {
+				cargando(false);
+				mytoast('success',json[0].pmsg,3000) ;
+				
+			}
+		} else {cargando(false);  mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar");}
+                
+                }, "json").done(function() {
+                    // Esto se ejecuta siempre, haya o no haya sido exitoso el request
+                    cerrar_modal();
+                    limpiar_tabla('tabla');
+                    procesar_tabla('tabla','forma_ver');
+                });
+            }
+        } else if(accion=="anular"){
+            if(confirm("¿Seguro que desea anular la avería "+cid+"?")){
+                $.post("averia_ver_descuentos.php", { a: "anular", cid: cid }, function(resp){
+
+
+                    alert(resp.pmsg || "Acción realizada");
+                    cerrar_modal();
+                    procesar_tabla('tabla','forma_ver');
+
+
+
+                }, "json");
+            }
+        } else {
+            cerrar_modal();
+        }
+    }
+
+
+    function cerrar_modal() {
+        $('#ModalWindow').modal('hide');
+    }
+    </script>
+
+    <?php
     exit;
 }
 
@@ -43,7 +166,7 @@ if ($accion=="1") {
         if ($pagina>=1) { $offset=$pagina*app_reg_por_pag;   }
         $datos="";
 
-        $result = sql_select("SELECT ave.id num_averia,prod.nombre vehiculo, cliente.nombre cliente,(ave_detalle.cantidad* ave_detalle.precio_costo) valor,  ave.fecha, tienda.nombre tienda,ave_detalle.desc_aprob
+        $result = sql_select("SELECT ave.id num_averia,ave_detalle.id ave_detalle_id,prod.nombre vehiculo, cliente.nombre cliente,(ave_detalle.cantidad* ave_detalle.precio_costo) valor,  ave.fecha, tienda.nombre tienda,ave_detalle.desc_aprob
         FROM averia ave
         INNER JOIN tienda ON tienda.id=ave.id_tienda
         INNER JOIN entidad cliente ON cliente.id=ave.cliente_id
@@ -65,7 +188,7 @@ if ($accion=="1") {
 
             $datos .= '<tr'.$style.'>
                        
-                    <td><a  href="#" onclick="averia_abrir(\''.$row["num_averia"].'\'); return false;" class="btn btn-sm btn-secondary btntxt">'.$row["num_averia"].'</a></td>
+                    <td><a  href="#" onclick="averia_abrir(\''.$row["num_averia"].'\',\''.$row["ave_detalle_id"].'\'); return false;" class="btn btn-sm btn-secondary btntxt">'.$row["num_averia"].'</a></td>
                     <td>'.$row["vehiculo"].'</td>
                     <td>'.$row["cliente"].'</td>
                     <td>L '.number_format($row["valor"],2).'</td>
@@ -171,12 +294,12 @@ if ($accion=="1") {
     // $("#numero" ).focus();
 
 
-    function averia_abrir(codigo){
+    function averia_abrir(codigo,idDescuento){
         
         //get_page_switch('pagina','averia_mant.php?a=v&cid='+codigo,'Orden de Averia') ;
         //modalwindow('Editar','averia_ver_descuentos.php?a=2&Edit=1');
 
-        modalwindow('Editar','averia_ver_descuentos.php?a=2&cid=' + codigo);
+        modalwindow('Editar','averia_ver_descuentos.php?a=2&cid=' + codigo+'&idDescuento=' + idDescuento);
     }
 
 </script>
