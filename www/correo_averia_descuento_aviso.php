@@ -2,6 +2,7 @@
 require_once ('include/framework.php');
 
 $solicitud=true;
+$correos="alexander.v211111@gmail.com;";//reemplazar los correos principales con los de produccion
 
 
 $app_enviar_email=true;
@@ -56,6 +57,20 @@ WHERE ave_detalle.id=$id_averia_detalle;");
 
                     $fecha=formato_fecha_de_mysql($correo_row['fecha']);
 
+                    if(!$solicitud)
+                    {
+                        $correosResult=sql_select("SELECT correo_orden_averia_nueva FROM tienda WHERE nombre = '".$correo_row['tienda']."' LIMIT 1");
+                        if($correosResult!=false && $correosResult -> num_rows > 0)
+                        {
+                            $correosRow = $correosResult -> fetch_assoc(); 
+                            if($correosRow['correo_orden_averia_nueva']!='')
+                            {
+                                $correos=$correosRow['correo_orden_averia_nueva'];
+                                $correos="alexander.v211111@gmail.com";//quitar linea cuando este en produccion
+                            }
+                        }
+                    }
+
 
                     $cuerpohtml = "
 <html>
@@ -78,7 +93,7 @@ WHERE ave_detalle.id=$id_averia_detalle;");
         </tr>
         <tr style='background-color:#f9f9f9;'>
             <th style='text-align:left; color:#004080;'>Valor</th>
-            <td>L ".number_format($correo_row['valor'],2)."</td>
+            <td>L ".number_format($correo_row['valor']*-1,2)."</td>
         </tr>
         <tr>
             <th style='text-align:left; color:#004080;'>Fecha</th>
@@ -96,16 +111,12 @@ WHERE ave_detalle.id=$id_averia_detalle;");
 </html>
 ";
 
-
-
                 $cuerpo_sinhtml = strip_tags($cuerpohtml);
 
                 require_once ('include/correo.php');
 
-
-
                 enviar_correo_dev(
-                    'alexander.v211111@gmail.com',
+                    $correos,
                     'Descuento Averias',
                     $cuerpohtml,
                     $cuerpo_sinhtml

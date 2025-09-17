@@ -276,7 +276,7 @@ if ($accion=="1") {
                     <td><a  href="#" onclick="averia_abrir(\''.$row["num_averia"].'\',\''.$row["ave_detalle_id"].'\',\''.$row["desc_aprob"].'\'); return false;" class="btn btn-sm btn-secondary btntxt">'.$row["num_averia"].'</a></td>
                     <td>'.$row["vehiculo"].'</td>
                     <td>'.$row["cliente"].'</td>
-                    <td>L '.number_format($row["valor"],2).'</td>
+                    <td>L '.number_format($row["valor"]*-1,2).'</td>
                     <td>'.formato_fecha_de_mysql($row["fecha"]).'</td>
                     <td>'.$row["tienda"].'</td>  
                     <<td style="text-align:left;">'.$estado.'</td>             
