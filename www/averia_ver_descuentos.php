@@ -22,6 +22,32 @@ if ($accion == "aprobar" && $cid > 0) {
 
     if ($result == true) {
 
+         $resultestado=sql_select("SELECT ave.id_estado,ave.id FROM averia ave INNER JOIN averia_detalle ave_detalle ON ave.id=ave_detalle.id_maestro WHERE ave_detalle.id=".$cid);
+         $estado=0;
+         $idave=0;
+
+        if ($resultestado!=false){
+            if ($resultestado -> num_rows > 0) { 
+            $row = $resultestado -> fetch_assoc(); 
+
+            $estado=$row["id_estado"];
+            $idave=$row["id"];
+            }
+        } 
+
+$sqlhistAveria = "INSERT INTO averia_historial_estado
+(id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
+VALUES (
+    $idave, 
+    ".$_SESSION['usuario_id'].", 
+    ".$estado.", 
+    'Descuento Aprobado id: ".$cid."', 
+    NOW(), 
+    'Se aprobó descuento de averia'
+);";
+
+        $resultHist = sql_insert($sqlhistAveria);
+
       $stud_arr[0]["pcode"] = 1;
       $stud_arr[0]["pmsg"] ="Descuento aprobado correctamente";
       $stud_arr[0]["pcid"] = $cid;
@@ -46,8 +72,34 @@ if ($accion == "anular" && $cid > 0) {
 
     if ($result == true) {
 
+         $resultestado=sql_select("SELECT ave.id_estado,ave.id FROM averia ave INNER JOIN averia_detalle ave_detalle ON ave.id=ave_detalle.id_maestro WHERE ave_detalle.id=".$cid);
+         $estado=0;
+
+        if ($resultestado!=false){
+            if ($resultestado -> num_rows > 0) { 
+            $row = $resultestado -> fetch_assoc(); 
+
+            $estado=$row["id_estado"];
+            $idave=$row["id"];
+            }
+        } 
+
+$sqlhistAveria = "INSERT INTO averia_historial_estado
+(id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
+VALUES (
+    $idave, 
+    ".$_SESSION['usuario_id'].", 
+    ".$estado.", 
+    'Descuento denegado id: ".$cid."', 
+    NOW(), 
+    'Se denegó descuento de averia'
+);";
+
+        $resultHist = sql_insert($sqlhistAveria);
+
+
       $stud_arr[0]["pcode"] = 1;
-      $stud_arr[0]["pmsg"] ="Descuento Anulado correctamente";
+      $stud_arr[0]["pmsg"] ="Descuento Denegado correctamente";
       $stud_arr[0]["pcid"] = $cid;
 
       require_once ('correo_averia_descuento_aviso.php');
@@ -163,7 +215,7 @@ if($accion==2)
 if ($accion=="1") {
 
     $stud_arr[0]["pcode"] = 0;
-    $stud_arr[0]["pmsg"] ="No se encontraron Datos";
+    $stud_arr[0]["pmsg"] ="Recargado";
     $stud_arr[0]["pdata"] ="";
     $stud_arr[0]["pmas"] =0;
 
