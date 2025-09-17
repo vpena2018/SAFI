@@ -1,9 +1,22 @@
 <?php
 require_once ('include/framework.php');
 
-$app_enviar_email=true;//susttituir por app_enviar_email despues
+
+$app_enviar_email=true;
 $id_averia=$cid;
-$id_averia_detalle=$result;
+
+if($accion=="aprobar")
+{
+    $id_averia_detalle=$cid;
+}else if($accion=="anulado")
+{
+    $id_averia_detalle=$cid;
+}else{
+    $id_averia_detalle=$result;
+}
+
+
+
 
 if ($app_enviar_email==true) {
 
@@ -12,7 +25,8 @@ INNER JOIN tienda ON tienda.id=ave.id_tienda
 INNER JOIN entidad cliente ON cliente.id=ave.cliente_id
 INNER JOIN producto prod ON prod.id= ave.id_producto
 INNER JOIN averia_detalle ave_detalle ON ave.id=ave_detalle.id_maestro
-WHERE ave_detalle.id_maestro=$id_averia AND ave_detalle.id=$id_averia_detalle;");
+WHERE ave_detalle.id=$id_averia_detalle;");
+
 
             if ($correo_servicio_result!=false){
                 if ($correo_servicio_result -> num_rows > 0) { 
@@ -74,6 +88,9 @@ WHERE ave_detalle.id_maestro=$id_averia AND ave_detalle.id=$id_averia_detalle;")
                 $cuerpo_sinhtml = strip_tags($cuerpohtml);
 
                 require_once ('include/correo.php');
+
+
+
                 enviar_correo_dev(
                     'alexander.v211111@gmail.com',
                     'Aprobación de descuento',

@@ -24,25 +24,32 @@ if ($accion == "aprobar" && $cid > 0) {
       $stud_arr[0]["pcode"] = 1;
       $stud_arr[0]["pmsg"] ="Descuento aprobado correctamente";
       $stud_arr[0]["pcid"] = $cid;
+
+      require_once ('correo_averia_descuento_aviso.php');
     }
+
+
 
     salida_json($stud_arr);
     exit;
 
 }
 
+
 if ($accion == "anular" && $cid > 0) {
 
       $stud_arr[0]["pcode"] = 0;
       $stud_arr[0]["pmsg"] ="ERROR";
 
-    $result=sql_update("UPDATE averia_detalle SET desc_aprob=1 WHERE id=".$cid);
+    $result=sql_update("UPDATE averia_detalle SET desc_aprob=2 WHERE id=".$cid);
 
     if ($result == true) {
 
       $stud_arr[0]["pcode"] = 1;
-      $stud_arr[0]["pmsg"] ="Descuento aprobado correctamente";
+      $stud_arr[0]["pmsg"] ="Descuento Anulado correctamente";
       $stud_arr[0]["pcid"] = $cid;
+
+      require_once ('correo_averia_descuento_aviso.php');
     }
 
     salida_json($stud_arr);
@@ -58,7 +65,7 @@ if($accion==2)
 
     <div class="card">
         <div class="card-header bg-dark text-white">
-            Gestión de Avería
+            Gestión de Descuentos de Averías
         </div>
         <div class="card-body">
             <form id="form_accion_averia" method="post" onsubmit="return false;">
@@ -116,20 +123,28 @@ if($accion==2)
             }
         } else if(accion=="anular"){
             if(confirm("¿Seguro que desea anular la avería "+cid+"?")){
-                $.post("averia_ver_descuentos.php", { a: "anular", cid: cid }, function(resp){
+                $.post("averia_ver_descuentos.php", { a: "anular", cid: cid }, function(json){
 
+                    if (json.length > 0) {
+                    if (json[0].pcode == 0) {
+                        cargando(false);
+                        mytoast('error',json[0].pmsg,3000) ;   
+                    }
+                    if (json[0].pcode == 1) {
+                        cargando(false);
+                        mytoast('success',json[0].pmsg,3000) ;
+                        
+                    }
+                } else {cargando(false);  mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar");}
 
-                    alert(resp.pmsg || "Acción realizada");
+                }, "json").done(function() {
+
                     cerrar_modal();
+                    limpiar_tabla('tabla');
                     procesar_tabla('tabla','forma_ver');
-
-
-
-                }, "json");
+                });;
             }
-        } else {
-            cerrar_modal();
-        }
+        } 
     }
 
 
@@ -186,15 +201,25 @@ if ($accion=="1") {
                 ? ' style="background-color:#d4edda;"'   // verde claro
                 : '';
 
+
+                $estado = '';
+                if ($row["desc_aprob"] == 1) {
+                    $estado = '✅ Aprobado';
+                } elseif ($row["desc_aprob"] == 2) {
+                    $estado = '❌ Anulado';
+                } else {
+                    $estado = '⚠️ Pendiente';
+                }
+
             $datos .= '<tr'.$style.'>
                        
-                    <td><a  href="#" onclick="averia_abrir(\''.$row["num_averia"].'\',\''.$row["ave_detalle_id"].'\'); return false;" class="btn btn-sm btn-secondary btntxt">'.$row["num_averia"].'</a></td>
+                    <td><a  href="#" onclick="averia_abrir(\''.$row["num_averia"].'\',\''.$row["ave_detalle_id"].'\',\''.$row["desc_aprob"].'\'); return false;" class="btn btn-sm btn-secondary btntxt">'.$row["num_averia"].'</a></td>
                     <td>'.$row["vehiculo"].'</td>
                     <td>'.$row["cliente"].'</td>
                     <td>L '.number_format($row["valor"],2).'</td>
                     <td>'.formato_fecha_de_mysql($row["fecha"]).'</td>
                     <td>'.$row["tienda"].'</td>  
-                    <td style="text-align:left;">'.($row["desc_aprob"] == 1 ? '✅ Aprobado' : '⚠️ Pendiente').'</td>           
+                    <<td style="text-align:left;">'.$estado.'</td>             
                     </tr>';
                 }
 
@@ -294,12 +319,17 @@ if ($accion=="1") {
     // $("#numero" ).focus();
 
 
-    function averia_abrir(codigo,idDescuento){
-        
-        //get_page_switch('pagina','averia_mant.php?a=v&cid='+codigo,'Orden de Averia') ;
-        //modalwindow('Editar','averia_ver_descuentos.php?a=2&Edit=1');
-
-        modalwindow('Editar','averia_ver_descuentos.php?a=2&cid=' + codigo+'&idDescuento=' + idDescuento);
+    function averia_abrir(codigo,idDescuento,estado){
+        if (estado==2 || estado==1) {
+            if(estado==1) {
+                mymodal('info',"Información","El descuento, ya fue aprobado no se puede modificar.");
+            } else {
+                mymodal('info',"Información","El descuento,ya fue anulado no se puede modificar.");
+            }
+            return;
+        }else{
+        modalwindow('Descuentos','averia_ver_descuentos.php?a=2&cid=' + codigo+'&idDescuento=' + idDescuento);
+        }
     }
 
 </script>
