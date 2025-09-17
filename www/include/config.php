@@ -26,11 +26,11 @@ define("db_ip", "localhost");  // Ip o host donde se encuentra la base de datos
 define("db_name", "inglosa"); //Nombre de base de datos
 
 
-define("app_email", "flota@inglosa.hn");
+define("app_email", "xxx@xxx.con");
 define("app_email_name", "Flota");
-define("app_email_host", "smtp.office365.com");
-define("app_email_user", "flota@inglosa.hn");
-define("app_email_pass", "IgFlot@2018+");
+define("app_email_host", "smtp.xxx.con");
+define("app_email_user", "xxx@xxx.con");
+define("app_email_pass", "xxx");
 define("app_email_port", "587");
 define("app_enviar_email", false);
 
