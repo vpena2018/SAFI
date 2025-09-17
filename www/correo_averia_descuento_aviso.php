@@ -1,21 +1,43 @@
 <?php
 require_once ('include/framework.php');
 
+$solicitud=true;
+
 
 $app_enviar_email=true;
 $id_averia=$cid;
+$titulo="<h2 style='color:#004080;'>Solicitud de aprobación de descuento</h2>";
+$subtitulo="<p>Se ha generado una solicitud de descuento que requiere aprobación:</p>";
+$estiloTabla="<tr style='background-color:#004080; color:#fff; text-align:left;'>";
+$footer="    <p>Por favor ingrese al sistema para aprobar o rechazar esta solicitud:</p>
+    <p>
+        <a href='https://flota.inglosa.hn/' 
+           style='display:inline-block;padding:12px 24px;background-color:#004080;
+                  color:#fff;text-decoration:none;font-weight:bold;
+                  border-radius:5px;'>
+            Ingresar al SAFI
+        </a>
+    </p>";
 
 if($accion=="aprobar")
 {
     $id_averia_detalle=$cid;
-}else if($accion=="anulado")
+    $titulo="<h2 style='color:#28a745;'>Descuento Aprobado</h2>";
+    $subtitulo="<p></p>";
+    $estiloTabla="<tr style='background-color:#28a745; color:#fff; text-align:left;'>";
+    $footer="";
+    $solicitud=false;
+}else if($accion=="anular")
 {
     $id_averia_detalle=$cid;
+    $titulo="<h2 style='color:#dc3545;'>Descuento Denegado</h2>";
+    $subtitulo="<p></p>";
+    $estiloTabla="<tr style='background-color:#dc3545; color:#fff; text-align:left;'>";
+    $footer="";
+    $solicitud=false;
 }else{
     $id_averia_detalle=$result;
 }
-
-
 
 
 if ($app_enviar_email==true) {
@@ -38,12 +60,11 @@ WHERE ave_detalle.id=$id_averia_detalle;");
                     $cuerpohtml = "
 <html>
 <body style='font-family: Arial, sans-serif; font-size:14px; color:#333;'>
-    <h2 style='color:#004080;'>Solicitud de aprobación de descuento</h2>
-    <p>Se ha generado una solicitud de descuento que requiere aprobación:</p>
-    
+    {$titulo}
+    {$subtitulo}
     <table cellpadding='8' cellspacing='0' width='100%' 
            style='border-collapse:collapse; border:1px solid #ccc;'>
-        <tr style='background-color:#004080; color:#fff; text-align:left;'>
+        {$estiloTabla}
             <th>N° Avería</th>
             <td>{$correo_row['num_averia']}</td>
         </tr>
@@ -70,15 +91,7 @@ WHERE ave_detalle.id=$id_averia_detalle;");
     </table>
     
     <br>
-    <p>Por favor ingrese al sistema para aprobar o rechazar esta solicitud:</p>
-    <p>
-        <a href='https://flota.inglosa.hn/' 
-           style='display:inline-block;padding:12px 24px;background-color:#004080;
-                  color:#fff;text-decoration:none;font-weight:bold;
-                  border-radius:5px;'>
-            Ingresar al SAFI
-        </a>
-    </p>
+    {$footer}
 </body>
 </html>
 ";
@@ -93,7 +106,7 @@ WHERE ave_detalle.id=$id_averia_detalle;");
 
                 enviar_correo_dev(
                     'alexander.v211111@gmail.com',
-                    'Aprobación de descuento',
+                    'Descuento Averias',
                     $cuerpohtml,
                     $cuerpo_sinhtml
                 );
