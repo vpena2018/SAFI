@@ -295,11 +295,41 @@ $totalrepuestos=0;
         
             if ($averias_result->num_rows > 0) { 
               while ($detalle = $averias_result -> fetch_assoc()) { 
+
+                $producto_tipo=$detalle['producto_codigoalterno'];
+                $descuento=false;
+                $cantidad=$detalle['cantidad'];
+
+                if($producto_tipo=="DESC AVERIA")
+                {
+                    $descuento=true;
+                    $cantidad=$cantidad*-1;
+                }
+
+                
+
+
+
                 $monto=$detalle['precio_venta'];
                 if ($alcosto<>"") {
                     $monto=$detalle['precio_costo'];
                 }
-                $totlinea=floatval($detalle['cantidad'])*floatval($monto);
+                
+                /*if($descuento)
+                {
+                    $monto=$monto*-1;
+                }*/
+
+                    if($descuento)
+                    {
+                        $totlinea=floatval($cantidad)*floatval($monto*-1);
+                    }else{
+                        $totlinea=floatval($cantidad)*floatval($monto);
+                    }
+
+                //$totlinea=floatval($cantidad)*floatval($monto);
+
+
                 $totalobra+= $totlinea ;   
                 
                 if (!in_array($detalle['producto_codigoalterno'],$_SESSION['p_exento_isv'])) {
@@ -308,9 +338,9 @@ $totalrepuestos=0;
 
                 $pdf->Ln();
                 $pdf->Cell(135, 5, $detalle['producto_nombre'] , 'LTRB', 0, 'L', false );
-                $pdf->Cell(15, 5, $detalle['cantidad'] , 'LTRB', 0, 'C', false );
+                $pdf->Cell(15, 5, $cantidad , 'LTRB', 0, 'C', false );
                 $pdf->Cell(25, 5, formato_numero($monto,2) , 'LTRB', 0, 'R', false );
-                $pdf->Cell(25, 5, formato_numero(floatval($detalle['cantidad'])*floatval($monto),2) , 'LTRB', 0, 'R', false );     
+                $pdf->Cell(25, 5, formato_numero(floatval($cantidad)*floatval($monto),2) , 'LTRB', 0, 'R', false );     
                 $lin++;
 
                 if ($detalle['estado']<=1) {
