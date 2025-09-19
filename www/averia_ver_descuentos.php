@@ -236,7 +236,7 @@ if ($accion=="1") {
         if ($pagina>=1) { $offset=$pagina*app_reg_por_pag;   }
         $datos="";
 
-        $result = sql_select("SELECT ave.id num_averia,ave_detalle.id ave_detalle_id,prod.nombre vehiculo, cliente.nombre cliente,(ave_detalle.cantidad* ave_detalle.precio_costo) valor,  ave_detalle.fecha, tienda.nombre tienda,ave_detalle.desc_aprob
+        $result = sql_select("SELECT ave.id num_averia,ave_detalle.id ave_detalle_id,prod.nombre vehiculo, cliente.nombre cliente,(ave_detalle.cantidad* ave_detalle.precio_venta) valor,  ave_detalle.fecha, tienda.nombre tienda,ave_detalle.desc_aprob
         FROM averia ave
         INNER JOIN tienda ON tienda.id=ave.id_tienda
         INNER JOIN entidad cliente ON cliente.id=ave.cliente_id
