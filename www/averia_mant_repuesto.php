@@ -257,7 +257,6 @@ if ($accion =="agr_g") {// guardar averia repuesto
     
              //Calculos
 
-                 
               $tmpsql="";$tmpsql2="";
    
  
@@ -329,7 +328,37 @@ if ($accion =="agr_g") {// guardar averia repuesto
     $hayerrores=false;
     foreach( $sqldetalle as $sqldet ) {
         $result=sql_insert($sqldet);
-        if ($result==false){ $hayerrores=true;}
+        if ($result==false)
+          { 
+            $hayerrores=true;
+          }else{
+
+            if (strpos($sqldet, 'DESC AVERIA') !== false) {
+
+              $resultestado=sql_select("SELECT id_estado FROM averia WHERE id=".$cid);
+              $estado=0;
+
+                    if ($resultestado!=false){
+                      if ($resultestado -> num_rows > 0) { 
+                        $row = $resultestado -> fetch_assoc(); 
+
+                        $estado=$row["id_estado"];
+                      }
+                    } 
+
+
+                    $sqlhistAveria="INSERT INTO averia_historial_estado
+                    (id_maestro,  id_usuario, id_estado, nombre, fecha, observaciones)
+                    VALUES ( $cid, ".$_SESSION['usuario_id'].",".$estado.", 'Ingreso de descuento', NOW(), 'se ingreso descuento para aprobacion')";
+
+                    $resultHist = sql_insert($sqlhistAveria);
+
+
+              // La cadena contiene "DESC AVERIA"
+              require_once ('correo_averia_descuento_aviso.php');
+          } 
+
+          }
         }	
 
      recalcular_totales_averia($cid );

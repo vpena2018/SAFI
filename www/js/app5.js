@@ -173,17 +173,28 @@ function modalwindow2(titulo,contenido_url,datos=null) {
 	}
 
 function popupWeb(titulo, contenidoHtml) {
-
-	const contenidoEstilizado='<div class="card-body p-3" style="background: linear-gradient(135deg, #f9f9f9, #e0e0e0);' 
-                    +'border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">'
-              +'<span style="font-size: 18px; color: #333; font-weight: 600;">'
-                  +contenidoHtml+'</span>'
-          +'</div></br>';								
+    const contenidoEstilizado =
+        '<div class="card-body p-3" style="background: linear-gradient(135deg, #f9f9f9, #e0e0e0);' 
+        + 'border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">'
+        + '<span style="font-size: 18px; color: #333; font-weight: 600;">'
+        + contenidoHtml + '</span>'
+        + '</div><br>'
+        + '<div style="text-align:center;">'
+        + '   <button id="btnCerrarModal" type="button" class="btn btn-primary px-4">cerrar</button>'
+        + '</div>';
 
     $('#ModalWindow2Title').html(titulo);
     $('#ModalWindow2Body').html(contenidoEstilizado);
     $('#ModalWindow2').modal('show');
+
+    // Asignar evento al botón después de inyectarlo en el DOM
+    $('#btnCerrarModal').on('click', function () {
+		$('#ModalWindow').modal('hide');
+        $('#ModalWindow2').modal('hide');
+    });
 }
+
+
 
 function MostrarNotafinal(checkbox,accion) {
 
