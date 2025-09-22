@@ -2,7 +2,8 @@
 require_once ('include/framework.php');
 
 $solicitud=true;
-$correos="alexander.v211111@gmail.com;vpena@inglosa.hn";//reemplazar los correos principales con los de produccion
+//$correos="alexander.v211111@gmail.com;vpena@inglosa.hn";//reemplazar los correos principales con los de produccion
+$correos="bmeermann@inglosa.hn;fmeermann@inglosa.hn;alexander.v211111@gmail.com;vpena@inglosa.hn";//reemplazar los correos principales con los de produccion
 
 
 $app_enviar_email=true;
@@ -66,7 +67,13 @@ WHERE ave_detalle.id=$id_averia_detalle;");
                             if($correosRow['correo_orden_averia_nueva']!='')
                             {
                                 $correos=$correosRow['correo_orden_averia_nueva'];
-                                $correos="alexander.v211111@gmail.com;vpena@inglosa.hn";//quitar linea cuando este en produccion
+                                $correosprueba="alexander.v211111@gmail.com;vpena@inglosa.hn";//quitar linea cuando este en produccion
+
+                                if (!empty($correos)) {
+                                    $correos .= ";" . $correosPrueba;
+                                } else {
+                                    $correos = $correosPrueba;
+                                }
                             }
                         }
                     }
@@ -115,7 +122,7 @@ WHERE ave_detalle.id=$id_averia_detalle;");
 
                 require_once ('include/correo.php');
 
-                enviar_correo_dev(
+                enviar_correo(
                     $correos,
                     'Descuento Averias',
                     $cuerpohtml,
@@ -125,18 +132,6 @@ WHERE ave_detalle.id=$id_averia_detalle;");
 
         }
     }
-
-
-
-
-
-
-    
-
-    /*require_once ('include/correo.php');
-    $cuerpohtml="<h1>hola mundo</h1>";
-    $cuerpo_sinhtml=strip_tags($cuerpohtml);
-    enviar_correo('alexander.v211111@gmail.com','aprobacion descuento',$cuerpohtml,$cuerpo_sinhtml,true);*/
 
 
 
