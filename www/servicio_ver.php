@@ -31,7 +31,8 @@ if ($accion=="1") {
     if (isset($_REQUEST['vin'])) { $tmpval=sanear_string(trim($_REQUEST['vin'])); if (!es_nulo($tmpval)){ $filtros.=" and producto.chasis like ".GetSQLValue($tmpval,'like');} }
     
     if (isset($_REQUEST['id_tecnico'])) { $tmpval=sanear_int($_REQUEST['id_tecnico']); if (!es_nulo($tmpval)){$filtros.=' AND (servicio.id_tecnico1='.GetSQLValue($tmpval,'int').' OR servicio.id_tecnico2='.GetSQLValue($tmpval,'int').' OR servicio.id_tecnico3='.GetSQLValue($tmpval,'int').' OR servicio.id_tecnico4='.GetSQLValue($tmpval,'int').')' ;}   }
-
+    if (isset($_REQUEST['id_tipo_revision'])) { $tmpval=sanear_int($_REQUEST['id_tipo_revision']); if (!es_nulo($tmpval)){$filtros.=" and servicio.id_tipo_revision = ".GetSQLValue($tmpval,'int') ;}   }
+    
    
     if (isset($_REQUEST['rfdesde'])) { $fdesde = sanear_date($_REQUEST['rfdesde']); } else   {$fdesde ='';}
     if (isset($_REQUEST['rfhasta'])) { $fhasta = sanear_date($_REQUEST['rfhasta']); } else   {$fhasta ='';}
@@ -242,9 +243,15 @@ if ($accion=="1") {
             <script>rf_fechas('hoy');</script>
 
             <div class="col-sm">
+                <?php
+                 echo campo("id_tipo_revision","Tipo Revision",'select',valores_combobox_db('servicio_tipo_revision','','nombre','','','Todas'),' ',' onkeypress="buscarfiltro(event,\'btn-filtro\');"');
+                ?>
+            </div>
+
+            <div class="col-sm">
             <a id="btn-filtro" href="#" onclick="procesar_tabla_datatable('tablaver','tabla','servicio_ver.php?a=1','Ordenes de Servicio','forma_ver');  return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i>  <?php echo "Buscar"; ?></a>
             
-        </div>
+            </div>
 
     </div>
    
