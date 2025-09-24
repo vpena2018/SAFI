@@ -412,49 +412,7 @@ $totalrepuestos=0;
     WHERE servicio_foto.id_servicio=$cid  
     order by servicio_foto.fecha,servicio_foto.id");
     if ($result_fotos!=false){
-        if ($result_fotos -> num_rows > 0) { 
-            /*
-            $pdf->AddPage();
-
-            $ancho_img=66;
-            $colx=1;
-            $total_columnas=3;
-            $pos_x=8;
-            $pn_ln=0;
-            $nn=1;
-             
-            while ($row_fotos = $result_fotos -> fetch_assoc()) {
-                $fecha=$row_fotos["fecha"];
-                $fext = substr($row_fotos["archivo"], -3);
-                if ($fext=='jpg' or $fext=='peg' or $fext=='png' ) {
-                    if ($fecha<='2025-03-31'){
-                        $image_file= 'aws_bucket_s3/thumbnail/'.$row_fotos["archivo"];                        
-                        $pdf->writeHTMLCell($ancho_img, '', $pos_x,'', '<img src="aws_bucket_s3/'.$row_fotos["archivo"].'">', 0,$pn_ln, 0, true, 'C', true);                
-                    }else{
-                        $image_file= 'uploa_d/thumbnail/'.$row_fotos["archivo"];  
-                        $pdf->writeHTMLCell($ancho_img, '', $pos_x,'', '<img src="uploa_d/'.$row_fotos["archivo"].'">', 0,$pn_ln, 0, true, 'C', true);
-                    }
-                   // $pdf->Image($image_file,'', '', 0, 0, '', '', '', false, 300, '', false, false, 0, false, false, false);
-                   //$pdf->writeHTMLCell(150, '', 35, '', '<img src="uploa_d/'.$row_fotos["archivo"].'">', 0, 1, 0, true, 'C', true);
-                   //$pdf->writeHTMLCell($ancho_img, '', $pos_x,'', '<img src="uploa_d/'.$row_fotos["archivo"].'">', 0,$pn_ln, 0, true, 'C', true);
-                   $pos_x+=$ancho_img;           
-                   $colx++;
-                   $pn_ln=0;
-                   if ($colx==($total_columnas)) {$pn_ln=2;}
-                    if ($colx>$total_columnas) {
-                         $pos_x=8;
-                         $colx=1; 
-                        // $pdf->Ln(7); 
-                    }
-                    if ($pdf->getY()>(230)) {
-                       $pdf->AddPage();
-                       $pos_x=8;
-                       $colx=1; 
-                       $pn_ln=0;
-                    }
- 
-                 $nn++;     
-            } */
+        if ($result_fotos -> num_rows > 0) {      
             $pdf->AddPage();     
             $ancho_img=66; //66;
             $colx=1;
@@ -538,7 +496,7 @@ $totalrepuestos=0;
 
 
     //********* PAGINA MULTI-K */
-    if ($id_tipo_revision<=5)
+if ($id_tipo_revision<=5)
 //if (!es_nulo($multik))
      {
         $pdf->AddPage();
