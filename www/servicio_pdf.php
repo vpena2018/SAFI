@@ -381,9 +381,6 @@ $totalrepuestos=0;
 
                 }
 
-
-
-
   //***observaciones  trabajo_realizar*/
   $pdf->Ln();
   $pdf->Ln();
