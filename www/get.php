@@ -117,7 +117,7 @@ if ($accion=="3") {
 				$tipo_producto=" and "." ( ".app_tipo_inventariables."  )";
 			}
 			
-			
+/*			
 			if(isset($_GET['taller']))
 			{
 				if ($_GET['taller']=="1")
@@ -129,17 +129,17 @@ if ($accion=="3") {
 			else{
 				   $tipo_producto=" and "." ( ". app_tipo_no_inventariables.")"; //."  OR ". app_tipo_venta
 				} 
+*/
 
 
-
-/* 			if ($_GET['t']=="3") { // servicio
+			if ($_GET['t']=="3") { // servicio
 				if ($_GET['taller']=="1")
 				{
 				   $tipo_producto=" and left(codigo_alterno,4)='MGV-' and "." ( ". app_tipo_no_inventariables.")";
 				}else{
 				   $tipo_producto=" and "." ( ". app_tipo_no_inventariables.")"; //."  OR ". app_tipo_venta
 				} 
-			} */ 
+			} 
 
 			if ($_GET['t']=="4") { // cobrable
 				$tipo_producto=" and "." ( ".app_tipo_cobrables."  )";
