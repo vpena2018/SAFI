@@ -307,6 +307,7 @@ if ($accion=="g") {
         if (isset($_REQUEST["observaciones"])) { $sqlcampos.= " , observaciones =".GetSQLValue($_REQUEST["observaciones"],"text"); }         
         if (isset($_REQUEST["foto"])) { $sqlcampos.= " , foto =".GetSQLValue($_REQUEST["foto"],"text"); } 
         if (isset($_REQUEST["reproceso"])) { $sqlcampos.= " , reproceso =".GetSQLValue($_REQUEST["reproceso"],"text"); } 
+        if (isset($_REQUEST["oferta"])) { $sqlcampos.= " , oferta =".GetSQLValue($_REQUEST["oferta"],"int"); } 
 
         if ($nuevoregistro==false) {
             $reproceso="";  
@@ -531,6 +532,7 @@ if ($accion=="g") {
     if (isset($row["fecha_negociacion"])) {$fecha_negociacion=$row["fecha_negociacion"]; } else {$fecha_negociacion= "";}
     if (isset($row["id_inspeccion"])) {$id_inspeccion=$row["id_inspeccion"]; } else {$id_inspeccion= "";}
     if (isset($row["reproceso"])) {$reproceso=$row["reproceso"]; } else {$reproceso= "";}
+    $oferta = (isset($row["oferta"]) && $row["oferta"] == 1) ? true : false;
    
     $carShopPerfil="";
     $carShopPerfil=get_dato_sql("usuario","grupo_id"," WHERE id=".$_SESSION["usuario_id"]);
@@ -583,7 +585,7 @@ if ($accion=="g") {
 <div class="row">
     <div class="col-md-4">                
          <?php if (tiene_permiso(167) && $id_estado<20 || es_nulo($id_estado)) {            
-             echo campo("id_tienda","Sucursal",'select2',valores_combobox_db("tienda",$id_tienda,"nombre"," ",'','...'),' ',' required '.$disable_sec1,''); 
+             echo campo("id_tienda","Sucursall",'select2',valores_combobox_db("tienda",$id_tienda,"nombre"," ",'','...'),' ',' required '.$disable_sec1,''); 
          }else{
              echo campo("id_tienda","sucursal",'hidden',$id_tienda,'','','');
              echo campo("id_tienda_label","Sucursal",'label',$latienda,'','','');
@@ -660,6 +662,12 @@ if ($accion=="g") {
     <div class="col-md">            
          <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',$disable_sec2); ?>                 
     </div>   
+</div>
+
+<div class="row">
+     <div class="col-md">
+         <?php echo campo("oferta","oferta",'checkboxCustom',$oferta,' ',$disable_sec2); ?>          
+     </div>
 </div>
 
 <div class="row">
