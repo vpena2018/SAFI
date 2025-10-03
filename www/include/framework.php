@@ -802,6 +802,7 @@ if ($ajax<>'') {
 
 
 
+
 function campo($nombre,$etiqueta,$tipo,$valor,$class="",$adicional="",$valor2="",$valor_etiqueta="",$numero="") {
 	$salida="";
 	$salida_end="";
@@ -861,6 +862,19 @@ function campo($nombre,$etiqueta,$tipo,$valor,$class="",$adicional="",$valor2=""
 	    case "select":  
 	    	$salida.= '<select id="'.$nombre.'" name="'.$nombre.'" class="form-control '.$class.'" '.$adicional.'>'.$valor.'</select>';
 	    	break; 
+         
+            case "checkboxCustom":  
+
+            $checked = $valor ? "checked" : "";
+            $value_attr = "1"; // Valor que se enviará si el checkbox está marcado
+            $hidden_value = "0"; // Valor que se enviará si el checkbox no está marcado
+
+
+            $salida = '<div class="form-group"><div class="custom-control custom-checkbox">';
+            $salida .= '<input type="hidden" name="' . $nombre . '" value="' . $hidden_value . '">';
+            $salida .= '<input id="' . $nombre . '" name="' . $nombre . '" value="' . $value_attr . '" type="checkbox" class="custom-control-input ' . $class . '" ' . $checked . ' ' . $adicional . ' />';
+            $salida_end = ' <label class="custom-control-label" for="' . $nombre . '">' . $etiqueta . '</label></div></div>';
+		    break;
 
 	    case "checkbox":  
       		$salida ='<div class="form-group"><div class="custom-control custom-checkbox ">';
