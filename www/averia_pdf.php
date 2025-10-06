@@ -474,7 +474,7 @@ $totalrepuestos=0;
                 $fecha=$row_fotos["fecha"];
                 $fext = substr($row_fotos["archivo"], -3);
                 if ($fext=='jpg' or $fext=='peg' or $fext=='png' ) {
-                    if ($fecha<='2025-03-31'){
+                    if ($fecha<'2025-10-01'){
                         $image_file= 'aws_bucket_s3/thumbnail/'.$row_fotos["archivo"];  
                     }else{
                         $image_file= 'uploa_d/thumbnail/'.$row_fotos["archivo"];  

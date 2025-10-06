@@ -428,7 +428,7 @@ $totalrepuestos=0;
                 if ($fext=='jpg' or $fext=='peg' or $fext=='png' ) {                
                     //$image_file= 'uploa_d/thumbnail/'.$row_fotos["archivo"];  
                     
-                    if ($fecha<='2025-03-31'){
+                    if ($fecha<'2025-10-01'){
                         $image_file= 'aws_bucket_s3/'.$row_fotos["archivo"];                                                                   
                     }else{
                         $image_file= 'uploa_d/'.$row_fotos["archivo"];    
