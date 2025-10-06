@@ -666,7 +666,7 @@ if ($accion=="g") {
 
 <div class="row">
      <div class="col-md">
-         <?php echo campo("oferta","oferta",'checkboxCustom',$oferta,' ',$disable_sec2); ?>          
+         <?php echo campo("oferta","Oferta Web",'checkboxCustom',$oferta,' ',$disable_sec2); ?>          
      </div>
 </div>
 
