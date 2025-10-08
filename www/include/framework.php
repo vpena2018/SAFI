@@ -124,7 +124,7 @@ define("app_version", "1.2.0");  // Version de Applicacion
 define("app_combo_si_no", '<option value="0">NO</option><option value="1">'.'SI'.'</option>');
 define("app_combo_a_i", '<option value="A">Activo</option><option value="I">'.'Inactivo'.'</option>');
 
-define("app_id_empresa", '<option value="1">Hertz</option><option value="2">Dollar</option>');
+define("app_id_empresa", '<option value="1">Hertz</option><option value="2">Dollar</option><option value="3">Thrifty</option>');
 define("app_tipo_inspeccion", '<option value="1">Renta</option><option value="2">Taller</option>');
 define("app_tipo_servicio", '<option value="1">Preventivo</option><option value="2">Correctivo</option>');
 

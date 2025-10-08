@@ -791,6 +791,7 @@ if (es_nulo($plantilla_vehiculo)) {
 $empresa_logo ="nd";
 if ($id_empresa==1) {$empresa_logo ="hertz";}
 if ($id_empresa==2) {$empresa_logo ="dollar";}
+if ($id_empresa==3) {$empresa_logo ="thrifty";}
 
 if ($tipo_inspeccion==1 and $tipo_doc==2){
    $visible_sec5='hidden'; 

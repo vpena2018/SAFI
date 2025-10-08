@@ -187,6 +187,9 @@ if ($accion=="1") { // mostrar vehiculos
         <div class="col-md mb-5  text-center"> 
             <a href="#" onclick="$('#empresa').val('2'); navegar_panel(14); return false;" class="btn btn-outline-info btn-lg "  ><i class="fa fa-car-side"></i><br> DOLLAR</a>   
         </div>
+         <div class="col-md mb-5  text-center"> 
+            <a href="#" onclick="$('#empresa').val('3'); navegar_panel(14); return false;" class="btn btn-outline-info btn-lg "  ><i class="fa fa-car-side"></i><br> THRIFTY</a>   
+        </div>
         </div> 
         <p class=" mt-16"><a id="btnregresar_panel" href="#" onclick="navegar_panel(1); return false;" class="btn btn-outline-secondary  "   ><i class="fa fa-angle-left"></i> Regresar</a></p>
 
