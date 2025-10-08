@@ -2242,6 +2242,7 @@ function insp_cambiar_logo() {
   var empresa_logo ="nd";
   if (valempresa==1) {empresa_logo ="hertz";}
   if (valempresa==2) {empresa_logo ="dollar";}
+  if (valempresa==3) {empresa_logo ="thrifty";}
   $('#id_empresa').val(valempresa);
   $('#ins_logo_empresa').attr("src", "img/"+empresa_logo+".jpg"); 
 

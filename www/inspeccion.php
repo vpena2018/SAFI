@@ -168,12 +168,12 @@ if ($accion=="1") { // mostrar vehiculos
     <!-- RENTA -->
     <div id="pnl-12" class="panel-inspeccion oculto">
         <div class="row "> 
-        <div class="col-md mb-5  text-center "> 
-             <a href="#" onclick="$('#tipo_doc').val('salida');  $('#estado').val('2'); $('#empresa').val('0'); navegar_panel(14); return false;" class="btn btn-outline-info btn-lg "   ><i class="fa fa-car-side"></i><br>Salida<br>Inicio de Alquiler</a>
-        </div>
-        <div class="col-md mb-5  text-center"> 
-            <a href="#" onclick="$('#tipo_doc').val('entrada'); $('#estado').val('1'); navegar_panel(15); return false;" class="btn btn-outline-info btn-lg "  ><i class="fa fa-car-side"></i><br>Entrada<br>Devolver Alquiler</a>   
-        </div>
+            <div class="col-md mb-5  text-center "> 
+                <a href="#" onclick="$('#tipo_doc').val('salida');  $('#estado').val('2'); $('#empresa').val('0'); navegar_panel(14); return false;" class="btn btn-outline-info btn-lg "   ><i class="fa fa-car-side"></i><br>Salida<br>Inicio de Alquiler</a>
+            </div>
+            <div class="col-md mb-5  text-center"> 
+                <a href="#" onclick="$('#tipo_doc').val('entrada'); $('#estado').val('1'); navegar_panel(15); return false;" class="btn btn-outline-info btn-lg "  ><i class="fa fa-car-side"></i><br>Entrada<br>Devolver Alquiler</a>   
+            </div>
         </div> 
         <p class=" mt-16"><a id="btnregresar_panel" href="#" onclick="navegar_panel(1); return false;" class="btn btn-outline-secondary  "   ><i class="fa fa-angle-left"></i> Regresar</a></p>
 
@@ -181,18 +181,17 @@ if ($accion=="1") { // mostrar vehiculos
 
     <div id="pnl-13" class="panel-inspeccion oculto">
         <div class="row "> 
-        <div class="col-md mb-5  text-center "> 
-             <a href="#" onclick="$('#empresa').val('1'); navegar_panel(14); return false;" class="btn btn-outline-info btn-lg "   ><i class="fa fa-car-side"></i><br> HERTZ</a>
-        </div>
-        <div class="col-md mb-5  text-center"> 
-            <a href="#" onclick="$('#empresa').val('2'); navegar_panel(14); return false;" class="btn btn-outline-info btn-lg "  ><i class="fa fa-car-side"></i><br> DOLLAR</a>   
-        </div>
-         <div class="col-md mb-5  text-center"> 
-            <a href="#" onclick="$('#empresa').val('3'); navegar_panel(14); return false;" class="btn btn-outline-info btn-lg "  ><i class="fa fa-car-side"></i><br> THRIFTY</a>   
-        </div>
+            <div class="col-md mb-5  text-center "> 
+                <a href="#" onclick="$('#empresa').val('1'); navegar_panel(14); return false;" class="btn btn-outline-info btn-lg "  ><i class="fa fa-car-side"></i><br> HERTZ</a>
+            </div>
+            <div class="col-md mb-5  text-center"> 
+                <a href="#" onclick="$('#empresa').val('2'); navegar_panel(14); return false;" class="btn btn-outline-info btn-lg "  ><i class="fa fa-car-side"></i><br> DOLLAR</a>   
+            </div>            
+            <div class="col-md mb-5  text-center"> 
+                <a href="#" onclick="$('#empresa').val('3'); navegar_panel(14); return false;" class="btn btn-outline-info btn-lg "  ><i class="fa fa-car-side"></i><br> THRIFTY</a>   
+            </div>                    
         </div> 
         <p class=" mt-16"><a id="btnregresar_panel" href="#" onclick="navegar_panel(1); return false;" class="btn btn-outline-secondary  "   ><i class="fa fa-angle-left"></i> Regresar</a></p>
-
     </div>
 
     <div id="pnl-14" class="panel-inspeccion oculto">
