@@ -315,14 +315,11 @@ function thumb_agregar2(archivo,campo,puede_agregar_varias){
     var salida = '<div class="foto_item mb-2 mr-2" id="' + fotoId + '">';
 
 
-
    if (fext=='jpg' || fext=='peg' || fext=='png' || fext=='gif') {
     salida+='<a href="#" onclick="mostrar_foto(\''+archivo+'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'+archivo+'" ></a> ';
    } else {
     salida+='<a href="uploa_d/'+archivo+'" target="_blank" class="img-thumbnail mb-3 mr-3" >'+archivo+'</a>';
    }
-
-   
 
    if(puede_agregar_varias){   
     $("#"+campo).closest('.ins_foto_div').append(salida +'<a id="del_'+campo+'" href="#" onclick="insp_borrar_foto(\''+archivo+'\',\'del_'+campo+'\', \'' + fotoId + '\'); return false;" class="btn  btn-outline-secondary ml-3 "><i class="fa fa-eraser"></i> Borrar</a>');
@@ -364,7 +361,6 @@ Swal.fire({
                         mytoast('error',json[0].pmsg,3000) ;   
                     }
                     if (json[0].pcode == 1) {
-                        debugger;
                         if(puede_agregar_varias){
                             //$("#"+campo).closest('.ins_foto_div').html('Eliminado');
                             $("#" + fotoId).remove();
