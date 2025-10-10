@@ -243,15 +243,17 @@ if ($result!=false){
 		} else {mytoast('error',json[0].pmsg,3000) ; }
 	})
 	  .done(function() { 
+        debugger;
         if(window.cantidadFotosSubidasGlobal==cantidadFotos && puede_agregar_varias){
-            debugger;
 
             var div = document.getElementById('variasfotosdiv');
             if (div) {
+                debugger;
                     div.parentNode.removeChild(div);
 
                     var nuevoBloque = <?php echo json_encode($nuevoBloqueParaVarias); ?>;
                     $('.ins_foto_div_nuevo').append(nuevoBloque);
+                    window.cantidadFotosSubidasGlobal = 0; // Reiniciar el contador
                 }
 
             //mytoast('success','Todas las fotos se subieron correctamente',3000) ; 
