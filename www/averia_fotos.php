@@ -208,11 +208,11 @@ if ($result!=false){
 
 <script> 
 
-    if (typeof cantidadFotosSubidasGlobal === 'undefined') {
-        let cantidadFotosSubidasGlobal = 0;
-    }else{
-        cantidadFotosSubidasGlobal = 0;
-    }
+        if (typeof window.cantidadFotosSubidasGlobal === 'undefined') {
+            window.cantidadFotosSubidasGlobal = 0;
+        } else {
+            window.cantidadFotosSubidasGlobal = 0; // o el valor que quieras reiniciar
+        }
 
     function insp_guardar_foto(arch,campo,cantidadFotos){
         //debugger;
@@ -228,30 +228,30 @@ if ($result!=false){
 			}
 			if (json[0].pcode == 1) {
 
-                cantidadFotosSubidasGlobal++;
+                if(puede_agregar_varias){
+                    window.cantidadFotosSubidasGlobal++;
+                    thumb_agregar2(arch,campo,puede_agregar_varias);
+                }else{
+                    $('#'+campo).val(arch);                
+                    $('#files_'+campo).text('Guardado');
+                    $('#lk'+campo).html(arch);
+                    thumb_agregar2(arch,campo,puede_agregar_varias);
 
-                /*if(cantidadFotosSubidasGlobal>0 && cantidadFotosSubidasGlobal==cantidadFotos){
-                    ultimafoto=true;
-                }*/
+                }
 
-
-
-
-                //$('#'+campo).val(arch);                
-                //$('#files_'+campo).text('Guardado');
-                //$('#lk'+campo).html(arch);
-                thumb_agregar2(arch,campo,puede_agregar_varias,ultimafoto);
-			
 			}
 		} else {mytoast('error',json[0].pmsg,3000) ; }
 	})
 	  .done(function() { 
-        if(cantidadFotosSubidasGlobal==cantidadFotos){
+        if(window.cantidadFotosSubidasGlobal==cantidadFotos && puede_agregar_varias){
             debugger;
 
             var div = document.getElementById('variasfotosdiv');
             if (div) {
                     div.parentNode.removeChild(div);
+
+                    var nuevoBloque = <?php echo json_encode($nuevoBloqueParaVarias); ?>;
+                    $('.ins_foto_div_nuevo').append(nuevoBloque);
                 }
 
             //mytoast('success','Todas las fotos se subieron correctamente',3000) ; 
@@ -308,7 +308,7 @@ function thumb_agregar(archivo){
 }
 
 
-function thumb_agregar2(archivo,campo,puede_agregar_varias,ultimafoto){
+function thumb_agregar2(archivo,campo,puede_agregar_varias){
     
     var salida='';
     if (archivo!='' && archivo!=undefined) {
