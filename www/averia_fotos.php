@@ -155,6 +155,10 @@ if ($result!=false){
     $puede_agregar=true;
     $puede_agregar_varias=true;
 
+    $nuevoBloqueParaVarias = '<div class="row"><div class="col-12"><div class="ins_foto_div">' .
+                campo_upload_varias("ins_foto0","Adjuntar Fotos o Documentos",'upload','', '  ','',3,9,'NO',false ) .
+                '</div></div></div><hr>';
+
      $estado_actual= get_dato_sql('averia',"id_estado"," where id=$cid"); 
      if (intval($estado_actual)>2) {
 
@@ -178,6 +182,7 @@ if ($result!=false){
             echo campo_upload_varias("ins_foto0","Adjuntar Fotos o Documentos",'upload','', '  ','',3,9,'NO',false );
             echo "</div></div></div>";
             echo "<hr>"; 
+            echo '<div class="ins_foto_div_nuevo">';
         }else{
 
             $a=1;
@@ -202,13 +207,18 @@ if ($result!=false){
 
 
 <script> 
-    function insp_guardar_foto(arch,campo){
 
-        var puede_agregar_varias = <?= $puede_agregar_varias ? 'true' : 'false' ?>;
+    if (typeof cantidadFotosSubidasGlobal === 'undefined') {
+        let cantidadFotosSubidasGlobal = 0;
+    }else{
+        cantidadFotosSubidasGlobal = 0;
+    }
 
+    function insp_guardar_foto(arch,campo,cantidadFotos){
+        //debugger;
+     var ultimafoto=false;
+     var puede_agregar_varias = <?= $puede_agregar_varias ? 'true' : 'false' ?>;
      var datos= { a: "g", cid: $("#cid").val(), pid: $("#pid").val() , arch: encodeURI(arch)} ;
-        
-
 	 $.post( 'averia_fotos.php',datos, function(json) {
 	 			
 		if (json.length > 0) {
@@ -217,17 +227,39 @@ if ($result!=false){
 				mytoast('error',json[0].pmsg,3000) ;   
 			}
 			if (json[0].pcode == 1) {
-                $('#'+campo).val(arch);                
-                $('#files_'+campo).text('Guardado');
-                $('#lk'+campo).html(arch);
-                //thumb_agregar(arch);
-                thumb_agregar2(arch,campo);
+
+                cantidadFotosSubidasGlobal++;
+
+                /*if(cantidadFotosSubidasGlobal>0 && cantidadFotosSubidasGlobal==cantidadFotos){
+                    ultimafoto=true;
+                }*/
+
+
+
+
+                //$('#'+campo).val(arch);                
+                //$('#files_'+campo).text('Guardado');
+                //$('#lk'+campo).html(arch);
+                thumb_agregar2(arch,campo,puede_agregar_varias,ultimafoto);
 			
 			}
 		} else {mytoast('error',json[0].pmsg,3000) ; }
-		  
 	})
-	  .done(function() { if(puede_agregar_varias){serv_cambiartab('nav_fotos');}  })
+	  .done(function() { 
+        if(cantidadFotosSubidasGlobal==cantidadFotos){
+            debugger;
+
+            var div = document.getElementById('variasfotosdiv');
+            if (div) {
+                    div.parentNode.removeChild(div);
+                }
+
+            //mytoast('success','Todas las fotos se subieron correctamente',3000) ; 
+            //if(puede_agregar_varias){serv_cambiartab('nav_fotos');}  
+        }
+        //if(puede_agregar_varias){serv_cambiartab('nav_fotos');}  
+    
+    })
 	  .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
 	  .always(function() {	  });
     
@@ -276,7 +308,8 @@ function thumb_agregar(archivo){
 }
 
 
-function thumb_agregar2(archivo,campo){
+function thumb_agregar2(archivo,campo,puede_agregar_varias,ultimafoto){
+    
     var salida='';
     if (archivo!='' && archivo!=undefined) {
         
@@ -288,8 +321,14 @@ function thumb_agregar2(archivo,campo){
    } else {
     salida='<a href="uploa_d/'+archivo+'" target="_blank" class="img-thumbnail mb-3 mr-3" >'+archivo+'</a>';
    }
+
+   if(puede_agregar_varias){   
+    $("#"+campo).closest('.ins_foto_div').append(salida +'<a id="del_'+campo+'" href="#" onclick="insp_borrar_foto(\''+archivo+'\',\'del_'+campo+'\'); return false;" class="btn  btn-outline-secondary ml-3 "><i class="fa fa-eraser"></i> Borrar</a>');
+   }else{
    $("#"+campo).closest('.ins_foto_div').html(salida +'<a id="del_'+campo+'" href="#" onclick="insp_borrar_foto(\''+archivo+'\',\'del_'+campo+'\'); return false;" class="btn  btn-outline-secondary ml-3 "><i class="fa fa-eraser"></i> Borrar</a>');
   }
+    
+}
 }
 
 
