@@ -215,7 +215,6 @@ if ($result!=false){
         }
 
     function insp_guardar_foto(arch,campo,cantidadFotos){
-        //debugger;
      var ultimafoto=false;
      var puede_agregar_varias = <?= $puede_agregar_varias ? 'true' : 'false' ?>;
      var datos= { a: "g", cid: $("#cid").val(), pid: $("#pid").val() , arch: encodeURI(arch)} ;
@@ -243,24 +242,17 @@ if ($result!=false){
 		} else {mytoast('error',json[0].pmsg,3000) ; }
 	})
 	  .done(function() { 
-        debugger;
         if(window.cantidadFotosSubidasGlobal==cantidadFotos && puede_agregar_varias){
 
             var div = document.getElementById('variasfotosdiv');
             if (div) {
-                debugger;
                     div.parentNode.removeChild(div);
 
                     var nuevoBloque = <?php echo json_encode($nuevoBloqueParaVarias); ?>;
                     $('.ins_foto_div_nuevo').append(nuevoBloque);
                     window.cantidadFotosSubidasGlobal = 0; // Reiniciar el contador
                 }
-
-            //mytoast('success','Todas las fotos se subieron correctamente',3000) ; 
-            //if(puede_agregar_varias){serv_cambiartab('nav_fotos');}  
         }
-        //if(puede_agregar_varias){serv_cambiartab('nav_fotos');}  
-    
     })
 	  .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
 	  .always(function() {	  });
@@ -312,32 +304,44 @@ function thumb_agregar(archivo){
 
 function thumb_agregar2(archivo,campo,puede_agregar_varias){
     
-    var salida='';
+    //var salida='';
+    
     if (archivo!='' && archivo!=undefined) {
         
    
     var fext= archivo.substr(archivo.length - 3);
 
+    var fotoId = "foto_" + campo + "_" + archivo.replace(/\W/g, "");
+    var salida = '<div class="foto_item mb-2 mr-2" id="' + fotoId + '">';
+
+
+
    if (fext=='jpg' || fext=='peg' || fext=='png' || fext=='gif') {
-    salida='<a href="#" onclick="mostrar_foto(\''+archivo+'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'+archivo+'" ></a> ';
+    salida+='<a href="#" onclick="mostrar_foto(\''+archivo+'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'+archivo+'" ></a> ';
    } else {
-    salida='<a href="uploa_d/'+archivo+'" target="_blank" class="img-thumbnail mb-3 mr-3" >'+archivo+'</a>';
+    salida+='<a href="uploa_d/'+archivo+'" target="_blank" class="img-thumbnail mb-3 mr-3" >'+archivo+'</a>';
    }
 
+   
+
    if(puede_agregar_varias){   
-    $("#"+campo).closest('.ins_foto_div').append(salida +'<a id="del_'+campo+'" href="#" onclick="insp_borrar_foto(\''+archivo+'\',\'del_'+campo+'\'); return false;" class="btn  btn-outline-secondary ml-3 "><i class="fa fa-eraser"></i> Borrar</a>');
+    $("#"+campo).closest('.ins_foto_div').append(salida +'<a id="del_'+campo+'" href="#" onclick="insp_borrar_foto(\''+archivo+'\',\'del_'+campo+'\', \'' + fotoId + '\'); return false;" class="btn  btn-outline-secondary ml-3 "><i class="fa fa-eraser"></i> Borrar</a>');
    }else{
    $("#"+campo).closest('.ins_foto_div').html(salida +'<a id="del_'+campo+'" href="#" onclick="insp_borrar_foto(\''+archivo+'\',\'del_'+campo+'\'); return false;" class="btn  btn-outline-secondary ml-3 "><i class="fa fa-eraser"></i> Borrar</a>');
   }
+
+  salida += '</div>';
     
 }
 }
 
 
 
-function insp_borrar_foto(arch,campo){
+function insp_borrar_foto(arch,campo,fotoId){
 
 var datos= { a: "d", cid: $("#cid").val(), pid: $("#pid").val() , arch: encodeURI(arch)} ;
+
+var puede_agregar_varias = <?= $puede_agregar_varias ? 'true' : 'false' ?>;
   
 
 Swal.fire({
@@ -360,9 +364,13 @@ Swal.fire({
                         mytoast('error',json[0].pmsg,3000) ;   
                     }
                     if (json[0].pcode == 1) {
-                        
-                        $("#"+campo).closest('.ins_foto_div').html('Eliminado');
-                    
+                        debugger;
+                        if(puede_agregar_varias){
+                            //$("#"+campo).closest('.ins_foto_div').html('Eliminado');
+                            $("#" + fotoId).remove();
+                        }else{
+                            $("#"+campo).closest('.ins_foto_div').html('Eliminado');
+                        }
                     }
                 } else {mytoast('error',json[0].pmsg,3000) ; }
                 
