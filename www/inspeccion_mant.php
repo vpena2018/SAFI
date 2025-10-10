@@ -247,7 +247,7 @@ if ($accion=="g") {
                     exit;            
                   }
               }       
-              if ($tipodoc==1){
+              if ($tipodoc==1 and es_nulo($tipo_insp_especial)){
                  $EstadoReparacion=get_dato_sql("ventas","COUNT(*)"," WHERE id_estado=99 AND id_producto=".intval($_REQUEST['id_producto']));
                   if (!es_nulo($EstadoReparacion)){
                       $stud_arr[0]["pmsg"] =" El Vehiculo esta en proceso de reparacion"; 
