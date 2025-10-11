@@ -107,8 +107,9 @@ FROM servicio_foto
 LEFT OUTER JOIN servicio ON (servicio.id=servicio_foto.id_servicio)
 WHERE servicio_foto.id_servicio=$cid and servicio.id_producto=$pid 
 order by servicio_foto.fecha,servicio_foto.id");
-   echo '<div class="row" ><strong> Fotos de esta orden</strong></div>';
-  echo '<hr><div class="row" id="insp_fotos_thumbs">';
+
+echo '<div class="row" ><strong> Fotos de esta orden</strong></div>';
+echo '<hr><div class="row" id="insp_fotos_thumbs">';
 if ($result!=false){
     if ($result -> num_rows > 0) {      
         while ($row = $result -> fetch_assoc()) {
@@ -117,7 +118,7 @@ if ($result!=false){
             $fecha = sanear_date($row['fecha']);
             if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
                 if($fecha<'2025-10-01'){
-                   echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto2(\''.$row["archivo"].'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" style="width: 180px; height: auto; src="aws_bucket_s3/thumbnail/'.$row["archivo"].'" data-cod="'.$row["id"].'"></a> ';
+                   echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto2(\''.$row["archivo"].'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" style="width: 180px; height: auto;" src="aws_bucket_s3/thumbnail/'.$row["archivo"].'" data-cod="'.$row["id"].'"></a> ';                    
                 }else{                
                    echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$row["archivo"].'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" style="width: 180px; height: auto;" src="uploa_d/thumbnail/'.$row["archivo"].'" data-cod="'.$row["id"].'"></a> ';
                 }

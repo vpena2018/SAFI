@@ -165,7 +165,10 @@ if ($accion=="g") {
       if (isset($_REQUEST["tipo_doc"])){
           $tipodoc=intval($_REQUEST["tipo_doc"]);
       }
-
+      $tipoinsp="";           
+      if (isset($_REQUEST["tipo_inspeccion"])){
+          $tipoinsp=intval($_REQUEST["tipo_inspeccion"]);          
+      }
       if (isset($_REQUEST["tipo_doc"])) { $sqlcampos.= " , tipo_doc =".GetSQLValue($_REQUEST["tipo_doc"],"int"); }    
       // if (isset($_REQUEST["fecha_hora_inicio"])) { $sqlcampos.= " , fecha_hora_inicio =".GetSQLValue($_REQUEST["fecha_hora_inicio"],"text"); } 
       // if (isset($_REQUEST["fecha_hora_final"])) { $sqlcampos.= " , fecha_hora_final =".GetSQLValue($_REQUEST["fecha_hora_final"],"text"); } 
@@ -237,6 +240,7 @@ if ($accion=="g") {
               }                          
             }            
             if ($nuevo_estado==2) {
+                   
               //Valida que no tenga traslado pendientes
               $Codigo_Alterno=get_dato_sql("producto","COUNT(*)"," WHERE left(codigo_alterno,7)='EA-0000' and id=".intval($_REQUEST['id_producto']));          
               if (es_nulo($Codigo_Alterno)){
@@ -247,19 +251,19 @@ if ($accion=="g") {
                     exit;            
                   }
               }       
-               //Valida si el vehiculo esta en reparacion     
-               $ListoParaVenta=get_dato_sql("ventas","COUNT(*)"," WHERE tipo_ventas_reparacion=1 and id_estado=99 and id_producto=".intval($_REQUEST['id_producto']));  
-               if (!es_nulo($ListoParaVenta)){
-                    $stud_arr[0]["pmsg"]=" El vehiculo esta en proceso de reparacion, consultar con ADCP";
-                    salida_json($stud_arr);
-                    exit;    
-               }
-                     
+              if ($tipoinsp==1){
+                 $EstadoReparacion=get_dato_sql("ventas","COUNT(*)"," WHERE id_estado=99 AND id_producto=".intval($_REQUEST['id_producto']));
+                  if (!es_nulo($EstadoReparacion)){
+                      $stud_arr[0]["pmsg"] =" El Vehiculo esta en proceso de reparacion"; 
+                      salida_json($stud_arr);
+                      exit;  
+                    }
+              }
+
               if ($tipodoc==2){                
                  $ParoPorRepuesto=get_dato_sql("servicio","COUNT(*)"," WHERE id_estado=7 AND (estado_paro_por_repuesto='I' or estado_paro_por_repuesto=null)  AND id_producto=".intval($_REQUEST['id_producto']));                 
                  $Oservicio=get_dato_sql("servicio","COUNT(*)"," WHERE id_estado not in (20,22,7) AND id_producto=".intval($_REQUEST['id_producto']));                 
-                 $Ocombustible=get_dato_sql("orden_combustible","COUNT(*)"," WHERE id_estado<3 AND id_producto=".intval($_REQUEST['id_producto']));
-                 $EstadoReparacion=get_dato_sql("ventas","COUNT(*)"," WHERE id_estado=99 AND id_producto=".intval($_REQUEST['id_producto']));
+                 $Ocombustible=get_dato_sql("orden_combustible","COUNT(*)"," WHERE id_estado<3 AND id_producto=".intval($_REQUEST['id_producto']));                 
                  if (!es_nulo($Oservicio) or !es_nulo($ParoPorRepuesto)){
                     $stud_arr[0]["pmsg"] =" Tiene Orden de Servicio sin completar del vehiculo"; 
                     salida_json($stud_arr);
@@ -270,12 +274,8 @@ if ($accion=="g") {
                     salida_json($stud_arr);
                     exit;  
                  }
-                 if (!es_nulo($EstadoReparacion)){
-                  $stud_arr[0]["pmsg"] =" El Vehiculo esta en proceso de reparacion"; 
-                  salida_json($stud_arr);
-                  exit;  
-                 }
-              } 
+                }
+ 
               $lbl_estado="Completado";
 
               // enviar email a cliente 
