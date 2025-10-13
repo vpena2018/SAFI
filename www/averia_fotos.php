@@ -92,11 +92,15 @@ if (!es_nulo($insp)) {
                 $ano=intval($row['ano']);
                 $fecha = sanear_date($row['fecha']);
                 if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
-                       if ($fecha<'2025-10-01'){
-                          echo '  <a href="#" onclick="mostrar_foto2(\''.$row["archivo"].'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="aws_bucket_s3/thumbnail/'.$row["archivo"].'" data-cod="'.$row["id"].'"></a> ';
+
+                       
+                    if ($fecha<'2025-10-01'){
+                          echo '  <a href="#" onclick="mostrar_foto2(\''.$row["archivo"].'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3"  style="width: 180px; height: auto;"  src="aws_bucket_s3/thumbnail/'.$row["archivo"].'" data-cod="'.$row["id"].'"></a> ';
                        }else{  
-                          echo '  <a href="#" onclick="mostrar_foto(\''.$row["archivo"].'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$row["archivo"].'" data-cod="'.$row["id"].'"></a> ';
+                          echo '  <a href="#" onclick="mostrar_foto(\''.$row["archivo"].'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3"  style="width: 180px; height: auto;" src="uploa_d/thumbnail/'.$row["archivo"].'" data-cod="'.$row["id"].'"></a> ';
                        }
+
+
                 } else {
                     echo '  <a href="uploa_d/'.$row["archivo"].'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$row["archivo"].'</a> ';
                 }
@@ -126,9 +130,9 @@ if ($result!=false){
             $fecha = sanear_date($row['fecha']);
             if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
                 if ($fecha<'2025-10-01'){
-                   echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto2(\''.$row["archivo"].'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="aws_bucket_s3/thumbnail/'.$row["archivo"].'" data-cod="'.$row["id"].'"></a> ';
+                   echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto2(\''.$row["archivo"].'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3"  style="width: 180px; height: auto;"   src="aws_bucket_s3/thumbnail/'.$row["archivo"].'" data-cod="'.$row["id"].'"></a> ';
                 }else{
-                   echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$row["archivo"].'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$row["archivo"].'" data-cod="'.$row["id"].'"></a> ';
+                   echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$row["archivo"].'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3"  style="width: 180px; height: auto;"    src="uploa_d/thumbnail/'.$row["archivo"].'" data-cod="'.$row["id"].'"></a> ';
                 }                
                 if ($row["id_estado"]<=2 or tiene_permiso(151))  { echo '  <a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].'); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';}
             } else {
@@ -215,7 +219,6 @@ if ($result!=false){
         }
 
     function insp_guardar_foto(arch,campo,cantidadFotos){
-     var ultimafoto=false;
      var puede_agregar_varias = <?= $puede_agregar_varias ? 'true' : 'false' ?>;
      var datos= { a: "g", cid: $("#cid").val(), pid: $("#pid").val() , arch: encodeURI(arch)} ;
 	 $.post( 'averia_fotos.php',datos, function(json) {
