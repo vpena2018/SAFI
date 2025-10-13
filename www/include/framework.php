@@ -1198,7 +1198,7 @@ function campo_upload_varias($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solic
        
         if ($etiqueta!="") {       
              $salida.= '
-             <div class="form-group"><label  class="control-label col-sm-'.$columna1.'">'.$etiqueta.'</label>
+             <div id="variasfotosdiv" class="form-group"><label  class="control-label col-sm-'.$columna1.'">'.$etiqueta.'</label>
              <div class=" col-sm-'.$columna2.'">';
         }
 
@@ -1275,6 +1275,8 @@ function campo_upload_varias($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solic
                                previewThumbnail: false,
                                
                                done: function (e, data) {
+
+                               var cantidadFotos = data.files.length;
                                      
                                    $.each(data.result.files, function (index, file) {
          
@@ -1286,7 +1288,7 @@ function campo_upload_varias($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solic
                                     //    $('#files_$nombre').text('Guardado');
                                     //    $('#lk$nombre').html(file.name);
                                     //console.log(file.name,'$nombre'); 
-                                    insp_guardar_foto(file.name,'$nombre');
+                                    insp_guardar_foto(file.name,'$nombre',cantidadFotos);
          ";
                                       
                                       

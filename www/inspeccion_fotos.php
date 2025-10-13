@@ -239,18 +239,7 @@ if ($result!=false){
 
     if ($result -> num_rows > 0) { 
 
-        // $fecha_actualfoto='';
-
         while ($row = $result -> fetch_assoc()) {
-
-            // if ($fecha_actualfoto<>$row["fecha"]) {
-
-            //     echo ''.formato_fecha_de_mysql($row["fecha"]).'<hr>';
-
-            //     $fecha_actualfoto=$row["fecha"];
-
-            // }
-
 
             $fext = substr($row["archivo"], -3);
             $ano = intval($row['ano']);   
@@ -316,6 +305,12 @@ if ($result!=false){
    $puede_agregar_varias=true;
     $puede_agregar_fotos=true;
 
+        $nuevoBloqueParaVarias = '<div class="row"><div class="col-12"><div class="ins_foto_div">' .
+                campo_upload_varias("ins_foto0","Adjuntar Fotos o Documentos",'upload','', '  ','',3,9,'NO',false ) .
+                '</div></div></div><hr>';
+
+
+
     if ($elestado>1)  {$puede_agregar_fotos=false; }
 
     if ($puede_agregar_fotos==true) {     
@@ -330,6 +325,7 @@ if ($result!=false){
             echo campo_upload_varias("ins_foto0","Adjuntar Fotos o Documentos",'upload','', '  ','',3,9,'NO',false );
             echo "</div></div></div>";
             echo "<hr>"; 
+            echo '<div class="ins_foto_div_nuevo">';
         }else{
                  $a=1;
 
@@ -359,53 +355,57 @@ if ($result!=false){
 
 <script> 
 
-    function insp_guardar_foto(arch,campo){
+        if (typeof window.cantidadFotosSubidasGlobal === 'undefined') {
+            window.cantidadFotosSubidasGlobal = 0;
+        } else {
+            window.cantidadFotosSubidasGlobal = 0; // o el valor que quieras reiniciar
+        }
 
-
-        var puede_agregar_varias = <?= $puede_agregar_varias ? 'true' : 'false' ?>;
+    function insp_guardar_foto(arch,campo,cantidadFotos){
+     var puede_agregar_varias = <?= $puede_agregar_varias ? 'true' : 'false' ?>;
      var datos= { a: "g", cid: $("#cid").val(), pid: $("#pid").val() , arch: encodeURI(arch)} ;
 
-        
-
-
-
 	 $.post( 'inspeccion_fotos.php',datos, function(json) {
-
-	 			
 
 		if (json.length > 0) {
 
 			if (json[0].pcode == 0) {
-
-				
-
 				mytoast('error',json[0].pmsg,3000) ;   
-
 			}
 
 			if (json[0].pcode == 1) {
 
-                $('#'+campo).val(arch);                
+                if(puede_agregar_varias){
+                    window.cantidadFotosSubidasGlobal++;
+                    thumb_agregar2(arch,campo,puede_agregar_varias);
 
-                $('#files_'+campo).text('Guardado');
+                }else{
+                    $('#'+campo).val(arch);                
+                    $('#files_'+campo).text('Guardado');
+                    $('#lk'+campo).html(arch);
+                    thumb_agregar2(arch,campo,puede_agregar_varias);
+                }
 
-                $('#lk'+campo).html(arch);
-
-               // thumb_agregar(arch);
-
-               thumb_agregar2(arch,campo);
-
-			
 
 			}
 
 		} else {mytoast('error',json[0].pmsg,3000) ; }
-
-		  
-
 	})
 
-	  .done(function() { if(puede_agregar_varias){insp_cambiartab('nav_fotos');}	  })
+	  .done(function() { 
+                if(window.cantidadFotosSubidasGlobal==cantidadFotos && puede_agregar_varias){
+
+            var div = document.getElementById('variasfotosdiv');
+            if (div) {
+                    div.parentNode.removeChild(div);
+
+                    var nuevoBloque = <?php echo json_encode($nuevoBloqueParaVarias); ?>;
+                    $('.ins_foto_div_nuevo').append(nuevoBloque);
+                    window.cantidadFotosSubidasGlobal = 0; // Reiniciar el contador
+                }
+        }	  
+    
+    })
 
 	  .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
 
@@ -491,32 +491,30 @@ function thumb_agregar(archivo){
 
 
 
-function thumb_agregar2(archivo,campo){
+function thumb_agregar2(archivo,campo,puede_agregar_varias){
 
     var salida='';
 
     if (archivo!='' && archivo!=undefined) {
 
-        
-
-   
-
     var fext= archivo.substr(archivo.length - 3);
 
-
+    var fotoId = "foto_" + campo + "_" + archivo.replace(/\W/g, "");
+    var salida = '<div class="foto_item mb-2 mr-2" id="' + fotoId + '">';
 
    if (fext=='jpg' || fext=='peg' || fext=='png' || fext=='gif') {
-
-    salida='<a href="#" onclick="mostrar_foto(\''+archivo+'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'+archivo+'" ></a> ';
-
+    salida+='<a href="#" onclick="mostrar_foto(\''+archivo+'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'+archivo+'" ></a> ';
    } else {
-
-    salida='<a href="uploa_d/'+archivo+'" target="_blank" class="img-thumbnail mb-3 mr-3" >'+archivo+'</a>';
-
+    salida+='<a href="uploa_d/'+archivo+'" target="_blank" class="img-thumbnail mb-3 mr-3" >'+archivo+'</a>';
    }
 
+   if(puede_agregar_varias){   
+    $("#"+campo).closest('.ins_foto_div').append(salida +'<a id="del_'+campo+'" href="#" onclick="insp_borrar_foto(\''+archivo+'\',\'del_'+campo+'\', \'' + fotoId + '\'); return false;" class="btn  btn-outline-secondary ml-3 "><i class="fa fa-eraser"></i> Borrar</a>');
+   }else{
    $("#"+campo).closest('.ins_foto_div').html(salida +'<a id="del_'+campo+'" href="#" onclick="insp_borrar_foto(\''+archivo+'\',\'del_'+campo+'\'); return false;" class="btn  btn-outline-secondary ml-3 "><i class="fa fa-eraser"></i> Borrar</a>');
+  }
 
+  salida += '</div>';
   }
 
 }
@@ -527,68 +525,41 @@ function thumb_agregar2(archivo,campo){
 
 
 
-function insp_borrar_foto(arch,campo){
-
-
+function insp_borrar_foto(arch,campo,fotoId){
 
 var datos= { a: "d", cid: $("#cid").val(), pid: $("#pid").val() , arch: encodeURI(arch)} ;
-
-  
-
-
+var puede_agregar_varias = <?= $puede_agregar_varias ? 'true' : 'false' ?>;
 
 Swal.fire({
 
 	  title: 'Borrar Foto',
-
 	  text:  'Desea Borrar la Foto o Documento adjunto?',
-
 	  icon: 'question',
-
 	  showCancelButton: true,
-
 	  confirmButtonColor: '#3085d6',
-
 	  cancelButtonColor: '#d33',
-
 	  confirmButtonText:  'Si',
-
 	  cancelButtonText:  'No'
-
 	}).then((result) => {
 
 	  if (result.value) {
-
-	    
-
             $.post( 'inspeccion_fotos.php',datos, function(json) {
-
-                
-
                 if (json.length > 0) {
 
                     if (json[0].pcode == 0) {
-
-                        
-
                         mytoast('error',json[0].pmsg,3000) ;   
-
                     }
 
                     if (json[0].pcode == 1) {
 
-                        console.log('->'+campo);
-
-                        $("#"+campo).closest('.ins_foto_div').html('Eliminado');
-
-                    
-
+                        if(puede_agregar_varias){
+                            $("#" + fotoId).remove();
+                        }else{
+                            $("#"+campo).closest('.ins_foto_div').html('Eliminado');
+                        }
                     }
 
                 } else {mytoast('error',json[0].pmsg,3000) ; }
-
-                
-
             })
 
             .done(function() {	  })
@@ -602,15 +573,6 @@ Swal.fire({
 	  }
 
 	});
-
-
-
-
-
-
-
-
-
 }
 
 
