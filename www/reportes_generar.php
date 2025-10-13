@@ -1409,7 +1409,7 @@ case 73:// 	Reporte de averias
            
             ,servicio.kilometraje
             ,servicio_tipo_revision.nombre AS elrevision
-            
+            ,taller.nombre as eltaller
             
             FROM servicio_detalle
             LEFT OUTER JOIN servicio ON (servicio.id=servicio_detalle.id_servicio)
@@ -1417,6 +1417,7 @@ case 73:// 	Reporte de averias
             LEFT OUTER JOIN servicio_tipo_mant ON (servicio.id_tipo_mant=servicio_tipo_mant.id)
             LEFT OUTER JOIN servicio_estado ON (servicio.id_estado=servicio_estado.id)
             LEFT OUTER JOIN entidad ON (servicio.cliente_id=entidad.id)
+            LEFT OUTER JOIN entidad taller ON (servicio.id_taller=taller.id)
             LEFT OUTER JOIN servicio_tipo_revision ON (servicio.id_tipo_revision=servicio_tipo_revision.id)
             WHERE servicio.fecha BETWEEN '$fdesde' AND '$fhasta'
             $where
@@ -1444,6 +1445,7 @@ case 73:// 	Reporte de averias
                     $reporte_datos.= "<th>Tipo Revision</th>";
                     $reporte_datos.= "<th>Kilometraje</th>";
                     $reporte_datos.= "<th>Costo</th>";
+                    $reporte_datos.= "<th>Taller</th>";
                     $reporte_datos.= "</tr></thead>";
                     
                     //BODY
@@ -1469,6 +1471,7 @@ case 73:// 	Reporte de averias
                         // }
                         $totalcosto=$elcosto*$row['cantidad'];
                         $reporte_datos.= '<td align="right"> '.formato_numero($totalcosto,2).'</td>';
+                        $reporte_datos.= '<td align=""> '.$row['eltaller'].'</td>';
                         $reporte_datos.= "</tr>";
     
                     }
