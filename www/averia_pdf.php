@@ -460,6 +460,85 @@ $totalrepuestos=0;
     WHERE averia_foto.id_maestro=$cid  
     order by averia_foto.fecha,averia_foto.id");
     if ($result_fotos!=false){
+     if ($result_fotos -> num_rows > 0) {      
+            $pdf->AddPage();     
+            $ancho_img=66; //66;
+            $colx=1;
+            $total_columnas=1;
+            $pos_x=8;   //8;
+            $pn_ln=0;
+            $nn=1;
+            
+            $x = 4;
+            $y = 15;
+            $w = 50;
+            $h = 50;
+            while ($row_fotos = $result_fotos -> fetch_assoc()) {
+                $fecha=$row_fotos["fecha"];
+                $fext = substr($row_fotos["archivo"], -3);
+                if ($fext=='jpg' or $fext=='peg' or $fext=='png' ) {                
+                    //$image_file= 'uploa_d/thumbnail/'.$row_fotos["archivo"];  
+                    
+                    if ($fecha<'2025-10-01'){
+                        $image_file= 'aws_bucket_s3/'.$row_fotos["archivo"];                                                                   
+                    }else{
+                        $image_file= 'uploa_d/'.$row_fotos["archivo"];    
+                    }                    
+                    
+                    $pdf->Image($image_file, $x,$y, $w, $h, '', '', '', false, 300, '', false, false, 0, false, false, false);
+                    // $pdf->Image($image_file,'', '', 0, 0, '', '', '', false, 300, '', false, false, 0, false, false, false);
+                    //$pdf->Image($image_file,'', '', 0, 0, '', '', '', false, 90, '', false, false, 0, false, false, false);
+                    
+                    /*$pdf->writeHTMLCell($ancho_img, '', $pos_x,'', '<img src="uploa_d/'.$row_fotos["archivo"].'">', 0,$pn_ln, 0, true, 'C', true); 
+                    $pos_x+=$ancho_img;
+                    */
+                    $x+=52; 
+                    $colx++;  
+                    $total_columnas++;                                       
+                    //$pn_ln=0;
+                    if ($colx==5) {
+                       // $pn_ln=2;
+                       $x=4;
+                       $y+=52; 
+                       $colx=1; 
+                    }                                       
+                    if ($total_columnas>20) {
+                        $pdf->AddPage();
+                        $x=4;
+                        $y=15;
+                        $total_columnas=1;
+                        //$pos_x=8;
+                        $colx=1; 
+                       // $pdf->Ln(7); 
+                    }                  
+                                                           
+                    /*                 
+                    if ($pdf->getY()>(230)) {
+                        //$pdf->AddPage();
+                        $x = 1;
+                        $y += 72;
+                                    
+                        $pos_x=8;
+                        $colx=1; 
+                        $pn_ln=0;
+                        
+                    }   */                 
+                    $nn++;                         
+                }     
+                /*   
+                $x+=72;
+                if ($x>216){
+                    $x=1; 
+                    $y+=72;  
+                } 
+                if ($y>=618){                       
+                   $x=1; 
+                   $y=15;                      
+                } 
+                */           
+            }       
+        }
+/*         
         if ($result_fotos -> num_rows > 0) { 
             $pdf->AddPage();
 
@@ -502,7 +581,8 @@ $totalrepuestos=0;
             }        
         }
     }
-    }
+        */
+}
 
  
 
