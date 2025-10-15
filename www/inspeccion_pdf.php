@@ -423,6 +423,10 @@ $detallespos=$pdf->getY();
     $pdf->Cell(130, 4, $firmanombrecliente, '', 0, 'L', true );
     
  
+    $PerfilVendedor="";
+    $PerfilVendedor=get_dato_sql("usuario","grupo_id"," WHERE id=".$_SESSION["usuario_id"]);
+    
+    if ($PerfilVendedor<>7){
     //************   PAGINA de FOTOS */
     $result_fotos = sql_select("SELECT inspeccion_foto.id,inspeccion_foto.id_inspeccion,inspeccion_foto.archivo,inspeccion_foto.fecha
     FROM inspeccion_foto
@@ -506,6 +510,7 @@ $detallespos=$pdf->getY();
             }
         }
     }
+}
 
 //     <table>
 //     <tr>
