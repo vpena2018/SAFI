@@ -10,6 +10,9 @@ if ($nuevo=='N'){
    pagina_permiso(167);
 }
 
+$PerfilVendedor="";
+$PerfilVendedor=get_dato_sql("usuario","grupo_id"," WHERE id=".$_SESSION["usuario_id"]);
+  
 
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="v";}
 $disable_sec1=' ';    
@@ -483,9 +486,11 @@ if ($accion=="g") {
       <li class="nav-item">
         <a class="nav-link " id="insp_tabhistorial" data-toggle="tab" href="#" onclick="ventas_cambiartab('nav_historial');"   role="tab"  >Historial</a>
       </li> 
-      <li class="nav-item">
-        <a class="nav-link " id="insp_tabFotos" data-toggle="tab" href="#" onclick="ventas_cambiartab('nav_Fotos_venta');"   role="tab"  >Fotos</a>
-      </li> 
+      <?php if($PerfilVendedor<>18) { ?>
+        <li class="nav-item">
+            <a class="nav-link " id="insp_tabFotos" data-toggle="tab" href="#" onclick="ventas_cambiartab('nav_Fotos_venta');"   role="tab"  >Fotos</a>
+        </li> 
+       <?php } ?>
     </ul>   
  </div>
 
