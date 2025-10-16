@@ -225,7 +225,7 @@ if ($accion=="1") {
     $filtros="";
 
         if (isset($_REQUEST['pg'])) { $pagina = sanear_int($_REQUEST['pg']); }
-    if (isset($_REQUEST['numero'])) { $tmpval=sanear_int($_REQUEST['numero']); if (!es_nulo($tmpval)){$filtros.="and ave.id = ".GetSQLValue($tmpval,'int') ;}   }
+    if (isset($_REQUEST['numero'])) { $tmpval=sanear_int($_REQUEST['numero']); if (!es_nulo($tmpval)){$filtros.="and ave.numero = ".GetSQLValue($tmpval,'int') ;}   }
     if (isset($_REQUEST['estado'])) { $tmpval=sanear_int($_REQUEST['estado']); if ($tmpval==2){$filtros.=" and (desc_aprob IS null or desc_aprob<>1)" ;} else if ($tmpval==1) {$filtros.=" and desc_aprob=1" ;}else{$filtros="";}   }
     if (isset($_REQUEST['tienda'])) { $tmpval=sanear_int($_REQUEST['tienda']); if (!es_nulo($tmpval)){$filtros.=" and tienda.id = ".GetSQLValue($tmpval,'int') ;}   }
     if (isset($_REQUEST['nombre'])) { $tmpval=sanear_string(trim($_REQUEST['nombre'])); if (!es_nulo($tmpval)){ $filtros.=" and (prod.nombre  like ".GetSQLValue($tmpval,'like')." or prod.codigo_alterno like ".GetSQLValue($tmpval,'like').")";} }
@@ -236,7 +236,7 @@ if ($accion=="1") {
         if ($pagina>=1) { $offset=$pagina*app_reg_por_pag;   }
         $datos="";
 
-        $result = sql_select("SELECT ave.id num_averia,ave_detalle.id ave_detalle_id,prod.nombre vehiculo, cliente.nombre cliente,(ave_detalle.cantidad* ave_detalle.precio_venta) valor,  ave_detalle.fecha, tienda.nombre tienda,ave_detalle.desc_aprob
+        $result = sql_select("SELECT ave.id id_averia,ave.numero num_averia,ave_detalle.id ave_detalle_id,prod.nombre vehiculo, cliente.nombre cliente,(ave_detalle.cantidad* ave_detalle.precio_venta) valor,  ave_detalle.fecha, tienda.nombre tienda,ave_detalle.desc_aprob
         FROM averia ave
         INNER JOIN tienda ON tienda.id=ave.id_tienda
         INNER JOIN entidad cliente ON cliente.id=ave.cliente_id
@@ -245,7 +245,7 @@ if ($accion=="1") {
         WHERE 1=1  AND ave_detalle.producto_codigoalterno='DESC AVERIA'
         $filtros
         order by ave.fecha desc, ave.id desc
-        limit $offset,".app_reg_por_pag);
+        limit $offset,".app_reg_por_pag); 
 
         if ($result!=false){
             if ($result -> num_rows > 0) { 
@@ -273,7 +273,7 @@ if ($accion=="1") {
 
             $datos .= '<tr'.$style.'>
                        
-                    <td><a  href="#" onclick="averia_abrir(\''.$row["num_averia"].'\',\''.$row["ave_detalle_id"].'\',\''.$row["desc_aprob"].'\'); return false;" class="btn btn-sm btn-secondary btntxt">'.$row["num_averia"].'</a></td>
+                    <td><a  href="#" onclick="averia_abrir(\''.$row["id_averia"].'\',\''.$row["ave_detalle_id"].'\',\''.$row["desc_aprob"].'\'); return false;" class="btn btn-sm btn-secondary btntxt">'.$row["num_averia"].'</a></td>
                     <td>'.$row["vehiculo"].'</td>
                     <td>'.$row["cliente"].'</td>
                     <td>L '.number_format($row["valor"]*-1,2).'</td>
