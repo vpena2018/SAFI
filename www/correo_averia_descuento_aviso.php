@@ -67,13 +67,14 @@ WHERE ave_detalle.id=$id_averia_detalle;");
                             if($correosRow['correo_orden_averia_nueva']!='')
                             {
                                 $correos=$correosRow['correo_orden_averia_nueva'];
-                                //$correosprueba="alexander.v211111@gmail.com;vpena@inglosa.hn";//quitar linea cuando este en produccion
+                                /*$correosprueba="alexander.v211111@gmail.com;vpena@inglosa.hn";//quitar linea cuando este en produccion
 
                                 if (!empty($correos)) {
                                     $correos .= ";" . $correosPrueba;
                                 } else {
                                     $correos = $correosPrueba;
                                 }
+                                    */
                             }
                         }
                     }
