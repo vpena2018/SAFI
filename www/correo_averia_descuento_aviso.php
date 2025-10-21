@@ -44,7 +44,7 @@ if($accion=="aprobar")
 
 if ($app_enviar_email==true) {
 
-    $correo_servicio_result = sql_select("SELECT ave.id num_averia,prod.nombre vehiculo, cliente.nombre cliente,(ave_detalle.cantidad* ave_detalle.precio_costo) valor,  ave.fecha, tienda.nombre tienda FROM averia ave
+    $correo_servicio_result = sql_select("SELECT ave.id num_averia,ave.numero numeroAve,prod.nombre vehiculo, cliente.nombre cliente,(ave_detalle.cantidad* ave_detalle.precio_costo) valor,  ave.fecha, tienda.nombre tienda FROM averia ave
 INNER JOIN tienda ON tienda.id=ave.id_tienda
 INNER JOIN entidad cliente ON cliente.id=ave.cliente_id
 INNER JOIN producto prod ON prod.id= ave.id_producto
@@ -89,7 +89,7 @@ WHERE ave_detalle.id=$id_averia_detalle;");
            style='border-collapse:collapse; border:1px solid #ccc;'>
         {$estiloTabla}
             <th>N° Avería</th>
-            <td>{$correo_row['num_averia']}</td>
+            <td>{$correo_row['numeroAve']}</td>
         </tr>
         <tr style='background-color:#f9f9f9;'>
             <th style='width:150px; text-align:left; color:#004080;'>Vehículo</th>
