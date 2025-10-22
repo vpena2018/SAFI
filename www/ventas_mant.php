@@ -708,7 +708,11 @@ if ($accion=="g") {
                     echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';                   
                 }
             } else {
-                echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
+                if ($fecha<'2025-10-01'){                   
+                    echo '  <a href="aws_bucket_s3/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
+                }else{    
+                    echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
+                }    
             }
   }
   ?>
@@ -865,6 +869,7 @@ function mostrar_foto(imagen,folder="uploa_d/") {
 }); 
 
 }
+
 
 function thumb_agregar(archivo){
 if (archivo!='' && archivo!=undefined) {
