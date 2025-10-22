@@ -773,45 +773,65 @@ if ($accion=="g") {
         $sql="select id,nombre_archivo,fecha,principal from ventas_fotos where id_venta=".GetSQLValue($id,"int")." order by principal desc";
         $result = sql_select($sql);
 
-        if ($result!=false){
-            $total_filas = $result->num_rows;
-            if ($result -> num_rows > 0) {
-                while ($row = $result -> fetch_assoc()) {
+        if ($result != false) {
+    $total_filas = $result->num_rows;
+    if ($total_filas > 0) {
 
-                    $principalEncontrada=false;
-                    $es_principal = (bool)$row["principal"];
+        echo '<div style="
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+            justify-items: center;
+            align-items: start;
+            justify-content: center;
+        ">';
 
-                    if($es_principal){
-                        $principal=true;
-                        $principalEncontrada=true;
-                    }
+        while ($row = $result->fetch_assoc()) {
+            $es_principal = (bool)$row["principal"];
+            $fext = strtolower(substr($row["nombre_archivo"], -3));
 
-                    $fext = substr($row["nombre_archivo"], -3);
-                    $fecha = sanear_date($row['fecha']);
-                    if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif' or $fext=='JPG' or $fext=='PEG' or $fext=='PNG' or $fext=='GIF') {               
-                        echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$row["nombre_archivo"].'\',\'uploa_d_ventas/\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d_ventas/thumbnail/'.$row["nombre_archivo"].'" data-cod="'.$row["id"].'"></a> ';
-                        echo '<a href="#" class="mr-5 foto_br'.$row["id"].'" 
-                                onclick="borrar_fotodb('.$row["id"].',\''.$row["nombre_archivo"].'\'); return false;">
-                                <i class="fa fa-eraser"></i> Borrar';
+            if (in_array($fext, ['jpg', 'peg', 'png', 'gif'])) {
 
-                        if ($es_principal) {
-                            //echo ' <i class="fa fa-star" title="Foto Principal" style="color: gold;">principal</i>';
-                            echo ' <i class="fa fa-star" title="Foto de portada" style="color: #f0c651;">Foto de Portada</i>';
-                        }else{
-                                echo ' <a href="#" onclick="marcar_portada('.$row["id"].',\''.$row["nombre_archivo"].'\'); return false;">
-                                    <i class="far fa-star"></i> Marcar como portada
-                                </a>';
-                        }
+                echo '<div style="text-align:center;">';
 
-                        echo '</a>';                                                          
-                    } else {
-                        echo '  <a href="uploa_d_ventas/'.$row["archivo"].'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$row["archivo"].'</a> ';
-                    }
-           
-                } 
-                
+                // Imagen
+                echo '<a href="#" class="foto_br' . $row["id"] . '" 
+                        onclick="mostrar_foto(\'' . $row["nombre_archivo"] . '\',\'uploa_d_ventas/\'); return false;"
+                        style="display:inline-block; transition: transform 0.2s ease-in-out;">
+                        <img class="img img-thumbnail mb-2" 
+                             src="uploa_d_ventas/thumbnail/' . $row["nombre_archivo"] . '" 
+                             data-cod="' . $row["id"] . '" 
+                             style="width:100%; max-width:160px; height:auto; border-radius:6px;">
+                      </a>';
+
+                // Controles
+                echo '<div style="text-align:center; font-size:13px;">';
+                echo '<a href="#" class="mr-2 foto_br' . $row["id"] . '" 
+                        onclick="borrar_fotodb(' . $row["id"] . ',\'' . $row["nombre_archivo"] . '\'); return false;"
+                        style="color:#dc3545; text-decoration:none;">
+                        <i class="fa fa-eraser"></i> Borrar
+                      </a>';
+
+                if ($es_principal) {
+                    echo '<i class="fa fa-star" title="Foto de portada" style="color:#f0c651;"> Portada</i>';
+                } else {
+                    echo '<a href="#" onclick="marcar_portada(' . $row["id"] . ',\'' . $row["nombre_archivo"] . '\'); return false;"
+                            style="color:#6c757d; text-decoration:none;">
+                            <i class="far fa-star"></i> Portada
+                          </a>';
+                }
+                echo '</div>';
+
+                echo '</div>';
             }
         }
+
+        echo '</div>';
+    }
+}
+
+
+
 
         $a=$total_filas;
         while ($a < 10) {
