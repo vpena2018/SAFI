@@ -124,8 +124,9 @@ if ($accion =="ocobro") { //crear ORDEN COBRO
               $producto = $tmpresult -> fetch_assoc() ;
   
             //validar
-            if ($cantproducto<1 or $cantproducto>$producto['cantidad']) { $verror="La cantidad a solicitar de ".$producto['producto_codigoalterno'].", excede la cantidad autorizada";}
-
+            if ($producto['producto_codigoalterno']<>'DESC AVERIA'){
+                if ($cantproducto<1 or $cantproducto>$producto['cantidad']) { $verror="La cantidad a solicitar de ".$producto['producto_codigoalterno'].", excede la cantidad autorizada";}
+            }
             //Calculos
 
              
