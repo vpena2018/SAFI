@@ -13,6 +13,7 @@ if ($nuevo=='N'){
  
 
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="v";}
+
 $disable_sec1=' ';    
 $disable_sec2=' ';    
 
@@ -85,7 +86,12 @@ if (!tiene_permiso(168)) {
 if ($accion=="dfoto") {
    $cid=0;
    if (isset($_REQUEST['id'])) { $cid = intval($_REQUEST["id"]); }   
-   sql_update("UPDATE ventas set foto=null where id=$cid limit 1");   
+   if (isset($_REQUEST['foto'])){ $dfoto = intval($_REQUEST['foto']);} 
+   if ($dfoto==1){
+      sql_update("UPDATE ventas set foto=null where id=$cid limit 1");   
+   }else{
+      sql_update("UPDATE ventas set foto_televentas=null where id=$cid limit 1");
+   }
    $stud_arr[0]["pcode"] = 1;
    $stud_arr[0]["pmsg"] ="Foto eliminada";     
    salida_json($stud_arr);  
@@ -307,6 +313,7 @@ if ($accion=="g") {
         if (isset($_REQUEST["id_televentas"])) { $sqlcampos.= " , id_televentas =".GetSQLValue($_REQUEST["id_televentas"],"int"); } 
         if (isset($_REQUEST["observaciones"])) { $sqlcampos.= " , observaciones =".GetSQLValue($_REQUEST["observaciones"],"text"); }         
         if (isset($_REQUEST["foto"])) { $sqlcampos.= " , foto =".GetSQLValue($_REQUEST["foto"],"text"); } 
+        if (isset($_REQUEST["foto_televentas"])) { $sqlcampos.= " , foto_televentas =".GetSQLValue($_REQUEST["foto_televentas"],"text"); } 
         if (isset($_REQUEST["reproceso"])) { $sqlcampos.= " , reproceso =".GetSQLValue($_REQUEST["reproceso"],"text"); } 
         if (isset($_REQUEST["oferta"])) { $sqlcampos.= " , oferta =".GetSQLValue($_REQUEST["oferta"],"int"); } 
 
@@ -694,25 +701,45 @@ if ($accion=="g") {
 <?php  
     
     if ($foto=='') {  echo campo_upload("foto","Adjuntar comprobante de pago",'upload','', '  ','',4,8,'NO',false ); }                   
- ?>
+    if ($foto_televentas=='') {  echo campo_upload("foto_televentas","Adjuntar de Chat TeleVentas",'upload','', '  ','',4,8,'NO',false ); }                   
 
+?>
 </div>
 <div class="col-md">
+
 <div class="" id="insp_fotos_thumbs">
   <?php
   if ($foto<>'') {
      $fext = substr($foto, -3);
             if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {               
                 if ($fecha<'2025-10-01'){                   
-                    echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\',\'aws_bucket_s3\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="aws_bucket_s3/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
+                    echo '  <a href="#" onclick="mostrar_foto2(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="aws_bucket_s3/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
                 }else{
                     echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';                   
                 }
+                if(tiene_permiso(168))  { echo '  <a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="ventas_dfoto(1); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';}
             } else {
                 if ($fecha<'2025-10-01'){                   
                     echo '  <a href="aws_bucket_s3/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
                 }else{    
                     echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
+                }    
+            }
+  }
+   if ($foto_televentas<>'') {
+     $fext = substr($foto_televentas, -3);
+            if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {               
+                if ($fecha<'2025-10-01'){                   
+                    echo '  <a href="#" onclick="mostrar_foto2(\''.$foto_televentas.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="aws_bucket_s3/thumbnail/'.$foto_televentas.'" data-cod="'.$row["id"].'"></a> ';
+                }else{
+                    echo '  <a href="#" onclick="mostrar_foto(\''.$foto_televentas.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto_televentas.'" data-cod="'.$row["id"].'"></a> ';                   
+                }
+                if(tiene_permiso(168))  { echo '  <a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="ventas_dfoto(2); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';}
+            } else {
+                if ($fecha<'2025-10-01'){                   
+                    echo '  <a href="aws_bucket_s3/'.$foto_televentas.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto_televentas.'</a> ';
+                }else{    
+                    echo '  <a href="uploa_d/'.$foto_televentas.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto_televentas.'</a> ';
                 }    
             }
   }
@@ -729,8 +756,7 @@ if ($accion=="g") {
         </div>        
         <?php if (tiene_permiso(168)){ ?>
               <div class="col-sm"><a id="ventas_anularbtn"  href="#" onclick="ventas_anular(); return false;" class="btn btn-danger  btn-block mr-2 mb-2 xfrm"><i class="fa fa-trash-alt"></i> Borrar</a></div>		              
-              <div class="col-sm"><a id="ventas_anularbtn"  href="#" onclick="ventas_dfoto(); return false;" class="btn btn-warning btn-block mb-2 xfrm" ><i class="fa fa-trash-alt"></i> Borrar Foto</a></div>	                           
-        <?php } ?>  
+          <?php } ?>  
 
         <?php if (!es_nulo($id_inspeccion)){ ?>            
             <a href="#" onclick="abrir_hoja(); return false;" class="btn btn-outline-secondary mr-2 mb-2 xfrm" ><i class="fa fa-file-medical-alt"></i> Abrir Inspección</a>
@@ -858,15 +884,6 @@ if ($accion=="g") {
 
 <script>
 
-function servicio_editarcampo(nombre,etiqueta,valor,adicional=''){
-  var estado = $('#id_estado').val();  
-  $('#ModalWindow2').modal('hide');
-  modalwindow('Editar','ventas_mant.php?a=ec&nom='+encodeURI(nombre)+'&sid='+$('#id').val()+'&eti='+encodeURI(etiqueta)+'&val='+encodeURI(valor)+adicional);
-  $('#ModalWindow2').modal('show');
-}
-
-
-
 function abrir_hoja(){    
     hinspeccion = $('#id_inspeccion').val();
     $('#ModalWindow2').modal('hide');
@@ -883,6 +900,14 @@ function insp_guardar_foto(arch,campo){
 
 
 function mostrar_foto(imagen,folder="uploa_d/") {
+
+  Swal.fire({
+  imageUrl: folder+imagen,
+
+}); 
+}
+
+function mostrar_foto2(imagen,folder="aws_bucket_s3/") {
 
   Swal.fire({
   imageUrl: folder+imagen,
@@ -1027,12 +1052,9 @@ Swal.fire({
 }
 
 function marcar_portada(codid,arch){
-  
-
     var cid=$("#id").val();
     var datos= { a: "ufotoportadaventas", cid: cid, pid: $("#pid").val() , cod: codid, arch: encodeURI(arch)} ;
   
-
 Swal.fire({
 	  title: '⭐Foto de portada',
 	  text:  'Desea Marcar la foto como portada?',
@@ -1151,7 +1173,7 @@ function ventas_anular(){
 
 }
 
-function ventas_dfoto(){
+function ventas_dfoto(foto){
     Swal.fire({
 	  title: 'Borrar',
 	  text:  'Desea Borrar este foto?',
@@ -1163,7 +1185,7 @@ function ventas_dfoto(){
 	  cancelButtonText:  'Cancelar'
 	}).then((result) => {
 	  if (result.value) {
-	     ventas_procesar('ventas_mant.php?a=dfoto','forma_ventas','dfoto');        
+	     ventas_procesar('ventas_mant.php?a=dfoto&foto='+encodeURI(foto),'forma_ventas','dfoto');        
 	  }
 	})
 
