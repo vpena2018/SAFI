@@ -531,6 +531,7 @@ if ($accion=="g") {
     if (isset($row["id_vendedor"])) {$id_vendedor= $row["id_vendedor"]; } else {$id_vendedor= "";}
     if (isset($row["id_televentas"])) {$id_televentas= $row["id_televentas"]; } else {$id_televentas= "";}
     if (isset($row["observaciones"])) {$observaciones= $row["observaciones"]; } else {$observaciones= "";}
+    if (isset($row["foto_televentas"])) {$foto_televentas= $row["foto_televentas"]; } else {$foto_televentas= "";}
     if (isset($row["foto"])) {$foto= $row["foto"]; } else {$foto= "";}
     if (isset($row["fecha_negociacion"])) {$fecha_negociacion=$row["fecha_negociacion"]; } else {$fecha_negociacion= "";}
     if (isset($row["id_inspeccion"])) {$id_inspeccion=$row["id_inspeccion"]; } else {$id_inspeccion= "";}
@@ -703,7 +704,7 @@ if ($accion=="g") {
      $fext = substr($foto, -3);
             if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {               
                 if ($fecha<'2025-10-01'){                   
-                     echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="aws_bucket_s3/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
+                    echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\',\'aws_bucket_s3\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="aws_bucket_s3/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
                 }else{
                     echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';                   
                 }
