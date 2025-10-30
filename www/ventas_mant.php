@@ -491,11 +491,11 @@ if ($accion=="g") {
       <li class="nav-item">
         <a class="nav-link " id="insp_tabhistorial" data-toggle="tab" href="#" onclick="ventas_cambiartab('nav_historial');"   role="tab"  >Historial</a>
       </li> 
-      <?php if(tiene_permiso(186)) { ?>
+      
         <li class="nav-item">
             <a class="nav-link " id="insp_tabFotos" data-toggle="tab" href="#" onclick="ventas_cambiartab('nav_Fotos_venta');"   role="tab"  >Fotos</a>
         </li> 
-       <?php } ?>
+      
     </ul>   
  </div>
 
@@ -832,20 +832,22 @@ if ($accion=="g") {
                       </a>';
 
                 // Controles
-                echo '<div style="text-align:center; font-size:13px;">';
-                echo '<a href="#" class="mr-2 foto_br' . $row["id"] . '" 
-                        onclick="borrar_fotodb(' . $row["id"] . ',\'' . $row["nombre_archivo"] . '\'); return false;"
-                        style="color:#dc3545; text-decoration:none;">
-                        <i class="fa fa-eraser"></i> Borrar
-                      </a>';
-
-                if ($es_principal) {
-                    echo '<i class="fa fa-star" title="Foto de portada" style="color:#f0c651;"> Portada</i>';
-                } else {
-                    echo '<a href="#" onclick="marcar_portada(' . $row["id"] . ',\'' . $row["nombre_archivo"] . '\'); return false;"
-                            style="color:#6c757d; text-decoration:none;">
-                            <i class="far fa-star"></i> Portada
-                          </a>';
+                if (tiene_permiso(186)){
+                    echo '<div style="text-align:center; font-size:13px;">';
+                    echo '<a href="#" class="mr-2 foto_br' . $row["id"] . '" 
+                            onclick="borrar_fotodb(' . $row["id"] . ',\'' . $row["nombre_archivo"] . '\'); return false;"
+                            style="color:#dc3545; text-decoration:none;">
+                            <i class="fa fa-eraser"></i> Borrar
+                        </a>';
+                
+                    if ($es_principal) {
+                        echo '<i class="fa fa-star" title="Foto de portada" style="color:#f0c651;"> Portada</i>';
+                    } else {
+                       echo '<a href="#" onclick="marcar_portada(' . $row["id"] . ',\'' . $row["nombre_archivo"] . '\'); return false;"
+                                style="color:#6c757d; text-decoration:none;">
+                                <i class="far fa-star"></i> Portada
+                             </a>';
+                    }
                 }
                 echo '</div>';
 
@@ -859,7 +861,7 @@ if ($accion=="g") {
 
 
 
-
+    if (tiene_permiso(186)){
         $a=$total_filas;
         while ($a < 10) {
             
@@ -872,6 +874,7 @@ if ($accion=="g") {
             
 
         }
+    }   
     ?>
     </div>
 </div>
