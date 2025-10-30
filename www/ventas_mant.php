@@ -297,6 +297,41 @@ if ($accion=="g") {
             $nuevoregistro=true;
         }     
 
+        if(isset($_REQUEST['foto']) || isset($_REQUEST['foto_televentas'])) {
+            $foto_original_comp = urldecode($_REQUEST['foto']);
+            $foto_original_tele = urldecode($_REQUEST['foto_televentas']);
+
+            $foto = str_replace(' ', '_', urldecode($_REQUEST["foto"]));
+            $foto_televentas = str_replace(' ', '_', urldecode($_REQUEST["foto_televentas"]));
+
+            // Rutas originales
+            $ruta1 = 'uploa_d/' . $foto_original_comp;
+            $ruta2 = 'uploa_d/thumbnail/' . $foto_original_comp;
+            $ruta3 = 'uploa_d/' . $foto_original_tele;
+            $ruta4 = 'uploa_d/thumbnail/' . $foto_original_tele;
+
+            // Rutas nuevas
+            $nueva1 = 'uploa_d/' . $foto;
+            $nueva2 = 'uploa_d/thumbnail/' . $foto;
+            $nueva3 = 'uploa_d/' . $foto_televentas;
+            $nueva4 = 'uploa_d/thumbnail/' . $foto_televentas;
+
+            // Renombrar
+            if (file_exists($ruta1)) {
+                rename($ruta1, $nueva1);
+            }
+            if (file_exists($ruta2)) {
+                rename($ruta2, $nueva2);
+            }        
+
+            if (file_exists($ruta3)) {
+                rename($ruta3, $nueva3);
+            }        
+
+            if (file_exists($ruta4)) {
+                rename($ruta4, $nueva4);
+            }        
+        } 
         if (isset($_REQUEST["id_producto"])) { $sqlcampos.= "  id_producto =".GetSQLValue($_REQUEST["id_producto"],"int"); } 
         if (isset($_REQUEST["id_tienda"])) { $sqlcampos.= " , id_tienda =".GetSQLValue($_REQUEST["id_tienda"],"int"); }    
         if (isset($_REQUEST["id_estado"])) { $sqlcampos.= " , id_estado =".GetSQLValue($_REQUEST["id_estado"],"int"); }    
@@ -312,8 +347,8 @@ if ($accion=="g") {
         if (isset($_REQUEST["id_vendedor"])) { $sqlcampos.= " , id_vendedor =".GetSQLValue($_REQUEST["id_vendedor"],"int"); } 
         if (isset($_REQUEST["id_televentas"])) { $sqlcampos.= " , id_televentas =".GetSQLValue($_REQUEST["id_televentas"],"int"); } 
         if (isset($_REQUEST["observaciones"])) { $sqlcampos.= " , observaciones =".GetSQLValue($_REQUEST["observaciones"],"text"); }         
-        if (isset($_REQUEST["foto"])) { $sqlcampos.= " , foto =".GetSQLValue($_REQUEST["foto"],"text"); } 
-        if (isset($_REQUEST["foto_televentas"])) { $sqlcampos.= " , foto_televentas =".GetSQLValue($_REQUEST["foto_televentas"],"text"); } 
+        if (isset($_REQUEST["foto"])) { $sqlcampos.= " , foto ='$foto'"; } 
+        if (isset($_REQUEST["foto_televentas"])) { $sqlcampos.= " , foto_televentas = '$foto_televentas'"; } 
         if (isset($_REQUEST["reproceso"])) { $sqlcampos.= " , reproceso =".GetSQLValue($_REQUEST["reproceso"],"text"); } 
         if (isset($_REQUEST["oferta"])) { $sqlcampos.= " , oferta =".GetSQLValue($_REQUEST["oferta"],"int"); } 
 
@@ -847,11 +882,12 @@ if ($accion=="g") {
                                 style="color:#6c757d; text-decoration:none;">
                                 <i class="far fa-star"></i> Portada
                              </a>';
+                    
                     }
+                    echo '</div>';
                 }
                 echo '</div>';
-
-                echo '</div>';
+        
             }
         }
 
@@ -863,8 +899,7 @@ if ($accion=="g") {
 
     if (tiene_permiso(186)){
         $a=$total_filas;
-        while ($a < 10) {
-            
+        while ($a < 10) {            
             echo '<div class="row"><div class="col-12">';
             echo '<div class="ins_varias_foto_div">';
             echo campo_upload_foto_ventas("ins_foto".$a,"Adjuntar Fotos",'upload','', '  ','',3,9,'NO',false,$principal );
