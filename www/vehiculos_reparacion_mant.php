@@ -89,13 +89,23 @@ if ($accion=="g") {
     $verror.=validar("Vehiculo",$_REQUEST['id_producto'], "int", true);
     $verror.=validar("Kilomatraje",$_REQUEST['kilometraje'], "int", true);
     $verror.=validar("Observaciones",$_REQUEST['observaciones_reparacion'], "text", true);
-       
+    $verror.=validar("Trasmision",$_REQUEST['trasmision'], "text", true);   
+
     if (es_nulo($cid)){
         $id_producto=intval($_REQUEST['id_producto']);
         $vehiculo=get_dato_sql("ventas","count(*)"," where id_producto=".$id_producto);
         if (!es_nulo($vehiculo) && es_nulo($cid)){ $verror.='Vehiculo ya esta registrado'; }   
     }  
-       
+     
+    if ((tiene_permiso(169))){
+       $precio_minimo=intval($_REQUEST['precio_minimo']);
+       $precio_maximo=intval($_REQUEST['precio_maximo']);
+       if ($precio_minimo>$precio_maximo or $precio_maximo<$precio_minimo){
+             $verror.='El Precio Minimo no puede ser mayor al Precio Maximo o viceversa.<br>'; 
+       }
+    }
+
+    
     if ($verror=="") {
         //Campos
         $sqlcampos="";
@@ -119,7 +129,8 @@ if ($accion=="g") {
         if (isset($_REQUEST["foto"])) { $sqlcampos.= " , foto =".GetSQLValue($_REQUEST["foto"],"text"); } 
         if (isset($_REQUEST["precio_minimo"])) { $sqlcampos.= " , precio_minimo =".GetSQLValue($_REQUEST["precio_minimo"],"int"); } 
         if (isset($_REQUEST["precio_maximo"])) { $sqlcampos.= " , precio_maximo =".GetSQLValue($_REQUEST["precio_maximo"],"int"); } 
-         
+        if (isset($_REQUEST["trasmision"])) { $sqlcampos.= " , trasmision =".GetSQLValue($_REQUEST["trasmision"],"text"); } 
+
         $estadocompletar="";
         if (isset($_REQUEST['est'])) { $estadocompletar = trim($_REQUEST["est"]); }
         if (!es_nulo($estadocompletar) && $estadocompletar=='cmp'){
@@ -174,6 +185,18 @@ if ($accion=="g") {
              if ($fecha_promesa!=trim($_REQUEST['fecha_promesa'])){   
                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",99,'Modificacion de Fecha de Promesa', NOW(),'".$_REQUEST['fecha_promesa']."')"); 
+             }
+
+             $precio_minimo=intval(get_dato_sql("ventas","precio_minimo"," where id=".$cid));
+             if ($precio_minimo!=intval($_REQUEST['precio_minimo'])){   
+                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
+                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",99,'Modificacion de Precio Minimo', NOW(), ".$_REQUEST['precio_minimo'].")");
+             }
+
+             $precio_maximo=intval(get_dato_sql("ventas","precio_maximo"," where id=".$cid));
+             if ($precio_maximo!=intval($_REQUEST['precio_maximo'])){   
+                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
+                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",99,'Modificacion de Precio Maximo', NOW(), ".$_REQUEST['precio_maximo'].")");
              }
              
             $sql="update ventas set ".$sqlcampos." where id=".$cid." limit 1";
@@ -319,7 +342,8 @@ if ($accion =="d") {
     if (isset($row["observaciones_reparacion"])) {$observaciones_reparacion=$row["observaciones_reparacion"]; } else {$observaciones_reparacion="";}
     if (isset($row["precio_minimo"])) {$precio_minimo= $row["precio_minimo"]; } else {$precio_minimo= "";}
     if (isset($row["precio_maximo"])) {$precio_maximo= $row["precio_maximo"]; } else {$precio_maximo= "";}
-   
+    if (isset($row["trasmision"])) {$trasmision= $row["trasmision"]; } else {$trasmision= "";}
+
     //$observaciones_reparacion= "";
     if ($id_estado=='' || $id_estado==99){
        $disable_sec1=' ';  
@@ -422,6 +446,9 @@ if ($accion =="d") {
     </div>
 </div>  
 <div class="row">
+    <div class="col-md">
+         <?php echo campo("trasmision","Trasmision",'select', valores_combobox_texto(app_tipo_trasmision,$trasmision),' ',$disable_sec1); ?>
+    </div>
    <div class="col-md">
         <?php echo campo("precio_minimo","Precio Minimo",'number',$precio_minimo,' ',$disable_sec2); ?>        
     </div>
