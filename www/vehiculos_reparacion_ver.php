@@ -51,6 +51,8 @@ if ($accion=="1") {
     ,producto.nombre AS vehiculo
     ,producto.codigo_alterno AS codvehiculo
     ,usuario.nombre AS elusuario    
+    ,ventas.precio_minimo
+    ,ventas.precio_maximo
         FROM ventas
         LEFT OUTER JOIN producto ON (ventas.id_producto=producto.id)    
         LEFT OUTER JOIN ventas_estado ON (ventas.id_estado=ventas_estado.id)    
@@ -74,7 +76,9 @@ if ($accion=="1") {
                     <th>Fecha de Promesa</th>
                     <th>Vehiculo</th>   
                     <th>Adjunto</th>
-                    <th>Estado</th>                                        
+                    <th>Estado</th>  
+                    <th>Precio Minimo</th>  
+                    <th>Precio Maximo</th>                                        
                     <th>Pintura</th>
                     <th>Interior</th>
                     <th>Mecanica</th>
@@ -103,8 +107,9 @@ if ($accion=="1") {
                 '.$adjunto.'
 
 
-
                 <td>'.$row["elestado"].'</td>
+                <td>'.$row["precio_minimo"].'</td>
+                <td>'.$row["precio_maximo"].'</td>
                 <td>'.$row["elestado1"].'</td>
                 <td>'.$row["elestado2"].'</td>
                 <td>'.$row["elestado3"].'</td>
