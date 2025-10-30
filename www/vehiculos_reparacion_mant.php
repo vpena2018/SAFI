@@ -117,6 +117,8 @@ if ($accion=="g") {
         if (isset($_REQUEST["fecha_asignacion"])) { $sqlcampos.= " , fecha_asignacion =".GetSQLValue($_REQUEST["fecha_asignacion"],"date"); }      
         if (isset($_REQUEST["fecha_promesa"])) { $sqlcampos.= " , fecha_promesa =".GetSQLValue($_REQUEST["fecha_promesa"],"date"); }                            
         if (isset($_REQUEST["foto"])) { $sqlcampos.= " , foto =".GetSQLValue($_REQUEST["foto"],"text"); } 
+        if (isset($_REQUEST["precio_minimo"])) { $sqlcampos.= " , precio_minimo =".GetSQLValue($_REQUEST["precio_minimo"],"int"); } 
+        if (isset($_REQUEST["precio_maximo"])) { $sqlcampos.= " , precio_maximo =".GetSQLValue($_REQUEST["precio_maximo"],"int"); } 
          
         $estadocompletar="";
         if (isset($_REQUEST['est'])) { $estadocompletar = trim($_REQUEST["est"]); }
@@ -315,11 +317,16 @@ if ($accion =="d") {
     if (isset($row["reproceso"])) {$reproceso=$row["reproceso"]; } else {$reproceso="";}
     if (isset($row["foto"])) {$foto=$row["foto"]; } else {$foto="";}
     if (isset($row["observaciones_reparacion"])) {$observaciones_reparacion=$row["observaciones_reparacion"]; } else {$observaciones_reparacion="";}
-    
+    if (isset($row["precio_minimo"])) {$precio_minimo= $row["precio_minimo"]; } else {$precio_minimo= "";}
+    if (isset($row["precio_maximo"])) {$precio_maximo= $row["precio_maximo"]; } else {$precio_maximo= "";}
+   
     //$observaciones_reparacion= "";
     if ($id_estado=='' || $id_estado==99){
        $disable_sec1=' ';  
        $disable_sec2=' ';  
+       if (!tiene_permiso(169)){         
+          $disable_sec2=' readonly="readonly" ';              
+       }      
     }else{
        $disable_sec1=' disabled="disabled" ';  
        $disable_sec2=' disabled="disabled" ';  
@@ -414,6 +421,15 @@ if ($accion =="d") {
          ?>         
     </div>
 </div>  
+<div class="row">
+   <div class="col-md">
+        <?php echo campo("precio_minimo","Precio Minimo",'number',$precio_minimo,' ',$disable_sec2); ?>        
+    </div>
+    <div class="col-md">
+        <?php echo campo("precio_maximo","Precio Maximo",'number',$precio_maximo,' ',$disable_sec2); ?>          
+    </div>    
+
+</div>
 
 <div class="row">
      <div class="col-md">
