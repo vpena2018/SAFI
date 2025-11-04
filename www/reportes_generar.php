@@ -403,8 +403,8 @@ switch ($reporte) {
                 $reporte_datos.= "<th>Mecanico</th>";
                 $reporte_datos.= "<th>Fecha Completada</th>";
                 $reporte_datos.= "<th># Orden Servicio</th>";
-                $reporte_datos.= "<th>Tiempo</th>";
-                $reporte_datos.= "<th>Finalizada</th>";
+     /*         $reporte_datos.= "<th>Tiempo</th>";
+                $reporte_datos.= "<th>Finalizada</th>";*/
                 $reporte_datos.= "<th>En Proceso</th>";
                 $reporte_datos.= "<th>Preventivo</th>";
                 $reporte_datos.= "<th>Correctivo</th>";
@@ -471,8 +471,8 @@ switch ($reporte) {
                                             $reporte_datos.= '<td ></td>';                                   
                                             $reporte_datos.= '<td align="center">'.Formato_fechahora_de_mysql($fecha_completada).'</td>';
                                             $reporte_datos.= '<td align="center">'.$orden_act_numero.'</td>';                                            
-                                            $reporte_datos.= '<td align="center">'.minutos_a_hora($salida_orden).'</td>';
-                                            $reporte_datos.= '<td align="center">'.$finalizada_etq.'</td>';
+                                            /*$reporte_datos.= '<td align="center">'.minutos_a_hora($salida_orden).'</td>';
+                                            $reporte_datos.= '<td align="center">'.$finalizada_etq.'</td>';*/
                                             $reporte_datos.= '<td align="center">'.$enproceso_etq.'</td>';
                                             $reporte_datos.= '<td align="center">'.$preventivo_etq.'</td>';
                                             $reporte_datos.= '<td align="center">'.$correctivo_etq.'</td>';                                            
@@ -482,8 +482,8 @@ switch ($reporte) {
                                             $reporte_datos.= '<tr class="tbl_grp_head">';                                            
                                             $reporte_datos.= '<td >['.$cod_tecnico.'] '.$nombre_tecnico.'</td>';                                   
                                             $reporte_datos.= '<td align="center"></td>';
-                                            $reporte_datos.= '<td align="center"></td>';
-                                            $reporte_datos.= '<td align="center"></td>';
+                                            /*$reporte_datos.= '<td align="center"></td>';
+                                            $reporte_datos.= '<td align="center"></td>';*/
                                             $reporte_datos.= '<td align="center"></td>';
                                             $reporte_datos.= '<td align="center"></td>';
                                             $reporte_datos.= '<td align="center"></td>';
@@ -557,8 +557,8 @@ switch ($reporte) {
                                     $reporte_datos.= '<td ></td>';                  
                                     $reporte_datos.= '<td align="center">'.Formato_fechahora_de_mysql($fecha_completada).'</td>';                 
                                     $reporte_datos.= '<td align="center" >'.$orden_act_numero.'</td>';
-                                    $reporte_datos.= '<td align="center" >'.minutos_a_hora($salida_orden).'</td>';                                   
-                                    $reporte_datos.= '<td align="center">'.$finalizada_etq.'</td>';
+                                    /*$reporte_datos.= '<td align="center" >'.minutos_a_hora($salida_orden).'</td>';                                   
+                                    $reporte_datos.= '<td align="center">'.$finalizada_etq.'</td>';*/
                                     $reporte_datos.= '<td align="center">'.$enproceso_etq.'</td>';
                                     $reporte_datos.= '<td align="center">'.$preventivo_etq.'</td>';
                                     $reporte_datos.= '<td align="center">'.$correctivo_etq.'</td>';
@@ -574,8 +574,8 @@ switch ($reporte) {
                                 $reporte_datos.= '<td></td>';                                                                     
                                 $reporte_datos.= '<td align="right">Total '.$nombre_tecnico.':</td>';                                   
                                 $reporte_datos.= '<td align="center" ><b>'.$cant_ordenes.'</b></td>';
-                                $reporte_datos.= '<td align="center" >'.minutos_a_hora($salida).'</td>';
-                                $reporte_datos.= '<td align="center">'.$finalizada.'</td>';
+                                /*$reporte_datos.= '<td align="center" >'.minutos_a_hora($salida).'</td>';
+                                $reporte_datos.= '<td align="center">'.$finalizada.'</td>';*/
                                 $reporte_datos.= '<td align="center">'.$enproceso.'</td>';
                                 $reporte_datos.= '<td align="center">'.$preventivo.'</td>';
                                 $reporte_datos.= '<td align="center">'.$correctivo.'</td>';
@@ -594,8 +594,8 @@ switch ($reporte) {
                  $reporte_datos.= '<td align="right">Gran Total:</td>';                                   
                  $reporte_datos.= '<td align="center" ></td>';
                  $reporte_datos.= '<td align="center" >'.$total_cant_ordenes.'</td>';
-                 $reporte_datos.= '<td align="center" ></td>';
-                 $reporte_datos.= '<td align="center">'.$total_finalizada.'</td>';
+                 /*$reporte_datos.= '<td align="center" ></td>';
+                 $reporte_datos.= '<td align="center">'.$total_finalizada.'</td>';*/
                  $reporte_datos.= '<td align="center">'.$total_enproceso.'</td>';
                  $reporte_datos.= '<td align="center">'.$total_preventivo.'</td>';
                  $reporte_datos.= '<td align="center">'.$total_correctivo.'</td>';
