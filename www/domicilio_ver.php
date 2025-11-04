@@ -24,8 +24,7 @@ if ($accion=="1") {
     if (isset($_REQUEST['numero'])) { $tmpval=sanear_int($_REQUEST['numero']); if (!es_nulo($tmpval)){$filtros.=" and orden_domicilio.numero = ".GetSQLValue($tmpval,'int') ;}   }
     if (isset($_REQUEST['estado'])) { $tmpval=sanear_int($_REQUEST['estado']); if (!es_nulo($tmpval)){$filtros.=" and orden_domicilio.id_estado = ".GetSQLValue($tmpval,'int') ;}   }
     if (isset($_REQUEST['tienda'])) { $tmpval=sanear_int($_REQUEST['tienda']); if (!es_nulo($tmpval)){$filtros.=" and orden_domicilio.id_tienda = ".GetSQLValue($tmpval,'int') ;}   }
-    
-    
+    if (isset($_REQUEST['id_motorista'])) { $tmpval=sanear_int($_REQUEST['id_motorista']); if (!es_nulo($tmpval)){$filtros.=" and orden_domicilio.id_motorista=".GetSQLValue($tmpval,'int') ;}  }
     if (isset($_REQUEST['tipoest'])) { $tmpval=sanear_int($_REQUEST['tipoest']); 
      
         
@@ -183,6 +182,11 @@ if ($accion=="1") {
             ?>
          </div>
 
+         <div class="col-sm">
+           <?php 
+           echo campo("id_motorista","Motorista",'select',valores_combobox_db('usuario','','nombre',' where activo=1 and (grupo_id=3 or perfil_adicional=3)','','Todos'),' ',' onkeypress="buscarfiltro(event,\'btn-filtro\');"');
+            ?>
+        </div>
          
     </div>   
 
