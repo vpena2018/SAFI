@@ -2364,7 +2364,8 @@ case 73:// 	Reporte de averias
             ,producto.codigo_alterno,producto.nombre,producto.placa
             ,orden_traslado_estado.nombre AS elestado
             ,l1.nombre AS motorista
-            ,l2.usuario AS solicitante
+            ,l2.nombre AS solicitante
+            ,l3.nombre AS usuariocompleta
             ,t1.nombre AS tienda_salida
             ,t2.nombre AS tienda_destino
             ,p1.nombre AS elproveedor
@@ -2374,6 +2375,7 @@ case 73:// 	Reporte de averias
             LEFT OUTER JOIN orden_traslado_estado ON (orden_traslado.id_estado=orden_traslado_estado.id)
             LEFT OUTER JOIN usuario l1 ON (orden_traslado.id_motorista=l1.id)
             LEFT OUTER JOIN usuario l2 ON (orden_traslado.id_solicitante=l2.id)
+            LEFT OUTER JOIN usuario l3 ON (orden_traslado.id_usuario_autoriza=l3.id)
             LEFT OUTER JOIN tienda_agencia t1 ON (orden_traslado.id_tienda_salida=t1.id)
             LEFT OUTER JOIN tienda_agencia t2 ON (orden_traslado.id_tienda_destino=t2.id)
             LEFT OUTER JOIN entidad p1 ON (orden_traslado.id_proveedor=p1.id)  
@@ -2398,9 +2400,10 @@ case 73:// 	Reporte de averias
                     $reporte_datos.= "<th>Proveedor Destino</th>"; 
                     $reporte_datos.= "<th>Tienda Destino</th>";
                   
-                    $reporte_datos.= "<th>Vehiculo</th>";                    
+                    $reporte_datos.= "<th>Vehiculo</th>"; 
+                    $reporte_datos.= "<th>Solicitante</th>";                   
                     $reporte_datos.= "<th>Motorista</th>"; 
-                    $reporte_datos.= "<th>Solicitante</th>";
+                    $reporte_datos.= "<th>Completado Por</th>"; 
                     $reporte_datos.= "<th>Estado</th>";
                     $reporte_datos.= "<th>Combustible Salida</th>";
                     $reporte_datos.= "<th>Combustible Entrada</th>";
@@ -2422,9 +2425,11 @@ case 73:// 	Reporte de averias
                         $reporte_datos.= '<td>'.$row['elproveedor'].'</td>';
                         $reporte_datos.= '<td>'.$row['tienda_destino'].'</td>';
                         $reporte_datos.= '<td style="white-space: nowrap;">'.$row['codigo_alterno'].'</td>';                       
-                        $reporte_datos.= '<td > '.$row['motorista'].'</td>';
+                        
                         $reporte_datos.= '<td > '.$row['solicitante'].'</td>';
-
+                        $reporte_datos.= '<td > '.$row['motorista'].'</td>';
+                        $reporte_datos.= '<td > '.$row['usuariocompleta'].'</td>';
+                        
                         $reporte_datos.= '<td > '.$row['elestado'].'</td>';
 
                         $reporte_datos.= '<td  align="center" > '.$row['combustible_salida'].'</td>';

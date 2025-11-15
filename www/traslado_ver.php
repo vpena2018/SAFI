@@ -75,6 +75,7 @@ if ($accion=="1") {
     order by orden_traslado.fecha desc, orden_traslado.id desc
      "
     );//limit $offset,".app_reg_por_pag
+    
 
     if ($result!=false){
         if ($result -> num_rows > 0) { 

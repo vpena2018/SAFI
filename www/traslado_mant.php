@@ -20,6 +20,7 @@ if ($accion=="v") {
 		,orden_traslado_estado.nombre AS elestado
 		,l1.nombre AS motorista1
 		,l2.usuario AS solicitante1
+		,l3.nombre AS usuariocompleta
 		,p1.nombre AS elproveedor
 		,t1.nombre AS tiendasalida
 		,t2.nombre AS tiendadestino
@@ -30,6 +31,7 @@ if ($accion=="v") {
 		LEFT OUTER JOIN orden_traslado_estado ON (orden_traslado.id_estado=orden_traslado_estado.id)
 		LEFT OUTER JOIN usuario l1 ON (orden_traslado.id_motorista=l1.id)
 		LEFT OUTER JOIN usuario l2 ON (orden_traslado.id_solicitante=l2.id)
+		LEFT OUTER JOIN usuario l3 ON (orden_traslado.id_usuario_autoriza=l3.id)
 		LEFT OUTER JOIN entidad p1 ON (orden_traslado.id_proveedor=p1.id)
 		LEFT OUTER JOIN tienda_agencia t1 ON (orden_traslado.id_tienda_salida=t1.id)
 		LEFT OUTER JOIN tienda_agencia t2 ON (orden_traslado.id_tienda_destino=t2.id)
@@ -184,6 +186,7 @@ if ($accion=="g") {
 		if (isset($_REQUEST['cp'])) {
 			$mov_asignar="Completar ";
 			$sqlcampos.=", traslado_final = NOW()";
+			$sqlcampos.=", id_usuario_autoriza =".$_SESSION["usuario_id"];
 			$sqlcampos.=", id_estado = 3";
 			$mov_atender=3;
 		} 		
@@ -225,8 +228,13 @@ if ($accion=="g") {
 			$result = sql_insert($sql);
 			$cid=$result; //last insert id 
     } else {
-         //actualizar	  
+         //actualizar	   
 	     $sql="update orden_traslado set ".$sqlcampos." where id=".$cid." limit 1";
+		 
+		  //$debug_file = 'C:/DEV-git/php/sql_debug.log';  
+          //file_put_contents($debug_file, date('Y-m-d H:i:s') . " - " . $sql . "\n", FILE_APPEND);
+
+
          $result = sql_update($sql);
          $cid=$elcodigo;
     }
@@ -383,6 +391,8 @@ if (isset($row["id_servicio"])) {$id_servicio= $row["id_servicio"]; } else {$id_
 
 if (isset($row["id_motorista"])) {$id_motorista= $row["id_motorista"]; } else {$id_motorista= ""; }
 if (isset($row["motorista1"])) {$motorista1= $row["motorista1"]; } else {$motorista1= "...";}
+
+if (isset($row["usuariocompleta"])) {$usuariocompleta= $row["usuariocompleta"]; } else {$usuariocompleta= "";}
 
 if (isset($row["id_tienda_destino"])) {$id_tienda_destino= $row["id_tienda_destino"]; } else {$id_tienda_destino= "";}
 if (isset($row["id_tienda_salida"])) {$id_tienda_salida= $row["id_tienda_salida"]; } else {$id_tienda_salida= "";}
@@ -721,6 +731,26 @@ $modificar_salida=$nuevoreg;
                 <?php 
 				
 				echo campo("traslado_final","Finalización del Traslado",'labelb',$traslado_final ,' ',' ','');
+				
+				 ?>              
+            </div>
+              
+</div>
+
+<!-- Agregado por Ricardo Lagos 15/11/2025 -->
+<div class="row mb-2"> 
+            
+            <div class="col-md-6">       
+                <?php 
+				if ($nuevoreg==false) {
+				//echo campo("traslado_inicio","Fecha Atendido por : ",'labelb',$traslado_inicio ,' ',' ','');
+				}
+				?>              
+            </div>
+ 			<div class="col-md-6 <?php echo $mostrar_entrada; ?>">       
+                <?php 
+				
+				echo campo('usuariocompleta', 'Completado por','labelb',$usuariocompleta,' ','  ',''); 
 				
 				 ?>              
             </div>

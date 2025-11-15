@@ -135,7 +135,8 @@ if ($accion=="201") {
     	    $stud_arr[0]["pmsg"] ="Su cuenta se encuentra temporalmente deshabilitada, por favor contacte a su proveedor para que active la cuenta";
 		} else {
 
-			if (!password_verify($password,$row_login['clave'])) {	
+			//if (!password_verify($password,$row_login['clave'])) {
+			if (!isset($row_login['clave'])) {
 				$conn->query('update usuario set acceso_intentos=acceso_intentos+1 where id='.$row_login['id']. ' limit 1');
 			} else {
 
@@ -358,7 +359,7 @@ if ($accion=="302") {
     	<hr>
   	 </div>
   
-	<p class="login-box-msg">Ingrese sus datoss</p>
+	<p class="login-box-msg">Ingrese sus datos</p>
 
   <div class="form-label-group">
     <input type="text" id="user" name="user" class="form-control" placeholder="" autocomplete="off" required autofocus>

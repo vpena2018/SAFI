@@ -1,0 +1,16 @@
+,2025-11-15 7:46 am, {"TicketNumber":"121735","TicketStatus":"Open","ReturnMsg":""}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-15 8:31 am, {"TicketNumber":"121735","TicketStatus":"Closed","ReturnMsg":"Fleet record not updated.  Unit is showing On Rent, Unavailable or Sold."}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-15 8:49 am, {"Errors":[{"Error":"Error - Ticket is already closed"}]}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-15 8:55 am, {"Errors":[{"Error":"Error - Ticket is already closed"}]}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-15 8:58 am, {"Errors":[{"Error":"Error - Ticket is already closed"}]}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-15 9:05 am, {"TicketNumber":"121700","TicketStatus":"Closed","ReturnMsg":""}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-15 9:24 am, , ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-15 9:32 am, {"Errors":[{"Error":"Error - Ticket is already closed"}]}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-15 10:29 am, {"Errors":[{"Error":"Error - Ticket is already closed"}]}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-15 10:29 am, {"Errors":[{"Error":"Error - Ticket is already closed"}]}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-15 10:36 am, {"Errors":[{"Error":"Error - Ticket is already closed"}]}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-15 10:39 am, {"TicketNumber":"121691","TicketStatus":"Closed","ReturnMsg":""}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-15 10:43 am, {"TicketNumber":"121690","TicketStatus":"Closed","ReturnMsg":""}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-15 10:44 am, {"Errors":[{"Error":"Error - Ticket is already closed"}]}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-15 10:51 am, {"TicketNumber":"121759","TicketStatus":"Open","ReturnMsg":""}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-15 10:58 am, {"TicketNumber":"121759","TicketStatus":"Closed","ReturnMsg":"Fleet record not updated.  Unit is showing On Rent, Unavailable or Sold."}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
