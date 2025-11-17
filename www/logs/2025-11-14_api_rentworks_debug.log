@@ -1,0 +1,15 @@
+,2025-11-14 10:03 am, {"Errors":[{"Error":"Error - Vehicle not found."}]}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-14 10:03 am, {"Errors":[{"Error":"Error - Vehicle not found."}]}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-14 10:05 am, {"Errors":[{"Error":"Error - Non-revenue ticket not found"}]}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-14 10:05 am, {"Errors":[{"Error":"Error - Non-revenue ticket not found"}]}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-14 10:05 am, {"Errors":[{"Error":"Error - Non-revenue ticket not found"}]}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-14 10:08 am, {"Errors":[{"Error":"Error - Non-revenue ticket not found"}]}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-14 10:14 am, {"Errors":[{"Error":"Error - Vehicle not found."}]}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-14 10:14 am, {"Errors":[{"Error":"Error - Non-revenue ticket not found"}]}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-14 10:22 am, {"Errors":[{"Error":"Error - Vehicle not found."}]}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-14 10:24 am, {"Errors":[{"Error":"Error - Non-revenue ticket not found"}]}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-14 3:11 pm, {"Errors":[{"Error":"Error - Ticket is already closed"}]}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-14 3:11 pm, {"Errors":[{"Error":"Error - Ticket is already closed"}]}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-14 3:35 pm, {"TicketNumber":"121711","TicketStatus":"Closed","ReturnMsg":""}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-14 3:41 pm, {"TicketNumber":"121731","TicketStatus":"Open","ReturnMsg":""}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 
+,2025-11-14 3:52 pm, {"TicketNumber":"121731","TicketStatus":"Closed","ReturnMsg":""}, ::1, Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 

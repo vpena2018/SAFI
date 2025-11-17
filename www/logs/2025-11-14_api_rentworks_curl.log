@@ -1,0 +1,105 @@
+2025-11-14 10:03 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-3504", "VehicleStatus":"Taller de pintura", "OdometerOut":"46789", "FuelLevelOut":"8", "Company":"AUTOPINTURAS HN", "LocationOut":"OPSPS", "LocationDue":"OPSPS", "DateTimeOut":"2025-11-14T10:03", "DateTimeDue":"2025-11-14T10:03", "Driver":"Jose Daniel Gonzales Carcamo", "DueDetails":""}'
+ 
+2025-11-14 10:03 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-3504", "VehicleStatus":"Taller de pintura", "OdometerOut":"46789", "FuelLevelOut":"8", "Company":"AUTOPINTURAS HN", "LocationOut":"OPSPS", "LocationDue":"OPSPS", "DateTimeOut":"2025-11-14T10:03", "DateTimeDue":"2025-11-14T10:03", "Driver":"Jose Daniel Gonzales Carcamo", "DueDetails":""}'
+ 
+2025-11-14 10:05 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"", "VehicleStatus":"Taller de pintura", "LocationIn":"OPSPS", "DateTimeIn":"2025-11-14T10:05", "OdometerIn":"47700", "FuelLevelIn":"7", "DueDetails":"Autorizado por taller de pintura"}'
+ 
+2025-11-14 10:05 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"", "VehicleStatus":"Taller de pintura", "LocationIn":"OPSPS", "DateTimeIn":"2025-11-14T10:05", "OdometerIn":"47700", "FuelLevelIn":"7", "DueDetails":"Autorizado por taller de pintura"}'
+ 
+2025-11-14 10:05 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"", "VehicleStatus":"Taller de pintura", "LocationIn":"OPSPS", "DateTimeIn":"2025-11-14T10:05", "OdometerIn":"46790", "FuelLevelIn":"7", "DueDetails":"Autorizado por taller de pintura"}'
+ 
+2025-11-14 10:07 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"", "VehicleStatus":"Taller de pintura", "LocationIn":"OPSPS", "DateTimeIn":"2025-11-14T10:07", "OdometerIn":"46790", "FuelLevelIn":"7", "DueDetails":"Autorizado por taller de pintura"}'
+ 
+2025-11-14 10:14 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-3586", "VehicleStatus":"Taller de pintura", "OdometerOut":"4000", "FuelLevelOut":"8", "Company":"TALLER DE PINTURAS LISFER/CLAUDIA MARIA CABRERA RODRIGUEZ", "LocationOut":"OPSPS", "LocationDue":"OPSPS", "DateTimeOut":"2025-11-14T10:14", "DateTimeDue":"2025-11-14T10:14", "Driver":"Marcio Edgardo Oyuela Zuniga", "DueDetails":"puntura"}'
+ 
+2025-11-14 10:14 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"", "VehicleStatus":"Taller de pintura", "LocationIn":"OPSPS", "DateTimeIn":"2025-11-14T10:14", "OdometerIn":"4010", "FuelLevelIn":"8", "DueDetails":"punturapintado"}'
+ 
+2025-11-14 10:22 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-1856", "VehicleStatus":"Auto reemplazo", "OdometerOut":"12", "FuelLevelOut":"8", "Company":"HENRY MENDEZ", "LocationOut":"OPSPS", "LocationDue":"OPSPS", "DateTimeOut":"2025-11-14T10:22", "DateTimeDue":"2025-11-14T10:22", "Driver":"Franklin Alexis Lopez Hernandez", "DueDetails":""}'
+ 
+2025-11-14 10:24 am
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"", "VehicleStatus":"Auto reemplazo", "LocationIn":"OPSPS", "DateTimeIn":"2025-11-14T10:24", "OdometerIn":"34", "FuelLevelIn":"8", "DueDetails":""}'
+ 
+2025-11-14 3:11 pm
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"121712", "VehicleStatus":"Non-Rev", "LocationIn":"OPT", "DateTimeIn":"2025-11-14T15:11", "OdometerIn":"69447", "FuelLevelIn":"8", "DueDetails":"LLENADO"}'
+ 
+2025-11-14 3:11 pm
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"121712", "VehicleStatus":"Non-Rev", "LocationIn":"OPT", "DateTimeIn":"2025-11-14T15:11", "OdometerIn":"69446", "FuelLevelIn":"8", "DueDetails":"LLENADO"}'
+ 
+2025-11-14 3:35 pm
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"121711", "VehicleStatus":" Necesita limpieza", "LocationIn":"Bdg Palmas", "DateTimeIn":"2025-11-14T15:35", "OdometerIn":"24537", "FuelLevelIn":"8", "DueDetails":"Alfombra mojada y mal olor"}'
+ 
+2025-11-14 3:41 pm
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Open", "Product":"VEHICLES", "UnitNumber":"EA-4663", "VehicleStatus":"Non-Rev", "OdometerOut":"40674", "FuelLevelOut":"8", "Company":"", "LocationOut":"ASPS", "LocationDue":"OPSPS", "DateTimeOut":"2025-11-14T15:41", "DateTimeDue":"2025-11-14T15:41", "Driver":"Bryan Alejandro Nuñez", "DueDetails":"Traslado para Shampuseo "}'
+ 
+2025-11-14 3:52 pm
+curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/NonRev' \
+    --header 'X-Api-Key: 123e3a22302c2137' \
+    --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"Action":"Close", "TicketNumber":"121731", "VehicleStatus":"Available", "LocationIn":"OPSPS", "DateTimeIn":"2025-11-14T15:52", "OdometerIn":"40689", "FuelLevelIn":"8", "DueDetails":"Traslado para Shampuseo "}'
+ 
