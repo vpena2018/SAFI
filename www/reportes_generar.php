@@ -2434,7 +2434,8 @@ case 73:// 	Reporte de averias
 
                         $reporte_datos.= '<td  align="center" > '.$row['combustible_salida'].'</td>';
                         $reporte_datos.= '<td  align="center" > '.$row['combustible_entrada'].'</td>';
-                        $reporte_datos.= '<td  align="center" > '.formato_numero($row['kilometraje_salida']).'</td>';
+                        
+                        }$reporte_datos.= '<td  align="center" > '.formato_numero($row['kilometraje_salida']).'</td>';
                         $reporte_datos.= '<td  align="center" > '.formato_numero($row['kilometraje_entrada']).'</td>';
 
 
