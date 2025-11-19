@@ -4,114 +4,105 @@ header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 // FUNCIONES
 //#######################################################
-function salida_json($stud_arr){
-    
-            header('Cache-Control: no-cache, must-revalidate');
-            header('Expires: Sat, 15 Jan 2000 07:00:00 GMT');
-            header('Content-type: application/json');
-            echo json_encode($stud_arr);    
-            exit;   
-}
-
-
-function obtener_ip2() {
-	$salida="";
-	$pieces = explode(".", $_SERVER['REMOTE_ADDR']);
-	if (is_array($pieces)){
-		foreach ($pieces as $key => $value) {
-			$salida.= $value.'.';
-		}
-	} else {
-		$salida= $pieces;
-	}
-	return $salida;
-}
-
-function generate_id()// de 40 caracteres de ancho
+function salida_json($stud_arr)
 {
-	return sha1(rand(10000, 30000) . time() . rand(10000, 30000));
+    header("Cache-Control: no-cache, must-revalidate");
+    header("Expires: Sat, 15 Jan 2000 07:00:00 GMT");
+    header("Content-type: application/json");
+    echo json_encode($stud_arr);
+    exit();
 }
 
-function leer_permisos_asignados($grupo_id){
-	global $conn;	
-	$salida=array();	
- 
-		
-		$sql="SELECT  usuario_nivelxgrupo.nivel_id 
+function obtener_ip2()
+{
+    $salida = "";
+    $pieces = explode(".", $_SERVER["REMOTE_ADDR"]);
+    if (is_array($pieces)) {
+        foreach ($pieces as $key => $value) {
+            $salida .= $value . ".";
+        }
+    } else {
+        $salida = $pieces;
+    }
+    return $salida;
+}
+
+function generate_id()
+{
+    // de 40 caracteres de ancho
+    return sha1(rand(10000, 30000) . time() . rand(10000, 30000));
+}
+
+function leer_permisos_asignados($grupo_id)
+{
+    global $conn;
+    $salida = [];
+
+    $sql = "SELECT  usuario_nivelxgrupo.nivel_id 
 				FROM usuario_nivelxgrupo 
 				LEFT OUTER JOIN usuario_nivel ON (usuario_nivelxgrupo.nivel_id=usuario_nivel.id)
 				where usuario_nivelxgrupo.grupo_id=$grupo_id 
 				AND usuario_nivel.activo=1
 				order by usuario_nivelxgrupo.nivel_id";
 
-		$result = $conn -> query($sql);
-		$i=0;
-		if ($result -> num_rows > 0) {
-			while ($row = $result -> fetch_assoc()) {
-				$salida[$i]=$row["nivel_id"];				
-				$i++;
-			}
-	
-		}
-	
-	 return $salida;	
-	
+    $result = $conn->query($sql);
+    $i = 0;
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $salida[$i] = $row["nivel_id"];
+            $i++;
+        }
+    }
+
+    return $salida;
 }
 
 //#######################################################
 
-$txt_mensaje="";
-	
- 
+$txt_mensaje = "";
 
+if (isset($_REQUEST["a"])) {
+    $accion = $_REQUEST["a"];
 
-if (isset($_REQUEST['a'])){
+    // Logout
+    if ($accion == "logout") {
+        // borrar session
+        session_set_cookie_params([
+            "lifetime" => time() - 3600,
+            "path" => "/",
+            "domain" => $_SERVER["HTTP_HOST"],
+            "secure" => false,
+            "httponly" => true,
+            "samesite" => "strict",
+        ]);
 
+        session_start();
+        session_destroy();
 
- $accion = $_REQUEST['a']; 
+        // borrar cookies
+        setcookie("urs", "", ["samesite" => "Strict"]);
+        setcookie("sgt", "", ["samesite" => "Strict"]);
+        setcookie("PHPSESSID", "", ["samesite" => "Strict"]);
 
-// Logout
-if ($accion=="logout"){
-  
+        $txt_mensaje = "Sesion cerrada";
+    }
 
-    // borrar session
-    session_set_cookie_params([
-        'lifetime' => time() - 3600,
-        'path' => '/',
-        'domain' => $_SERVER['HTTP_HOST'],
-        'secure' => false,
-        'httponly' => true,
-        'samesite' => 'strict'
-    ]);
+    // LOGIN
+    if ($accion == "201") {
+        $stud_arr[0]["pcode"] = 0;
+        $stud_arr[0]["pmsg"] = "El usuario y/o contraseña son incorrectos";
 
-	session_start();
-	session_destroy();
+        require_once "include/config.php";
 
-	// borrar cookies
-	setcookie("urs", "", ['samesite' => 'Strict']);
-	setcookie("sgt", "",  ['samesite' => 'Strict']);
-	setcookie("PHPSESSID", "", ['samesite' => 'Strict']);
+        $conn = new mysqli(db_ip, db_user, db_pw, db_name);
+        if (mysqli_connect_errno()) {
+            exit("Error al conectar a la base de datos");
+        }
 
-	$txt_mensaje='Sesion cerrada';
-}
+        $username = filter_var(trim($_POST["u"]), FILTER_SANITIZE_STRING);
+        $password = filter_var(trim($_POST["p"]), FILTER_SANITIZE_STRING);
 
-
-// LOGIN
-if ($accion=="201") {
-  
-	$stud_arr[0]["pcode"] = 0;
-    $stud_arr[0]["pmsg"] ="El usuario y/o contraseña son incorrectos";
-  	
-  	require_once ('include/config.php');
-
-	$conn = new mysqli(db_ip, db_user, db_pw, db_name);
-	if (mysqli_connect_errno()) {  exit("Error al conectar a la base de datos");}
-
-	$username=filter_var(trim($_POST['u']), FILTER_SANITIZE_STRING);
-	$password=filter_var(trim($_POST['p']), FILTER_SANITIZE_STRING);
-
-
-	$sql="SELECT usuario.* ,usuario_grupo.nombre AS grupo_nombre 
+        $sql = "SELECT usuario.* ,usuario_grupo.nombre AS grupo_nombre 
 		,tienda.nombre as tienda_nombre
 		,tienda.correo_bodega
 		,tienda.correo_compras
@@ -122,208 +113,235 @@ if ($accion=="201") {
 	  	FROM usuario 
 		LEFT OUTER JOIN usuario_grupo ON (usuario.grupo_id=usuario_grupo.id)
 		LEFT OUTER JOIN tienda ON (usuario.tienda_id=tienda.id)
-		 WHERE usuario='$username' and activo=1 limit 1"; 
+		 WHERE usuario='$username' and activo=1 limit 1";
 
-	$result = $conn->query($sql) ; 
+        $result = $conn->query($sql);
 
-	if ($result->num_rows > 0)  {
+        if ($result->num_rows > 0) {
+            $row_login = $result->fetch_assoc();
 
-		$row_login  = $result->fetch_assoc();
+            if ($row_login["acceso_intentos"] >= 3) {
+                $stud_arr[0]["pcode"] = 0;
+                $stud_arr[0]["pmsg"] =
+                    "Su cuenta se encuentra temporalmente deshabilitada, por favor contacte a su proveedor para que active la cuenta";
+            } else {
+                if (!password_verify($password,$row_login['clave'])) {
+                //if (!isset($row_login["clave"])) {
+                    $conn->query(
+                        "update usuario set acceso_intentos=acceso_intentos+1 where id=" .
+                            $row_login["id"] .
+                            " limit 1"
+                    );
+                } else {
+                    // registro de acceso
+                    $conn->query(
+                        "update usuario set acceso_ultimo=now(), acceso_intentos=0 where id=" .
+                            $row_login["id"] .
+                            " limit 1"
+                    );
 
-		if ($row_login['acceso_intentos']>=3) {
-			$stud_arr[0]["pcode"] = 0;
-    	    $stud_arr[0]["pmsg"] ="Su cuenta se encuentra temporalmente deshabilitada, por favor contacte a su proveedor para que active la cuenta";
-		} else {
+                    //######## definir Variables de sesion ##########
 
-			if (!password_verify($password,$row_login['clave'])) {
-			if (!isset($row_login['clave'])) {
-				$conn->query('update usuario set acceso_intentos=acceso_intentos+1 where id='.$row_login['id']. ' limit 1');
-			} else {
+                    session_set_cookie_params([
+                        "lifetime" => 0,
+                        "path" => "/",
+                        "domain" => $_SERVER["HTTP_HOST"],
+                        "secure" => false,
+                        "httponly" => true,
+                        "samesite" => "strict",
+                    ]);
 
+                    session_start();
 
-				// registro de acceso
-				$conn->query('update usuario set acceso_ultimo=now(), acceso_intentos=0 where id='.$row_login['id']. ' limit 1');
-				
-				//######## definir Variables de sesion ##########
-	
-				session_set_cookie_params([
-			            'lifetime' => 0,
-			            'path' => '/',
-			            'domain' => $_SERVER['HTTP_HOST'],
-			            'secure' => false,
-			            'httponly' => true,
-			            'samesite' => 'strict'
-			        ]);
-				
-				session_start();
-		
-				$_SESSION['usuario'] = ucfirst(strtolower($row_login['usuario']));
-				$_SESSION['usuario_nombre'] = ucfirst(strtolower($row_login['nombre']));
-				$_SESSION['usuario_id'] = $row_login['id'];
-				$_SESSION['grupo_id'] = $row_login['grupo_id'];
-				$_SESSION['tienda_id'] = $row_login['tienda_id'];
-				$_SESSION['tienda_nombre'] = $row_login['tienda_nombre'];
-				$_SESSION['sap_almacen'] = $row_login['sap_almacen'];
-				$_SESSION['grupo_nombre'] = $row_login['grupo_nombre'];
-				$_SESSION['correo_bodega'] = trim($row_login['correo_bodega']);
-				$_SESSION['correo_compras'] = trim($row_login['correo_compras']);
-				$_SESSION['correo_orden_servicio_nueva'] = trim($row_login['correo_orden_servicio_nueva']);
-				$_SESSION['correo_orden_averia_nueva'] = trim($row_login['correo_orden_averia_nueva']);
-				$_SESSION['correo_cita'] = trim($row_login['correo_cita']);
+                    $_SESSION["usuario"] = ucfirst(
+                        strtolower($row_login["usuario"])
+                    );
+                    $_SESSION["usuario_nombre"] = ucfirst(
+                        strtolower($row_login["nombre"])
+                    );
+                    $_SESSION["usuario_id"] = $row_login["id"];
+                    $_SESSION["grupo_id"] = $row_login["grupo_id"];
+                    $_SESSION["tienda_id"] = $row_login["tienda_id"];
+                    $_SESSION["tienda_nombre"] = $row_login["tienda_nombre"];
+                    $_SESSION["sap_almacen"] = $row_login["sap_almacen"];
+                    $_SESSION["grupo_nombre"] = $row_login["grupo_nombre"];
+                    $_SESSION["correo_bodega"] = trim(
+                        $row_login["correo_bodega"]
+                    );
+                    $_SESSION["correo_compras"] = trim(
+                        $row_login["correo_compras"]
+                    );
+                    $_SESSION["correo_orden_servicio_nueva"] = trim(
+                        $row_login["correo_orden_servicio_nueva"]
+                    );
+                    $_SESSION["correo_orden_averia_nueva"] = trim(
+                        $row_login["correo_orden_averia_nueva"]
+                    );
+                    $_SESSION["correo_cita"] = trim($row_login["correo_cita"]);
 
-				$_SESSION['hora_inicio'] = time();
-				$_SESSION['hora_ultima_tran'] = time();
-				$_SESSION['seg'] = leer_permisos_asignados($row_login['grupo_id']);
+                    $_SESSION["hora_inicio"] = time();
+                    $_SESSION["hora_ultima_tran"] = time();
+                    $_SESSION["seg"] = leer_permisos_asignados(
+                        $row_login["grupo_id"]
+                    );
 
-				$_SESSION['formato_fecha'] = "dd/mm/yyyy";
-				$_SESSION['formato_fecha_php'] = "d/m/Y";
-				$_SESSION['formato_fecha_jquery'] = "dd/mm/yy";
+                    $_SESSION["formato_fecha"] = "dd/mm/yyyy";
+                    $_SESSION["formato_fecha_php"] = "d/m/Y";
+                    $_SESSION["formato_fecha_jquery"] = "dd/mm/yy";
 
+                    //colocar_cookie
+                    $randomid = generate_id();
+                    //$cookieid = trim(sha1($randomid . $_SERVER['HTTP_USER_AGENT'] . obtener_ip2()));
+                    $cookieid = trim(
+                        sha1($randomid . $_SERVER["HTTP_USER_AGENT"])
+                    );
+                    setcookie("urs", $cookieid, ["samesite" => "Strict"]);
+                    setcookie("sgt", $randomid, ["samesite" => "Strict"]);
 
-				//colocar_cookie
-				$randomid = generate_id();
-				//$cookieid = trim(sha1($randomid . $_SERVER['HTTP_USER_AGENT'] . obtener_ip2()));
-				$cookieid = trim(sha1($randomid . $_SERVER['HTTP_USER_AGENT']));
-				setcookie("urs", $cookieid, ['samesite' => 'Strict']);
-				setcookie("sgt", $randomid, ['samesite' => 'Strict']);
+                    $stud_arr[0]["pcode"] = 1;
+                    $stud_arr[0]["pmsg"] = "";
 
-				$stud_arr[0]["pcode"] = 1;
-    			$stud_arr[0]["pmsg"] ="";
+                    //LOG
+                    if (app_log_logins == true) {
+                        $proxyip = "";
+                        if (isset($_SERVER["HTTP_X_FORWARDED_FOR"])) {
+                            $proxyip =
+                                " (" . $_SERVER["HTTP_X_FORWARDED_FOR"] . ")";
+                        }
+                        file_put_contents(
+                            app_logs_folder . date("Y-m-d") . "_logins.log",
+                            "$username , " .
+                                date("Y-m-d g:i a") .
+                                ", " .
+                                $_SERVER["REMOTE_ADDR"] .
+                                " " .
+                                $proxyip .
+                                ", " .
+                                $_SERVER["HTTP_USER_AGENT"] .
+                                " \r\n",
+                            FILE_APPEND
+                        );
+                    }
+                }
+            }
+        }
 
-    			//LOG
-    			if (app_log_logins==true) {
-    				$proxyip="";
-    				if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {$proxyip=' ('.$_SERVER['HTTP_X_FORWARDED_FOR'].')'; }
-					file_put_contents(app_logs_folder.date("Y-m-d")."_logins.log", "$username , ".date("Y-m-d g:i a").", ".$_SERVER['REMOTE_ADDR']." ".$proxyip.", ".$_SERVER['HTTP_USER_AGENT']." \r\n", FILE_APPEND );
-				}
-  
-			} 
+        salida_json($stud_arr);
+        exit();
+    } //login
 
-		}	
+    //Recover password
+    if ($accion == "301") {
+        $email = filter_var(trim($_POST["m"]), FILTER_SANITIZE_STRING);
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $stud_arr[0]["pcode"] = 0;
+            $stud_arr[0]["pmsg"] = "Ingrese una direccion de email valido";
+        } else {
+            $stud_arr[0]["pcode"] = 1;
+            $stud_arr[0]["pmsg"] = "Se ha enviado un correo, revise su email";
 
-	}
+            require_once "include/config.php";
 
+            $conn = new mysqli(db_ip, db_user, db_pw, db_name);
+            if (mysqli_connect_errno()) {
+                exit("Error al conectar a la base de datos");
+            }
 
+            $sql = "SELECT id,nombre FROM usuario WHERE email='$email' and activo=1 limit 1";
 
-    salida_json($stud_arr);
-    exit;
+            $result = $conn->query($sql);
 
+            if ($result->num_rows > 0) {
+                $row_login = $result->fetch_assoc();
 
-} //login
+                $new_token = md5($email . date("Y-m-d H:i:s"));
+                $new_token_link = app_host . "?a=302&t=" . $new_token;
+                $conn->query(
+                    "insert into usuario_recover set fecha=NOW() , token='$new_token', usuario_id=" .
+                        $row_login["id"]
+                );
 
+                if (app_enviar_email == true) {
+                    require_once "include/correo.php";
+                    $subject = app_title . " - Recuperar contraseña";
+                    $cuerpo_sinhtml = "Para reestablecer su contraseña abra este enlace: $new_token_link";
+                    $cuerpo_html =
+                        '<p>Para reestablecer su contraseña abra este enlace:</p> <a href="$new_token_link">Reestablecer su contraseña</a>';
 
-//Recover password
-if ($accion=="301") { 
+                    enviar_correo(
+                        $email,
+                        $subject,
+                        $cuerpo_html,
+                        $cuerpo_sinhtml
+                    );
+                }
+            }
+        }
 
-	$email=filter_var(trim($_POST['m']), FILTER_SANITIZE_STRING);
-	if(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-		$stud_arr[0]["pcode"] = 0;
-   		$stud_arr[0]["pmsg"] ="Ingrese una direccion de email valido";
+        salida_json($stud_arr);
+        exit();
+    } // recover
 
-	} else {
+    //Recover password 2
+    if ($accion == "302") {
+        if (isset($_REQUEST["t"])) {
+            require_once "include/config.php";
 
-	$stud_arr[0]["pcode"] = 1;
-    $stud_arr[0]["pmsg"] ="Se ha enviado un correo, revise su email";
-  	
-  	require_once ('include/config.php');
+            $conn = new mysqli(db_ip, db_user, db_pw, db_name);
+            if (mysqli_connect_errno()) {
+                exit("Error al conectar a la base de datos");
+            }
+            $conn->set_charset("utf8");
+            $token = filter_var(trim($_REQUEST["t"]), FILTER_SANITIZE_STRING);
 
-	$conn = new mysqli(db_ip, db_user, db_pw, db_name);
-	if (mysqli_connect_errno()) {  exit("Error al conectar a la base de datos");}
-
-	
-
-
-	$sql="SELECT id,nombre FROM usuario WHERE email='$email' and activo=1 limit 1"; 
-
-	$result = $conn->query($sql) ; 
-
-	if ($result->num_rows > 0)  {
-
-		$row_login  = $result->fetch_assoc();
-
-				$new_token= md5($email. date("Y-m-d H:i:s")); 
-				$new_token_link=app_host."?a=302&t=".$new_token;
-				$conn->query("insert into usuario_recover set fecha=NOW() , token='$new_token', usuario_id=".$row_login['id']);
-				
-				 				
-				if (app_enviar_email==true) {
-				require_once ('include/correo.php');
-				$subject=app_title." - Recuperar contraseña";
-				$cuerpo_sinhtml="Para reestablecer su contraseña abra este enlace: $new_token_link";
-				$cuerpo_html='<p>Para reestablecer su contraseña abra este enlace:</p> <a href="$new_token_link">Reestablecer su contraseña</a>';
-				
-				 enviar_correo($email,$subject,$cuerpo_html,$cuerpo_sinhtml);
-				}
-		 
-
-}
-
-}
-
-
-    salida_json($stud_arr);
-    exit;
-
-} // recover
-
-
-//Recover password 2
-if ($accion=="302") { 
-
-	if (isset($_REQUEST['t'])) {
-		 
-		require_once ('include/config.php');
-
-		$conn = new mysqli(db_ip, db_user, db_pw, db_name);
-		if (mysqli_connect_errno()) {  exit("Error al conectar a la base de datos");}
-		$conn->set_charset("utf8");
-		$token=filter_var(trim($_REQUEST['t']), FILTER_SANITIZE_STRING);
-
-		$sql="SELECT usuario_recover.id, usuario_recover.usuario_id ,usuario.email,usuario.usuario
+            $sql = "SELECT usuario_recover.id, usuario_recover.usuario_id ,usuario.email,usuario.usuario
 				FROM usuario_recover
 				LEFT OUTER JOIN usuario ON (usuario_recover.usuario_id=usuario.id)
 				WHERE usuario_recover.token='$token'  and usuario_recover.fecha_usado IS NULL  AND DATEDIFF(NOW(),usuario_recover.fecha)=0
-				order by usuario_recover.id desc LIMIT 1"; 
+				order by usuario_recover.id desc LIMIT 1";
 
-		$result = $conn->query($sql) ; 
+            $result = $conn->query($sql);
 
-		if ($result->num_rows > 0)  {
+            if ($result->num_rows > 0) {
+                $row = $result->fetch_assoc();
 
-			$row  = $result->fetch_assoc();
+                $userid = $row["usuario"];
+                $email = $row["email"];
+                $newpass = substr(md5($email . date("Y-m-d H:i:s")), 1, 6);
+                $newpassenc = password_hash($newpass, PASSWORD_BCRYPT);
+                $conn->query(
+                    "update usuario set clave='$newpassenc' where id=" .
+                        $row["usuario_id"] .
+                        "  limit 1"
+                );
+                $conn->query(
+                    "update usuario_recover set fecha_usado=now() where id=" .
+                        $row["id"] .
+                        "  limit 1"
+                );
 
-			
-			$userid=$row['usuario'];
-			$email=$row['email'];
-			$newpass= substr(md5($email. date("Y-m-d H:i:s")),1, 6);
-			$newpassenc=password_hash($newpass, PASSWORD_BCRYPT);
-			$conn->query("update usuario set clave='$newpassenc' where id=".$row['usuario_id']."  limit 1");
-			$conn->query("update usuario_recover set fecha_usado=now() where id=".$row['id']."  limit 1");
-			
+                if (app_enviar_email == true) {
+                    require_once "include/correo.php";
+                    $subject = app_title . " - Recuperar contraseña";
+                    $cuerpo_sinhtml = "Su contraseña ha sido reestablecida, su nueva contraseña es: $newpass  y su nombre de usuario es: $userid";
+                    $cuerpo_html = $cuerpo_sinhtml;
 
-			if (app_enviar_email==true) {
-					require_once ('include/correo.php');
-					$subject=app_title." - Recuperar contraseña";
-					$cuerpo_sinhtml="Su contraseña ha sido reestablecida, su nueva contraseña es: $newpass  y su nombre de usuario es: $userid";
-					$cuerpo_html=$cuerpo_sinhtml;
-					
-					 enviar_correo($email,$subject,$cuerpo_html,$cuerpo_sinhtml); 
-				}
+                    enviar_correo(
+                        $email,
+                        $subject,
+                        $cuerpo_html,
+                        $cuerpo_sinhtml
+                    );
+                }
 
-        	$txt_mensaje='Su contraseña ha sido reestablecida y enviada a su email';
-
-
-		} else {
-			$txt_mensaje='Error.. Este enlace ha expirado';
-		}
-
-
-	} 
-
-
-
-	} // recover 2
-
-} 
+                $txt_mensaje =
+                    "Su contraseña ha sido reestablecida y enviada a su email";
+            } else {
+                $txt_mensaje = "Error.. Este enlace ha expirado";
+            }
+        }
+    } // recover 2
+}
 ?>
 <!doctype html>
 <html lang="es">
@@ -429,11 +447,9 @@ if ($accion=="302") {
 		});
 
 	 
-		<?php 
-		if ($txt_mensaje!="") {
-			echo "mytoast('info','$txt_mensaje',0);";
-		}
-		?>
+		<?php if ($txt_mensaje != "") {
+      echo "mytoast('info','$txt_mensaje',0);";
+  } ?>
 
 
 		$('#password').keypress(function (e) {
