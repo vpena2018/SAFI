@@ -105,6 +105,42 @@ if ($accion=="g") {
        }
     }
 
+            // NUEVAS VALIDACIONES DE FECHAS - Ing. Ricardo Lagos
+            $fecha_asignacion = $_REQUEST['fecha_asignacion'];
+            $fecha_promesa_taller = $_REQUEST['fecha_promesa_taller'];
+            $fecha_promesa = $_REQUEST['fecha_promesa'];
+
+            // Validar que fecha_promesa_taller NO sea menor que fecha_asignacion y fecha_promesa
+            if (!es_nulo($fecha_promesa_taller) && !es_nulo($fecha_asignacion)) {
+                if (strtotime($fecha_promesa_taller) < strtotime($fecha_asignacion)) {
+                    $verror .= 'La Fecha Promesa Taller no puede ser menor que la Fecha de Asignación.<br>';
+                }
+            }
+
+            // Validar que fecha_promesa NO sea menor que fecha_promesa_taller y fecha_asignacion
+            if (!es_nulo($fecha_promesa) && !es_nulo($fecha_promesa_taller)) {
+                if (strtotime($fecha_promesa) < strtotime($fecha_promesa_taller)) {
+                    $verror .= 'La Fecha Promesa Operaciones no puede ser menor que la Fecha Promesa Taller.<br>';
+                }
+            }
+
+            if (!es_nulo($fecha_promesa) && !es_nulo($fecha_asignacion)) {
+                if (strtotime($fecha_promesa) < strtotime($fecha_asignacion)) {
+                    $verror .= 'La Fecha Promesa Operaciones no puede ser menor que la Fecha de Asignación.<br>';
+                }
+            }
+
+    // Ing. Ricardo Lagos NUEVA VALIDACIÓN: Si hay foto, no permitir cambiar id_vendedor, pero permitir si estaba vacío
+        if (!es_nulo($cid)) {
+            $foto_actual = get_dato_sql("ventas", "foto", " where id=".$cid);
+            $id_vendedor = get_dato_sql("ventas", "id_vendedor", " where id=".$cid);
+            
+            // Si hay foto y se está intentando cambiar el vendedor (solo si ya tenía un vendedor asignado)
+            if (!es_nulo($foto_actual) && !es_nulo($id_vendedor) && $id_vendedor != intval($_REQUEST['id_vendedor'])) {
+                $verror .= 'No puede cambiar el vendedor cuando ya existe una foto/documento adjunto.<br>';
+            }
+        }
+
     
     if ($verror=="") {
         //Campos
@@ -130,6 +166,8 @@ if ($accion=="g") {
         if (isset($_REQUEST["precio_minimo"])) { $sqlcampos.= " , precio_minimo =".GetSQLValue($_REQUEST["precio_minimo"],"int"); } 
         if (isset($_REQUEST["precio_maximo"])) { $sqlcampos.= " , precio_maximo =".GetSQLValue($_REQUEST["precio_maximo"],"int"); } 
         if (isset($_REQUEST["trasmision"])) { $sqlcampos.= " , trasmision =".GetSQLValue($_REQUEST["trasmision"],"text"); } 
+        if (isset($_REQUEST["fecha_promesa_taller"])) { $sqlcampos.= " , fecha_promesa_taller =".GetSQLValue($_REQUEST["fecha_promesa_taller"],"date"); }                            
+        if (isset($_REQUEST["id_vendedor"])) { $sqlcampos.= " , id_vendedor =".GetSQLValue($_REQUEST["id_vendedor"],"int"); } 
 
         $estadocompletar="";
         if (isset($_REQUEST['est'])) { $estadocompletar = trim($_REQUEST["est"]); }
@@ -187,6 +225,13 @@ if ($accion=="g") {
                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",99,'Modificacion de Fecha de Promesa', NOW(),'".$_REQUEST['fecha_promesa']."')"); 
              }
 
+             $fecha_promesa_taller=trim(get_dato_sql("ventas","fecha_promesa_taller"," where id=".$cid));
+            
+             if ($fecha_promesa_taller!=trim($_REQUEST['fecha_promesa_taller'])){   
+                sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
+                VALUES ( $cid,  ".$_SESSION['usuario_id'].",99,'Modificacion de Fecha de Promesa Taller', NOW(),'".$_REQUEST['fecha_promesa_taller']."')"); 
+             }
+
              $precio_minimo=intval(get_dato_sql("ventas","precio_minimo"," where id=".$cid));
              if ($precio_minimo!=intval($_REQUEST['precio_minimo'])){   
                  sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
@@ -198,8 +243,15 @@ if ($accion=="g") {
                  sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
                  VALUES ( $cid,  ".$_SESSION['usuario_id'].",99,'Modificacion de Precio Maximo', NOW(), ".$_REQUEST['precio_maximo'].")");
              }
+
+         
              
             $sql="update ventas set ".$sqlcampos." where id=".$cid." limit 1";
+
+
+
+             
+
             $result = sql_update($sql);
         } else {
             //Crear nuevo                       
@@ -337,17 +389,21 @@ if ($accion =="d") {
     if (isset($row["id_estado"])) {$id_estado=$row["id_estado"]; } else {$id_estado= "";}
     if (isset($row["fecha_asignacion"])) {$fecha_asignacion= $row["fecha_asignacion"]; } else {$fecha_asignacion= "";}
     if (isset($row["fecha_promesa"])) {$fecha_promesa= $row["fecha_promesa"]; } else {$fecha_promesa= "";}
+    if (isset($row["fecha_promesa_taller"])) {$fecha_promesa_taller= $row["fecha_promesa_taller"]; } else {$fecha_promesa_taller= "";}
     if (isset($row["reproceso"])) {$reproceso=$row["reproceso"]; } else {$reproceso="";}
     if (isset($row["foto"])) {$foto=$row["foto"]; } else {$foto="";}
     if (isset($row["observaciones_reparacion"])) {$observaciones_reparacion=$row["observaciones_reparacion"]; } else {$observaciones_reparacion="";}
     if (isset($row["precio_minimo"])) {$precio_minimo= $row["precio_minimo"]; } else {$precio_minimo= "";}
     if (isset($row["precio_maximo"])) {$precio_maximo= $row["precio_maximo"]; } else {$precio_maximo= "";}
     if (isset($row["trasmision"])) {$trasmision= $row["trasmision"]; } else {$trasmision= "";}
+    if (isset($row["id_vendedor"])) {$id_vendedor= $row["id_vendedor"]; } else {$id_vendedor= "";}
 
     //$observaciones_reparacion= "";
     if ($id_estado=='' || $id_estado==99){
        $disable_sec1=' ';  
        $disable_sec2=' ';  
+
+
        if (!tiene_permiso(169)){         
           $disable_sec2=' readonly="readonly" ';              
        }      
@@ -375,14 +431,26 @@ if ($accion =="d") {
     <div class="col-md">
         <?php echo campo("hora",("Fecha / Hora"),'label',formato_fechahora_de_mysql($hora),' ',' ');   ?>
     </div>
+    
     <div class="col-md">
         <?php echo campo("numero","Numero",'label',$numero,' ',' '); ?>        
     </div>    
-    <div class="col-md">
+   
+
+</div>
+
+<div class="row">
+    
+    <div class="col-md-4">
         <?php echo campo("fecha_asignacion","Fecha de Asignacion",'date',$fecha_asignacion,' ',' required '.$disable_sec1); ?>
     </div>
-    <div class="col-md">
-        <?php echo campo("fecha_promesa","Fecha de Promesa",'date',$fecha_promesa,' ',' required '.$disable_sec1); ?>
+
+    <div class="col-md-4">
+        <?php echo campo("fecha_promesa_taller","Fecha Promesa Taller",'date',$fecha_promesa_taller,' ',' required '.$disable_sec1); ?>
+    </div>
+    
+    <div class="col-md-4">
+        <?php echo campo("fecha_promesa","Fecha Promesa Operaciones",'date',$fecha_promesa,' ',' required '.$disable_sec1); ?>
     </div>
     <div class="col-md">
        <?php echo campo("id_inspeccion","Numero",'hidden',$id_inspeccion,' ',' '); ?>          
@@ -413,8 +481,15 @@ if ($accion =="d") {
 
 
 <div class="row">
+     
+    
+    
     <div class="col-md">
         <?php echo campo("kilometraje","Kilometraje",'number',$kilometraje,' ',$disable_sec1); ?>        
+    </div>
+
+    <div class="col-md">
+         <?php echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2);  ?> 
     </div>
     
     <div class="col-md">
@@ -499,16 +574,17 @@ if ($foto=='')
     </div>
     </div>
 </div>
-				
-	<div class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top ">
-		<div class="row">
-		<div class="col-sm">     
+
+   <div class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top ">
+    <div class="row">
+        <div class="col-sm">     
             <?php if ($id_estado==99 || $id_estado=='') {?>       
-                 <a href="#" onclick="procesar('vehiculos_reparacion_mant.php?a=g&est=<?php echo $completar; ?>','forma_ventas',''); return false;" class="btn btn-primary btn-block mb-2 xfrm" ><i class="fa fa-check"></i> <?php echo $NombreBotton; ?></a>                           
+                 <a href="#" onclick="return validarYProcesar('<?php echo $completar; ?>');" class="btn btn-primary btn-block mb-2 xfrm" >
+                     <i class="fa fa-check"></i> <?php echo $NombreBotton; ?>
+                 </a>                           
             <?php } ?>
         </div>        
       
-
         <?php if (tiene_permiso(168)){ ?>
               <div class="col-sm"><a id="ventas_anularbtn"  href="#" onclick="ventas_anular(); return false;" class="btn btn-danger  btn-block mr-2 mb-2 xfrm"><i class="fa fa-trash-alt"></i> Borrar</a></div>		                                        
         <?php } ?>  
@@ -518,8 +594,10 @@ if ($foto=='')
         <?php } ?>  
 
         <div class="col-sm"><a href="#" onclick="$('#ModalWindow2').modal('hide');  return false;" class="btn btn-light btn-block mb-2 xfrm" >  <?php echo 'Cerrar'; ?></a></div>
-		</div>
-	</div>
+    </div>
+  	
+   
+</div>
 
 	</fieldset>
 	</form>
@@ -544,6 +622,143 @@ if ($foto=='')
 
 
 <script>
+
+function validarYProcesar(completar) {
+    // Primero validar todo
+    if (!validarFechasParaGuardado()) {
+        return false; // Detener el proceso si hay errores
+    }
+    
+    // Si pasa la validación, proceder con el guardado
+    procesar('vehiculos_reparacion_mant.php?a=g&est=' + completar, 'forma_ventas', '');
+    return false; // Prevenir el comportamiento por defecto del enlace
+}
+
+// Validación en tiempo real de fechas (solo para mostrar errores visuales)
+$('#fecha_asignacion, #fecha_promesa_taller, #fecha_promesa').on('change', function() {
+    validarFechasEnTiempoReal();
+});
+
+function validarFechasEnTiempoReal() {
+    var fechaAsignacion = $('#fecha_asignacion').val();
+    var fechaPromesaTaller = $('#fecha_promesa_taller').val();
+    var fechaPromesa = $('#fecha_promesa').val();
+    
+    // Resetear estilos
+    $('#fecha_asignacion, #fecha_promesa_taller, #fecha_promesa').removeClass('is-invalid');
+    
+    var esValido = true;
+    
+    // Solo validar si hay Fecha Asignación (obligatoria)
+    if (fechaAsignacion) {
+        var asignacion = new Date(fechaAsignacion);
+        
+        // Validar Fecha Promesa Taller si está llena
+        if (fechaPromesaTaller) {
+            var promesaTaller = new Date(fechaPromesaTaller);
+            
+            // Aplicar estilos de error si Fecha Promesa Taller es menor que Fecha Asignación
+            if (promesaTaller < asignacion) {
+                $('#fecha_promesa_taller').addClass('is-invalid');
+                esValido = false;
+            }
+            
+            // Validar Fecha Operaciones si también está llena
+            if (fechaPromesa) {
+                var promesa = new Date(fechaPromesa);
+                
+                // Aplicar estilos de error si hay problemas
+                if (promesa < promesaTaller) {
+                    $('#fecha_promesa').addClass('is-invalid');
+                    esValido = false;
+                }
+                if (promesa < asignacion) {
+                    $('#fecha_promesa').addClass('is-invalid');
+                    esValido = false;
+                }
+            }
+        } 
+        // Si solo hay Fecha Operaciones (sin Fecha Promesa Taller)
+        else if (fechaPromesa) {
+            var promesa = new Date(fechaPromesa);
+            
+            // Aplicar estilos de error si Fecha Operaciones es menor que Fecha Asignación
+            if (promesa < asignacion) {
+                $('#fecha_promesa').addClass('is-invalid');
+                esValido = false;
+            }
+        }
+    }
+    
+    return esValido;
+}
+
+// Función específica para validación al guardar (con mensajes)
+function validarFechasParaGuardado() {
+    var fechaAsignacion = $('#fecha_asignacion').val();
+    var fechaPromesaTaller = $('#fecha_promesa_taller').val();
+    var fechaPromesa = $('#fecha_promesa').val();
+    
+    // Validar que Fecha Asignación esté completa (es la única obligatoria)
+    if (!fechaAsignacion) {
+        Swal.fire({
+            title: 'Fecha requerida',
+            text: 'La Fecha de Asignación es obligatoria',
+            icon: 'warning',
+            confirmButtonText: 'Entendido'
+        });
+        return false;
+    }
+    
+    var asignacion = new Date(fechaAsignacion);
+    var errores = [];
+    
+    // Validar Fecha Promesa Taller si está llena
+    if (fechaPromesaTaller) {
+        var promesaTaller = new Date(fechaPromesaTaller);
+        
+        // Validar que Fecha Promesa Taller no sea menor que Fecha Asignación
+        if (promesaTaller < asignacion) {
+            errores.push('La Fecha Promesa Taller no puede ser menor que la Fecha de Asignación');
+        }
+        
+        // Si también hay Fecha Operaciones, validar relación entre ellas
+        if (fechaPromesa) {
+            var promesa = new Date(fechaPromesa);
+            
+            // Validar que Fecha Operaciones no sea menor que Fecha Promesa Taller
+            if (promesa < promesaTaller) {
+                errores.push('La Fecha Operaciones no puede ser menor que la Fecha Promesa Taller');
+            }
+            
+            // Validar que Fecha Operaciones no sea menor que Fecha Asignación
+            if (promesa < asignacion) {
+                errores.push('La Fecha Operaciones no puede ser menor que la Fecha de Asignación');
+            }
+        }
+    } 
+    // Si solo hay Fecha Operaciones (sin Fecha Promesa Taller)
+    else if (fechaPromesa) {
+        var promesa = new Date(fechaPromesa);
+        
+        // Validar que Fecha Operaciones no sea menor que Fecha Asignación
+        if (promesa < asignacion) {
+            errores.push('La Fecha Operaciones no puede ser menor que la Fecha de Asignación');
+        }
+    }
+    
+    if (errores.length > 0) {
+        Swal.fire({
+            title: 'Error en fechas',
+            html: errores.join('<br>'),
+            icon: 'error',
+            confirmButtonText: 'Corregir'
+        });
+        return false;
+    }
+    
+    return true;
+}
 
 function abrir_hoja(){    
     hinspeccion = $('#id_inspeccion').val();
