@@ -65,6 +65,7 @@ if ($accion=="1") {
         when servicio.estado_paro_por_repuesto='I' then 'Inactivo' 
     end
     AS estadoparoporrepuesto
+    ,(select A.mod_citas from inspeccion A where A.id=servicio.id_inspeccion limit 1) as mod_citas    
 	FROM servicio
 	LEFT OUTER JOIN producto ON (servicio.id_producto=producto.id)
 	LEFT OUTER JOIN servicio_tipo_mant ON (servicio.id_tipo_mant=servicio_tipo_mant.id)
@@ -74,8 +75,7 @@ if ($accion=="1") {
     LEFT OUTER JOIN usuario t3 ON (servicio.id_tecnico3=t3.id)
     LEFT OUTER JOIN usuario t4 ON (servicio.id_tecnico4=t4.id)
     LEFT OUTER JOIN usuario t5 ON (servicio.id_usuario_auditado=t5.id)
-    LEFT OUTER JOIN entidad ON (servicio.cliente_id=entidad.id)
-	
+    LEFT OUTER JOIN entidad ON (servicio.cliente_id=entidad.id)   	
     where 1=1
     $filtros
     order by servicio.fecha desc, servicio.id desc

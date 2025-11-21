@@ -56,6 +56,7 @@ if ($accion=="1") {
     ,aud.usuario AS auditor
     ,observaciones_adpc
     ,tipo_doc   
+    ,mod_citas
     FROM inspeccion
 	LEFT OUTER JOIN producto ON (inspeccion.id_producto=producto.id)
 	LEFT OUTER JOIN inspeccion_estado ON (inspeccion.id_estado=inspeccion_estado.id)
@@ -83,6 +84,7 @@ if ($accion=="1") {
                     <th>Estado</th>
                     <th>Tipo Mov.</th>
                     <th>Motorista</th>
+                    <th>Cita</th>
                     <th>Revision ADPC</th>                    
                     <th>Comentario ADPC</th>     
                 </tr>
@@ -113,6 +115,7 @@ if ($accion=="1") {
                <td>'.$row["elestado"].'</td>
                <td>'.get_tipo_doc($row["tipo_doc"]).'</td>               
                <td>'.$row["motorista"].'</td>
+               <td>'.$row["mod_citas"].'</td>
                <td>'.$row["auditor"].'</td>
                <td>'.$adpc.'</td>
                </tr>';               
