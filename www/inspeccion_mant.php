@@ -506,10 +506,6 @@ if ($nuevoreg==true) {
 
 }
 
-
-  
-
-
   if ($valerror<>"") {
   
     echo '<div class="card-body">
@@ -522,7 +518,7 @@ if ($nuevoreg==true) {
     ';
     exit;
   }
-}
+} // Fin validaciones nuevo registro
 
 
 // inicializar  
