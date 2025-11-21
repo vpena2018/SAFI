@@ -304,7 +304,12 @@ if ($accion=="g") {
 
 
       if ($nuevoreg==true){
-        //Crear nuevo            
+        //Crear nuevo         
+        // actualizar CITA
+        if (!es_nulo($id_cita)) {
+           $sqlcampos.= " , mod_citas='S'";   
+           sql_update("UPDATE cita	SET id_inspeccion=$cid WHERE id=$id_cita LIMIT 1");
+        }   
         $sqlcampos.= " , fecha =NOW(), hora =NOW()"; 
         $sqlcampos.= " , id_usuario =".$_SESSION["usuario_id"];
         $sqlcampos.= " , id_tienda =".$_SESSION['tienda_id'];
@@ -350,8 +355,7 @@ if ($accion=="g") {
         }
         //actualizar Km
         if($actualizarkm==true) {sql_update("UPDATE producto SET km=".GetSQLValue($_REQUEST["kilometraje_entrada"],"int")."  WHERE id=".GetSQLValue($_REQUEST["id_producto"],"int"));}
-        
-          
+                  
           $stud_arr[0]["pcode"] = 1;
           $stud_arr[0]["pmsg"] ="Guardado";
           $stud_arr[0]["pcid"] = $cid;
