@@ -277,6 +277,7 @@ if ($accion=="g") {
     }
 
     $envioCorreo="";
+    $enviar_correo_sin_fotos = "";
     $fotoRegistro=get_dato_sql("ventas_estado","foto"," where foto=1 and id=".$id_estado);
     $envioCorreo=get_dato_sql("ventas_estado","envio_correo"," where envio_correo=1 and id=".$id_estado);
     if (!es_nulo($fotoRegistro)){
@@ -416,7 +417,9 @@ if ($accion=="g") {
              $id_estado=intval(get_dato_sql("ventas","id_estado"," where id=".$cid));             
              $id_estado_vendido=intval(get_dato_sql("ventas_estado","envio_correo"," where id=".$id_estado));             
              $id_estado_modifico=false;
-             if ($id_estado!=intval($_REQUEST['id_estado'])){                  
+             
+             if ($id_estado!=intval($_REQUEST['id_estado']))
+                {                  
                  //si cambia el estado a en negociacion  
                  if ($envioCorreo==1){                      
                     $id_estado_modifico=true;
@@ -430,11 +433,38 @@ if ($accion=="g") {
                  }                                 
                  if ($id_estado_vendido==1){                
                      $sqlcampos.=" , fecha_vendido=null, precio_venta=null";  
-                 }                                                                                                                     
+                 } 
+                 
+
+                /* RL. 20251121  - Cambio para verificar si cuando cambia al estado 5 (Disponiblidad para venta) 
+                                   se han adjuntado fotos a la Venta del vehiculo
+                */
+                if (intval($_REQUEST['id_estado']) == 5) {
+                    $tiene_fotos = get_dato_sql("ventas_fotos", "COUNT(*)", " WHERE id_venta = $cid");
+                    if ($tiene_fotos == 0 || es_nulo($tiene_fotos)) {
+                        // Marcar para enviar correo
+                        $enviar_correo_sin_fotos = true;
+                    }
+                }
+                 
                  $fotoRegistro1=get_dato_sql("ventas_estado","foto"," where foto=1 and id=".$id_estado);
                  $id_estado_name=get_dato_sql("ventas_estado","nombre"," where id=".$_REQUEST['id_estado']);
                  sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
                  VALUES ( $cid,  ".$_SESSION['usuario_id'].",$id_estado,'Modificacion de Estado', NOW(),'$id_estado_name')");               
+             }
+
+
+              /* RL. 20251121  - Cambio para verificar si el  estado es 5 (Disponiblidad para venta) 
+                                   se han adjuntado fotos a la Venta del vehiculo
+                */
+             if($id_estado == 5)
+             {
+                $tiene_fotos = get_dato_sql("ventas_fotos", "COUNT(*)", " WHERE id_venta = $cid");
+                    if ($tiene_fotos == 0 || es_nulo($tiene_fotos)) 
+                    {          
+                        // Marcar para enviar correo
+                        $enviar_correo_sin_fotos = true;
+                    }
              }
 
              $id_impuesto=intval(get_dato_sql("ventas","id_impuesto"," where id=".$cid));
@@ -476,7 +506,8 @@ if ($accion=="g") {
             $sql="update ventas set ".$sqlcampos." where id=".$cid." limit 1";
             $result = sql_update($sql);
 
-        } else {
+        } else 
+        {
             //Crear nuevo                       
             $sqlcampos.=" ,id_usuario=".$_SESSION['usuario_id'] ;      
             $sqlcampos.=" ,tipo_ventas_reparacion=2";      
@@ -488,7 +519,19 @@ if ($accion=="g") {
 
             sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
             VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Nuevo registro de vehiculo', NOW(),'Nuevo')");
-        }
+            
+            // RL. 20251121 - Para nuevo registro en estado 5, verificar fotos
+            $id_estado = intval($_REQUEST['id_estado']);
+            if ($id_estado == 5) 
+            {
+                // Para nuevo registro, verificamos si hay fotos (debería ser 0)
+                $tiene_fotos = get_dato_sql("ventas_fotos", "COUNT(*)", " WHERE id_venta = $cid");
+                if ($tiene_fotos == 0 || es_nulo($tiene_fotos)) {
+                    $enviar_correo_sin_fotos = true;
+                }
+            }
+    
+    }
 
         
         if ($result!=false){
@@ -500,7 +543,19 @@ if ($accion=="g") {
             if ($envioCorreo==1 and $id_estado_modifico==true){
                 //require_once ('correo_ventas.php');
             }
+
+           
         }
+
+         /* RL. 20251121  - Como no hay fotos adjuntas tanto en el ingreso como la actualizacion 
+                            procedo a enviar correo para notificar que no se estan adjuntando fotos para la venta 
+                            del vehiculo
+         */
+        if($enviar_correo_sin_fotos  == true)
+        {
+            require_once ('correo_ventas_verificacion.php');
+        }
+        
 
     } else {
         $stud_arr[0]["pcode"] = 0;
@@ -1330,5 +1385,3 @@ $("#"+campo).load(url, function(response, status, xhr) {
 
 
 </script>
-
-
