@@ -99,6 +99,7 @@ if ($accion=="1") {
                     <th>Cliente</th>                    
                     <th>Placa</th>
                     <th>Estado</th>
+                    <th>Cita</th>
                     <th>Tecnico</th>
                     <th>Nota Operaciones</th>
                     <th>Observaciones Tecnico</th>    
@@ -128,6 +129,7 @@ if ($accion=="1") {
                 <td bgcolor='.$color.'>'.trim($row["cliente"]).' '.trim($row["nombrecliente"]).'</td>
                 <td bgcolor='.$color.'>'.$row["placa"].'</td>
                 <td bgcolor='.$color.'>'.$row["elestado"].'</td>
+                <td bgcolor='.$color.'>'.$row["mod_citas"].'</td>
                 <td bgcolor='.$color.'>'.implode("<br>", array_filter([$row['tecnico'],$row['tecnico2'],$row['tecnico3'],$row['tecnico4'] ])) .'</td>
                 <td bgcolor='.$color.'>'.$row["nota_operaciones"].'</td>
                 <td bgcolor='.$color.'>'.trim($row["observaciones_realizado"]).'</td>
