@@ -241,7 +241,9 @@ if ($accion=="g") {
             }            
             if ($nuevo_estado==2) {
                    
+              //*esta validaciones se dejaron antes de crear HI */              
               //Valida que no tenga traslado pendientes
+              /*
               $Codigo_Alterno=get_dato_sql("producto","COUNT(*)"," WHERE left(codigo_alterno,7)='EA-0000' and id=".intval($_REQUEST['id_producto']));          
               if (es_nulo($Codigo_Alterno)){
                   $trasladosP=get_dato_sql("orden_traslado","COUNT(*)"," WHERE id_estado<3 AND id_producto=".intval($_REQUEST['id_producto']));
@@ -274,7 +276,7 @@ if ($accion=="g") {
                       exit;  
                   }
                 }
- 
+              */
               $lbl_estado="Completado";
 
               // enviar email a cliente 
@@ -302,7 +304,12 @@ if ($accion=="g") {
 
 
       if ($nuevoreg==true){
-        //Crear nuevo            
+        //Crear nuevo         
+        // actualizar CITA
+        if (!es_nulo($id_cita)) {
+           $sqlcampos.= " , mod_citas='S'";   
+           sql_update("UPDATE cita	SET id_inspeccion=$cid WHERE id=$id_cita LIMIT 1");
+        }   
         $sqlcampos.= " , fecha =NOW(), hora =NOW()"; 
         $sqlcampos.= " , id_usuario =".$_SESSION["usuario_id"];
         $sqlcampos.= " , id_tienda =".$_SESSION['tienda_id'];
@@ -348,8 +355,7 @@ if ($accion=="g") {
         }
         //actualizar Km
         if($actualizarkm==true) {sql_update("UPDATE producto SET km=".GetSQLValue($_REQUEST["kilometraje_entrada"],"int")."  WHERE id=".GetSQLValue($_REQUEST["id_producto"],"int"));}
-        
-          
+                  
           $stud_arr[0]["pcode"] = 1;
           $stud_arr[0]["pmsg"] ="Guardado";
           $stud_arr[0]["pcid"] = $cid;
@@ -412,12 +418,38 @@ if ($nuevoreg==true) {
     $valerror="";
     $ordenesborrador=0;
     if ($codigo_veh<>'' ){
-      $ordenesborrador=get_dato_sql("inspeccion","COUNT(*)"," WHERE id_estado=1 AND id_producto=".$codigo_veh);
-      if ($ordenesborrador>0) {
-        $valerror=mensaje("No puede crear una nueva Hoja de Inspección porque actualmente se encontraron $ordenesborrador  Hojas de Inspección en estado de borrador, para continuar debe completar estas  Hojas de Inspección o borrarlas",'warning');
-        $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspección</a>';
-      } 
-    
+        $ordenesborrador=get_dato_sql("inspeccion","COUNT(*)"," WHERE id_estado=1 AND id_producto=".$codigo_veh);
+        if ($ordenesborrador>0) {
+          $valerror=mensaje("No puede crear una nueva Hoja de Inspección porque actualmente se encontraron $ordenesborrador  Hojas de Inspección en estado de borrador, para continuar debe completar estas  Hojas de Inspección o borrarlas",'warning');
+          $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspección</a>';
+        } 
+        
+        $trasladosP=get_dato_sql("orden_traslado","COUNT(*)"," WHERE id_estado<3 AND id_producto=".intval($codigo_veh));
+        if ($trasladosP>0) {
+          $valerror=mensaje("No puede crear una nueva Hoja de Inspección porque existe una Orden de Traslado sin completar del vehiculo",'warning');
+          $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspección</a>';
+        }
+        
+        if($tipo_doc=='2'){
+          $EstadoReparacion=get_dato_sql("ventas","COUNT(*)"," WHERE id_estado=99 AND id_producto=".intval($codigo_veh));
+          if (!es_nulo($EstadoReparacion)){
+              $valerror=mensaje("No puede crear una nueva Hoja de Inspección porque el Vehiculo esta en proceso de reparacion",'warning');
+              $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspección</a>';
+          }       
+          $ParoPorRepuesto=get_dato_sql("servicio","COUNT(*)"," WHERE id_estado=7 AND (estado_paro_por_repuesto='I' or estado_paro_por_repuesto=null)  AND id_producto=".intval($codigo_veh));                 
+          $Oservicio=get_dato_sql("servicio","COUNT(*)"," WHERE id_estado not in (20,22,7) AND id_producto=".intval($codigo_veh));                 
+          $Ocombustible=get_dato_sql("orden_combustible","COUNT(*)"," WHERE id_estado<3 AND id_producto=".intval($codigo_veh));                 
+          if (!es_nulo($Oservicio) or !es_nulo($ParoPorRepuesto)){
+              $valerror=mensaje("No puede crear una nueva Hoja de Inspección, porque existe una Orden de Servicio sin completar del vehiculo",'warning');
+              $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspección</a>';
+          }
+
+          if (!es_nulo($Ocombustible)){
+              $valerror=mensaje("No puede crear una nueva Hoja de Inspección, porque existe una Orden de Combustible sin completar del vehiculo",'warning');
+              $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspección</a>';
+          }
+        }
+    /*
     if($tipo_insp_especial<>'1') {// ignorar validacion en especial
 
         //-- ultima entrada
@@ -439,33 +471,31 @@ if ($nuevoreg==true) {
                 //**Deshabilitado temporalmente: Cuando lo reactivemos (yo le avisaría) lo mejor es que el cambio no fuera retroactivo, es decir que considere los cambios desde la fecha de reactivación en adelante, si fuera posible
                 // $valerror=mensaje("No puede crear una nueva Hoja de Inspección porque existe una Hoja de Inspección de ENTRADA que aun no ha sido recibida, para continuar debe completar estas  Hojas de Inspección o borrarlas",'warning');
                 // $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspección</a>';
-              }
-          } else { 
-              //Salida
-              //$codigo_insp_ant
-              if (!es_nulo($row_ult_entrada['lasalida']) and $row_ult_entrada['lasalida']==$codigo_insp_ant) {
-                //**Deshabilitado temporalmente: Cuando lo reactivemos (yo le avisaría) lo mejor es que el cambio no fuera retroactivo, es decir que considere los cambios desde la fecha de reactivación en adelante, si fuera posible
-                // $valerror=mensaje("No puede crear una nueva Hoja de Inspección porque existe una Hoja de Inspección de SALIDA que ya fue completada",'warning');
-                // $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspección</a>';
-              }
+               }
+            } else { 
+                //Salida
+                //$codigo_insp_ant
+                if (!es_nulo($row_ult_entrada['lasalida']) and $row_ult_entrada['lasalida']==$codigo_insp_ant) {
+                  //**Deshabilitado temporalmente: Cuando lo reactivemos (yo le avisaría) lo mejor es que el cambio no fuera retroactivo, es decir que considere los cambios desde la fecha de reactivación en adelante, si fuera posible
+                  // $valerror=mensaje("No puede crear una nueva Hoja de Inspección porque existe una Hoja de Inspección de SALIDA que ya fue completada",'warning');
+                  // $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspección</a>';
+                }
 
-              if(es_nulo($row_ult_entrada['lasalida']) and $row_ult_entrada['tipo_inspeccion']<>$tipo_insp){
-                //**Deshabilitado temporalmente: Cuando lo reactivemos (yo le avisaría) lo mejor es que el cambio no fuera retroactivo, es decir que considere los cambios desde la fecha de reactivación en adelante, si fuera posible
-                // $valerror=mensaje("No puede crear una nueva Hoja de Inspección porque difiere el tipo de inspeccion RENTA/TALLER",'warning');
-                // $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspección</a>';
-              }
-  
-          }
+                if(es_nulo($row_ult_entrada['lasalida']) and $row_ult_entrada['tipo_inspeccion']<>$tipo_insp){
+                  //**Deshabilitado temporalmente: Cuando lo reactivemos (yo le avisaría) lo mejor es que el cambio no fuera retroactivo, es decir que considere los cambios desde la fecha de reactivación en adelante, si fuera posible
+                  // $valerror=mensaje("No puede crear una nueva Hoja de Inspección porque difiere el tipo de inspeccion RENTA/TALLER",'warning');
+                  // $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspección</a>';
+                }
+              
+            }
 
           }
         }
 
        
       }
-
+    */
    
-
-
     // //-- ultima Salida
     // $result_ultima_salida = sql_select("SELECT id,fecha,id_estado,tipo_doc,id_inspeccion_anterior FROM inspeccion 
     // WHERE inspeccion.tipo_doc=2 AND (id_estado=2 OR id_estado=3)
@@ -480,10 +510,6 @@ if ($nuevoreg==true) {
 
 }
 
-
-  
-
-
   if ($valerror<>"") {
   
     echo '<div class="card-body">
@@ -496,7 +522,7 @@ if ($nuevoreg==true) {
     ';
     exit;
   }
-}
+} // Fin validaciones nuevo registro
 
 
 // inicializar  
