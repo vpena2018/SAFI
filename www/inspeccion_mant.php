@@ -427,6 +427,11 @@ if ($nuevoreg==true) {
         }
         
         if($tipo_doc=='2'){
+          $EstadoReparacion=get_dato_sql("ventas","COUNT(*)"," WHERE id_estado=99 AND id_producto=".intval($codigo_veh));
+          if (!es_nulo($EstadoReparacion)){
+              $valerror=mensaje("No puede crear una nueva Hoja de Inspección porque el Vehiculo esta en proceso de reparacion",'warning');
+              $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspección</a>';
+          }       
           $ParoPorRepuesto=get_dato_sql("servicio","COUNT(*)"," WHERE id_estado=7 AND (estado_paro_por_repuesto='I' or estado_paro_por_repuesto=null)  AND id_producto=".intval($codigo_veh));                 
           $Oservicio=get_dato_sql("servicio","COUNT(*)"," WHERE id_estado not in (20,22,7) AND id_producto=".intval($codigo_veh));                 
           $Ocombustible=get_dato_sql("orden_combustible","COUNT(*)"," WHERE id_estado<3 AND id_producto=".intval($codigo_veh));                 
