@@ -23,6 +23,7 @@ $ip_scan="http://localhost:8082/";
 define("db_user", "root");  // Usuario de la Base de datos
 define("db_pw", "inglosalocal");  // Clave
 //define("db_pw", "inglosalocal");  // Clave
+
 define("db_ip", "localhost");  // Ip o host donde se encuentra la base de datos
 define("db_name", "inglosa"); //Nombre de base de datos
 
