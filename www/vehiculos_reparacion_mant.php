@@ -557,12 +557,22 @@ if ($foto=='')
     <?php
     if ($foto<>'') {
         $fext = substr($foto, -3);
-                if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {       
-                    if ($fecha<'2025-10-01'){
-                       echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
-                    }else{       
-                       echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3 float-left" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
-                    }
+                if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {  
+                    $ruta1='uploa_d/'.$foto;
+                    if (file_exists($ruta1)) {                        
+                       $src= 'uploa_d/thumbnail/'.$foto;
+                       $mostrar=true;
+                    } else {                                   
+                       $src= 'aws_bucket_s3/thumbnail/'.$foto;
+                       $mostrar=false;                    
+                    }    
+                    $onclick = 'mostrar_foto(\'' . $foto . '\', \'' . $mostrar . '\'); return false;';        
+                    echo '  <a href="#" onclick="'.$onclick.'" ><img class="img  img-thumbnail mb-3 mr-3" src="'.$src.'" data-cod="'.$row["id"].'"></a> '; 
+                    //if ($fecha<'2025-10-01'){
+                    //   echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
+                    //}else{       
+                    //   echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3 float-left" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
+                    //}
                     if (tiene_permiso(183))  {
                         echo '<a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].'); return false;" ><i class="fa fa-eraser"></i> Borrar Foto</a>';
                     }                    
@@ -775,11 +785,15 @@ function insp_guardar_foto(arch,campo){
 }
 
 
-function mostrar_foto(imagen) {
+function mostrar_foto(imagen,ruta) {
+  if (ruta==true){
+    var imagenurl='uploa_d/'+imagen;
+  } else {
+    var imagenurl='aws_bucket_s3/'+imagen;
+  }
   Swal.fire({
-  imageUrl: 'uploa_d/'+imagen,
-
-}); 
+       imageUrl: imagenurl,  
+  }); 
 
 }
 
