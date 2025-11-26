@@ -401,11 +401,11 @@ switch ($reporte) {
                 
                 $reporte_datos.= "<thead><tr>";
                 $reporte_datos.= "<th>Mecanico</th>";
-                $reporte_datos.= "<th>Fecha Completada</th>";
+                $reporte_datos.= "<th>Fecha Orden Servicio</th>";
                 $reporte_datos.= "<th># Orden Servicio</th>";
      /*         $reporte_datos.= "<th>Tiempo</th>";
-                $reporte_datos.= "<th>Finalizada</th>";*/
-                $reporte_datos.= "<th>En Proceso</th>";
+                $reporte_datos.= "<th>Finalizada</th>";
+                $reporte_datos.= "<th>En Proceso</th>";*/
                 $reporte_datos.= "<th>Preventivo</th>";
                 $reporte_datos.= "<th>Correctivo</th>";
            
@@ -443,7 +443,7 @@ switch ($reporte) {
                             $enproceso_etq="";
                             $fecha_completada="";
 
-                            $sql="SELECT servicio_historial_estado.id_servicio
+                            /*$sql="SELECT servicio_historial_estado.id_servicio
                             , servicio_historial_estado.id_estado
                             ,servicio_historial_estado.fecha
                             ,servicio.numero
@@ -458,9 +458,25 @@ switch ($reporte) {
                             AND DATE(servicio.fecha_hora_final) BETWEEN '$fdesde' AND '$fhasta'
                             AND (servicio.id_tecnico1=$cod_tecnico OR servicio.id_tecnico2=$cod_tecnico OR servicio.id_tecnico3=$cod_tecnico OR servicio.id_tecnico4=$cod_tecnico)
                             ORDER BY servicio_historial_estado.id_servicio,  servicio_historial_estado.fecha
-                            ";
-
-                            $result = $conn -> query($sql);
+                            ";*/
+                            $sql="SELECT servicio_historial_estado.id_servicio
+                            , servicio_historial_estado.id_estado
+                            ,servicio_historial_estado.fecha
+                            ,servicio.numero
+                            ,servicio.fecha AS fechaservicio
+                            ,servicio.id_estado AS estadoservicio
+                            ,servicio.id_tipo_revision
+                            ,servicio.fecha_hora_final AS fechacompletado
+                            ,servicio_detalle.fecha_atender_fin AS fecharealizada
+                            ,servicio_historial_estado.id_usuario
+                            FROM servicio_historial_estado
+                            LEFT OUTER JOIN servicio ON (servicio_historial_estado.id_servicio=servicio.id)
+                            LEFT OUTER JOIN servicio_detalle ON (servicio_historial_estado.id_servicio=servicio_detalle.id_servicio)
+                            WHERE DATE(servicio_detalle.fecha_atender_fin) BETWEEN '$fdesde' AND '$fhasta' AND 
+						    (id_tecnico1=$cod_tecnico OR id_tecnico2=$cod_tecnico OR id_tecnico3=$cod_tecnico OR id_tecnico4=$cod_tecnico) AND servicio_detalle.producto_tipo=3
+                            ORDER BY servicio_historial_estado.id_servicio,  servicio_historial_estado.fecha";
+                           
+                           $result = $conn -> query($sql);
 
                             if ($result -> num_rows > 0) {
                                 while ($row = $result -> fetch_assoc()) {
@@ -469,11 +485,11 @@ switch ($reporte) {
                                         if ($orden_act>0) {
                                             $reporte_datos.= "<tr>";
                                             $reporte_datos.= '<td ></td>';                                   
-                                            $reporte_datos.= '<td align="center">'.Formato_fechahora_de_mysql($fecha_completada).'</td>';
+                                            $reporte_datos.= '<td align="center">'.Formato_fecha_de_mysql($fecha_completada).'</td>';
                                             $reporte_datos.= '<td align="center">'.$orden_act_numero.'</td>';                                            
                                             /*$reporte_datos.= '<td align="center">'.minutos_a_hora($salida_orden).'</td>';
-                                            $reporte_datos.= '<td align="center">'.$finalizada_etq.'</td>';*/
-                                            $reporte_datos.= '<td align="center">'.$enproceso_etq.'</td>';
+                                            $reporte_datos.= '<td align="center">'.$finalizada_etq.'</td>';
+                                            $reporte_datos.= '<td align="center">'.$enproceso_etq.'</td>';*/
                                             $reporte_datos.= '<td align="center">'.$preventivo_etq.'</td>';
                                             $reporte_datos.= '<td align="center">'.$correctivo_etq.'</td>';                                            
                                             $reporte_datos.= "</tr>";
@@ -483,8 +499,8 @@ switch ($reporte) {
                                             $reporte_datos.= '<td >['.$cod_tecnico.'] '.$nombre_tecnico.'</td>';                                   
                                             $reporte_datos.= '<td align="center"></td>';
                                             /*$reporte_datos.= '<td align="center"></td>';
-                                            $reporte_datos.= '<td align="center"></td>';*/
                                             $reporte_datos.= '<td align="center"></td>';
+                                            $reporte_datos.= '<td align="center"></td>';*/
                                             $reporte_datos.= '<td align="center"></td>';
                                             $reporte_datos.= '<td align="center"></td>';
                                             $reporte_datos.= '<td align="center"></td>';
@@ -492,7 +508,7 @@ switch ($reporte) {
                                         }
                                         $orden_act=$row['id_servicio'];
                                         $orden_act_numero=$row['numero'];
-                                        $fecha_completada=$row['fechacompletado'];
+                                        $fecha_completada=$row['fechaservicio'];
                                         $cant_ordenes++;
                                         $total_cant_ordenes++;
                                         $fecha_ant=false;
@@ -558,8 +574,8 @@ switch ($reporte) {
                                     $reporte_datos.= '<td align="center">'.Formato_fechahora_de_mysql($fecha_completada).'</td>';                 
                                     $reporte_datos.= '<td align="center" >'.$orden_act_numero.'</td>';
                                     /*$reporte_datos.= '<td align="center" >'.minutos_a_hora($salida_orden).'</td>';                                   
-                                    $reporte_datos.= '<td align="center">'.$finalizada_etq.'</td>';*/
-                                    $reporte_datos.= '<td align="center">'.$enproceso_etq.'</td>';
+                                    $reporte_datos.= '<td align="center">'.$finalizada_etq.'</td>';
+                                    $reporte_datos.= '<td align="center">'.$enproceso_etq.'</td>';*/
                                     $reporte_datos.= '<td align="center">'.$preventivo_etq.'</td>';
                                     $reporte_datos.= '<td align="center">'.$correctivo_etq.'</td>';
                                     $reporte_datos.= "</tr>";
@@ -575,8 +591,8 @@ switch ($reporte) {
                                 $reporte_datos.= '<td align="right">Total '.$nombre_tecnico.':</td>';                                   
                                 $reporte_datos.= '<td align="center" ><b>'.$cant_ordenes.'</b></td>';
                                 /*$reporte_datos.= '<td align="center" >'.minutos_a_hora($salida).'</td>';
-                                $reporte_datos.= '<td align="center">'.$finalizada.'</td>';*/
-                                $reporte_datos.= '<td align="center">'.$enproceso.'</td>';
+                                $reporte_datos.= '<td align="center">'.$finalizada.'</td>';
+                                $reporte_datos.= '<td align="center">'.$enproceso.'</td>';*/
                                 $reporte_datos.= '<td align="center">'.$preventivo.'</td>';
                                 $reporte_datos.= '<td align="center">'.$correctivo.'</td>';
                                 $reporte_datos.= "</tr>";
@@ -595,8 +611,8 @@ switch ($reporte) {
                  $reporte_datos.= '<td align="center" ></td>';
                  $reporte_datos.= '<td align="center" >'.$total_cant_ordenes.'</td>';
                  /*$reporte_datos.= '<td align="center" ></td>';
-                 $reporte_datos.= '<td align="center">'.$total_finalizada.'</td>';*/
-                 $reporte_datos.= '<td align="center">'.$total_enproceso.'</td>';
+                 $reporte_datos.= '<td align="center">'.$total_finalizada.'</td>';
+                 $reporte_datos.= '<td align="center">'.$total_enproceso.'</td>';*/
                  $reporte_datos.= '<td align="center">'.$total_preventivo.'</td>';
                  $reporte_datos.= '<td align="center">'.$total_correctivo.'</td>';
                  $reporte_datos.= "</tr>";
