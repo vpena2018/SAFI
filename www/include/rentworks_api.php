@@ -307,6 +307,7 @@ function rw_cerrar_orden($tipo_doc,$id_doc,$notas,$odocampo=""){
     }
 
     //fleetstatus
+         
     $fleetstatus="Available";
 
     $vehiculo="";
@@ -326,7 +327,8 @@ function rw_cerrar_orden($tipo_doc,$id_doc,$notas,$odocampo=""){
            $row = $result -> fetch_assoc() ; 
            $locacion_tmp=$row['rentworks_almacen'];
            $vehiculo=$row['codigo_alterno'];
-            $odometro=$row['km'];
+           $odometro=$row['km'];
+           $id_producto=$row['id_producto'];
             // if ($campo_add<>"") {
             //     $disponibilidad=intval($row['disponibilidad']);
             //     if ($disponibilidad==1) { $fleetstatus="Available"; }
@@ -334,6 +336,24 @@ function rw_cerrar_orden($tipo_doc,$id_doc,$notas,$odocampo=""){
             // }
         }
     }
+    
+    $result_RV=sql_select("SELECT ventas.tipo_ventas_repacion,ventas.id_estado
+    FROM ventas WHERE ventas.id_producto=".$id_producto);            
+    if ($result_RV!=false){
+        if ($result_RV -> num_rows > 0) { 
+           $row_RV = $result_RV -> fetch_assoc() ; 
+           $tipo_ventas_repacion=$row_RV['tipo_ventas_repacion'];
+           $id_estado=$row_RV['id_estado'];
+           //si carro esta en reparacion para venta 
+           if ($tipo_ventas_repacion==1) {
+               $fleetstatus="For Sale";
+           }else{
+               if ($id_estado!=14) { //disponible para venta
+                   $fleetstatus="For Sale";
+               }    
+           }
+        }
+    }  
 
     if ($odocampo<>"") {
         $odometro=$odocampo;
