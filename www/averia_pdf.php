@@ -478,13 +478,12 @@ $totalrepuestos=0;
                 $fext = substr($row_fotos["archivo"], -3);
                 if ($fext=='jpg' or $fext=='peg' or $fext=='png' ) {                
                     //$image_file= 'uploa_d/thumbnail/'.$row_fotos["archivo"];  
-                    
-                    if ($fecha<'2025-10-01'){
-                        $image_file= 'aws_bucket_s3/'.$row_fotos["archivo"];                                                                   
-                    }else{
-                        $image_file= 'uploa_d/'.$row_fotos["archivo"];    
-                    }                    
-                    
+                    $ruta1 = 'uploa_d/' . $row_fotos['archivo'];           
+                    if (file_exists($ruta1)) {
+                        $image_file= 'uploa_d/'.$row_fotos["archivo"]; 
+                    } else {
+                        $image_file= 'aws_bucket_s3/'.$row_fotos["archivo"]; 
+                    }   
                     $pdf->Image($image_file, $x,$y, $w, $h, '', '', '', false, 300, '', false, false, 0, false, false, false);
                     // $pdf->Image($image_file,'', '', 0, 0, '', '', '', false, 300, '', false, false, 0, false, false, false);
                     //$pdf->Image($image_file,'', '', 0, 0, '', '', '', false, 90, '', false, false, 0, false, false, false);
