@@ -29,12 +29,17 @@ if ($accion=="v") {
     ,producto.nombre AS vehiculo
     ,producto.codigo_alterno AS codvehiculo
     ,tienda.nombre AS latienda
+    ,cuentas_propias.id AS id_cuenta
+    ,cuentas_propias.nombre_cuenta AS nombre_cuenta
+    
         FROM ventas
         LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)        
         LEFT OUTER JOIN producto ON (ventas.id_producto=producto.id)        
         LEFT OUTER JOIN ventas_estado ON (ventas.id_estado=ventas_estado.id)
         LEFT OUTER JOIN ventas_impuestos ON (ventas.id_impuesto=ventas_impuestos.id)
         LEFT OUTER JOIN ventas_factura ON (ventas.id_factura=ventas_factura.id)
+        LEFT OUTER JOIN cuentas_propias ON (ventas.id_cuenta=cuentas_propias.id)
+     
         
     where ventas.id=$cid limit 1");
 
@@ -276,8 +281,19 @@ if ($accion=="g") {
         }
     }
 
+    /* RL. 20251202  - Cambio para verificar si cuando cambia al estado 11 (En negociacion) 
+                                   se tiene que tener una cuenta de banco
+                */
+    if ($id_estado == 11) {
+        $id_cuenta_val = isset($_REQUEST['id_cuenta']) ? intval($_REQUEST['id_cuenta']) : 0;
+        if (es_nulo($id_cuenta_val) || $id_cuenta_val == 0) {
+            $verror .= 'Debe asignar una cuenta de banco cuando el estado es "En negociacion"';
+        }
+    }
+
     $envioCorreo="";
     $enviar_correo_sin_fotos = "";
+    $tienecuenta  = "";
     $fotoRegistro=get_dato_sql("ventas_estado","foto"," where foto=1 and id=".$id_estado);
     $envioCorreo=get_dato_sql("ventas_estado","envio_correo"," where envio_correo=1 and id=".$id_estado);
     if (!es_nulo($fotoRegistro)){
@@ -347,6 +363,7 @@ if ($accion=="g") {
         if (isset($_REQUEST["id_factura"])) { $sqlcampos.= " , id_factura =".GetSQLValue($_REQUEST["id_factura"],"int"); } 
         if (isset($_REQUEST["id_vendedor"])) { $sqlcampos.= " , id_vendedor =".GetSQLValue($_REQUEST["id_vendedor"],"int"); } 
         if (isset($_REQUEST["id_televentas"])) { $sqlcampos.= " , id_televentas =".GetSQLValue($_REQUEST["id_televentas"],"int"); } 
+        if (isset($_REQUEST["id_cuenta"])) { $sqlcampos.= " , id_cuenta =".GetSQLValue($_REQUEST["id_cuenta"],"int"); } 
         if (isset($_REQUEST["observaciones"])) { $sqlcampos.= " , observaciones =".GetSQLValue($_REQUEST["observaciones"],"text"); }         
         if (isset($_REQUEST["foto"])) { $sqlcampos.= " , foto ='$foto'"; } 
         if (isset($_REQUEST["foto_televentas"])) { $sqlcampos.= " , foto_televentas = '$foto_televentas'"; } 
@@ -446,6 +463,17 @@ if ($accion=="g") {
                         $enviar_correo_sin_fotos = true;
                     }
                 }
+
+                /* RL. 20251202  - Cambio para verificar si cuando cambia al estado 11 (En Negociacion) 
+                                   se valida que este lleno el campo de id_cuenta
+                */
+               if (intval($_REQUEST['id_estado'])==11){  
+                    $tiene_cuenta = get_dato_sql("ventas_fotos", "id_cuenta", " WHERE id_venta = $cid");
+                    if ($tiene_cuenta == 0 || es_nulo($tiene_cuenta)) {
+                        // Marcar para enviar correo
+                        $tienecuenta = true;
+                    }
+                }
                  
                  $fotoRegistro1=get_dato_sql("ventas_estado","foto"," where foto=1 and id=".$id_estado);
                  $id_estado_name=get_dato_sql("ventas_estado","nombre"," where id=".$_REQUEST['id_estado']);
@@ -488,6 +516,13 @@ if ($accion=="g") {
                  VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Modificacion de Vendedor', NOW(), '$id_vendedor_name')");
              }
 
+             $id_cuenta=intval(get_dato_sql("ventas","id_cuenta"," where id=".$cid));
+             if ($id_vendedor!=intval($_REQUEST['id_cuenta'])){   
+                $id_cuenta_name=get_dato_sql("cuentas_propias","nombre_cuenta"," where id=".$_REQUEST['id_cuenta']);
+                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
+                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_cuenta'].",'Modificacion de Cuenta Propia', NOW(), '$id_cuenta_name')");
+             }
+
              $id_televentas=intval(get_dato_sql("ventas","id_televentas"," where id=".$cid));
              if ($id_televentas!=intval($_REQUEST['id_televentas'])){   
                  $id_televentas_name=get_dato_sql("usuario","nombre"," where id=".$_REQUEST['id_televentas']);
@@ -512,6 +547,7 @@ if ($accion=="g") {
             $sqlcampos.=" ,id_usuario=".$_SESSION['usuario_id'] ;      
             $sqlcampos.=" ,tipo_ventas_reparacion=2";      
             $sqlcampos.=" ,numero=".GetSQLValue(get_dato_sql('ventas',"IFNULL((max(numero)+1),1)"," "),"int"); 
+            
             $sql="insert into ventas set fecha=NOW(), hora=now(),".$sqlcampos." ";        
             
             $result = sql_insert($sql);
@@ -523,7 +559,7 @@ if ($accion=="g") {
             // RL. 20251121 - Para nuevo registro en estado 5, verificar fotos
             $id_estado = intval($_REQUEST['id_estado']);
             if ($id_estado == 5) 
-            {
+                {
                 // Para nuevo registro, verificamos si hay fotos (debería ser 0)
                 $tiene_fotos = get_dato_sql("ventas_fotos", "COUNT(*)", " WHERE id_venta = $cid");
                 if ($tiene_fotos == 0 || es_nulo($tiene_fotos)) {
@@ -627,6 +663,7 @@ if ($accion=="g") {
     if (isset($row["trasmision"])) {$trasmision= $row["trasmision"]; } else {$trasmision= "";}
     if (isset($row["id_vendedor"])) {$id_vendedor= $row["id_vendedor"]; } else {$id_vendedor= "";}
     if (isset($row["id_televentas"])) {$id_televentas= $row["id_televentas"]; } else {$id_televentas= "";}
+    if (isset($row["id_cuenta"])) {$id_cuenta= $row["id_cuenta"]; } else {$id_cuenta= "";}
     if (isset($row["observaciones"])) {$observaciones= $row["observaciones"]; } else {$observaciones= "";}
     if (isset($row["foto_televentas"])) {$foto_televentas= $row["foto_televentas"]; } else {$foto_televentas= "";}
     if (isset($row["foto"])) {$foto= $row["foto"]; } else {$foto= "";}
@@ -762,6 +799,18 @@ if ($accion=="g") {
     </div>
     <div class="col-md">            
          <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',$disable_sec2); ?>                 
+    </div>   
+</div>
+
+<div class="row">
+    <div class="col-md">
+         <?php echo campo("id_cuenta","Banco",'select2',valores_combobox_db('cuentas_propias',$id_cuenta,'nombre_cuenta',' where 1=1 ','','...'),' ',' required '.$disable_sec2);  ?> 
+    </div>
+    <div class="col-md">
+        
+    </div>
+    <div class="col-md">            
+                    
     </div>   
 </div>
 
