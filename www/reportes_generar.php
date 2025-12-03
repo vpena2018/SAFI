@@ -571,7 +571,7 @@ switch ($reporte) {
                                     //$fecha_ant=false;                                    
                                     $reporte_datos.= "<tr>";
                                     $reporte_datos.= '<td ></td>';                  
-                                    $reporte_datos.= '<td align="center">'.Formato_fechahora_de_mysql($fecha_completada).'</td>';                 
+                                    $reporte_datos.= '<td align="center">'.Formato_fecha_de_mysql($fecha_completada).'</td>';                 
                                     $reporte_datos.= '<td align="center" >'.$orden_act_numero.'</td>';
                                     /*$reporte_datos.= '<td align="center" >'.minutos_a_hora($salida_orden).'</td>';                                   
                                     $reporte_datos.= '<td align="center">'.$finalizada_etq.'</td>';

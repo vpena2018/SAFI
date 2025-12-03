@@ -28,7 +28,7 @@ if (app_enviar_email==true)
         }
     } 
     
-    $email_enviar = 'admon.sps@inglosa.hn;customerservice@inglosa.hn;mercadeo@inglosa.hn';
+    $email_enviar = 'admon.sps@inglosa.hn;mercadeo@inglosa.hn;iguzman@inglosa.hn;konier@inglosa.hn';
     $subject = 'Alerta : Vehículo Disponible para Venta - Sin Fotos'; 
     
        $cuerpo_html = "
