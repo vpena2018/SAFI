@@ -789,20 +789,26 @@ if ($accion=="cal2") {
             });
 
 			document.querySelector('#sucursal').addEventListener('change', () => {
-				var $talleres = $('#taller').empty();
-				//$talleres.append('<option value = "">Seleccione...</option>');
-				var sucursal_actual= $('#sucursal').val();
-				for (i in d_taller) {
-					if (sucursal_actual==d_taller[i][2]) {
-						$talleres.append('<option value = "' + d_taller[i][0] + '">' + d_taller[i][1] + '</option>');
-					}			
+				var $talleres = $('#taller');
+				var sucursal_actual = $('#sucursal').val();
+				
+				// Limpiar taller y calendario
+				$talleres.empty().append('<option value="">Seleccione...</option>');
+				$('#fecha').val('');
+				$('#hora').val('');
+				
+				// Cargar calendario solo si hay sucursal seleccionada
+				if (sucursal_actual !== "") {
+					cargar_calendario(calendar, true);
 				}
-
-	
-
-				cargar_calendario(calendar,true);
-
-            });
+				
+				// Cargar talleres correspondientes
+				for (i in d_taller) {
+					if (sucursal_actual == d_taller[i][2]) {
+						$talleres.append('<option value="' + d_taller[i][0] + '">' + d_taller[i][1] + '</option>');
+					}
+				}
+			});
 
 			document.querySelector('#taller').addEventListener('change', () => {
 				cargar_calendario(calendar,true);
