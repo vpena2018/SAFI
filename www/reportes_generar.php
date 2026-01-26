@@ -3206,6 +3206,69 @@ case 73:// 	Reporte de averias
         }
        break; 
   
+
+       case 187:
+
+        if (es_nulo($fdesde) or es_nulo($fhasta)) {
+            $errores.="debe ingresar las fechas";
+        }
+              
+        if (!es_nulo($id_tienda)) {
+            $where.=' AND  ventas.id_tienda='.$id_tienda;
+        } 
+
+        $sql="SELECT ventas.numero as numero,tienda.nombre as sucursal,ventas_historial_estado.fecha as fecha
+             ,producto.codigo_alterno as vehiculo ,producto.nombre as descripcion
+             ,ventas_historial_estado.observaciones as observacion FROM ventas_historial_estado
+             INNER JOIN ventas ON ventas_historial_estado.id_maestro=ventas.id
+             INNER JOIN producto ON ventas.id_producto=producto.id
+             INNER JOIN tienda ON ventas.id_tienda=tienda.id
+             WHERE date(ventas_historial_estado.fecha) BETWEEN '$fdesde' AND '$fhasta' and ventas_historial_estado.nombre='Vehiculo a Reproceso'
+             $where ORDER BY ventas.id";       
+        
+        if ($errores=='') {
+            $result = sql_select($sql);
+            if ($result!=false){
+                 if ($result -> num_rows > 0) {
+                    
+                    $reporte_datos.= '<table id="genreporte'.$reporte.'" class="table table-striped  table-sm">';
+                    
+                    //HEADER
+
+                    $reporte_datos.= "<thead><tr>";                                        
+                    $reporte_datos.= "<th>Sucursal</th>";
+                    $reporte_datos.= "<th>Numero</th>";   
+                    $reporte_datos.= "<th>Fecha</th>";                    
+                    $reporte_datos.= "<th>Vehiculo</th>";                    
+                    $reporte_datos.= "<th>Descripcion</th>";                    
+                    $reporte_datos.= "<th>Reproceso</th>";
+                    $reporte_datos.= "</tr></thead>";
+                    
+                    //BODY
+                    $reporte_datos.= "<tbody>";
+                    while ($row = $result -> fetch_assoc()) {                          
+                        $reporte_datos.= "<tr>";
+                        $reporte_datos.= '<td>'.$row['sucursal'].'</td>';
+                        $reporte_datos.= '<td>'.$row['numero'].'</td>';
+                        $reporte_datos.= '<td align="center" style="white-space: nowrap;">'.formato_fechahoraT_de_mysql($row['fecha']).'</td>';
+                        $reporte_datos.= '<td>'.$row['vehiculo'].'</td>';
+                        $reporte_datos.= '<td>'.$row['descripcion'].'</td>';
+                        $reporte_datos.= '<td>'.$row['observacion'].'</td>';
+                        $reporte_datos.= "</tr>";
+    
+                    }
+                    $reporte_datos.= "</tbody>";
+                    
+                    //FOOTER
+                    // $reporte_datos.= "<tfoot>";
+                    // $reporte_datos.= "</tfoot>";
+                    $reporte_datos.= "<table>";
+    
+                    $con_datatable=true;
+                 }
+            }        
+        }
+       break; 
     
     default:
         $reporte_datos="";
