@@ -405,12 +405,16 @@ if ($foto_original_tele !== '') {
         //if (isset($_REQUEST["foto"])) { $sqlcampos.= " , foto ='$foto'"; } 
         //if (isset($_REQUEST["foto_televentas"])) { $sqlcampos.= " , foto_televentas = '$foto_televentas'"; } 
 
-                if (!empty($_REQUEST["foto"])) {
-            $sqlcampos .= " , foto = " . GetSQLValue($_REQUEST["foto"], "text");
+        if (!empty($_REQUEST["foto"])) {
+            //$sqlcampos .= " , foto = " . GetSQLValue($_REQUEST["foto"], "text");
+            $sqlcampos .= " , foto = " . GetSQLValue($foto, "text");
+
         }
 
         if (!empty($_REQUEST["foto_televentas"])) {
-            $sqlcampos .= " , foto_televentas = " . GetSQLValue($_REQUEST["foto_televentas"], "text");
+            //$sqlcampos .= " , foto_televentas = " . GetSQLValue($_REQUEST["foto_televentas"], "text");
+
+            $sqlcampos .= " , foto_televentas = " . GetSQLValue($foto_televentas, "text");
         }
 
         if (isset($_REQUEST["reproceso"])) { $sqlcampos.= " , reproceso =".GetSQLValue($_REQUEST["reproceso"],"text"); } 
@@ -864,6 +868,7 @@ if ($foto_original_tele !== '') {
   <?php
   if ($foto<>'') {
      $fext = substr($foto, -3);
+     $fext = strtolower($fext);
             if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {    
                 $ruta1 = 'uploa_d/' . $foto;           
                 if (file_exists($ruta1)) {
@@ -886,6 +891,7 @@ if ($foto_original_tele !== '') {
   }
    if ($foto_televentas<>'') {
      $fext = substr($foto_televentas, -3);
+     $fext = strtolower($fext);
             if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {   
                 $ruta1 = 'uploa_d/' . $foto_televentas;           
                 if (file_exists($ruta1)) {
