@@ -469,17 +469,13 @@ function filtros_reporte(cod,objeto){
 
         break;
 
-        case 179:// 	Reporte de HI Creadas
+        case 179 && 187:// 	Reporte de HI Creadas
             $("#repfecha").show();  
             $("#reptienda").show();
-        break;
+        break;        
 
       
-    }
-	
-	
-	
-
+    }	
 
     $("#forma_rep").show();
 
