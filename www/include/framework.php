@@ -980,7 +980,7 @@ function campo($nombre,$etiqueta,$tipo,$valor,$class="",$adicional="",$valor2=""
 
 	}			
 
-
+ 
 
 	$salida .= $salida_end;      
 

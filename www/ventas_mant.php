@@ -321,7 +321,7 @@ if ($foto_original_comp !== '') {
         @rename($ruta2, $nueva2);
     }
 
-}
+} 
 
 // FOTO TELEVENTAS
 if ($foto_original_tele !== '') {
