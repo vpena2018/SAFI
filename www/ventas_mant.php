@@ -29,12 +29,14 @@ if ($accion=="v") {
     ,producto.nombre AS vehiculo
     ,producto.codigo_alterno AS codvehiculo
     ,tienda.nombre AS latienda
+    ,entidad.nombre AS cliente_nombre
         FROM ventas
         LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)        
         LEFT OUTER JOIN producto ON (ventas.id_producto=producto.id)        
         LEFT OUTER JOIN ventas_estado ON (ventas.id_estado=ventas_estado.id)
         LEFT OUTER JOIN ventas_impuestos ON (ventas.id_impuesto=ventas_impuestos.id)
         LEFT OUTER JOIN ventas_factura ON (ventas.id_factura=ventas_factura.id)
+        LEFT OUTER JOIN entidad ON (ventas.cliente_id=entidad.id)
         
     where ventas.id=$cid limit 1");
 
@@ -257,6 +259,17 @@ if ($accion=="g") {
     $carShopPerfil=get_dato_sql("usuario","grupo_id"," WHERE id=".$_SESSION["usuario_id"]);
     $id_estado=intval($_REQUEST['id_estado']);
     $precio_venta=intval($_REQUEST['precio_venta']);
+
+    if ($id_estado == 11) {
+
+            $client_id_val = isset($_REQUEST['cliente_id'])
+                ? (int) $_REQUEST['cliente_id']
+                : 0;
+
+            if ($client_id_val <= 0) {
+                $verror .= 'Seleccione un cliente para el estado En Negociación. ';
+            }
+    }
    
     if (!es_nulo($cid) && $id_estado==20){
        if (es_nulo($precio_venta)) { $verror.='Ingrese el precio de venta del vehiculo'; }    
@@ -406,19 +419,23 @@ if ($foto_original_tele !== '') {
         //if (isset($_REQUEST["foto_televentas"])) { $sqlcampos.= " , foto_televentas = '$foto_televentas'"; } 
 
         if (!empty($_REQUEST["foto"])) {
-            //$sqlcampos .= " , foto = " . GetSQLValue($_REQUEST["foto"], "text");
             $sqlcampos .= " , foto = " . GetSQLValue($foto, "text");
 
         }
 
         if (!empty($_REQUEST["foto_televentas"])) {
-            //$sqlcampos .= " , foto_televentas = " . GetSQLValue($_REQUEST["foto_televentas"], "text");
-
             $sqlcampos .= " , foto_televentas = " . GetSQLValue($foto_televentas, "text");
         }
 
         if (isset($_REQUEST["reproceso"])) { $sqlcampos.= " , reproceso =".GetSQLValue($_REQUEST["reproceso"],"text"); } 
         if (isset($_REQUEST["oferta"])) { $sqlcampos.= " , oferta =".GetSQLValue($_REQUEST["oferta"],"int"); } 
+
+        if($id_estado==11){
+            if (isset($_REQUEST["cliente_id"])) { $sqlcampos.= " , cliente_id =".GetSQLValue($_REQUEST["cliente_id"],"int"); }  
+        }else{
+            $sqlcampos.= " , cliente_id =null";
+        }
+
 
         if ($nuevoregistro==false) {
             $reproceso="";  
@@ -701,6 +718,11 @@ if ($foto_original_tele !== '') {
     if (isset($row["id_inspeccion"])) {$id_inspeccion=$row["id_inspeccion"]; } else {$id_inspeccion= "";}
     if (isset($row["reproceso"])) {$reproceso=$row["reproceso"]; } else {$reproceso= "";}
     $oferta = (isset($row["oferta"]) && $row["oferta"] == 1) ? true : false;
+
+    if (isset($row["cliente_id"])) {$cliente_id= $row["cliente_id"]; } else {$cliente_id= "";}
+    if (isset($row["cliente_nombre"])) {$cliente_nombre= $row["cliente_nombre"]; } else {$cliente_nombre= "";}
+
+
    
     $carShopPerfil="";
     $carShopPerfil=get_dato_sql("usuario","grupo_id"," WHERE id=".$_SESSION["usuario_id"]);
@@ -794,6 +816,25 @@ if ($foto_original_tele !== '') {
         <?php echo campo("precio_maximo","Precio Maximo",'number',$precio_maximo,' ',$disable_sec1); ?>          
     </div>    
 </div>  
+
+
+    <div class="row">
+        <div id="clientediv" style="display:none;" class="col-md-8">                     
+            <?php   
+                $nombre_cliente='';
+                echo campo("nombre_cliente","",'hidden',$nombre_cliente,'','','');         
+                echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1  ,'get.php?a=2&t=1',$cliente_nombre);                            
+            ?>   
+            
+                <script>
+                    $(document).ready(function () {
+                    toggleClientePorEstado();
+                });
+                </script>
+        </div>
+    </div>
+
+
 
 <div class="row">
     <div class="col-md">
@@ -1057,6 +1098,19 @@ if ($foto_original_tele !== '') {
 
 <script>
 
+        function toggleClientePorEstado() {
+        
+        let valor = $('#id_estado option:selected').text().toLowerCase();
+        // o si prefieres por value:
+        // let valor = $('#id_estado').val();
+
+        if (valor === 'en negociacion') {
+            $('#clientediv').slideDown();
+        } else {
+            $('#clientediv').slideUp();
+        }
+    }
+
 function abrir_hoja(){    
     hinspeccion = $('#id_inspeccion').val();
     $('#ModalWindow2').modal('hide');
@@ -1280,8 +1334,6 @@ Swal.fire({
     var cid=$("#id").val();
     var datos= { a: "gfoto", arch: encodeURI(arch),cid:cid,isMain:isMain}; 
 
-    debugger;
-    
 
  	 $.post( 'ventas_mant.php',datos, function(json) {
 	 			

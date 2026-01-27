@@ -930,12 +930,49 @@ function campo($nombre,$etiqueta,$tipo,$valor,$class="",$adicional="",$valor2=""
 
 		case "select2":
 	
-		  $lg=',language: "es"' ; 
+		  /*$lg=',language: "es"' ; 
 		  $salida = '<div class="form-group"><label class="outside-label">'.$etiqueta.'</label>';
 	      $salida.= '<select id="'.$nombre.'" name="'.$nombre.'" class="form-control select2 '.$class.'" style="width: 100%;" '.$adicional.'>'.$valor.'</select>';
 	      $salida.= '<script>$(document).ready(function() {$("#'.$nombre.'").select2( {theme: "classic" '.$lg.'   }); });    </script>';
 		  $salida_end='</div>';
-	      break;  
+	      break;*/
+                      //evento change para ventas_mant.php
+            if ($nombre == 'id_estado') {
+            $evento_estado = ' onchange="toggleClientePorEstado(this)" ';
+            } else {
+                $evento_estado = '';
+            }
+
+            $lg = ',language: "es"';
+
+            $salida = '<div class="form-group">';
+            if ($etiqueta != '') {
+                $salida .= '<label class="outside-label">'.$etiqueta.'</label>';
+            }
+
+            $salida .= '
+                <select 
+                    id="'.$nombre.'" 
+                    name="'.$nombre.'" 
+                    class="form-control select2 '.$class.'" 
+                    style="width:100%;" 
+                    '.$adicional.'
+                    '.$evento_estado.'
+                >
+                    '.$valor.'
+                </select>';
+
+            $salida .= '
+                <script>
+                $(document).ready(function() {
+                    $("#'.$nombre.'").select2({
+                        theme: "classic" '.$lg.'
+                    });
+                });
+                </script>';
+
+            $salida_end = '</div>';
+            break;  
 
 		case "select2ajax":
             $nombre_id=$nombre;
@@ -1501,25 +1538,14 @@ $salida="";
 
 
    case "select2":
-      // $salida.= '<div id="pp'.$nombre.'"><select id="'.$nombre.'" name="'.$nombre.'" '.$adicional.'>'.$valor.'</select></div>';
-      // $salida.= '<script>$(document).ready(function() {
-           // var parentElement = $("#pp'.$nombre.'"); 
-           // $("#'.$nombre.'").select2( {
-                // placeholder: "Select Location Type",
-                // theme: "bootstrap",
-                // dropdownParent: parentElement,
-                // width: null,
-                // allowClear: true
-                // }); });
-//                  
-                 // </script>';
+
       $salida.= '<select id="'.$nombre.'" name="'.$nombre.'" '.$adicional.'>'.$valor.'</select>';
       $salida.= '<script>$(document).ready(function() {$("#'.$nombre.'").select2( {theme: "classic"    }); });    </script>';
-
-
       break;  
 	  
    case "select2multi":
+
+    
       $salida.= '<select multiple id="'.$nombre.'" name="'.$nombre.'[]" '.$adicional.'>'.$valor.'</select>';
       $salida.= '<script>$(document).ready(function() { $("#'.$nombre.'").select2( {theme: "classic"  ,allowClear: true}); });</script>';
       break;  
