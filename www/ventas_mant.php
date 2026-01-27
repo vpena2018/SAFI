@@ -665,9 +665,12 @@ if ($foto_original_tele !== '') {
       <li class="nav-item">
         <a class="nav-link " id="insp_tabhistorial" data-toggle="tab" href="#" onclick="ventas_cambiartab('nav_historial');"   role="tab"  >Historial</a>
       </li> 
-      
         <li class="nav-item">
             <a class="nav-link " id="insp_tabFotos" data-toggle="tab" href="#" onclick="ventas_cambiartab('nav_Fotos_venta');"   role="tab"  >Fotos</a>
+        </li> 
+
+        <li class="nav-item">
+            <a class="nav-link " id="insp_tabAbonos" data-toggle="tab" href="#" onclick="ventas_cambiartab('nav_Abonos_venta');"   role="tab"  >abonos</a>
         </li> 
       
     </ul>   
@@ -996,7 +999,6 @@ if ($foto_original_tele !== '') {
 
 
 <!-- fotos ventas -->
- 
 <div class="tab-pane fade " id="nav_Fotos_venta" role="tabpanel" >
     <div class="" id="insp_fotos_thumbs_ventas">
     </div>
@@ -1073,6 +1075,8 @@ if ($foto_original_tele !== '') {
 
 
 
+
+
     if (tiene_permiso(186)){
         $a=$total_filas;
         while ($a < 10) {            
@@ -1089,6 +1093,10 @@ if ($foto_original_tele !== '') {
     ?>
     </div>
 </div>
+</div>
+
+<div class="tab-pane fade " id="nav_Abonos_venta" role="tabpanel" >
+
 </div>
 
 <!-- errores -->
@@ -1481,6 +1489,10 @@ function ventas_cambiartab(eltab) {
   if (eltab=='nav_historial') {
      procesar_ventas_historial('nav_historial');
   }
+
+    if (eltab=='nav_Abonos_venta') {
+     procesar_abonos_venta('nav_Abonos_venta');
+  }
   
   if (continuar==true){
     $('#'+eltab).show();
@@ -1491,6 +1503,21 @@ function ventas_cambiartab(eltab) {
 // nav_fotos
 // nav_doctos 
 
+}
+
+function procesar_abonos_venta(campo){
+    var url='ver_abonos_ventas.php';
+
+    $("#"+campo).load(url, function(response, status, xhr) {	
+   
+    if (status == "error") { 
+
+        //$("#"+campo).html("Error"; // xhr.status + " " + xhr.statusText
+        $("#"+campo).html('<p>&nbsp;</p>');
+        mytoast('error','Error al cargar la pagina...',6000) ;
+    }
+
+    });
 }
 
 function procesar_ventas_historial(campo){
