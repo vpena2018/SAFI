@@ -668,10 +668,6 @@ if ($foto_original_tele !== '') {
         <li class="nav-item">
             <a class="nav-link " id="insp_tabFotos" data-toggle="tab" href="#" onclick="ventas_cambiartab('nav_Fotos_venta');"   role="tab"  >Fotos</a>
         </li> 
-
-        <li class="nav-item">
-            <a class="nav-link " id="insp_tabAbonos" data-toggle="tab" href="#" onclick="ventas_cambiartab('nav_Abonos_venta');"   role="tab"  >abonos</a>
-        </li> 
       
     </ul>   
  </div>
@@ -1095,9 +1091,6 @@ if ($foto_original_tele !== '') {
 </div>
 </div>
 
-<div class="tab-pane fade " id="nav_Abonos_venta" role="tabpanel" >
-
-</div>
 
 <!-- errores -->
 <div class="tab-pane fade mt-5 mb-5" id="nav_deshabilitado" role="tabpanel" ><div class="alert alert-warning" role="alert">Debe Guardar el documento para poder continuar con esta sección</div></div>
@@ -1490,9 +1483,6 @@ function ventas_cambiartab(eltab) {
      procesar_ventas_historial('nav_historial');
   }
 
-    if (eltab=='nav_Abonos_venta') {
-     procesar_abonos_venta('nav_Abonos_venta');
-  }
   
   if (continuar==true){
     $('#'+eltab).show();
@@ -1505,20 +1495,6 @@ function ventas_cambiartab(eltab) {
 
 }
 
-function procesar_abonos_venta(campo){
-    var url='ver_abonos_ventas.php';
-
-    $("#"+campo).load(url, function(response, status, xhr) {	
-   
-    if (status == "error") { 
-
-        //$("#"+campo).html("Error"; // xhr.status + " " + xhr.statusText
-        $("#"+campo).html('<p>&nbsp;</p>');
-        mytoast('error','Error al cargar la pagina...',6000) ;
-    }
-
-    });
-}
 
 function procesar_ventas_historial(campo){
 
