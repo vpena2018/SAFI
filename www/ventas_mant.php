@@ -498,6 +498,55 @@ if ($foto_original_tele !== '') {
                  VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Modificacion de Precio de Venta', NOW(), ".$_REQUEST['precio_venta'].")");
              }
 
+
+             $cliente_viejo = get_dato_sql(
+                "ventas",
+                "cliente_id",
+                " WHERE id = ".$cid
+            );
+
+            // Normalizar viejo
+            $cliente_viejo = ($cliente_viejo == 0 || $cliente_viejo === null)
+                ? null
+                : intval($cliente_viejo);
+
+            // Normalizar nuevo (lo que viene del form)
+            $cliente_nuevo = (
+                !isset($_REQUEST['cliente_id']) ||
+                $_REQUEST['cliente_id'] === '' ||
+                $_REQUEST['cliente_id'] === '0'
+            ) ? null : intval($_REQUEST['cliente_id']);
+
+            // 👉 SOLO aquí se detecta el cambio
+            if ($cliente_viejo !== $cliente_nuevo) {
+
+                $nombre_viejo = $cliente_viejo
+                    ? get_dato_sql("entidad", "nombre", " WHERE id = ".$cliente_viejo)
+                    : 'Vacío';
+
+                $nombre_nuevo = $cliente_nuevo
+                    ? get_dato_sql("entidad", "nombre", " WHERE id = ".$cliente_nuevo)
+                    : 'Vacío';
+
+                $observacion = "'Cliente: {$nombre_viejo} → {$nombre_nuevo}'";
+
+                if($nombre_viejo!=$nombre_nuevo)
+                {
+                    sql_insert("
+                        INSERT INTO ventas_historial_estado
+                        (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
+                        VALUES (
+                            $cid,
+                            ".$_SESSION['usuario_id'].",
+                            ".$_REQUEST['id_estado'].",
+                            'Modificación de cliente',
+                            NOW(),
+                            $observacion
+                        )
+                    ");
+                }
+            }
+
              $id_estado=intval(get_dato_sql("ventas","id_estado"," where id=".$cid));             
              $id_estado_vendido=intval(get_dato_sql("ventas_estado","envio_correo"," where id=".$id_estado));             
              $id_estado_modifico=false;
@@ -533,8 +582,26 @@ if ($foto_original_tele !== '') {
                  
                  $fotoRegistro1=get_dato_sql("ventas_estado","foto"," where foto=1 and id=".$id_estado);
                  $id_estado_name=get_dato_sql("ventas_estado","nombre"," where id=".$_REQUEST['id_estado']);
+
                  sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",$id_estado,'Modificacion de Estado', NOW(),'$id_estado_name')");               
+                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",$id_estado,'Modificacion de Estado', NOW(),'$id_estado_name')");
+
+                 if($id_estado_name!='en negociacion')
+                 {
+                                    sql_insert("
+                    INSERT INTO ventas_historial_estado
+                    (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
+                    VALUES (
+                        $cid,
+                        ".$_SESSION['usuario_id'].",
+                        ".$_REQUEST['id_estado'].",
+                        'Modificación de cliente',
+                        NOW(),
+                        'Cliente eliminado al quitar estado de en negociacion'
+                    )
+                ");
+                 }
+                 
              }
 
 
