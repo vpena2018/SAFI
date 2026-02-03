@@ -1,5 +1,87 @@
 <?php
 require_once ('include/framework.php');
+require __DIR__ . '/../vendor/autoload.php';
+use PhpOffice\PhpWord\TemplateProcessor;
+
+
+
+//contrato de venta en PDF
+function getSofficeCommand()
+{
+    // Windows
+    if (stripos(PHP_OS, 'WIN') === 0) {
+        $paths = [
+            'C:\Program Files\LibreOffice\program\soffice.exe',
+            'C:\Program Files (x86)\LibreOffice\program\soffice.exe',
+        ];
+
+        foreach ($paths as $path) {
+            if (file_exists($path)) {
+                return '"' . $path . '"';
+            }
+        }
+
+        throw new Exception('LibreOffice no encontrado en Windows');
+    }
+
+    // Linux / Unix
+    return 'soffice';
+}
+
+function convertirDocxAPdf($docxPath)
+{
+    $tmpDir = sys_get_temp_dir();
+    $soffice = getSofficeCommand();
+
+    $cmd = $soffice .
+        ' --headless --convert-to pdf --outdir ' .
+        escapeshellarg($tmpDir) . ' ' .
+        escapeshellarg($docxPath);
+
+    exec($cmd, $output, $code);
+
+    if ($code !== 0) {
+        throw new Exception('Error al convertir DOCX a PDF');
+    }
+
+    $pdfPath = preg_replace('/\.docx$/i', '.pdf', $docxPath);
+
+    if (!file_exists($pdfPath)) {
+        throw new Exception('El PDF no fue generado');
+    }
+
+    return $pdfPath;
+}
+
+function descargarVentaPDF()
+{
+    $template = new TemplateProcessor(__DIR__ . '/../plantillas/venta_contrato.docx');
+
+    // Datos reales
+    $template->setValue('cliente', 'Cliente Prueba');
+    $template->setValue('fecha', date('d/m/Y'));
+    $template->setValue('total', 'L 1,250.00');
+
+    $tmpDir  = sys_get_temp_dir();
+    $tmpDocx = tempnam($tmpDir, 'venta_') . '.docx';
+
+    $template->saveAs($tmpDocx);
+
+    $pdfPath = convertirDocxAPdf($tmpDocx);
+
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: attachment; filename="Venta_' . date('Ymd_His') . '.pdf"');
+    header('Content-Length: ' . filesize($pdfPath));
+    header('Cache-Control: no-cache');
+
+    readfile($pdfPath);
+
+    // Limpiar
+    unlink($tmpDocx);
+    unlink($pdfPath);
+    exit;
+}
+
 
 
 
@@ -10,7 +92,12 @@ if ($nuevo=='N'){
    pagina_permiso(167);
 }
 
- 
+
+
+ if (isset($_GET['a']) && $_GET['a'] === 'print') {
+    descargarVentaPDF();
+    exit;
+}
 
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="v";}
 
@@ -1037,7 +1124,24 @@ if ($foto_original_tele !== '') {
 
         <?php if (!es_nulo($id_inspeccion)){ ?>            
             <a href="#" onclick="abrir_hoja(); return false;" class="btn btn-outline-secondary mr-2 mb-2 xfrm" ><i class="fa fa-file-medical-alt"></i> Abrir Inspección</a>
-        <?php } ?>  
+        <?php } ?> 
+
+<div class="col-sm">
+    <a href="ventas_mant.php?a=print"
+       target="_blank"
+       class="btn btn-block mb-2"
+       style="
+           background-color: #e5533d;
+           color: #ffffff;
+           border: 1px solid #e5533d;
+       ">
+        <i class="fas fa-file-pdf"></i> Generar contrato
+    </a>
+</div>
+
+
+
+         
 
         <div class="col-sm"><a href="#" onclick="$('#ModalWindow2').modal('hide');  return false;" class="btn btn-light btn-block mb-2 xfrm" >  <?php echo 'Cerrar'; ?></a></div>
 		</div>
