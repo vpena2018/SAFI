@@ -44,7 +44,7 @@ function convertirDocxAPdf($docxPath)
         throw new Exception('Error al convertir DOCX a PDF');
     }
 
-    $pdfPath = preg_replace('/\.docx$/i', '.pdf', $docxPath);
+    $pdfPath = $tmpDir . '/' . pathinfo($docxPath, PATHINFO_FILENAME) . '.pdf';
 
     if (!file_exists($pdfPath)) {
         throw new Exception('El PDF no fue generado');
@@ -53,14 +53,18 @@ function convertirDocxAPdf($docxPath)
     return $pdfPath;
 }
 
-function descargarVentaPDF()
+
+function descargarVentaPDF($id_venta)
 {
-    $template = new TemplateProcessor(__DIR__ . '/../plantillas/venta_contrato.docx');
+
+    $template = new TemplateProcessor(__DIR__ . '/../plantillas/venta_contrato_vehiculo.docx');
 
     // Datos reales
     $template->setValue('cliente', 'Cliente Prueba');
     $template->setValue('fecha', date('d/m/Y'));
     $template->setValue('total', 'L 1,250.00');
+
+
 
     $tmpDir  = sys_get_temp_dir();
     $tmpDocx = tempnam($tmpDir, 'venta_') . '.docx';
@@ -95,7 +99,11 @@ if ($nuevo=='N'){
 
 
  if (isset($_GET['a']) && $_GET['a'] === 'print') {
-    descargarVentaPDF();
+
+ 	$id_venta=0;
+     if (isset($_REQUEST['id'])) { $id_venta = intval($_REQUEST["id"]); } 
+
+    descargarVentaPDF($id_venta);
     exit;
 }
 
@@ -1127,7 +1135,9 @@ if ($foto_original_tele !== '') {
         <?php } ?> 
 
 <div class="col-sm">
-    <a href="ventas_mant.php?a=print"
+    
+    <a href="#"
+       id="btnContrato"
        target="_blank"
        class="btn btn-block mb-2"
        style="
@@ -1139,6 +1149,18 @@ if ($foto_original_tele !== '') {
     </a>
 </div>
 
+<script>
+$(document).ready(function () {
+    let id = $('#id').val();
+
+    if (id) {
+        $('#btnContrato').attr(
+            'href',
+            'ventas_mant.php?a=print&id=' + id
+        );
+    }
+});
+</script>
 
 
          
@@ -1664,6 +1686,18 @@ function ventas_cambiartab(eltab) {
 // nav_fotos
 // nav_doctos 
 
+}
+
+
+function generarContratoPDF() {
+    let id = document.getElementById('id').value;
+
+    if (!id) {
+        alert('No hay ID de venta');
+        return;
+    }
+
+    window.open('ventas_mant.php?a=print&id=' + id, '_blank');
 }
 
 
