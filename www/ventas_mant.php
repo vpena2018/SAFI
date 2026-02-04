@@ -57,13 +57,97 @@ function convertirDocxAPdf($docxPath)
 function descargarVentaPDF($id_venta)
 {
 
-    $template = new TemplateProcessor(__DIR__ . '/../plantillas/venta_contrato_vehiculo.docx');
+    //sacamos el representante legal
+    //$datos_venta = sql_select("");
+    //$datos_representante_legal = sql_select("");
 
-    // Datos reales
-    $template->setValue('cliente', 'Cliente Prueba');
-    $template->setValue('fecha', date('d/m/Y'));
-    $template->setValue('total', 'L 1,250.00');
+    $datos_venta = sql_select
+        ("SELECT ventas.id_tienda,
+        /*datos cliente*/
+        entidad.nombre AS cliente_nombre
+        ,entidad.rtn AS identidad_cliente
+        ,entidad.direccion AS direccion
+        ,entidad.codigo_alterno AS codigo_cliente
+        ,entidad.direccion AS direccion_cliente
+        ,entidad.telefono AS telefono_cliente
+        
+        /*datos vehiculo*/
+        ,producto.codigo_alterno AS cod_vehiculo
+        ,producto.placa AS placa
+        ,producto.marca AS marca
+        ,producto.modelo AS modelo
+        ,producto.tipo_vehiculo AS tipo
+        ,producto.chasis AS chasis
+        ,producto.motor AS motor
+        ,producto.color AS color
+        ,producto.anio AS anio
+        ,producto.cilindrada AS cilindraje
+        ,'' AS combustible
 
+        FROM ventas
+        LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)        
+        LEFT OUTER JOIN producto ON (ventas.id_producto=producto.id)        
+        LEFT OUTER JOIN ventas_estado ON (ventas.id_estado=ventas_estado.id)
+        LEFT OUTER JOIN ventas_impuestos ON (ventas.id_impuesto=ventas_impuestos.id)
+        LEFT OUTER JOIN ventas_factura ON (ventas.id_factura=ventas_factura.id)
+        LEFT OUTER JOIN entidad ON (ventas.cliente_id=entidad.id)
+        
+    where ventas.id=$id_venta limit 1");
+
+	if ($datos_venta!=false){
+		if ($datos_venta -> num_rows > 0) { 
+			$row_datos_venta = $datos_venta -> fetch_assoc(); 
+
+            $datos_representante_legal = sql_select("SELECT * FROM tienda WHERE id=$row_datos_venta[id_tienda] limit 1");
+
+            if($datos_representante_legal!=false){
+                if($datos_representante_legal -> num_rows > 0)
+                {
+                    $row_representante = $datos_representante_legal -> fetch_assoc();
+                    //$representante_legal=$row_representante['representante_legal'];
+
+                        $template = new TemplateProcessor(__DIR__ . '/../plantillas/venta_contrato_vehiculo.docx');
+
+                        // representante legal
+                        $template->setValue('REPRESENTANTE_LEGAL', $row_representante['representante_legal']);
+                        $template->setValue('R_IDENTIDAD', $row_representante['representante_identidad']);
+
+                        //datos del cliente
+                        $template->setValue('CLIENTE', $row_datos_venta['cliente_nombre']);
+                        $template->setValue('IDENTIDAD_CLIENTE', $row_datos_venta['identidad_cliente']);
+                        $template->setValue('CODIGO_CLIENTE', $row_datos_venta['codigo_cliente']);
+                        $template->setValue('DIRECCION_CLIENTE', $row_datos_venta['direccion_cliente']);
+                        $template->setValue('TELEFONO_CLIENTE', $row_datos_venta['telefono_cliente']);
+
+                        //datos vehiculo
+
+                        $template->setValue('CODIGO_VEHICULO', $row_datos_venta['cod_vehiculo']);
+                        $template->setValue('PLACA',$row_datos_venta['placa']);
+                        $template->setValue('MARCA',$row_datos_venta['marca']);
+                        $template->setValue('MODELO',$row_datos_venta['modelo']);
+                        $template->setValue('TIPO',$row_datos_venta['tipo']);
+                        $template->setValue('CHASIS',$row_datos_venta['chasis']);
+                        $template->setValue('MOTOR',$row_datos_venta['motor']);
+                        $template->setValue('COLOR',$row_datos_venta['color']);
+                        $template->setValue('ANIO',$row_datos_venta['anio']);
+                        $template->setValue('CILINDRAJE',$row_datos_venta['cilindraje']);
+                        $template->setValue('COMBUSTIBLE',$row_datos_venta['combustible']);
+
+
+
+                        
+                        //$template->setValue('cliente_nombre', date('d/m/Y'));
+                        //$template->setValue('total', 'L 1,250.00');
+
+
+                }
+
+
+		}
+        }else{
+            exit;
+        }
+    }
 
 
     $tmpDir  = sys_get_temp_dir();
@@ -83,6 +167,9 @@ function descargarVentaPDF($id_venta)
     // Limpiar
     unlink($tmpDocx);
     unlink($pdfPath);
+
+
+
     exit;
 }
 
@@ -936,7 +1023,7 @@ if ($foto_original_tele !== '') {
 <div class="row">
     <div class="col-md-4">                
          <?php if (tiene_permiso(167) && $id_estado<20 || es_nulo($id_estado)) {            
-             echo campo("id_tienda","Sucursall",'select2',valores_combobox_db("tienda",$id_tienda,"nombre"," ",'','...'),' ',' required '.$disable_sec1,''); 
+             echo campo("id_tienda","Sucursal",'select2',valores_combobox_db("tienda",$id_tienda,"nombre"," ",'','...'),' ',' required '.$disable_sec1,''); 
          }else{
              echo campo("id_tienda","sucursal",'hidden',$id_tienda,'','','');
              echo campo("id_tienda_label","Sucursal",'label',$latienda,'','','');
@@ -1135,32 +1222,41 @@ if ($foto_original_tele !== '') {
         <?php } ?> 
 
 <div class="col-sm">
-    
-    <a href="#"
+    <a href="javascript:void(0);"
        id="btnContrato"
        target="_blank"
        class="btn btn-block mb-2"
        style="
-           background-color: #e5533d;
-           color: #ffffff;
-           border: 1px solid #e5533d;
+           background-color:#e5533d;
+           color:#fff;
+           border:1px solid #e5533d;
+           pointer-events:none;
+           opacity:0.6;
        ">
         <i class="fas fa-file-pdf"></i> Generar contrato
     </a>
 </div>
 
 <script>
-$(document).ready(function () {
-    let id = $('#id').val();
+$(function () {
+    const id = $('#id').val();
+    //const tienda = $('#tienda').val();
 
     if (id) {
-        $('#btnContrato').attr(
-            'href',
-            'ventas_mant.php?a=print&id=' + id
-        );
+        $('#btnContrato')
+            .attr(
+                'href',
+                'ventas_mant.php?a=print&id=' +
+                encodeURIComponent(id)
+            )
+            .css({
+                'pointer-events': 'auto',
+                'opacity': '1'
+            });
     }
 });
 </script>
+
 
 
          
@@ -1689,16 +1785,6 @@ function ventas_cambiartab(eltab) {
 }
 
 
-function generarContratoPDF() {
-    let id = document.getElementById('id').value;
-
-    if (!id) {
-        alert('No hay ID de venta');
-        return;
-    }
-
-    window.open('ventas_mant.php?a=print&id=' + id, '_blank');
-}
 
 
 function procesar_ventas_historial(campo){
