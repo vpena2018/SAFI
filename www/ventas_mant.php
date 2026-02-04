@@ -491,6 +491,7 @@ if ($accion=="g") {
     $carShopPerfil=get_dato_sql("usuario","grupo_id"," WHERE id=".$_SESSION["usuario_id"]);
     $id_estado=intval($_REQUEST['id_estado']);
     $precio_venta=intval($_REQUEST['precio_venta']);
+    $prima_venta=intval($_REQUEST['prima_venta']);
 
     if ($id_estado == 11) {
 
@@ -504,10 +505,12 @@ if ($accion=="g") {
     }
    
     if (!es_nulo($cid) && $id_estado==20){
-       if (es_nulo($precio_venta)) { $verror.='Ingrese el precio de venta del vehiculo'; }    
-    }    
+       if (es_nulo($precio_venta)||es_nulo($prima_venta)) { $verror.='Ingrese el precio y la prima de venta del vehiculo'; }    
+    }
+    
+    
     if (!es_nulo($cid) && $id_estado<20){
-       if (!es_nulo($precio_venta)) { $verror.='Precio de venta solo se ingresa, estado de vendido entregado'; }    
+       if (!es_nulo($precio_venta)||es_nulo($prima_venta)) { $verror.='Precio de venta y prima solo se ingresan, estado de vendido entregado'; }    
     }  
     if ($carShopPerfil=='18'){
         $verror.=validar("Estado",$_REQUEST['id_estado'], "int", true);
@@ -638,7 +641,11 @@ if ($foto_original_tele !== '') {
         
         if (isset($_REQUEST["precio_minimo"])) { $sqlcampos.= " , precio_minimo =".GetSQLValue($_REQUEST["precio_minimo"],"int"); } 
         if (isset($_REQUEST["precio_maximo"])) { $sqlcampos.= " , precio_maximo =".GetSQLValue($_REQUEST["precio_maximo"],"int"); } 
+        
         if (isset($_REQUEST["precio_venta"])) { $sqlcampos.= " , precio_venta =".GetSQLValue($_REQUEST["precio_venta"],"int"); } 
+        if (isset($_REQUEST["prima_venta"])) { $sqlcampos.= " , prima_venta =".GetSQLValue($_REQUEST["prima_venta"],"int"); } 
+
+
         if (isset($_REQUEST["kilometraje"])) { $sqlcampos.= " , kilometraje =".GetSQLValue($_REQUEST["kilometraje"],"int"); } 
         if (isset($_REQUEST["cilindraje"])) { $sqlcampos.= " , cilindraje =".GetSQLValue($_REQUEST["cilindraje"],"int"); } 
         if (isset($_REQUEST["trasmision"])) { $sqlcampos.= " , trasmision =".GetSQLValue($_REQUEST["trasmision"],"text"); } 
@@ -729,6 +736,16 @@ if ($foto_original_tele !== '') {
                  sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
                  VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Modificacion de Precio de Venta', NOW(), ".$_REQUEST['precio_venta'].")");
              }
+
+             $prima_venta=intval(get_dato_sql("ventas","prima_venta"," where id=".$cid));
+             if ($prima_venta!=intval($_REQUEST['prima_venta'])){   
+                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
+                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Modificacion de Prima de Venta', NOW(), ".$_REQUEST['prima_venta'].")");
+             }
+
+
+
+             
 
 
              $cliente_viejo = get_dato_sql(
@@ -1004,7 +1021,11 @@ if ($foto_original_tele !== '') {
     if (isset($row["kilometraje"])) {$kilometraje= $row["kilometraje"]; } else {$kilometraje= "";}
     if (isset($row["precio_minimo"])) {$precio_minimo= $row["precio_minimo"]; } else {$precio_minimo= "";}
     if (isset($row["precio_maximo"])) {$precio_maximo= $row["precio_maximo"]; } else {$precio_maximo= "";}
+
     if (isset($row["precio_venta"])) {$precio_venta= $row["precio_venta"]; } else {$precio_venta= "";}
+    if (isset($row["prima_venta"])) {$prima_venta= $row["prima_venta"]; } else {$prima_venta= "";}
+
+
     if (isset($row["cilindraje"])) {$cilindraje= $row["cilindraje"]; } else {$cilindraje= "";}
     if (isset($row["trasmision"])) {$trasmision= $row["trasmision"]; } else {$trasmision= "";}
     if (isset($row["id_vendedor"])) {$id_vendedor= $row["id_vendedor"]; } else {$id_vendedor= "";}
@@ -1169,6 +1190,9 @@ if ($foto_original_tele !== '') {
     <div class="col-md">            
          <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',$disable_sec2); ?>                 
     </div>   
+        <div class="col-md">            
+         <?php echo campo("prima_venta","Prima de Venta",'number',$prima_venta,' ',$disable_sec2); ?>                 
+    </div> 
 </div>
 
 <div class="row">
