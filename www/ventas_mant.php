@@ -82,6 +82,8 @@ function descargarVentaPDF($id_venta)
         ,producto.color AS color
         ,producto.anio AS anio
         ,producto.cilindrada AS cilindraje
+        ,'' AS departamento
+
         ,'' AS combustible
 
         FROM ventas
@@ -98,19 +100,22 @@ function descargarVentaPDF($id_venta)
 		if ($datos_venta -> num_rows > 0) { 
 			$row_datos_venta = $datos_venta -> fetch_assoc(); 
 
-            $datos_representante_legal = sql_select("SELECT * FROM tienda WHERE id=$row_datos_venta[id_tienda] limit 1");
+            $datos_tienda = sql_select("SELECT * FROM tienda WHERE id=$row_datos_venta[id_tienda] limit 1");
 
-            if($datos_representante_legal!=false){
-                if($datos_representante_legal -> num_rows > 0)
+            if($datos_tienda!=false){
+                if($datos_tienda -> num_rows > 0)
                 {
-                    $row_representante = $datos_representante_legal -> fetch_assoc();
+                    $row_tienda = $datos_tienda -> fetch_assoc();
                     //$representante_legal=$row_representante['representante_legal'];
 
                         $template = new TemplateProcessor(__DIR__ . '/../plantillas/venta_contrato_vehiculo.docx');
 
                         // representante legal
-                        $template->setValue('REPRESENTANTE_LEGAL', $row_representante['representante_legal']);
-                        $template->setValue('R_IDENTIDAD', $row_representante['representante_identidad']);
+                        $template->setValue('REPRESENTANTE_LEGAL', $row_tienda['representante_legal']);
+                        $template->setValue('R_IDENTIDAD', $row_tienda['representante_identidad']);
+                        //ciudad
+
+                        $template->setValue('CIUDAD', $row_tienda['nombre']);
 
                         //datos del cliente
                         $template->setValue('CLIENTE', $row_datos_venta['cliente_nombre']);
@@ -120,7 +125,6 @@ function descargarVentaPDF($id_venta)
                         $template->setValue('TELEFONO_CLIENTE', $row_datos_venta['telefono_cliente']);
 
                         //datos vehiculo
-
                         $template->setValue('CODIGO_VEHICULO', $row_datos_venta['cod_vehiculo']);
                         $template->setValue('PLACA',$row_datos_venta['placa']);
                         $template->setValue('MARCA',$row_datos_venta['marca']);
@@ -133,11 +137,41 @@ function descargarVentaPDF($id_venta)
                         $template->setValue('CILINDRAJE',$row_datos_venta['cilindraje']);
                         $template->setValue('COMBUSTIBLE',$row_datos_venta['combustible']);
 
+                        //pie de pagina
+                        $template->setValue('DEPARTAMENTO',$row_datos_venta['departamento']);
+
+                        // Fecha en español
+                        date_default_timezone_set('America/Tegucigalpa');
+
+                        // Fecha actual
+                        $dia  = date('j');   // 1–31 (sin cero)
+                        $anio = date('Y');   // 2026
+
+                        // Mes en español
+                        $meses = [
+                            1 => 'enero',
+                            2 => 'febrero',
+                            3 => 'marzo',
+                            4 => 'abril',
+                            5 => 'mayo',
+                            6 => 'junio',
+                            7 => 'julio',
+                            8 => 'agosto',
+                            9 => 'septiembre',
+                            10 => 'octubre',
+                            11 => 'noviembre',
+                            12 => 'diciembre'
+                        ];
+
+                        $mes = $meses[(int)date('n')];
+
+                        // Reemplazos en el template
+                        $template->setValue('DIAS', $dia);
+                        $template->setValue('MES', $mes);
+                        $template->setValue('ANIO_ACTUAL', $anio);
 
 
-                        
-                        //$template->setValue('cliente_nombre', date('d/m/Y'));
-                        //$template->setValue('total', 'L 1,250.00');
+
 
 
                 }
