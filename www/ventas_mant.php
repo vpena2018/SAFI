@@ -54,6 +54,7 @@ function convertirDocxAPdf($docxPath)
 }
 
 
+
 function descargarVentaPDF($id_venta)
 {
 
@@ -81,10 +82,12 @@ function descargarVentaPDF($id_venta)
         ,producto.motor AS motor
         ,producto.color AS color
         ,producto.anio AS anio
-        ,producto.cilindrada AS cilindraje
+        ,ventas.cilindraje AS cilindraje
         ,'' AS departamento
-
         ,'' AS combustible
+
+        /*datos venta*/
+        ,ventas.precio_venta AS precio_venta
 
         FROM ventas
         LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)        
@@ -123,6 +126,19 @@ function descargarVentaPDF($id_venta)
                         $template->setValue('CODIGO_CLIENTE', $row_datos_venta['codigo_cliente']);
                         $template->setValue('DIRECCION_CLIENTE', $row_datos_venta['direccion_cliente']);
                         $template->setValue('TELEFONO_CLIENTE', $row_datos_venta['telefono_cliente']);
+
+                        //datos de la venta
+                        $precioVenta = (float)$row_datos_venta['precio_venta'];
+
+                        $template->setValue(
+                            'PRECIO_VENTA',
+                            number_format($precioVenta, 2, '.', ',')
+                        );
+
+                        $PRECIO_LETRAS = numeroALetras($precioVenta);
+
+                        $template->setValue('PRECIO_VENTA_LETRAS', $PRECIO_LETRAS);
+
 
                         //datos vehiculo
                         $template->setValue('CODIGO_VEHICULO', $row_datos_venta['cod_vehiculo']);
@@ -646,7 +662,7 @@ if ($foto_original_tele !== '') {
         if (isset($_REQUEST["reproceso"])) { $sqlcampos.= " , reproceso =".GetSQLValue($_REQUEST["reproceso"],"text"); } 
         if (isset($_REQUEST["oferta"])) { $sqlcampos.= " , oferta =".GetSQLValue($_REQUEST["oferta"],"int"); } 
 
-        if($id_estado==11){
+        if($id_estado==11 || $id_estado==20){
             if (isset($_REQUEST["cliente_id"])) { $sqlcampos.= " , cliente_id =".GetSQLValue($_REQUEST["cliente_id"],"int"); }  
         }else{
             $sqlcampos.= " , cliente_id =null";
@@ -1428,7 +1444,7 @@ $(function () {
         // o si prefieres por value:
         // let valor = $('#id_estado').val();
 
-        if (valor === 'en negociacion') {
+        if (valor === 'en negociacion' || valor === 'vendido entregado') {
             $('#clientediv').slideDown();
         } else {
             $('#clientediv').slideUp();

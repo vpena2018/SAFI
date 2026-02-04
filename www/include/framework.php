@@ -690,6 +690,134 @@ function valores_combobox_db($tabla,$codigo,$campo,$where,$campo_etiqueta='',$te
 }
 
 
+function numeroALetras($numero)
+{
+    $numero = number_format($numero, 2, '.', '');
+    [$entero, $decimal] = explode('.', $numero);
+
+    $entero = (int)$entero;
+    $decimal = (int)$decimal;
+
+    if ($entero === 0) {
+        $letras = 'CERO';
+    } else {
+        $letras = convertirNumero($entero);
+    }
+
+    return trim($letras) . " LEMPIRAS CON " . str_pad($decimal, 2, '0', STR_PAD_LEFT) . "/100";
+}
+
+function convertirNumero($num)
+{
+    if ($num < 1000) {
+        return convertirCentenas($num);
+    }
+
+    if ($num < 1000000) {
+        $miles = intdiv($num, 1000);
+        $resto = $num % 1000;
+
+        if ($miles == 1) {
+            $texto = 'MIL';
+        } else {
+            // 👇 AQUÍ ESTÁ LA CLAVE
+            $texto = convertirCentenas($miles) . ' MIL';
+        }
+
+        if ($resto > 0) {
+            $texto .= ' ' . convertirCentenas($resto);
+        }
+
+        return trim($texto);
+    }
+
+    // MILLONES
+    $millones = intdiv($num, 1000000);
+    $resto = $num % 1000000;
+
+    if ($millones == 1) {
+        $texto = 'UN MILLÓN';
+    } else {
+        $texto = convertirNumero($millones) . ' MILLONES';
+    }
+
+    if ($resto > 0) {
+        $texto .= ' ' . convertirNumero($resto);
+    }
+
+    return trim($texto);
+}
+
+
+function convertirCentenas($num)
+{
+    $unidades = [
+        '', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO',
+        'SEIS', 'SIETE', 'OCHO', 'NUEVE'
+    ];
+
+    $especiales = [
+        10 => 'DIEZ', 11 => 'ONCE', 12 => 'DOCE', 13 => 'TRECE',
+        14 => 'CATORCE', 15 => 'QUINCE',
+        16 => 'DIECISÉIS', 17 => 'DIECISIETE',
+        18 => 'DIECIOCHO', 19 => 'DIECINUEVE'
+    ];
+
+    $decenas = [
+        2 => 'VEINTE', 3 => 'TREINTA', 4 => 'CUARENTA',
+        5 => 'CINCUENTA', 6 => 'SESENTA',
+        7 => 'SETENTA', 8 => 'OCHENTA', 9 => 'NOVENTA'
+    ];
+
+    $centenas = [
+        '', 'CIENTO', 'DOSCIENTOS', 'TRESCIENTOS', 'CUATROCIENTOS',
+        'QUINIENTOS', 'SEISCIENTOS', 'SETECIENTOS',
+        'OCHOCIENTOS', 'NOVECIENTOS'
+    ];
+
+    // EXACTO 100
+    if ($num == 100) {
+        return 'CIEN';
+    }
+
+    $texto = '';
+
+    // CENTENAS
+    if ($num > 100) {
+        $texto .= $centenas[intdiv($num, 100)] . ' ';
+        $num = $num % 100;
+    }
+
+    // ESPECIALES 10–19
+    if ($num >= 10 && $num <= 19) {
+        return trim($texto . $especiales[$num]);
+    }
+
+    // DECENAS
+    if ($num >= 20) {
+        $dec = intdiv($num, 10);
+        $uni = $num % 10;
+
+        if ($dec == 2 && $uni > 0) {
+            // VEINTIUNO, VEINTIDOS, etc.
+            $texto .= 'VEINTI' . $unidades[$uni];
+        } else {
+            $texto .= $decenas[$dec];
+            if ($uni > 0) {
+                $texto .= ' Y ' . $unidades[$uni];
+            }
+        }
+        return trim($texto);
+    }
+
+    // UNIDADES
+    if ($num > 0) {
+        $texto .= $unidades[$num];
+    }
+
+    return trim($texto);
+}
+
 
 
 
