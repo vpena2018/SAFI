@@ -88,6 +88,7 @@ function descargarVentaPDF($id_venta)
 
         /*datos venta*/
         ,ventas.precio_venta AS precio_venta
+        ,ventas.prima_venta AS prima_venta
 
         FROM ventas
         LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)        
@@ -130,14 +131,15 @@ function descargarVentaPDF($id_venta)
                         //datos de la venta
                         $precioVenta = (float)$row_datos_venta['precio_venta'];
 
-                        $template->setValue(
-                            'PRECIO_VENTA',
-                            number_format($precioVenta, 2, '.', ',')
-                        );
-
+                        $template->setValue('PRECIO_VENTA',number_format($precioVenta, 2, '.', ','));
                         $PRECIO_LETRAS = numeroALetras($precioVenta);
-
                         $template->setValue('PRECIO_VENTA_LETRAS', $PRECIO_LETRAS);
+
+                         $primaVenta = (float)$row_datos_venta['prima_venta'];
+
+                        $template->setValue('PRIMA_VENTA',number_format($primaVenta, 2, '.', ','));
+                        $PRIMA_LETRAS = numeroALetras($primaVenta);
+                        $template->setValue('PRIMA_VENTA_LETRAS', $PRIMA_LETRAS);
 
 
                         //datos vehiculo
@@ -510,7 +512,7 @@ if ($accion=="g") {
     
     
     if (!es_nulo($cid) && $id_estado<20){
-       if (!es_nulo($precio_venta)||es_nulo($prima_venta)) { $verror.='Precio de venta y prima solo se ingresan, estado de vendido entregado'; }    
+       if (!es_nulo($precio_venta)||!es_nulo($prima_venta)) { $verror.='Precio de venta y prima solo se ingresan, estado de vendido entregado'; }    
     }  
     if ($carShopPerfil=='18'){
         $verror.=validar("Estado",$_REQUEST['id_estado'], "int", true);
