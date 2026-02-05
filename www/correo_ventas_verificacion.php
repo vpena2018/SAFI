@@ -62,7 +62,11 @@ if (app_enviar_email==true)
     $cuerpo_sinhtml = strip_tags($cuerpo_html);    
 
     if ($email_enviar != '') {
+<<<<<<< HEAD
         //$debug_file = 'C:/DEV-git/php/sql_debug.log';  
+=======
+       // $debug_file = 'C:/DEV-git/php/sql_debug.log';  
+>>>>>>> 9d0ad25c43e1e2a5136db13b0a676d561c2102ee
         //file_put_contents($debug_file, date('Y-m-d H:i:s') . " - " . $cuerpo_html . "\n", FILE_APPEND);
         enviar_correo($email_enviar, $subject, $cuerpo_html, $cuerpo_sinhtml);
     }    
