@@ -18,6 +18,7 @@ define("app_dir", "c:/DEV-git/www/reportes/");
 
 
 $ip_scan="http://localhost:8082/"; 
+
   
 // base de datos local
 define("db_user", "root");  // Usuario de la Base de datos
