@@ -19,6 +19,8 @@ if ($accion=="1") {
     $offset=0;
     $haymas=0;
     $filtros="";
+    $perfilTenico=0;
+	$perfilTecnico=get_dato_sql("usuario","grupo_id"," WHERE id=".$_SESSION["usuario_id"]);
 
     if (isset($_REQUEST['pg'])) { $pagina = sanear_int($_REQUEST['pg']); }
     if (isset($_REQUEST['numero'])) { $tmpval=sanear_int($_REQUEST['numero']); if (!es_nulo($tmpval)){$filtros.=" and servicio.numero = ".GetSQLValue($tmpval,'int') ;}   }
@@ -111,8 +113,8 @@ if ($accion=="1") {
 
             if ($result -> num_rows>=app_reg_por_pag) {$haymas=1;  }
             while ($row = $result -> fetch_assoc()) {
-                if (tiene_permiso(163)){
-                   $adpc=trim($row["observaciones_adpc"]);
+                if ($perfilTecnico!='2'){
+                    $adpc=trim($row["observaciones_adpc"]);
                 }else{
                    $adpc=""; 
                 }
