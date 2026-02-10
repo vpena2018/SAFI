@@ -98,7 +98,7 @@ if ($accion=="1") {
             if ($result -> num_rows>=app_reg_por_pag) {$haymas=1;  }
             while ($row = $result -> fetch_assoc()) {                
                 $vehiculo=$row["codigo_alterno"];
-                if ($perfilTecnico!='3'){
+                if ($perfilTecnico!=3){
                     $adpc=trim($row["observaciones_adpc"]);
                  }else{
                     $adpc=""; 

@@ -3,6 +3,11 @@ require_once ('include/framework.php');
 pagina_permiso(166);
 
 $accion ="";
+$pruebasContrato = "N";
+
+if (tiene_permiso(188)){
+    $pruebasContrato="S";
+}
 
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } 
 if (isset($_REQUEST['estado'])) { $id_estado = sanear_int($_REQUEST['estado']); } else {$id_estado="";}
@@ -247,17 +252,26 @@ if ($accion=="1") {
 
     function abrir_ventas(codigo){
         var nuevo="";
+        var contrato="<?php echo $pruebasContrato; ?>";
         if (codigo==0){
             nuevo="S"
         }else{
             nuevo="N"
         }
+        
+        if (contrato=="S"){
+            modalwindow2(
+                'Registro Venta de Vehiculo',
+                'ventas_mant_contrato.php?a=v&r='+nuevo+'&cid='+codigo
+                );
 
-        modalwindow2(
-            'Registro Venta de Vehiculo',
-            'ventas_mant.php?a=v&r='+nuevo+'&cid='+codigo
-            );
-           
+        }else{
+            modalwindow2(
+                'Registro Venta de Vehiculo',
+                'ventas_mant.php?a=v&r='+nuevo+'&cid='+codigo
+                );
+            
+        }    
     }
 
 function abrir_ventana_foto(codigo) {

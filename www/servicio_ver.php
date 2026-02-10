@@ -113,7 +113,7 @@ if ($accion=="1") {
 
             if ($result -> num_rows>=app_reg_por_pag) {$haymas=1;  }
             while ($row = $result -> fetch_assoc()) {
-                if ($perfilTecnico!='2'){
+                if ($perfilTecnico!=2){
                     $adpc=trim($row["observaciones_adpc"]);
                 }else{
                    $adpc=""; 
