@@ -111,8 +111,15 @@ function convertirDocxAPdf(string $docxPath): string
             throw new RuntimeException('LibreOffice falló al convertir');
         }
 
-        $pdfPath = $tmpDir . DIRECTORY_SEPARATOR .
-            pathinfo($docxPath, PATHINFO_FILENAME) . '.pdf';
+        $files = glob($tmpDir . '/*.pdf');
+        $pdfPath = end($files);
+
+        appLog('PDF DETECTADO: ' . $pdfPath);
+
+        if (!$pdfPath || !file_exists($pdfPath)) {
+            throw new RuntimeException('No se encontró el PDF generado');
+        }
+
 
         appLog('PDF ESPERADO: ' . $pdfPath);
 
