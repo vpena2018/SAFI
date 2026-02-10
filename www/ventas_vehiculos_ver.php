@@ -253,6 +253,7 @@ if ($accion=="1") {
     function abrir_ventas(codigo){
         var nuevo="";
         var contrato="<?php echo $pruebasContrato; ?>";
+
         if (codigo==0){
             nuevo="S"
         }else{
@@ -261,7 +262,7 @@ if ($accion=="1") {
         
         if (contrato=="S"){
             modalwindow2(
-                'Registro Venta de Vehiculo',
+                'Registro Venta de Vehiculo Pruebas Contrato',
                 'ventas_mant_contrato.php?a=v&r='+nuevo+'&cid='+codigo
                 );
 

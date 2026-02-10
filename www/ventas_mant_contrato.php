@@ -1193,7 +1193,7 @@ if ($foto_original_tele !== '') {
          <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',$disable_sec2); ?>                 
     </div>   
         <div class="col-md">            
-         <?php echo campo("prima_venta","Prima de Venta",'number',$prima_venta,' ',$disable_sec2); ?>                 
+         <?php echo campo("prima_venta","Prima de Venta Contrato",'number',$prima_venta,' ',$disable_sec2); ?>                 
     </div> 
 </div>
 
@@ -1322,7 +1322,7 @@ $(function () {
         $('#btnContrato')
             .attr(
                 'href',
-                'ventas_mant.php?a=print&id=' +
+                'ventas_mant_contrato.php?a=print&id=' +
                 encodeURIComponent(id)
             )
             .css({
