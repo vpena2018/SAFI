@@ -5,8 +5,58 @@ use PhpOffice\PhpWord\TemplateProcessor;
 
 
 
-//contrato de venta en PDF
+
+
+
+function appLog(string $message): void
+{
+    try {
+        $logFile = app_logs_folder . 'ventas_contrato.log';
+        $date = date('Y-m-d H:i:s');
+
+        file_put_contents(
+            $logFile,
+            "[$date] $message\n",
+            FILE_APPEND | LOCK_EX
+        );
+    } catch (Throwable $e) {
+        // Nunca romper producción por un log
+        error_log('LOGGER ERROR: ' . $e->getMessage());
+    }
+}
+
+
+
 function getSofficeCommand()
+{
+    try {
+        appLog('Entrando a getSofficeCommand');
+
+        $path = '/usr/bin/soffice';
+
+        if (!file_exists($path)) {
+            appLog('ERROR: soffice no existe en ' . $path);
+            throw new RuntimeException('LibreOffice no encontrado');
+        }
+
+        if (!is_executable($path)) {
+            appLog('ERROR: soffice no es ejecutable');
+            throw new RuntimeException('LibreOffice sin permisos');
+        }
+
+        appLog('LibreOffice OK');
+        return $path;
+
+    } catch (Throwable $e) {
+        appLog('EXCEPTION: ' . $e->getMessage());
+        throw $e; // mantiene el 500 pero ahora con info real
+    }
+}
+
+
+
+//contrato de venta en PDF
+function getSofficeCommandOld()
 {
     // Windows
     if (stripos(PHP_OS, 'WIN') === 0) {
@@ -28,7 +78,61 @@ function getSofficeCommand()
     return 'soffice';
 }
 
-function convertirDocxAPdf($docxPath)
+function convertirDocxAPdf(string $docxPath): string
+{
+    try {
+        appLog('--- convertirDocxAPdf INICIO ---');
+        appLog('DOCX: ' . $docxPath);
+
+        if (!file_exists($docxPath)) {
+            appLog('ERROR: DOCX no existe');
+            throw new RuntimeException('Archivo DOCX no encontrado');
+        }
+
+        $tmpDir = sys_get_temp_dir();
+        appLog('TMP DIR: ' . $tmpDir);
+
+        $soffice = getSofficeCommand();
+        appLog('SOFFICE: ' . $soffice);
+
+        $cmd = $soffice .
+            ' --headless --convert-to pdf --outdir ' .
+            escapeshellarg($tmpDir) . ' ' .
+            escapeshellarg($docxPath) . ' 2>&1';
+
+        appLog('CMD: ' . $cmd);
+
+        exec($cmd, $output, $code);
+
+        appLog('RETURN CODE: ' . $code);
+        appLog('OUTPUT: ' . implode(' | ', $output));
+
+        if ($code !== 0) {
+            throw new RuntimeException('LibreOffice falló al convertir');
+        }
+
+        $pdfPath = $tmpDir . DIRECTORY_SEPARATOR .
+            pathinfo($docxPath, PATHINFO_FILENAME) . '.pdf';
+
+        appLog('PDF ESPERADO: ' . $pdfPath);
+
+        if (!file_exists($pdfPath)) {
+            throw new RuntimeException('El PDF no fue generado');
+        }
+
+        appLog('PDF GENERADO OK');
+        appLog('--- convertirDocxAPdf FIN ---');
+
+        return $pdfPath;
+
+    } catch (Throwable $e) {
+        appLog('EXCEPTION convertirDocxAPdf: ' . $e->getMessage());
+        throw $e; // mantiene el 500 pero ahora con log claro
+    }
+}
+
+
+function convertirDocxAPdfOld($docxPath)
 {
     $tmpDir = sys_get_temp_dir();
     $soffice = getSofficeCommand();
@@ -53,9 +157,136 @@ function convertirDocxAPdf($docxPath)
     return $pdfPath;
 }
 
-
-
 function descargarVentaPDF($id_venta)
+{
+    try {
+        appLog('===== descargarVentaPDF INICIO =====');
+        appLog('ID_VENTA: ' . $id_venta);
+
+        if (empty($id_venta)) {
+            appLog('ERROR: id_venta vacío');
+            throw new RuntimeException('ID de venta inválido');
+        }
+
+        appLog('Ejecutando query venta');
+
+        $datos_venta = sql_select("
+            SELECT ventas.id_tienda,
+                   entidad.nombre AS cliente_nombre,
+                   entidad.rtn AS identidad_cliente,
+                   entidad.direccion AS direccion,
+                   entidad.codigo_alterno AS codigo_cliente,
+                   entidad.direccion AS direccion_cliente,
+                   entidad.telefono AS telefono_cliente,
+                   producto.codigo_alterno AS cod_vehiculo,
+                   producto.placa AS placa,
+                   producto.marca AS marca,
+                   producto.modelo AS modelo,
+                   producto.tipo_vehiculo AS tipo,
+                   producto.chasis AS chasis,
+                   producto.motor AS motor,
+                   producto.color AS color,
+                   producto.anio AS anio,
+                   ventas.cilindraje AS cilindraje,
+                   '' AS departamento,
+                   '' AS combustible,
+                   ventas.precio_venta AS precio_venta,
+                   ventas.prima_venta AS prima_venta
+            FROM ventas
+            LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)
+            LEFT OUTER JOIN producto ON (ventas.id_producto=producto.id)
+            LEFT OUTER JOIN entidad ON (ventas.cliente_id=entidad.id)
+            WHERE ventas.id=$id_venta
+            LIMIT 1
+        ");
+
+        if ($datos_venta === false) {
+            appLog('ERROR: sql_select ventas devolvió false');
+            throw new RuntimeException('Error consultando venta');
+        }
+
+        if ($datos_venta->num_rows === 0) {
+            appLog('ERROR: venta no encontrada');
+            throw new RuntimeException('Venta no encontrada');
+        }
+
+        $row_datos_venta = $datos_venta->fetch_assoc();
+        appLog('Venta encontrada. ID_TIENDA: ' . $row_datos_venta['id_tienda']);
+
+        $datos_tienda = sql_select("SELECT * FROM tienda WHERE id={$row_datos_venta['id_tienda']} LIMIT 1");
+
+        if ($datos_tienda === false || $datos_tienda->num_rows === 0) {
+            appLog('ERROR: tienda no encontrada');
+            throw new RuntimeException('Tienda no encontrada');
+        }
+
+        $row_tienda = $datos_tienda->fetch_assoc();
+        appLog('Tienda cargada: ' . $row_tienda['nombre']);
+
+        // Template
+        $templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo.docx';
+        appLog('Template: ' . $templatePath);
+
+        if (!file_exists($templatePath)) {
+            appLog('ERROR: template no existe');
+            throw new RuntimeException('Template DOCX no encontrado');
+        }
+
+        $template = new TemplateProcessor($templatePath);
+
+        // Reemplazos principales
+        $template->setValue('REPRESENTANTE_LEGAL', $row_tienda['representante_legal']);
+        $template->setValue('R_IDENTIDAD', $row_tienda['representante_identidad']);
+        $template->setValue('CIUDAD', $row_tienda['nombre']);
+
+        $template->setValue('CLIENTE', $row_datos_venta['cliente_nombre']);
+        $template->setValue('IDENTIDAD_CLIENTE', $row_datos_venta['identidad_cliente']);
+        $template->setValue('CODIGO_CLIENTE', $row_datos_venta['codigo_cliente']);
+        $template->setValue('DIRECCION_CLIENTE', $row_datos_venta['direccion_cliente']);
+        $template->setValue('TELEFONO_CLIENTE', $row_datos_venta['telefono_cliente']);
+
+        // Precios
+        $precioVenta = (float)$row_datos_venta['precio_venta'];
+        $template->setValue('PRECIO_VENTA', number_format($precioVenta, 2, '.', ','));
+        $template->setValue('PRECIO_VENTA_LETRAS', numeroALetras($precioVenta));
+
+        $primaVenta = (float)$row_datos_venta['prima_venta'];
+        $template->setValue('PRIMA_VENTA', number_format($primaVenta, 2, '.', ','));
+        $template->setValue('PRIMA_VENTA_LETRAS', numeroALetras($primaVenta));
+
+        // Vehículo
+        $template->setValue('CODIGO_VEHICULO', $row_datos_venta['cod_vehiculo']);
+        $template->setValue('PLACA', $row_datos_venta['placa']);
+        $template->setValue('MARCA', $row_datos_venta['marca']);
+        $template->setValue('MODELO', $row_datos_venta['modelo']);
+        $template->setValue('TIPO', $row_datos_venta['tipo']);
+        $template->setValue('CHASIS', $row_datos_venta['chasis']);
+        $template->setValue('MOTOR', $row_datos_venta['motor']);
+        $template->setValue('COLOR', $row_datos_venta['color']);
+        $template->setValue('ANIO', $row_datos_venta['anio']);
+        $template->setValue('CILINDRAJE', $row_datos_venta['cilindraje']);
+        $template->setValue('COMBUSTIBLE', $row_datos_venta['combustible']);
+
+        // Fecha
+        date_default_timezone_set('America/Tegucigalpa');
+        $template->setValue('DIAS', date('j'));
+        $template->setValue('MES', [
+            1=>'enero',2=>'febrero',3=>'marzo',4=>'abril',5=>'mayo',6=>'junio',
+            7=>'julio',8=>'agosto',9=>'septiembre',10=>'octubre',11=>'noviembre',12=>'diciembre'
+        ][(int)date('n')]);
+        $template->setValue('ANIO_ACTUAL', date('Y'));
+
+        appLog('Template procesado correctamente');
+        appLog('===== descargarVentaPDF FIN OK =====');
+
+    } catch (Throwable $e) {
+        appLog('EXCEPTION descargarVentaPDF: ' . $e->getMessage());
+        throw $e; // mantiene el 500 pero ahora con log real
+    }
+}
+
+
+function descargarVentaPDFOld($id_venta)
 {
 
     //sacamos el representante legal
@@ -234,8 +465,6 @@ if ($nuevo=='N'){
 }else{
    pagina_permiso(167);
 }
-
-
 
  if (isset($_GET['a']) && $_GET['a'] === 'print') {
 
