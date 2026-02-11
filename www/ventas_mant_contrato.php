@@ -171,12 +171,12 @@ function descargarVentaPDF($id_venta)
         appLog('ID_VENTA: ' . $id_venta);
 
         if (empty($id_venta)) {
-            appLog('ERROR: id_venta vacío');
             throw new RuntimeException('ID de venta inválido');
         }
 
-        appLog('Ejecutando query venta');
-
+        /* =========================
+           CONSULTA DE LA VENTA
+        ========================== */
         $datos_venta = sql_select("
             SELECT ventas.id_tienda,
                    entidad.nombre AS cliente_nombre,
@@ -200,97 +200,150 @@ function descargarVentaPDF($id_venta)
                    ventas.precio_venta AS precio_venta,
                    ventas.prima_venta AS prima_venta
             FROM ventas
-            LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)
-            LEFT OUTER JOIN producto ON (ventas.id_producto=producto.id)
-            LEFT OUTER JOIN entidad ON (ventas.cliente_id=entidad.id)
-            WHERE ventas.id=$id_venta
+            LEFT JOIN tienda ON ventas.id_tienda = tienda.id
+            LEFT JOIN producto ON ventas.id_producto = producto.id
+            LEFT JOIN entidad ON ventas.cliente_id = entidad.id
+            WHERE ventas.id = $id_venta
             LIMIT 1
         ");
 
-        if ($datos_venta === false) {
-            appLog('ERROR: sql_select ventas devolvió false');
-            throw new RuntimeException('Error consultando venta');
-        }
-
-        if ($datos_venta->num_rows === 0) {
-            appLog('ERROR: venta no encontrada');
+        if (!$datos_venta || $datos_venta->num_rows === 0) {
             throw new RuntimeException('Venta no encontrada');
         }
 
-        $row_datos_venta = $datos_venta->fetch_assoc();
-        appLog('Venta encontrada. ID_TIENDA: ' . $row_datos_venta['id_tienda']);
+        $venta = $datos_venta->fetch_assoc();
+        appLog('Venta encontrada. ID_TIENDA: ' . $venta['id_tienda']);
 
-        $datos_tienda = sql_select("SELECT * FROM tienda WHERE id={$row_datos_venta['id_tienda']} LIMIT 1");
+        /* =========================
+           DATOS DE LA TIENDA
+        ========================== */
+        $datos_tienda = sql_select("
+            SELECT * FROM tienda
+            WHERE id = {$venta['id_tienda']}
+            LIMIT 1
+        ");
 
-        if ($datos_tienda === false || $datos_tienda->num_rows === 0) {
-            appLog('ERROR: tienda no encontrada');
+        if (!$datos_tienda || $datos_tienda->num_rows === 0) {
             throw new RuntimeException('Tienda no encontrada');
         }
 
-        $row_tienda = $datos_tienda->fetch_assoc();
-        appLog('Tienda cargada: ' . $row_tienda['nombre']);
+        $tienda = $datos_tienda->fetch_assoc();
+        appLog('Tienda cargada: ' . $tienda['nombre']);
 
-        // Template
+        /* =========================
+           TEMPLATE DOCX
+        ========================== */
         $templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo.docx';
-        appLog('Template: ' . $templatePath);
 
         if (!file_exists($templatePath)) {
-            appLog('ERROR: template no existe');
             throw new RuntimeException('Template DOCX no encontrado');
         }
 
         $template = new TemplateProcessor($templatePath);
 
-        // Reemplazos principales
-        $template->setValue('REPRESENTANTE_LEGAL', $row_tienda['representante_legal']);
-        $template->setValue('R_IDENTIDAD', $row_tienda['representante_identidad']);
-        $template->setValue('CIUDAD', $row_tienda['nombre']);
+        // Representante
+        $template->setValue('REPRESENTANTE_LEGAL', $tienda['representante_legal']);
+        $template->setValue('R_IDENTIDAD', $tienda['representante_identidad']);
+        $template->setValue('CIUDAD', $tienda['nombre']);
 
-        $template->setValue('CLIENTE', $row_datos_venta['cliente_nombre']);
-        $template->setValue('IDENTIDAD_CLIENTE', $row_datos_venta['identidad_cliente']);
-        $template->setValue('CODIGO_CLIENTE', $row_datos_venta['codigo_cliente']);
-        $template->setValue('DIRECCION_CLIENTE', $row_datos_venta['direccion_cliente']);
-        $template->setValue('TELEFONO_CLIENTE', $row_datos_venta['telefono_cliente']);
+        // Cliente
+        $template->setValue('CLIENTE', $venta['cliente_nombre']);
+        $template->setValue('IDENTIDAD_CLIENTE', $venta['identidad_cliente']);
+        $template->setValue('CODIGO_CLIENTE', $venta['codigo_cliente']);
+        $template->setValue('DIRECCION_CLIENTE', $venta['direccion_cliente']);
+        $template->setValue('TELEFONO_CLIENTE', $venta['telefono_cliente']);
 
         // Precios
-        $precioVenta = (float)$row_datos_venta['precio_venta'];
+        $precioVenta = (float)$venta['precio_venta'];
         $template->setValue('PRECIO_VENTA', number_format($precioVenta, 2, '.', ','));
         $template->setValue('PRECIO_VENTA_LETRAS', numeroALetras($precioVenta));
 
-        $primaVenta = (float)$row_datos_venta['prima_venta'];
+        $primaVenta = (float)$venta['prima_venta'];
         $template->setValue('PRIMA_VENTA', number_format($primaVenta, 2, '.', ','));
         $template->setValue('PRIMA_VENTA_LETRAS', numeroALetras($primaVenta));
 
         // Vehículo
-        $template->setValue('CODIGO_VEHICULO', $row_datos_venta['cod_vehiculo']);
-        $template->setValue('PLACA', $row_datos_venta['placa']);
-        $template->setValue('MARCA', $row_datos_venta['marca']);
-        $template->setValue('MODELO', $row_datos_venta['modelo']);
-        $template->setValue('TIPO', $row_datos_venta['tipo']);
-        $template->setValue('CHASIS', $row_datos_venta['chasis']);
-        $template->setValue('MOTOR', $row_datos_venta['motor']);
-        $template->setValue('COLOR', $row_datos_venta['color']);
-        $template->setValue('ANIO', $row_datos_venta['anio']);
-        $template->setValue('CILINDRAJE', $row_datos_venta['cilindraje']);
-        $template->setValue('COMBUSTIBLE', $row_datos_venta['combustible']);
+        $template->setValue('CODIGO_VEHICULO', $venta['cod_vehiculo']);
+        $template->setValue('PLACA', $venta['placa']);
+        $template->setValue('MARCA', $venta['marca']);
+        $template->setValue('MODELO', $venta['modelo']);
+        $template->setValue('TIPO', $venta['tipo']);
+        $template->setValue('CHASIS', $venta['chasis']);
+        $template->setValue('MOTOR', $venta['motor']);
+        $template->setValue('COLOR', $venta['color']);
+        $template->setValue('ANIO', $venta['anio']);
+        $template->setValue('CILINDRAJE', $venta['cilindraje']);
+        $template->setValue('COMBUSTIBLE', $venta['combustible']);
 
         // Fecha
         date_default_timezone_set('America/Tegucigalpa');
-        $template->setValue('DIAS', date('j'));
-        $template->setValue('MES', [
+        $meses = [
             1=>'enero',2=>'febrero',3=>'marzo',4=>'abril',5=>'mayo',6=>'junio',
             7=>'julio',8=>'agosto',9=>'septiembre',10=>'octubre',11=>'noviembre',12=>'diciembre'
-        ][(int)date('n')]);
+        ];
+        $template->setValue('DIAS', date('j'));
+        $template->setValue('MES', $meses[(int)date('n')]);
         $template->setValue('ANIO_ACTUAL', date('Y'));
 
-        appLog('Template procesado correctamente');
+        appLog('Template procesado');
+
+        /* =========================
+           GUARDAR DOCX TEMPORAL
+        ========================== */
+        $tmpDir  = sys_get_temp_dir();
+        $tmpDocx = $tmpDir . '/venta_' . $id_venta . '_' . time() . '.docx';
+
+        $template->saveAs($tmpDocx);
+        appLog('DOCX generado: ' . $tmpDocx);
+
+        if (!file_exists($tmpDocx)) {
+            throw new RuntimeException('No se pudo generar el DOCX');
+        }
+
+        /* =========================
+           CONVERTIR A PDF
+        ========================== */
+        $pdfPath = convertirDocxAPdf($tmpDocx);
+        appLog('PDF generado: ' . $pdfPath);
+
+        if (!file_exists($pdfPath) || !is_readable($pdfPath)) {
+            throw new RuntimeException('PDF no disponible');
+        }
+
+        /* =========================
+           DESCARGA
+        ========================== */
+        if (ob_get_length()) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: application/pdf');
+        header(
+            'Content-Disposition: attachment; filename="Venta_' .
+            $id_venta . '_' . date('Ymd_His') . '.pdf"'
+        );
+        header('Content-Length: ' . filesize($pdfPath));
+        header('Cache-Control: no-store, no-cache, must-revalidate');
+        header('Pragma: no-cache');
+
+        $bytes = readfile($pdfPath);
+        appLog('BYTES ENVIADOS: ' . $bytes);
+
+        /* =========================
+           LIMPIEZA
+        ========================== */
+        unlink($tmpDocx);
+        unlink($pdfPath);
+
         appLog('===== descargarVentaPDF FIN OK =====');
+        exit;
 
     } catch (Throwable $e) {
         appLog('EXCEPTION descargarVentaPDF: ' . $e->getMessage());
-        throw $e; // mantiene el 500 pero ahora con log real
+        throw $e;
     }
 }
+
 
 
 function descargarVentaPDFOld($id_venta)
