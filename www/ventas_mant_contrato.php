@@ -10,6 +10,7 @@ use PhpOffice\PhpWord\TemplateProcessor;
 
 function appLog(string $message): void
 {
+    return; // Desactivar logs en producción
     try {
         $logFile = app_logs_folder . 'ventas_contrato.log';
         $date = date('Y-m-d H:i:s');
