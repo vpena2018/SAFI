@@ -778,21 +778,45 @@ if ($accion=="g") {
     $id_estado=intval($_REQUEST['id_estado']);
     $precio_venta=intval($_REQUEST['precio_venta']);
     $prima_venta=intval($_REQUEST['prima_venta']);
+    $prima_raw = $_REQUEST['prima_venta'] ?? '';
 
-    if ($id_estado == 11) {
+    $persona_juridica=intval($_REQUEST['persona_juridica']);
+
+    if ($id_estado == 11 || $id_estado == 20) {
 
             $client_id_val = isset($_REQUEST['cliente_id'])
                 ? (int) $_REQUEST['cliente_id']
                 : 0;
 
             if ($client_id_val <= 0) {
-                $verror .= 'Seleccione un cliente para el estado En Negociación. ';
+                $verror .= 'Seleccione un cliente. ';
             }
+
+            if ($persona_juridica == 1) {
+
+                if (empty(trim($_REQUEST['representante_legal_persona_juridica'] ?? ''))) {
+                    $verror .= 'El Representante Legal es obligatorio. ';
+                }
+
+                if (empty(trim($_REQUEST['representante_legal_identidad'] ?? ''))) {
+                    $verror .= 'La Identidad del Representante Legal es obligatoria. ';
+                }
+            }
+
     }
    
-    if (!es_nulo($cid) && $id_estado==20){
-       if (es_nulo($precio_venta)||es_nulo($prima_venta)) { $verror.='Ingrese el precio y la prima de venta del vehiculo'; }    
+if (!es_nulo($cid) && in_array($id_estado, [11, 20], true)) {
+
+    // Precio: obligatorio
+    if (es_nulo($precio_venta)) {
+        $verror .= 'Ingrese el precio de venta del vehículo. ';
     }
+
+    // Prima: puede ser 0, pero no vacía
+    if (trim($prima_raw) === '') {
+        $verror .= 'Ingrese la prima de venta del vehículo. ';
+    }
+}
     
     
     if (!es_nulo($cid) && $id_estado<20){
