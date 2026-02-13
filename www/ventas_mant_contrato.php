@@ -548,6 +548,10 @@ if ($accion=="v") {
     ,producto.codigo_alterno AS codvehiculo
     ,tienda.nombre AS latienda
     ,entidad.nombre AS cliente_nombre
+    ,ventas.persona_juridica
+    ,ventas.representante_legal_persona_juridica
+    ,ventas.representante_legal_identidad
+
         FROM ventas
         LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)        
         LEFT OUTER JOIN producto ON (ventas.id_producto=producto.id)        
@@ -953,7 +957,30 @@ if ($foto_original_tele !== '') {
         if (isset($_REQUEST["precio_maximo"])) { $sqlcampos.= " , precio_maximo =".GetSQLValue($_REQUEST["precio_maximo"],"int"); } 
         
         if (isset($_REQUEST["precio_venta"])) { $sqlcampos.= " , precio_venta =".GetSQLValue($_REQUEST["precio_venta"],"int"); } 
+
         if (isset($_REQUEST["prima_venta"])) { $sqlcampos.= " , prima_venta =".GetSQLValue($_REQUEST["prima_venta"],"int"); } 
+
+
+        if (isset($_REQUEST["persona_juridica"])) { $sqlcampos.= " , persona_juridica =".GetSQLValue($_REQUEST["persona_juridica"],"int"); } 
+
+        if ($persona_juridica == 1) {
+
+            $rep_legal = trim($_REQUEST['representante_legal_persona_juridica'] ?? '');
+            $rep_id    = trim($_REQUEST['representante_legal_identidad'] ?? '');
+
+            $sqlcampos .= " , representante_legal_persona_juridica = "
+                        . GetSQLValue($rep_legal, "text");
+
+            $sqlcampos .= " , representante_legal_identidad = "
+                        . GetSQLValue($rep_id, "text");
+
+        } else {
+
+            // Si NO es persona jurídica, limpiamos los campos
+            $sqlcampos .= " , representante_legal_persona_juridica = NULL";
+            $sqlcampos .= " , representante_legal_identidad = NULL";
+        }
+        
 
 
         if (isset($_REQUEST["kilometraje"])) { $sqlcampos.= " , kilometraje =".GetSQLValue($_REQUEST["kilometraje"],"int"); } 
@@ -1335,6 +1362,11 @@ if ($foto_original_tele !== '') {
     if (isset($row["precio_venta"])) {$precio_venta= $row["precio_venta"]; } else {$precio_venta= "";}
     if (isset($row["prima_venta"])) {$prima_venta= $row["prima_venta"]; } else {$prima_venta= "";}
 
+    if (isset($row["persona_juridica"])) {$persona_juridica= $row["persona_juridica"]; } else {$persona_juridica= "";}
+    if (isset($row["representante_legal_persona_juridica"])) {$representante_legal_persona_juridica= $row["representante_legal_persona_juridica"]; } else {$representante_legal_persona_juridica= "";}
+    if (isset($row["representante_legal_identidad"])) {$representante_legal_identidad= $row["representante_legal_identidad"]; } else {$representante_legal_identidad= "";}
+
+
 
     if (isset($row["cilindraje"])) {$cilindraje= $row["cilindraje"]; } else {$cilindraje= "";}
     if (isset($row["trasmision"])) {$trasmision= $row["trasmision"]; } else {$trasmision= "";}
@@ -1454,16 +1486,16 @@ if ($foto_original_tele !== '') {
                 echo campo("nombre_cliente","",'hidden',$nombre_cliente,'','','');         
                 echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1  ,'get.php?a=2&t=1',$cliente_nombre);  
                 
-                $persona_juridica=false;  
+                //$persona_juridica=false;  
                 //echo campo("persona_juridica","persona juridica",'checkbox',$oferta,' ',$disable_sec2);
                 echo campo("persona_juridica","persona juridica",'checkboxCustom',$persona_juridica,' ',$disable_sec2);
                 //echo campo("oferta","Oferta Web",'checkboxCustom',$oferta,' ',$disable_sec2); 
 
-                $representante_legal_persona_juridica='';
+                //$representante_legal_persona_juridica='';
                 echo campo("representante_legal_persona_juridica","Representante Legal",'text',$representante_legal_persona_juridica,' ',$disable_sec2); 
 
-                $representante_legal_identidad='';
-                echo campo("representante_legal_identidad","Identidad",'text',$representante_legal_identidad,' ',$disable_sec2);
+                //$representante_legal_identidad='';
+                echo campo("representante_legal_identidad","Identidad de Representante Legal",'text',$representante_legal_identidad,' ',$disable_sec2);
             ?>   
             
                 <script>
