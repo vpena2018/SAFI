@@ -1428,7 +1428,18 @@ if ($foto_original_tele !== '') {
             <?php   
                 $nombre_cliente='';
                 echo campo("nombre_cliente","",'hidden',$nombre_cliente,'','','');         
-                echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1  ,'get.php?a=2&t=1',$cliente_nombre);                            
+                echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1  ,'get.php?a=2&t=1',$cliente_nombre);  
+                
+                $persona_juridica=false;  
+                //echo campo("persona_juridica","persona juridica",'checkbox',$oferta,' ',$disable_sec2);
+                echo campo("persona_juridica","persona juridica",'checkboxCustom',$persona_juridica,' ',$disable_sec2);
+                //echo campo("oferta","Oferta Web",'checkboxCustom',$oferta,' ',$disable_sec2); 
+
+                $representante_legal_persona_juridica='';
+                echo campo("representante_legal_persona_juridica","Representante Legal",'text',$representante_legal_persona_juridica,' ',$disable_sec2); 
+
+                $representante_legal_identidad='';
+                echo campo("representante_legal_identidad","Identidad",'text',$representante_legal_identidad,' ',$disable_sec2);
             ?>   
             
                 <script>
