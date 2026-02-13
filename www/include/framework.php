@@ -1299,8 +1299,22 @@ function campo_upload_foto_ventas($nombre,$etiqueta,$tipo,$valor,$adicional,$id_
                                disableAudioPreview: true,
                                disableImagePreview: true,
                                previewThumbnail: false,
-                               
-                               done: function (e, data) {
+                                add: function (e, data) {
+                                    if (typeof Promise === 'undefined' || typeof window.comprimirSiEsImagen !== 'function') {
+                                        data.submit();
+                                        return;
+                                    }
+                                    Promise.all($.map(data.files, function (f) { return window.comprimirSiEsImagen(f); }))
+                                        .then(function (filesComprimidos) {
+                                            data.files = filesComprimidos;
+                                            data.submit();
+                                        })
+                                        .catch(function () {
+                                            data.submit();
+                                        });
+                                },
+                                
+                                done: function (e, data) {
                                      
                                    $.each(data.result.files, function (index, file) {
 
@@ -1438,8 +1452,22 @@ function campo_upload_varias($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solic
                                disableAudioPreview: true,
                                disableImagePreview: true,
                                previewThumbnail: false,
-                               
-                               done: function (e, data) {
+                                add: function (e, data) {
+                                    if (typeof Promise === 'undefined' || typeof window.comprimirSiEsImagen !== 'function') {
+                                        data.submit();
+                                        return;
+                                    }
+                                    Promise.all($.map(data.files, function (f) { return window.comprimirSiEsImagen(f); }))
+                                        .then(function (filesComprimidos) {
+                                            data.files = filesComprimidos;
+                                            data.submit();
+                                        })
+                                        .catch(function () {
+                                            data.submit();
+                                        });
+                                },
+                                
+                                done: function (e, data) {
 
                                var cantidadFotos = data.files.length;
                                      
@@ -1572,12 +1600,26 @@ function campo_upload($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solicitud=""
                                acceptFileTypes: /(\.|\/)(gif|jpe?g|png|doc|docx|pdf|txt|xls|xlsx)$/i,
                                maxFileSize: 20971520,
                                maxNumberOfFiles: 30,
-                               disableVideoPreview: true,
-                               disableAudioPreview: true,
-                               disableImagePreview: true,
-                               previewThumbnail: false,
-                               
-                               done: function (e, data) {
+                                disableVideoPreview: true,
+                                disableAudioPreview: true,
+                                disableImagePreview: true,
+                                previewThumbnail: false,
+                                add: function (e, data) {
+                                    if (typeof Promise === 'undefined' || typeof window.comprimirSiEsImagen !== 'function') {
+                                        data.submit();
+                                        return;
+                                    }
+                                    Promise.all($.map(data.files, function (f) { return window.comprimirSiEsImagen(f); }))
+                                        .then(function (filesComprimidos) {
+                                            data.files = filesComprimidos;
+                                            data.submit();
+                                        })
+                                        .catch(function () {
+                                            data.submit();
+                                        });
+                                },
+                                
+                                done: function (e, data) {
                                      
                                    $.each(data.result.files, function (index, file) {
          
