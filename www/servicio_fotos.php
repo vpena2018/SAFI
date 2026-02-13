@@ -96,11 +96,7 @@ if ($tiene_insp) {
         WHERE inspeccion_foto.id_inspeccion = $insp and inspeccion.id_producto = $pid
         UNION ALL
         $sql_fotos_servicio
-        ORDER BY CASE origen
-            WHEN 'inspeccion' THEN 0
-            WHEN 'actual' THEN 1
-            ELSE 2
-        END, fecha, id";
+        ORDER BY origen, fecha, id";
 } else {
     $sql = "$sql_fotos_servicio ORDER BY fecha, id";
 }
@@ -170,6 +166,8 @@ if ($elestado < 22) {
 ?>
 
 <script>
+window.cantidadFotosSubidasGlobal = 0;
+
 function comprimirSiEsImagen(file, opts) {
     opts = opts || {};
     var maxLado = opts.maxLado || 1600;
