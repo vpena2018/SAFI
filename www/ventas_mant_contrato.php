@@ -4,10 +4,6 @@ require __DIR__ . '/../vendor/autoload.php';
 use PhpOffice\PhpWord\TemplateProcessor;
 
 
-
-
-
-
 function appLog(string $message): void
 {
     return; // Desactivar logs en producción
@@ -26,9 +22,31 @@ function appLog(string $message): void
     }
 }
 
-
-
+//contrato de venta en PDF
 function getSofficeCommand()
+{
+    // Windows
+    if (stripos(PHP_OS, 'WIN') === 0) {
+        $paths = [
+            'C:\Program Files\LibreOffice\program\soffice.exe',
+            'C:\Program Files (x86)\LibreOffice\program\soffice.exe',
+        ];
+
+        foreach ($paths as $path) {
+            if (file_exists($path)) {
+                return '"' . $path . '"';
+            }
+        }
+
+        throw new Exception('LibreOffice no encontrado en Windows');
+    }
+
+    // Linux / Unix
+    return 'soffice';
+}
+
+//para produccion
+function getSofficeCommandProd()
 {
     try {
         appLog('Entrando a getSofficeCommand');
@@ -54,29 +72,29 @@ function getSofficeCommand()
     }
 }
 
-
-
-//contrato de venta en PDF
-function getSofficeCommandOld()
+function convertirDocxAPdfOld($docxPath)
 {
-    // Windows
-    if (stripos(PHP_OS, 'WIN') === 0) {
-        $paths = [
-            'C:\Program Files\LibreOffice\program\soffice.exe',
-            'C:\Program Files (x86)\LibreOffice\program\soffice.exe',
-        ];
+    $tmpDir = sys_get_temp_dir();
+    $soffice = getSofficeCommand();
 
-        foreach ($paths as $path) {
-            if (file_exists($path)) {
-                return '"' . $path . '"';
-            }
-        }
+    $cmd = $soffice .
+        ' --headless --convert-to pdf --outdir ' .
+        escapeshellarg($tmpDir) . ' ' .
+        escapeshellarg($docxPath);
 
-        throw new Exception('LibreOffice no encontrado en Windows');
+    exec($cmd, $output, $code);
+
+    if ($code !== 0) {
+        throw new Exception('Error al convertir DOCX a PDF');
     }
 
-    // Linux / Unix
-    return 'soffice';
+    $pdfPath = $tmpDir . '/' . pathinfo($docxPath, PATHINFO_FILENAME) . '.pdf';
+
+    if (!file_exists($pdfPath)) {
+        throw new Exception('El PDF no fue generado');
+    }
+
+    return $pdfPath;
 }
 
 function convertirDocxAPdf(string $docxPath): string
@@ -140,29 +158,175 @@ function convertirDocxAPdf(string $docxPath): string
 }
 
 
-function convertirDocxAPdfOld($docxPath)
+
+function descargarVentaPDFOld($id_venta)
 {
-    $tmpDir = sys_get_temp_dir();
-    $soffice = getSofficeCommand();
 
-    $cmd = $soffice .
-        ' --headless --convert-to pdf --outdir ' .
-        escapeshellarg($tmpDir) . ' ' .
-        escapeshellarg($docxPath);
+    //sacamos el representante legal
+    //$datos_venta = sql_select("");
+    //$datos_representante_legal = sql_select("");
 
-    exec($cmd, $output, $code);
+    $datos_venta = sql_select
+        ("SELECT ventas.id_tienda,
+        /*datos cliente*/
+        entidad.nombre AS cliente_nombre
+        ,entidad.rtn AS identidad_cliente
+        ,entidad.direccion AS direccion
+        ,entidad.codigo_alterno AS codigo_cliente
+        ,entidad.direccion AS direccion_cliente
+        ,entidad.telefono AS telefono_cliente
+        
+        /*datos vehiculo*/
+        ,producto.codigo_alterno AS cod_vehiculo
+        ,producto.placa AS placa
+        ,producto.marca AS marca
+        ,producto.modelo AS modelo
+        ,producto.tipo_vehiculo AS tipo
+        ,producto.chasis AS chasis
+        ,producto.motor AS motor
+        ,producto.color AS color
+        ,producto.anio AS anio
+        ,ventas.cilindraje AS cilindraje
+        ,'' AS departamento
+        ,'' AS combustible
 
-    if ($code !== 0) {
-        throw new Exception('Error al convertir DOCX a PDF');
+        /*datos venta*/
+        ,ventas.precio_venta AS precio_venta
+        ,ventas.prima_venta AS prima_venta
+
+        FROM ventas
+        LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)        
+        LEFT OUTER JOIN producto ON (ventas.id_producto=producto.id)        
+        LEFT OUTER JOIN ventas_estado ON (ventas.id_estado=ventas_estado.id)
+        LEFT OUTER JOIN ventas_impuestos ON (ventas.id_impuesto=ventas_impuestos.id)
+        LEFT OUTER JOIN ventas_factura ON (ventas.id_factura=ventas_factura.id)
+        LEFT OUTER JOIN entidad ON (ventas.cliente_id=entidad.id)
+        
+    where ventas.id=$id_venta limit 1");
+
+	if ($datos_venta!=false){
+		if ($datos_venta -> num_rows > 0) { 
+			$row_datos_venta = $datos_venta -> fetch_assoc(); 
+
+            $datos_tienda = sql_select("SELECT * FROM tienda WHERE id=$row_datos_venta[id_tienda] limit 1");
+
+            if($datos_tienda!=false){
+                if($datos_tienda -> num_rows > 0)
+                {
+                    $row_tienda = $datos_tienda -> fetch_assoc();
+                    //$representante_legal=$row_representante['representante_legal'];
+
+                        $template = new TemplateProcessor(__DIR__ . '/../plantillas/venta_contrato_vehiculo.docx');
+
+                        // representante legal
+                        $template->setValue('REPRESENTANTE_LEGAL', $row_tienda['representante_legal']);
+                        $template->setValue('R_IDENTIDAD', $row_tienda['representante_identidad']);
+                        //ciudad
+
+                        $template->setValue('CIUDAD', $row_tienda['nombre']);
+
+                        //datos del cliente
+                        $template->setValue('CLIENTE', $row_datos_venta['cliente_nombre']);
+                        $template->setValue('IDENTIDAD_CLIENTE', $row_datos_venta['identidad_cliente']);
+                        $template->setValue('CODIGO_CLIENTE', $row_datos_venta['codigo_cliente']);
+                        $template->setValue('DIRECCION_CLIENTE', $row_datos_venta['direccion_cliente']);
+                        $template->setValue('TELEFONO_CLIENTE', $row_datos_venta['telefono_cliente']);
+
+                        //datos de la venta
+                        $precioVenta = (float)$row_datos_venta['precio_venta'];
+
+                        $template->setValue('PRECIO_VENTA',number_format($precioVenta, 2, '.', ','));
+                        $PRECIO_LETRAS = numeroALetras($precioVenta);
+                        $template->setValue('PRECIO_VENTA_LETRAS', $PRECIO_LETRAS);
+
+                         $primaVenta = (float)$row_datos_venta['prima_venta'];
+
+                        $template->setValue('PRIMA_VENTA',number_format($primaVenta, 2, '.', ','));
+                        $PRIMA_LETRAS = numeroALetras($primaVenta);
+                        $template->setValue('PRIMA_VENTA_LETRAS', $PRIMA_LETRAS);
+
+
+                        //datos vehiculo
+                        $template->setValue('CODIGO_VEHICULO', $row_datos_venta['cod_vehiculo']);
+                        $template->setValue('PLACA',$row_datos_venta['placa']);
+                        $template->setValue('MARCA',$row_datos_venta['marca']);
+                        $template->setValue('MODELO',$row_datos_venta['modelo']);
+                        $template->setValue('TIPO',$row_datos_venta['tipo']);
+                        $template->setValue('CHASIS',$row_datos_venta['chasis']);
+                        $template->setValue('MOTOR',$row_datos_venta['motor']);
+                        $template->setValue('COLOR',$row_datos_venta['color']);
+                        $template->setValue('ANIO',$row_datos_venta['anio']);
+                        $template->setValue('CILINDRAJE',$row_datos_venta['cilindraje']);
+                        $template->setValue('COMBUSTIBLE',$row_datos_venta['combustible']);
+
+                        //pie de pagina
+                        $template->setValue('DEPARTAMENTO',$row_datos_venta['departamento']);
+
+                        // Fecha en español
+                        date_default_timezone_set('America/Tegucigalpa');
+
+                        // Fecha actual
+                        $dia  = date('j');   // 1–31 (sin cero)
+                        $anio = date('Y');   // 2026
+
+                        // Mes en español
+                        $meses = [
+                            1 => 'enero',
+                            2 => 'febrero',
+                            3 => 'marzo',
+                            4 => 'abril',
+                            5 => 'mayo',
+                            6 => 'junio',
+                            7 => 'julio',
+                            8 => 'agosto',
+                            9 => 'septiembre',
+                            10 => 'octubre',
+                            11 => 'noviembre',
+                            12 => 'diciembre'
+                        ];
+
+                        $mes = $meses[(int)date('n')];
+
+                        // Reemplazos en el template
+                        $template->setValue('DIAS', $dia);
+                        $template->setValue('MES', $mes);
+                        $template->setValue('ANIO_ACTUAL', $anio);
+
+
+
+
+
+                }
+
+
+		}
+        }else{
+            exit;
+        }
     }
 
-    $pdfPath = $tmpDir . '/' . pathinfo($docxPath, PATHINFO_FILENAME) . '.pdf';
 
-    if (!file_exists($pdfPath)) {
-        throw new Exception('El PDF no fue generado');
-    }
+    $tmpDir  = sys_get_temp_dir();
+    $tmpDocx = tempnam($tmpDir, 'venta_') . '.docx';
 
-    return $pdfPath;
+    $template->saveAs($tmpDocx);
+
+    $pdfPath = convertirDocxAPdf($tmpDocx);
+
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: attachment; filename="Venta_' . date('Ymd_His') . '.pdf"');
+    header('Content-Length: ' . filesize($pdfPath));
+    header('Cache-Control: no-cache');
+
+    readfile($pdfPath);
+
+    // Limpiar
+    unlink($tmpDocx);
+    unlink($pdfPath);
+
+
+
+    exit;
 }
 
 function descargarVentaPDF($id_venta)
@@ -347,178 +511,6 @@ function descargarVentaPDF($id_venta)
 
 
 
-function descargarVentaPDFOld($id_venta)
-{
-
-    //sacamos el representante legal
-    //$datos_venta = sql_select("");
-    //$datos_representante_legal = sql_select("");
-
-    $datos_venta = sql_select
-        ("SELECT ventas.id_tienda,
-        /*datos cliente*/
-        entidad.nombre AS cliente_nombre
-        ,entidad.rtn AS identidad_cliente
-        ,entidad.direccion AS direccion
-        ,entidad.codigo_alterno AS codigo_cliente
-        ,entidad.direccion AS direccion_cliente
-        ,entidad.telefono AS telefono_cliente
-        
-        /*datos vehiculo*/
-        ,producto.codigo_alterno AS cod_vehiculo
-        ,producto.placa AS placa
-        ,producto.marca AS marca
-        ,producto.modelo AS modelo
-        ,producto.tipo_vehiculo AS tipo
-        ,producto.chasis AS chasis
-        ,producto.motor AS motor
-        ,producto.color AS color
-        ,producto.anio AS anio
-        ,ventas.cilindraje AS cilindraje
-        ,'' AS departamento
-        ,'' AS combustible
-
-        /*datos venta*/
-        ,ventas.precio_venta AS precio_venta
-        ,ventas.prima_venta AS prima_venta
-
-        FROM ventas
-        LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)        
-        LEFT OUTER JOIN producto ON (ventas.id_producto=producto.id)        
-        LEFT OUTER JOIN ventas_estado ON (ventas.id_estado=ventas_estado.id)
-        LEFT OUTER JOIN ventas_impuestos ON (ventas.id_impuesto=ventas_impuestos.id)
-        LEFT OUTER JOIN ventas_factura ON (ventas.id_factura=ventas_factura.id)
-        LEFT OUTER JOIN entidad ON (ventas.cliente_id=entidad.id)
-        
-    where ventas.id=$id_venta limit 1");
-
-	if ($datos_venta!=false){
-		if ($datos_venta -> num_rows > 0) { 
-			$row_datos_venta = $datos_venta -> fetch_assoc(); 
-
-            $datos_tienda = sql_select("SELECT * FROM tienda WHERE id=$row_datos_venta[id_tienda] limit 1");
-
-            if($datos_tienda!=false){
-                if($datos_tienda -> num_rows > 0)
-                {
-                    $row_tienda = $datos_tienda -> fetch_assoc();
-                    //$representante_legal=$row_representante['representante_legal'];
-
-                        $template = new TemplateProcessor(__DIR__ . '/../plantillas/venta_contrato_vehiculo.docx');
-
-                        // representante legal
-                        $template->setValue('REPRESENTANTE_LEGAL', $row_tienda['representante_legal']);
-                        $template->setValue('R_IDENTIDAD', $row_tienda['representante_identidad']);
-                        //ciudad
-
-                        $template->setValue('CIUDAD', $row_tienda['nombre']);
-
-                        //datos del cliente
-                        $template->setValue('CLIENTE', $row_datos_venta['cliente_nombre']);
-                        $template->setValue('IDENTIDAD_CLIENTE', $row_datos_venta['identidad_cliente']);
-                        $template->setValue('CODIGO_CLIENTE', $row_datos_venta['codigo_cliente']);
-                        $template->setValue('DIRECCION_CLIENTE', $row_datos_venta['direccion_cliente']);
-                        $template->setValue('TELEFONO_CLIENTE', $row_datos_venta['telefono_cliente']);
-
-                        //datos de la venta
-                        $precioVenta = (float)$row_datos_venta['precio_venta'];
-
-                        $template->setValue('PRECIO_VENTA',number_format($precioVenta, 2, '.', ','));
-                        $PRECIO_LETRAS = numeroALetras($precioVenta);
-                        $template->setValue('PRECIO_VENTA_LETRAS', $PRECIO_LETRAS);
-
-                         $primaVenta = (float)$row_datos_venta['prima_venta'];
-
-                        $template->setValue('PRIMA_VENTA',number_format($primaVenta, 2, '.', ','));
-                        $PRIMA_LETRAS = numeroALetras($primaVenta);
-                        $template->setValue('PRIMA_VENTA_LETRAS', $PRIMA_LETRAS);
-
-
-                        //datos vehiculo
-                        $template->setValue('CODIGO_VEHICULO', $row_datos_venta['cod_vehiculo']);
-                        $template->setValue('PLACA',$row_datos_venta['placa']);
-                        $template->setValue('MARCA',$row_datos_venta['marca']);
-                        $template->setValue('MODELO',$row_datos_venta['modelo']);
-                        $template->setValue('TIPO',$row_datos_venta['tipo']);
-                        $template->setValue('CHASIS',$row_datos_venta['chasis']);
-                        $template->setValue('MOTOR',$row_datos_venta['motor']);
-                        $template->setValue('COLOR',$row_datos_venta['color']);
-                        $template->setValue('ANIO',$row_datos_venta['anio']);
-                        $template->setValue('CILINDRAJE',$row_datos_venta['cilindraje']);
-                        $template->setValue('COMBUSTIBLE',$row_datos_venta['combustible']);
-
-                        //pie de pagina
-                        $template->setValue('DEPARTAMENTO',$row_datos_venta['departamento']);
-
-                        // Fecha en español
-                        date_default_timezone_set('America/Tegucigalpa');
-
-                        // Fecha actual
-                        $dia  = date('j');   // 1–31 (sin cero)
-                        $anio = date('Y');   // 2026
-
-                        // Mes en español
-                        $meses = [
-                            1 => 'enero',
-                            2 => 'febrero',
-                            3 => 'marzo',
-                            4 => 'abril',
-                            5 => 'mayo',
-                            6 => 'junio',
-                            7 => 'julio',
-                            8 => 'agosto',
-                            9 => 'septiembre',
-                            10 => 'octubre',
-                            11 => 'noviembre',
-                            12 => 'diciembre'
-                        ];
-
-                        $mes = $meses[(int)date('n')];
-
-                        // Reemplazos en el template
-                        $template->setValue('DIAS', $dia);
-                        $template->setValue('MES', $mes);
-                        $template->setValue('ANIO_ACTUAL', $anio);
-
-
-
-
-
-                }
-
-
-		}
-        }else{
-            exit;
-        }
-    }
-
-
-    $tmpDir  = sys_get_temp_dir();
-    $tmpDocx = tempnam($tmpDir, 'venta_') . '.docx';
-
-    $template->saveAs($tmpDocx);
-
-    $pdfPath = convertirDocxAPdf($tmpDocx);
-
-    header('Content-Type: application/pdf');
-    header('Content-Disposition: attachment; filename="Venta_' . date('Ymd_His') . '.pdf"');
-    header('Content-Length: ' . filesize($pdfPath));
-    header('Cache-Control: no-cache');
-
-    readfile($pdfPath);
-
-    // Limpiar
-    unlink($tmpDocx);
-    unlink($pdfPath);
-
-
-
-    exit;
-}
-
-
-
 
 if (isset($_REQUEST['r'])) { $nuevo = $_REQUEST['r']; } else   {$nuevo ="N";}
 if ($nuevo=='N'){
@@ -526,6 +518,8 @@ if ($nuevo=='N'){
 }else{
    pagina_permiso(167);
 }
+
+
 
  if (isset($_GET['a']) && $_GET['a'] === 'print') {
 
@@ -1430,21 +1424,12 @@ if ($foto_original_tele !== '') {
 
 
     <div class="row">
-        <div id="clientediv" style="display:none;" class="col-md-8">      
-            
+        <div id="clientediv" style="display:none;" class="col-md-8">                     
             <?php   
                 $nombre_cliente='';
-                echo campo("nombre_cliente","",'hidden',$nombre_cliente,'','','');        
-                echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1  ,'get.php?a=2&t=1',$cliente_nombre); 
-                 
-                echo campo("persona_juridica","persona juridica",'checkbox',1 ,'');    
-                echo campo("representante_legal_juridico","Representante Legal",'text','',' ',$disable_sec2); 
-                echo campo("representante_legal_identidad","Identidad",'text','',' ',$disable_sec2); 
-                
+                echo campo("nombre_cliente","",'hidden',$nombre_cliente,'','','');         
+                echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1  ,'get.php?a=2&t=1',$cliente_nombre);                            
             ?>   
-
-         </div>   
-
             
                 <script>
                     $(document).ready(function () {
@@ -1452,8 +1437,6 @@ if ($foto_original_tele !== '') {
                 });
                 </script>
         </div>
-
-
     </div>
 
 
@@ -1494,7 +1477,7 @@ if ($foto_original_tele !== '') {
          <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',$disable_sec2); ?>                 
     </div>   
         <div class="col-md">            
-         <?php echo campo("prima_venta","Prima de Venta Contrato",'number',$prima_venta,' ',$disable_sec2); ?>                 
+         <?php echo campo("prima_venta","Prima de Venta",'number',$prima_venta,' ',$disable_sec2); ?>                 
     </div> 
 </div>
 
@@ -1588,7 +1571,7 @@ if ($foto_original_tele !== '') {
 	<div class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top ">
 		<div class="row">
 		<div class="col-sm">            
-            <a href="#" onclick="procesar('ventas_mant.php?a=g','forma_ventas',''); return false;" class="btn btn-primary btn-block mb-2 xfrm" ><i class="fa fa-check"></i> Guardar</a>                           
+            <a href="#" onclick="procesar('ventas_mant_contrato.php?a=g','forma_ventas',''); return false;" class="btn btn-primary btn-block mb-2 xfrm" ><i class="fa fa-check"></i> Guardar</a>                           
         </div>        
         <?php if (tiene_permiso(168)){ ?>
               <div class="col-sm"><a id="ventas_anularbtn"  href="#" onclick="ventas_anular(); return false;" class="btn btn-danger  btn-block mr-2 mb-2 xfrm"><i class="fa fa-trash-alt"></i> Borrar</a></div>		              
@@ -1861,7 +1844,7 @@ Swal.fire({
 	}).then((result) => {
 	  if (result.value) {
 	    
-            $.post( 'ventas_mant.php',datos, function(json) {
+            $.post( 'ventas_mant_contrato.php',datos, function(json) {
                 
                 if (json.length > 0) {
                     if (json[0].pcode == 0) {
@@ -1909,7 +1892,7 @@ Swal.fire({
 	}).then((result) => {
 	  if (result.value) {
 	    
-            $.post( 'ventas_mant.php',datos, function(json) {
+            $.post( 'ventas_mant_contrato.php',datos, function(json) {
                 
                 if (json.length > 0) {
                     if (json[0].pcode == 0) {
@@ -1960,7 +1943,7 @@ Swal.fire({
 	}).then((result) => {
 	  if (result.value) {
 	    
-            $.post( 'ventas_mant.php',datos, function(json) {
+            $.post( 'ventas_mant_contrato.php',datos, function(json) {
                
                 if (json.length > 0) {
                     if (json[0].pcode == 0) {
@@ -2002,7 +1985,7 @@ Swal.fire({
     var datos= { a: "gfoto", arch: encodeURI(arch),cid:cid,isMain:isMain}; 
 
 
- 	 $.post( 'ventas_mant.php',datos, function(json) {
+ 	 $.post( 'ventas_mant_contrato.php',datos, function(json) {
 	 			
 		if (json.length > 0) {
 			if (json[0].pcode == 0) {
@@ -2059,7 +2042,7 @@ function ventas_anular(){
 	  cancelButtonText:  'Cancelar'
 	}).then((result) => {
 	  if (result.value) {
-	     ventas_procesar('ventas_mant.php?a=del','forma_ventas','del');        
+	     ventas_procesar('ventas_mant_contrato.php?a=del','forma_ventas','del');        
 	  }
 	})
 
@@ -2077,7 +2060,7 @@ function ventas_dfoto(foto){
 	  cancelButtonText:  'Cancelar'
 	}).then((result) => {
 	  if (result.value) {
-	     ventas_procesar('ventas_mant.php?a=dfoto&foto='+encodeURI(foto),'forma_ventas','dfoto');        
+	     ventas_procesar('ventas_mant_contrato.php?a=dfoto&foto='+encodeURI(foto),'forma_ventas','dfoto');        
 	  }
 	})
 
