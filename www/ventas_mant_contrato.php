@@ -1430,12 +1430,21 @@ if ($foto_original_tele !== '') {
 
 
     <div class="row">
-        <div id="clientediv" style="display:none;" class="col-md-8">                     
+        <div id="clientediv" style="display:none;" class="col-md-8">      
+            
             <?php   
                 $nombre_cliente='';
-                echo campo("nombre_cliente","",'hidden',$nombre_cliente,'','','');         
-                echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1  ,'get.php?a=2&t=1',$cliente_nombre);                            
+                echo campo("nombre_cliente","",'hidden',$nombre_cliente,'','','');        
+                echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1  ,'get.php?a=2&t=1',$cliente_nombre); 
+                 
+                echo campo("persona_juridica","persona juridica",'checkbox',1 ,'');    
+                echo campo("representante_legal_juridico","Representante Legal",'text','',' ',$disable_sec2); 
+                echo campo("representante_legal_identidad","Identidad",'text','',' ',$disable_sec2); 
+                
             ?>   
+
+         </div>   
+
             
                 <script>
                     $(document).ready(function () {
@@ -1443,6 +1452,8 @@ if ($foto_original_tele !== '') {
                 });
                 </script>
         </div>
+
+
     </div>
 
 
