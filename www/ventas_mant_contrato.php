@@ -2075,7 +2075,7 @@ if ($foto_original_tele !== '') {
             <a href="#" onclick="abrir_hoja(); return false;" class="btn btn-outline-secondary mr-2 mb-2 xfrm" ><i class="fa fa-file-medical-alt"></i> Abrir Inspección</a>
         <?php } ?> 
 
-<div class="col-sm">
+<div style="margin-right:10px;">
     <a href="javascript:void(0);"
        id="btnContrato"
        target="_blank"
@@ -2089,7 +2089,7 @@ if ($foto_original_tele !== '') {
     </a>
 </div>
 
-<div class="col-sm">
+<div>
     <a href="javascript:void(0);"
        id="btnActualizarContrato"
        class="btn btn-block mb-1"
