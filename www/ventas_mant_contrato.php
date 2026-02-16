@@ -823,7 +823,7 @@ if (!es_nulo($cid) && in_array($id_estado, [11, 20], true)) {
 }
     
     
-    if (!es_nulo($cid) && $id_estado<20){
+    if (!es_nulo($cid) && ($id_estado!=20 && $id_estado!=11)){
        if (!es_nulo($precio_venta)||!es_nulo($prima_venta)) { $verror.='Precio de venta y prima solo se ingresan, estado de vendido entregado'; }    
     }  
     if ($carShopPerfil=='18'){
