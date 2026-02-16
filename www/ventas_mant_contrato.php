@@ -903,13 +903,37 @@ if ($nuevo=='N'){
 if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
 
         $id_venta = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
+        $id_usuario=$_SESSION['usuario_id'];
+
+        $id_usuario = intval($_SESSION['usuario_id']);
+
+        $resUser = sql_select("
+            SELECT
+                u.usuario,
+                u.nombre,
+                u.tienda_id,
+                t.rentworks_almacen AS tienda_nombre
+            FROM usuario u
+            LEFT JOIN tienda_agencia t ON u.tienda_id = t.tienda_id
+            WHERE u.id = $id_usuario
+            LIMIT 1
+        ");
+
+        $user = $resUser->fetch_assoc();
+
+        $partes = explode(' ', trim($user['nombre']), 2);
+
+        $nombreUsuario   = $partes[0];
+        $apellidoUsuario = $partes[1] ?? '';
+        $ubicacion = strtoupper(trim($user['tienda_nombre']));
+        $usuarioSistema = $user['usuario'];
 
         $resp = generarContratoVenta(
             $id_venta,
-            'SPS',
-            'David',
-            'Velasquez',
-            'dvelasquez'
+            $ubicacion,
+            $nombreUsuario,
+            $apellidoUsuario,
+            $usuarioSistema
         );
 
         header('Content-Type: application/json');
@@ -2061,7 +2085,7 @@ if ($foto_original_tele !== '') {
            color:#fff;
            border:1px solid #e5533d;
        ">
-        <i class="fas fa-file-pdf"></i> ver contrato
+        <i class="fas fa-file-pdf"></i> imprimir contrato
     </a>
 </div>
 
@@ -2070,7 +2094,7 @@ if ($foto_original_tele !== '') {
        id="btnActualizarContrato"
        class="btn btn-block mb-1"
        style="background-color:#f0ad4e;color:#fff;border:1px solid #f0ad4e;">
-       <i class="fas fa-file-pdf"></i> Actualizar
+       <i class="fas fa-file-pdf"></i> Generar contrato
     </a>
 </div>
 
@@ -2083,11 +2107,11 @@ $('#btnContrato').on('click', function (e) {
 
     const id = $('#id').val();
     if (!id) {
-        mytoast('error', 'No hay ID');
+        mytoast('error', 'No hay ID',3000);
         return;
     }
 
-    if (!confirm("¿Seguro que desea generar el contrato?")) {
+    if (!confirm("¿Seguro que desea descargar contrato?")) {
         return;
     }
 
@@ -2104,7 +2128,7 @@ $('#btnContrato').on('click', function (e) {
 
                 mytoast(
                     'success',
-                    'Contrato listo: ' + resp.numero_contrato
+                    'Contrato listo: ' + resp.numero_contrato,3000
                 );
 
                 // 🔥 quitar aviso de salida
@@ -2117,11 +2141,11 @@ $('#btnContrato').on('click', function (e) {
                     encodeURIComponent(id);
 
             } else {
-                mytoast('error', resp.error || 'Error al generar contrato');
+                mytoast('error', resp.error || 'Error al generar contrato',3000);
             }
         },
         error: function () {
-            mytoast('error', 'Error de comunicación con el servidor');
+            mytoast('error', 'Error de comunicación con el servidor',3000);
         }
     });
 });
@@ -2135,7 +2159,7 @@ $('#btnActualizarContrato').on('click', function (e) {
         return;
     }
 
-    if (!confirm("¿Seguro desea sustituir los datos anteriores del contrato?")) {
+    if (!confirm("¿Seguro desea Generar el contrato,los datos se sustituiran si previamente ya existia un contrato?")) {
         return;
     }
 
@@ -2150,14 +2174,14 @@ $('#btnActualizarContrato').on('click', function (e) {
         success: function (resp) {
             if (resp.ok) {
                 mytoast('success',
-                    'Contrato generado: ' + resp.numero_contrato
+                    'Contrato generado: ' + resp.numero_contrato,3000
                 );
             } else {
-                mytoast('error',resp.error || 'Error inesperado');
+                mytoast('error',resp.error || 'Error inesperado',3000);
             }
         },
         error: function () {
-            mytoast('error','Error de comunicación con el servidor');
+            mytoast('error','Error de comunicación con el servidor',3000);
         }
     });
 });
