@@ -22,8 +22,8 @@ function appLog(string $message): void
     }
 }
 
-//contrato de venta en PDF
-function getSofficeCommand()
+//para desarrollo windows
+function getSofficeCommandDev()
 {
     // Windows
     if (stripos(PHP_OS, 'WIN') === 0) {
@@ -45,7 +45,7 @@ function getSofficeCommand()
     return 'soffice';
 }
 
-//para produccion
+//para produccion windows
 function getSofficeCommandProd()
 {
     try {
@@ -72,30 +72,6 @@ function getSofficeCommandProd()
     }
 }
 
-function convertirDocxAPdfOld($docxPath)
-{
-    $tmpDir = sys_get_temp_dir();
-    $soffice = getSofficeCommand();
-
-    $cmd = $soffice .
-        ' --headless --convert-to pdf --outdir ' .
-        escapeshellarg($tmpDir) . ' ' .
-        escapeshellarg($docxPath);
-
-    exec($cmd, $output, $code);
-
-    if ($code !== 0) {
-        throw new Exception('Error al convertir DOCX a PDF');
-    }
-
-    $pdfPath = $tmpDir . '/' . pathinfo($docxPath, PATHINFO_FILENAME) . '.pdf';
-
-    if (!file_exists($pdfPath)) {
-        throw new Exception('El PDF no fue generado');
-    }
-
-    return $pdfPath;
-}
 
 function generarContratoVenta(
     int $id_venta,
@@ -152,7 +128,7 @@ function generarContratoVenta(
            2️⃣ DATOS DE LA TIENDA
         =============================== */
         $datos_tienda = sql_select("
-            SELECT representante_legal, representante_identidad, nombre
+            SELECT representante_legal, representante_identidad, nombre,departamento
             FROM tienda
             WHERE id = {$venta['id_tienda']}
             LIMIT 1
@@ -239,10 +215,11 @@ function generarContratoVenta(
         $primaVenta  = (float)$venta['prima_venta'];
 
         $contratoJson = json_encode([
-            'representante' => [
-                'nombre'    => $tienda['representante_legal'],
-                'identidad' => $tienda['representante_identidad'],
-                'ciudad'    => $tienda['nombre']
+            'representante'   => [
+                'nombre'      => $tienda['representante_legal'],
+                'identidad'   => $tienda['representante_identidad'],
+                'ciudad'      => $tienda['nombre'],
+                'departamento'=> $tienda['departamento']
             ],
             'cliente' => [
                 'nombre'     => $venta['cliente_nombre'],
@@ -325,7 +302,7 @@ function convertirDocxAPdf(string $docxPath): string
         $tmpDir = sys_get_temp_dir();
         appLog('TMP DIR: ' . $tmpDir);
 
-        $soffice = getSofficeCommand();
+        $soffice = getSofficeCommandDev();
         appLog('SOFFICE: ' . $soffice);
 
         $cmd = $soffice .
@@ -371,177 +348,6 @@ function convertirDocxAPdf(string $docxPath): string
     }
 }
 
-
-
-function descargarVentaPDFOld($id_venta)
-{
-
-    //sacamos el representante legal
-    //$datos_venta = sql_select("");
-    //$datos_representante_legal = sql_select("");
-
-    $datos_venta = sql_select
-        ("SELECT ventas.id_tienda,
-        /*datos cliente*/
-        entidad.nombre AS cliente_nombre
-        ,entidad.rtn AS identidad_cliente
-        ,entidad.direccion AS direccion
-        ,entidad.codigo_alterno AS codigo_cliente
-        ,entidad.direccion AS direccion_cliente
-        ,entidad.telefono AS telefono_cliente
-        
-        /*datos vehiculo*/
-        ,producto.codigo_alterno AS cod_vehiculo
-        ,producto.placa AS placa
-        ,producto.marca AS marca
-        ,producto.modelo AS modelo
-        ,producto.tipo_vehiculo AS tipo
-        ,producto.chasis AS chasis
-        ,producto.motor AS motor
-        ,producto.color AS color
-        ,producto.anio AS anio
-        ,ventas.cilindraje AS cilindraje
-        ,'' AS departamento
-        ,'' AS combustible
-
-        /*datos venta*/
-        ,ventas.precio_venta AS precio_venta
-        ,ventas.prima_venta AS prima_venta
-
-        FROM ventas
-        LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)        
-        LEFT OUTER JOIN producto ON (ventas.id_producto=producto.id)        
-        LEFT OUTER JOIN ventas_estado ON (ventas.id_estado=ventas_estado.id)
-        LEFT OUTER JOIN ventas_impuestos ON (ventas.id_impuesto=ventas_impuestos.id)
-        LEFT OUTER JOIN ventas_factura ON (ventas.id_factura=ventas_factura.id)
-        LEFT OUTER JOIN entidad ON (ventas.cliente_id=entidad.id)
-        
-    where ventas.id=$id_venta limit 1");
-
-	if ($datos_venta!=false){
-		if ($datos_venta -> num_rows > 0) { 
-			$row_datos_venta = $datos_venta -> fetch_assoc(); 
-
-            $datos_tienda = sql_select("SELECT * FROM tienda WHERE id=$row_datos_venta[id_tienda] limit 1");
-
-            if($datos_tienda!=false){
-                if($datos_tienda -> num_rows > 0)
-                {
-                    $row_tienda = $datos_tienda -> fetch_assoc();
-                    //$representante_legal=$row_representante['representante_legal'];
-
-                        $template = new TemplateProcessor(__DIR__ . '/../plantillas/venta_contrato_vehiculo.docx');
-
-                        // representante legal
-                        $template->setValue('REPRESENTANTE_LEGAL', $row_tienda['representante_legal']);
-                        $template->setValue('R_IDENTIDAD', $row_tienda['representante_identidad']);
-                        //ciudad
-
-                        $template->setValue('CIUDAD', $row_tienda['nombre']);
-
-                        //datos del cliente
-                        $template->setValue('CLIENTE', $row_datos_venta['cliente_nombre']);
-                        $template->setValue('IDENTIDAD_CLIENTE', $row_datos_venta['identidad_cliente']);
-                        $template->setValue('CODIGO_CLIENTE', $row_datos_venta['codigo_cliente']);
-                        $template->setValue('DIRECCION_CLIENTE', $row_datos_venta['direccion_cliente']);
-                        $template->setValue('TELEFONO_CLIENTE', $row_datos_venta['telefono_cliente']);
-
-                        //datos de la venta
-                        $precioVenta = (float)$row_datos_venta['precio_venta'];
-
-                        $template->setValue('PRECIO_VENTA',number_format($precioVenta, 2, '.', ','));
-                        $PRECIO_LETRAS = numeroALetras($precioVenta);
-                        $template->setValue('PRECIO_VENTA_LETRAS', $PRECIO_LETRAS);
-
-                         $primaVenta = (float)$row_datos_venta['prima_venta'];
-
-                        $template->setValue('PRIMA_VENTA',number_format($primaVenta, 2, '.', ','));
-                        $PRIMA_LETRAS = numeroALetras($primaVenta);
-                        $template->setValue('PRIMA_VENTA_LETRAS', $PRIMA_LETRAS);
-
-
-                        //datos vehiculo
-                        $template->setValue('CODIGO_VEHICULO', $row_datos_venta['cod_vehiculo']);
-                        $template->setValue('PLACA',$row_datos_venta['placa']);
-                        $template->setValue('MARCA',$row_datos_venta['marca']);
-                        $template->setValue('MODELO',$row_datos_venta['modelo']);
-                        $template->setValue('TIPO',$row_datos_venta['tipo']);
-                        $template->setValue('CHASIS',$row_datos_venta['chasis']);
-                        $template->setValue('MOTOR',$row_datos_venta['motor']);
-                        $template->setValue('COLOR',$row_datos_venta['color']);
-                        $template->setValue('ANIO',$row_datos_venta['anio']);
-                        $template->setValue('CILINDRAJE',$row_datos_venta['cilindraje']);
-                        $template->setValue('COMBUSTIBLE',$row_datos_venta['combustible']);
-
-                        //pie de pagina
-                        $template->setValue('DEPARTAMENTO',$row_datos_venta['departamento']);
-
-                        // Fecha en español
-                        date_default_timezone_set('America/Tegucigalpa');
-
-                        // Fecha actual
-                        $dia  = date('j');   // 1–31 (sin cero)
-                        $anio = date('Y');   // 2026
-
-                        // Mes en español
-                        $meses = [
-                            1 => 'enero',
-                            2 => 'febrero',
-                            3 => 'marzo',
-                            4 => 'abril',
-                            5 => 'mayo',
-                            6 => 'junio',
-                            7 => 'julio',
-                            8 => 'agosto',
-                            9 => 'septiembre',
-                            10 => 'octubre',
-                            11 => 'noviembre',
-                            12 => 'diciembre'
-                        ];
-
-                        $mes = $meses[(int)date('n')];
-
-                        // Reemplazos en el template
-                        $template->setValue('DIAS', $dia);
-                        $template->setValue('MES', $mes);
-                        $template->setValue('ANIO_ACTUAL', $anio);
-
-
-
-
-
-                }
-
-
-		}
-        }else{
-            exit;
-        }
-    }
-
-
-    $tmpDir  = sys_get_temp_dir();
-    $tmpDocx = tempnam($tmpDir, 'venta_') . '.docx';
-
-    $template->saveAs($tmpDocx);
-
-    $pdfPath = convertirDocxAPdf($tmpDocx);
-
-    header('Content-Type: application/pdf');
-    header('Content-Disposition: attachment; filename="Venta_' . date('Ymd_His') . '.pdf"');
-    header('Content-Length: ' . filesize($pdfPath));
-    header('Cache-Control: no-cache');
-
-    readfile($pdfPath);
-
-    // Limpiar
-    unlink($tmpDocx);
-    unlink($pdfPath);
-
-
-
-    exit;
-}
 
 function descargarVentaPDFOld2($id_venta)
 {
@@ -787,6 +593,7 @@ function descargarVentaPDF($id_venta, $soloValidar = false)
         $template->setValue('REPRESENTANTE_LEGAL', $data['representante']['nombre']);
         $template->setValue('R_IDENTIDAD', $data['representante']['identidad']);
         $template->setValue('CIUDAD', $data['representante']['ciudad']);
+        $template->setValue('DEPARTAMENTO', $data['representante']['departamento']);
 
         // Cliente
         $template->setValue('CLIENTE', $data['cliente']['nombre']);
@@ -888,7 +695,6 @@ function descargarVentaPDF($id_venta, $soloValidar = false)
         ];
     }
 }
-
 
 
 
