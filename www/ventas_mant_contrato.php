@@ -97,6 +97,134 @@ function convertirDocxAPdfOld($docxPath)
     return $pdfPath;
 }
 
+function generarContratoVenta(
+    int $id_venta,
+    string $ubicacion,
+    string $nombreUsuario,
+    string $apellidoUsuario,
+    string $usuarioSistema
+) {
+    try {
+
+        sql_update("START TRANSACTION");
+
+        /* ===============================
+           1️⃣ Validar venta
+        =============================== */
+        $datos_venta = sql_select("
+            SELECT id, precio_venta
+            FROM ventas
+            WHERE id = $id_venta
+            FOR UPDATE
+        ");
+
+        if ($datos_venta == false || $datos_venta->num_rows == 0) {
+            throw new Exception("La venta no existe");
+        }
+
+        $venta = $datos_venta->fetch_assoc();
+
+            // 🔴 Anular contrato principal
+            sql_update("
+                UPDATE ventas_contratos
+                SET estado = 'ANULADO'
+                WHERE id_venta = {$id_venta}
+            ");
+
+            // 🔴 Anular detalle del contrato (si existe)
+                sql_update("
+                    UPDATE ventas_contratos_detalle
+                    SET estado = 'ANULADO',
+                        accion = 'ANULADO'
+                    WHERE id_venta = {$id_venta}
+                ");
+            
+        
+
+        /* ===============================
+           3️⃣ Correlativo
+        =============================== */
+        $datos_corr = sql_select("
+            SELECT id, correlativo_actual
+            FROM venta_correlativo_contrato
+            FOR UPDATE
+        ");
+
+        if ($datos_corr == false || $datos_corr->num_rows == 0) {
+            throw new Exception("No existe correlativo");
+        }
+
+        $corr = $datos_corr->fetch_assoc();
+        $nuevoCorrelativo = $corr['correlativo_actual'] + 1;
+
+        sql_update("
+            UPDATE venta_correlativo_contrato
+            SET correlativo_actual = $nuevoCorrelativo
+            WHERE id = {$corr['id']}
+        ");
+
+        /* ===============================
+           4️⃣ Número de contrato
+        =============================== */
+        $anio = date('Y');
+        $correlativo5 = str_pad($nuevoCorrelativo, 5, '0', STR_PAD_LEFT);
+        $letrasUsuario =
+            strtoupper(substr($nombreUsuario, 0, 1)) .
+            strtoupper(substr($apellidoUsuario, 0, 1));
+
+        $numeroContrato = "{$ubicacion}-{$anio}-{$correlativo5}-{$letrasUsuario}";
+
+        /* ===============================
+           5️⃣ Insertar contrato nuevo (ACTIVO)
+        =============================== */
+        sql_insert("
+            INSERT INTO ventas_contratos
+            (id_venta, correlativo, numero_contrato, estado, creado_por)
+            VALUES
+            ($id_venta, $nuevoCorrelativo, '$numeroContrato', 'ACTIVO', '$usuarioSistema')
+        ");
+
+        $resId = sql_select("SELECT LAST_INSERT_ID() AS id");
+        $idContrato = $resId->fetch_assoc()['id'];
+
+        /* ===============================
+           6️⃣ Insertar detalle del contrato nuevo
+        =============================== */
+        $snapshotNuevo = json_encode([
+            'id_contrato'     => $idContrato,
+            'id_venta'        => $id_venta,
+            'numero_contrato' => $numeroContrato,
+            'correlativo'     => $nuevoCorrelativo,
+            'precio_venta'    => $venta['precio_venta'],
+            'estado'          => 'ACTIVO'
+        ], JSON_UNESCAPED_UNICODE);
+
+        sql_insert("
+            INSERT INTO ventas_contratos_detalle
+            (id_contrato, id_venta, accion, usuario, estado, datos_json)
+            VALUES
+            ($idContrato, $id_venta, 'CREACION', '$usuarioSistema', 'ACTIVO', '$snapshotNuevo')
+        ");
+
+        sql_update("COMMIT");
+
+        return [
+            'ok' => true,
+            'id_contrato' => $idContrato,
+            'numero_contrato' => $numeroContrato
+        ];
+
+    } catch (Exception $e) {
+
+        sql_update("ROLLBACK");
+
+        return [
+            'ok' => false,
+            'error' => $e->getMessage()
+        ];
+    }
+}
+
 function convertirDocxAPdf(string $docxPath): string
 {
     try {
@@ -517,6 +645,23 @@ if ($nuevo=='N'){
    pagina_permiso(170);
 }else{
    pagina_permiso(167);
+}
+
+
+ if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
+
+ 	$id_venta=0;
+     if (isset($_REQUEST['id'])) { $id_venta = intval($_REQUEST["id"]); } 
+
+     $ubicacion='SPS';
+     $nombreUsuario='David';
+     $apellidoUsuario='Velasquez';
+     $usuarioSistema='dvelasquez';
+
+    generarContratoVenta($id_venta,$ubicacion,$nombreUsuario,$apellidoUsuario,$usuarioSistema);
+
+    
+    exit;
 }
 
 
@@ -1657,30 +1802,68 @@ if ($foto_original_tele !== '') {
            background-color:#e5533d;
            color:#fff;
            border:1px solid #e5533d;
-           pointer-events:none;
-           opacity:0.6;
        ">
-        <i class="fas fa-file-pdf"></i> Generar contrato
+        <i class="fas fa-file-pdf"></i> ver contrato
     </a>
 </div>
 
+<div class="col-sm">
+    <a href="javascript:void(0);"
+       id="btnActualizarContrato"
+       class="btn btn-block mb-1"
+       style="background-color:#f0ad4e;color:#fff;border:1px solid #f0ad4e;">
+       <i class="fas fa-file-pdf"></i> Actualizar
+    </a>
+</div>
+
+
 <script>
 $(function () {
-    const id = $('#id').val();
-    //const tienda = $('#tienda').val();
 
-    if (id) {
-        $('#btnContrato')
-            .attr(
-                'href',
-                'ventas_mant_contrato.php?a=print&id=' +
-                encodeURIComponent(id)
-            )
-            .css({
-                'pointer-events': 'auto',
-                'opacity': '1'
-            });
+$('#btnContrato').on('click', function (e) {
+    e.preventDefault();
+
+    const id = $('#id').val();
+
+    if (!id) {
+        alert('No hay ID');
+        return;
     }
+
+    if (confirm("¿Seguro que desea generar el contrato?")) {
+
+        // 🔥 quitar el aviso de salida
+        window.onbeforeunload = null;
+        $(window).off('beforeunload');
+
+        window.location.href =
+            'ventas_mant_contrato.php?a=print&id=' +
+            encodeURIComponent(id);
+    }
+});
+
+$('#btnActualizarContrato').on('click', function (e) {
+    e.preventDefault();
+
+    const id = $('#id').val();
+
+    if (!id) {
+        alert('No hay ID');
+        return;
+    }
+
+    if (confirm("¿Seguro desea sustituir los datos anteriores del contrato?")) {
+
+        // 🔥 quitar el aviso de salida
+        window.onbeforeunload = null;
+        $(window).off('beforeunload');
+
+        window.location.href =
+            'ventas_mant_contrato.php?a=actcontrato&id=' +
+            encodeURIComponent(id);
+    }
+});
+
 });
 </script>
 
