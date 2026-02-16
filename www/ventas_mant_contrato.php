@@ -648,20 +648,21 @@ if ($nuevo=='N'){
 }
 
 
- if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
+if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
 
- 	$id_venta=0;
-     if (isset($_REQUEST['id'])) { $id_venta = intval($_REQUEST["id"]); } 
+        $id_venta = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
 
-     $ubicacion='SPS';
-     $nombreUsuario='David';
-     $apellidoUsuario='Velasquez';
-     $usuarioSistema='dvelasquez';
+        $resp = generarContratoVenta(
+            $id_venta,
+            'SPS',
+            'David',
+            'Velasquez',
+            'dvelasquez'
+        );
 
-    generarContratoVenta($id_venta,$ubicacion,$nombreUsuario,$apellidoUsuario,$usuarioSistema);
-
-    
-    exit;
+        header('Content-Type: application/json');
+        echo json_encode($resp);
+        exit;
 }
 
 
@@ -1846,22 +1847,36 @@ $('#btnActualizarContrato').on('click', function (e) {
     e.preventDefault();
 
     const id = $('#id').val();
-
     if (!id) {
         alert('No hay ID');
         return;
     }
 
-    if (confirm("¿Seguro desea sustituir los datos anteriores del contrato?")) {
-
-        // 🔥 quitar el aviso de salida
-        window.onbeforeunload = null;
-        $(window).off('beforeunload');
-
-        window.location.href =
-            'ventas_mant_contrato.php?a=actcontrato&id=' +
-            encodeURIComponent(id);
+    if (!confirm("¿Seguro desea sustituir los datos anteriores del contrato?")) {
+        return;
     }
+
+    $.ajax({
+        url: 'ventas_mant_contrato.php',
+        type: 'GET',
+        dataType: 'json',
+        data: {
+            a: 'actcontrato',
+            id: id
+        },
+        success: function (resp) {
+            if (resp.ok) {
+                mytoast('success',
+                    'Contrato generado: ' + resp.numero_contrato
+                );
+            } else {
+                mytoast('error',resp.error || 'Error inesperado');
+            }
+        },
+        error: function () {
+            mytoast('error','Error de comunicación con el servidor');
+        }
+    });
 });
 
 });
