@@ -615,7 +615,7 @@ $modificar_salida=$nuevoreg;
 						echo  campo('id_motorista', '','hidden',$id_motorista,' ','  ','');           
 					} else {
 						if ($id_estado==1) {
-							echo  campo('id_motorista', 'Atendido por','select2',valores_combobox_db('usuario',$id_motorista,'nombre',' where activo=1 and (grupo_id=3 or grupo_id=20 or perfil_adicional=3) ','',$motorista1),' ','  ','');           
+							echo  campo('id_motorista', 'Atendido por','select2',valores_combobox_db('usuario',$id_motorista,'nombre',' where activo=1 and (grupo_id=3 or grupo_id=20 or perfil_motorista=3) ','',$motorista1),' ','  ','');           
 						} else {
 							echo  campo('id_motorista_lbl', 'Atendido por','labelb',$motorista1,' ','  ',''); 
 							echo  campo('id_motorista', '','hidden',$id_motorista,' ','  ','');
