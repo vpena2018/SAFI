@@ -202,10 +202,10 @@ if ($accion=="ec") {
           if ($result!=false){
               if ($result -> num_rows > 0) { 
                  $row = $result -> fetch_assoc() ;    
-                 $salida.= campo('id_tecnico1', $etiqueta,'select2',valores_combobox_db('usuario',$row["id_tecnico1"],'nombre',' where activo=1 and grupo_id=2 or perfil_adicional=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',' required ',''); 
-                 $salida.= campo('id_tecnico2', $etiqueta,'select2',valores_combobox_db('usuario',$row["id_tecnico2"],'nombre',' where activo=1 and grupo_id=2 or perfil_adicional=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',' required ',''); 
-                 $salida.= campo('id_tecnico3', $etiqueta,'select2',valores_combobox_db('usuario',$row["id_tecnico3"],'nombre',' where activo=1 and grupo_id=2 or perfil_adicional=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',' required ',''); 
-                 $salida.= campo('id_tecnico4', $etiqueta,'select2',valores_combobox_db('usuario',$row["id_tecnico4"],'nombre',' where activo=1 and grupo_id=2 or perfil_adicional=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',' required ','');                      
+                 $salida.= campo('id_tecnico1', $etiqueta,'select2',valores_combobox_db('usuario',$row["id_tecnico1"],'nombre',' where activo=1 and grupo_id=2 or perfil_tecnico=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',' required ',''); 
+                 $salida.= campo('id_tecnico2', $etiqueta,'select2',valores_combobox_db('usuario',$row["id_tecnico2"],'nombre',' where activo=1 and grupo_id=2 or perfil_tecnico=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',' required ',''); 
+                 $salida.= campo('id_tecnico3', $etiqueta,'select2',valores_combobox_db('usuario',$row["id_tecnico3"],'nombre',' where activo=1 and grupo_id=2 or perfil_tecnico=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',' required ',''); 
+                 $salida.= campo('id_tecnico4', $etiqueta,'select2',valores_combobox_db('usuario',$row["id_tecnico4"],'nombre',' where activo=1 and grupo_id=2 or perfil_tecnico=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',' required ','');                      
               }
           }         
       } 
