@@ -414,7 +414,7 @@ echo campo("id",("Codigo"),'hidden',$id,' ','');
         if (es_nulo($conductor)) {
             $primeal='Seleccione';
         } else {  $primeal=$conductor;}
-          echo  campo('conductor', 'Conductor','select2',valores_combobox_db('usuario',$conductor,'nombre',' where activo=1 and (grupo_id=3 or perfil_adicional=3) and tienda_id='.$_SESSION['tienda_id'],'',$primeal,'nombre'),' ','  ','');
+          echo  campo('conductor', 'Conductor','select2',valores_combobox_db('usuario',$conductor,'nombre',' where activo=1 and (grupo_id=3 or perfil_motorista=3) and tienda_id='.$_SESSION['tienda_id'],'',$primeal,'nombre'),' ','  ','');
         ?>
     </div>
     <div class="col-md">
