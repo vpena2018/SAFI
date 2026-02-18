@@ -78,7 +78,6 @@ function getSofficeCommandProd()
  */
 function generarContratoVenta(
     int $id_venta,
-    string $ubicacion,
     string $nombreUsuario,
     string $apellidoUsuario,
     string $usuarioSistema,
@@ -132,7 +131,7 @@ function generarContratoVenta(
            2️⃣ DATOS DE LA TIENDA
         =============================== */
         $datos_tienda = sql_select("
-            SELECT representante_legal, representante_identidad, nombre, departamento
+            SELECT representante_legal, representante_identidad, nombre, departamento,abr_ciudad
             FROM tienda
             WHERE id = {$venta['id_tienda']}
             LIMIT 1
@@ -185,13 +184,14 @@ function generarContratoVenta(
         /* ===============================
            5️⃣ NÚMERO DE CONTRATO
         =============================== */
-        $anio = date('Y');
+        //$anio = date('Y'); 2026
+        $anio = date('y'); //26
         $correlativo5 = str_pad($nuevoCorrelativo, 5, '0', STR_PAD_LEFT);
         $letrasUsuario =
             strtoupper(substr($nombreUsuario, 0, 1)) .
             strtoupper(substr($apellidoUsuario, 0, 1));
 
-        $numeroContrato = "{$ubicacion}-{$anio}-{$correlativo5}-{$letrasUsuario}";
+        $numeroContrato = "{$tienda['abr_ciudad']}-{$anio}-{$correlativo5}-{$letrasUsuario}";
 
         /* ===============================
            6️⃣ INSERTAR CONTRATO
@@ -741,12 +741,11 @@ if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
 
         $nombreUsuario   = $partes[0];
         $apellidoUsuario = $partes[1] ?? '';
-        $ubicacion = strtoupper(trim($user['tienda_nombre']));
+        //$ubicacion = strtoupper(trim($user['tienda_nombre']));
         $usuarioSistema = $user['usuario'];
 
         $resp = generarContratoVenta(
             $id_venta,
-            $ubicacion,
             $nombreUsuario,
             $apellidoUsuario,
             $usuarioSistema
@@ -1563,12 +1562,11 @@ if ($foto_original_tele !== '') {
 
             $nombreUsuario   = $partes[0];
             $apellidoUsuario = $partes[1] ?? '';
-            $ubicacion = strtoupper(trim($user['tienda_nombre']));
+            //ubicacion = strtoupper(trim($user['tienda_nombre']));
             $usuarioSistema = $user['usuario'];
 
                     $resultado = generarContratoVenta(
                             $id_venta,
-                            $ubicacion,
                             $nombreUsuario,
                             $apellidoUsuario,
                             $usuarioSistema
