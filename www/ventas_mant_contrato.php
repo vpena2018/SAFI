@@ -1537,7 +1537,7 @@ if ($foto_original_tele !== '') {
             $stud_arr[0]["pcid"] = $cid;    
             
 
-        if($estado_viejo!=$estado_nuevo && $estado_nuevo==11)
+/*         if($estado_viejo!=$estado_nuevo && $estado_nuevo==11)
         {
             $id_venta = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
             $id_usuario=$_SESSION['usuario_id'];
@@ -1599,7 +1599,7 @@ if ($foto_original_tele !== '') {
 
 
             
-        }
+        } */
             
             //correo
             if ($envioCorreo==1 and $id_estado_modifico==true){
@@ -1631,8 +1631,6 @@ if ($foto_original_tele !== '') {
     exit;
 
 } // fin guardar datos
-
-
 
 
 ?>
@@ -2013,16 +2011,16 @@ $(function () {
 
         const estado = $('#id_estado').val();
 
-        if(estado==11)
+/*         if(estado==11)
         {
             if (!confirm("¿Seguro desea Guardar si cambio de un estado distinto a negociacion el contrato se reconstruira con correlativo nuevo sino se mantendra el actual?")) {
                 return;
             }else{
                 procesar('ventas_mant_contrato.php?a=g','forma_ventas','');
             }
-        }else{
+        }else{ */
             procesar('ventas_mant_contrato.php?a=g','forma_ventas','');
-        }
+        //}
 
 
 
