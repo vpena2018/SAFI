@@ -2011,17 +2011,21 @@ $(function () {
 
         const estado = $('#id_estado').val();
 
-/*         if(estado==11)
-        {
-            if (!confirm("¿Seguro desea Guardar si cambio de un estado distinto a negociacion el contrato se reconstruira con correlativo nuevo sino se mantendra el actual?")) {
-                return;
-            }else{
+/*         popupConfirmacion(
+            'Confirmación',
+            '¿Seguro Deseas guardar?',
+            function () {
                 procesar('ventas_mant_contrato.php?a=g','forma_ventas','');
             }
-        }else{ */
-            procesar('ventas_mant_contrato.php?a=g','forma_ventas','');
-        //}
+        ); */
 
+        popupconfirmar(
+        'Confirmación',
+        '¿Seguro deseas guardar?',
+        function () {
+            procesar('ventas_mant_contrato.php?a=g', 'forma_ventas', '');
+        }
+    );
 
 
     });
