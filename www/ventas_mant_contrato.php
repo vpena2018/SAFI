@@ -184,8 +184,8 @@ function generarContratoVenta(
         /* ===============================
            5️⃣ NÚMERO DE CONTRATO
         =============================== */
-        //$anio = date('Y'); 2026
-        $anio = date('y'); //26
+        $anio = date('Y'); 
+        //$anio = date('y'); //26
         $correlativo5 = str_pad($nuevoCorrelativo, 5, '0', STR_PAD_LEFT);
         $letrasUsuario =
             strtoupper(substr($nombreUsuario, 0, 1)) .
@@ -1995,7 +1995,7 @@ if ($foto_original_tele !== '') {
     <a href="javascript:void(0);"
        id="btnActualizarContrato"
        class="btn btn-block mb-1"
-       style="background-color:#f0ad4e;color:#fff;border:1px solid #f0ad4e; display: none;">
+       style="background-color:#f0ad4e;color:#fff;border:1px solid #f0ad4e;">
        <i class="fas fa-file-pdf"></i> Generar contrato
     </a>
 </div>
@@ -2010,14 +2010,6 @@ $(function () {
     e.preventDefault();
 
         const estado = $('#id_estado').val();
-
-/*         popupConfirmacion(
-            'Confirmación',
-            '¿Seguro Deseas guardar?',
-            function () {
-                procesar('ventas_mant_contrato.php?a=g','forma_ventas','');
-            }
-        ); */
 
         popupconfirmar(
         'Confirmación',
@@ -2041,43 +2033,62 @@ $('#btnContrato').on('click', function (e) {
         return;
     }
 
-    if (!confirm("¿Seguro que desea descargar contrato?")) {
-        return;
-    }
 
-    $.ajax({
-        url: 'ventas_mant_contrato.php',
-        type: 'GET',
-        dataType: 'json',
-        data: {
-            a: 'print_check',
-            id: id
-        },
-        success: function (resp) {
-            if (resp.ok) {
+            popupconfirmar(
+            'Confirmación',
+            '¿Deseas descargar el contrato?',
+            function () {
 
-                mytoast(
-                    'success',
-                    'Contrato listo: ' + resp.numero_contrato,3000
-                );
+                $.ajax({
+                    url: 'ventas_mant_contrato.php',
+                    type: 'GET',
+                    dataType: 'json',
+                    data: {
+                        a: 'print_check',
+                        id: id
+                    },
+                    success: function (resp) {
+                        if (resp.ok) {
 
-                // 🔥 quitar aviso de salida
-                window.onbeforeunload = null;
-                $(window).off('beforeunload');
+                            mytoast(
+                                'success',
+                                'Contrato listo: ' + resp.numero_contrato,
+                                3000
+                            );
 
-                // 👉 ahora sí descargar
-                window.location.href =
-                    'ventas_mant_contrato.php?a=print&id=' +
-                    encodeURIComponent(id);
+                            // 🔥 quitar aviso de salida
+                            window.onbeforeunload = null;
+                            $(window).off('beforeunload');
 
-            } else {
-                mytoast('error', resp.error || 'Error al generar contrato',3000);
+                            // 👉 ahora sí descargar
+                            window.location.href =
+                                'ventas_mant_contrato.php?a=print&id=' +
+                                encodeURIComponent(id);
+
+                        } else {
+                            mytoast(
+                                'error',
+                                resp.error || 'Error al generar contrato',
+                                3000
+                            );
+                        }
+                    },
+                    error: function () {
+                        mytoast(
+                            'error',
+                            'Error de comunicación con el servidor',
+                            3000
+                        );
+                    }
+                });
+
             }
-        },
-        error: function () {
-            mytoast('error', 'Error de comunicación con el servidor',3000);
-        }
-    });
+        );
+
+
+    
+
+    
 });
 
 $('#btnActualizarContrato').on('click', function (e) {
@@ -2089,31 +2100,46 @@ $('#btnActualizarContrato').on('click', function (e) {
         return;
     }
 
-    if (!confirm("¿Seguro desea Generar el contrato,los datos se sustituiran si previamente ya existia un contrato?")) {
-        return;
-    }
+            popupconfirmar(
+                'Confirmación',
+                '¿Seguro desea generar el contrato? Los datos se sustituirán si previamente ya existía un contrato.',
+                function () {
 
-    $.ajax({
-        url: 'ventas_mant_contrato.php',
-        type: 'GET',
-        dataType: 'json',
-        data: {
-            a: 'actcontrato',
-            id: id
-        },
-        success: function (resp) {
-            if (resp.ok) {
-                mytoast('success',
-                    'Contrato generado: ' + resp.numero_contrato,3000
-                );
-            } else {
-                mytoast('error',resp.error || 'Error inesperado',3000);
-            }
-        },
-        error: function () {
-            mytoast('error','Error de comunicación con el servidor',3000);
-        }
-    });
+                    $.ajax({
+                        url: 'ventas_mant_contrato.php',
+                        type: 'GET',
+                        dataType: 'json',
+                        data: {
+                            a: 'actcontrato',
+                            id: id
+                        },
+                        success: function (resp) {
+                            if (resp.ok) {
+                                mytoast(
+                                    'success',
+                                    'Contrato generado: ' + resp.numero_contrato,
+                                    3000
+                                );
+                            } else {
+                                mytoast(
+                                    'error',
+                                    resp.error || 'Error inesperado',
+                                    3000
+                                );
+                            }
+                        },
+                        error: function () {
+                            mytoast(
+                                'error',
+                                'Error de comunicación con el servidor',
+                                3000
+                            );
+                        }
+                    });
+
+                }
+            );
+
 });
 
 });
