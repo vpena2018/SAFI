@@ -1576,6 +1576,23 @@ if ($foto_original_tele !== '') {
 
                     if (is_array($resultado) && $resultado['ok']) {
 
+                        $descripcion = "Guardado - contrato generado: " . $resultado['numero_contrato'];
+                        $observaciones = "numero de contrato: " . $resultado['numero_contrato'];
+
+                        sql_insert("
+                            INSERT INTO ventas_historial_estado 
+                            (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
+                            VALUES (
+                                ".GetSQLValue($cid, "int").",
+                                ".GetSQLValue($_SESSION['usuario_id'], "int").",
+                                ".GetSQLValue($_REQUEST['id_estado'], "int").",
+                                ".GetSQLValue($descripcion, "text").",
+                                NOW(),
+                                ".GetSQLValue($observaciones, "text")."
+                            )
+                        ");
+
+
                         $stud_arr[0]["pmsg"] =
                             "Guardado - contrato generado: " . $resultado['numero_contrato'];
 
