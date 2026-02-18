@@ -2004,8 +2004,6 @@ if ($foto_original_tele !== '') {
 <script>
 $(function () {
 
-
-
     $('#btnguardar').on('click', function (e) {   
     e.preventDefault();
 
