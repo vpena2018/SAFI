@@ -237,15 +237,6 @@ function popupconfirmar(titulo, mensaje, onSi) {
             </div>
 
             <div style="text-align:right;">
-                <button id="btnNoSimple" style="
-                    background:#6c757d;
-                    color:#fff;
-                    border:none;
-                    border-radius:6px;
-                    padding:7px 14px;
-                    cursor:pointer;
-                    margin-right:8px;
-                ">No</button>
 
                 <button id="btnSiSimple" style="
                     background:#0d6efd;
@@ -256,6 +247,18 @@ function popupconfirmar(titulo, mensaje, onSi) {
                     cursor:pointer;
                     font-weight:bold;
                 ">Sí</button>
+
+				<button id="btnNoSimple" style="
+                    background:#6c757d;
+                    color:#fff;
+                    border:none;
+                    border-radius:6px;
+                    padding:7px 14px;
+                    cursor:pointer;
+                    margin-right:8px;
+                ">No</button>
+
+
             </div>
         </div>
     `;

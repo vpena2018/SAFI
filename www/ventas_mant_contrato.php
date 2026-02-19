@@ -2011,7 +2011,7 @@ $(function () {
 
         popupconfirmar(
         'Confirmación',
-        '¿Seguro deseas guardar?',
+        '¿Seguro desea guardar?',
         function () {
             procesar('ventas_mant_contrato.php?a=g', 'forma_ventas', '');
         }
