@@ -195,6 +195,88 @@ function popupWeb(titulo, contenidoHtml) {
 }
 
 
+function popupconfirmar(titulo, mensaje, onSi) {
+
+    if (document.getElementById('popupSimple')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'popupSimple';
+    overlay.style = `
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,.45);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        z-index:9999;
+    `;
+
+    overlay.innerHTML = `
+        <div style="
+            background:#fff;
+            border-radius:12px;
+            padding:20px;
+            width:340px;
+            box-shadow:0 6px 18px rgba(0,0,0,.3);
+            font-family:Arial, sans-serif;
+        ">
+            <div style="
+                font-weight:bold;
+                font-size:16px;
+                margin-bottom:10px;
+            ">
+                ${titulo}
+            </div>
+
+            <div style="
+                font-size:14px;
+                margin-bottom:18px;
+                color:#333;
+            ">
+                ${mensaje}
+            </div>
+
+            <div style="text-align:right;">
+
+                <button id="btnSiSimple" style="
+                    background:#0d6efd;
+                    color:#fff;
+                    border:none;
+                    border-radius:6px;
+                    padding:7px 16px;
+                    cursor:pointer;
+                    font-weight:bold;
+                ">Sí</button>
+
+				<button id="btnNoSimple" style="
+                    background:#6c757d;
+                    color:#fff;
+                    border:none;
+                    border-radius:6px;
+                    padding:7px 14px;
+                    cursor:pointer;
+                    margin-right:8px;
+                ">No</button>
+
+
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('btnNoSimple').onclick = () => overlay.remove();
+
+    document.getElementById('btnSiSimple').onclick = () => {
+        overlay.remove();
+        if (typeof onSi === 'function') onSi();
+    };
+}
+
+
+
+
+
 
 function MostrarNotafinal(checkbox,accion) {
 
