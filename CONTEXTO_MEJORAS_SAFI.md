@@ -105,20 +105,16 @@ Este documento se generó como contexto base para iniciar mejoras incrementales 
   - En otros estados: no abre.
 - Se eliminó una validación backend intermedia agregada temporalmente en `a=ec2` (cerca de la línea 614), por solicitud del usuario.
 
-### 11.4 Seguridad de sesión y CSRF (compatibles con flujo actual)
+### 11.4 Seguridad de sesión y CSRF (estado real activo)
 - `www/include/framework.php`:
-  - Se centralizó configuración de cookies con `app_session_cookie_options(...)`.
-  - Detección de HTTPS con `app_is_https()` para `secure` dinámico.
-  - Se cambió `SameSite` a `Lax` para compatibilidad de navegación.
-  - Se agregó timeout por inactividad de 30 minutos.
-  - Se agregaron helpers `csrf_token()` y `csrf_validate()`.
+  - Timeout por inactividad activo de 30 minutos (`1800` segundos).
+  - Validación de expiración por inactividad usando `$_SESSION['hora_ultima_tran']`.
+  - Renovación de `hora_ultima_tran` en cada request válido.
 - `www/index.php`:
-  - Se agregaron helpers equivalentes (`index_session_cookie_options`, `index_csrf_token`, `index_csrf_validate`).
-  - Se inicializa sesión y token CSRF al cargar login.
-  - Login (`a=201`) y recuperación (`a=301`) ahora validan CSRF.
+  - Se inicializa sesión al cargar login y se genera token CSRF "soft".
+  - Login (`a=201`) y recuperación (`a=301`) reciben y verifican `csrf_token` en modo "soft" (solo warning en log si falta o es inválido).
   - En login exitoso se ejecuta `session_regenerate_id(true)`.
-  - Logout limpia sesión/cookies con opciones consistentes.
-  - Se expone token a JS: `window.APP_CSRF_TOKEN`.
+  - Se expone token al frontend con `window.APP_CSRF_TOKEN`.
 - `www/js/index.js`:
   - Login y recover envían `csrf_token` en los POST AJAX.
 
@@ -129,3 +125,14 @@ Este documento se generó como contexto base para iniciar mejoras incrementales 
   - `www/servicio_mant.php`
   - `www/inspeccion_mant.php`
   - `www/inspeccion_mant_init.php`
+- Validación funcional reportada por usuario:
+  - Inicio de sesión funcionando.
+  - Timeout de sesión funcionando con 30 minutos.
+
+### 11.6 Respaldo para reversa rápida
+- Carpeta de backup creada:
+  - `backup/login_security_20260221_193042/`
+- Archivos de respaldo:
+  - `backup/login_security_20260221_193042/index.php.bak`
+  - `backup/login_security_20260221_193042/framework.php.bak`
+  - `backup/login_security_20260221_193042/index.js.bak`
