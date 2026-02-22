@@ -109,6 +109,16 @@ if (!isset($_SESSION['usuario'])) {
 	sesion_expirada();
 }
 
+// Expiracion por inactividad (conservador)
+// 1800 segundos = 30 minutos
+$session_timeout_segundos = 1800;
+if (isset($_SESSION['hora_ultima_tran'])) {
+    $segundos_inactivo = time() - intval($_SESSION['hora_ultima_tran']);
+    if ($segundos_inactivo > $session_timeout_segundos) {
+        sesion_expirada();
+    }
+}
+
 renovar_session();
 renovar_cookie();
 

@@ -6,6 +6,28 @@ pagina_permiso(140);
  
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="v";}
 
+function traslado_historial_guardar($id_maestro, $id_estado, $nombre, $observaciones = "") {
+	$id_maestro = intval($id_maestro);
+	if ($id_maestro <= 0) { return; }
+
+	$id_estado_sql = "NULL";
+	if (!is_null($id_estado) && $id_estado !== "") {
+		$id_estado_sql = intval($id_estado);
+	}
+
+	$sqlhist = "INSERT INTO orden_traslado_historial_estado
+	(id_maestro, id_estado, id_usuario, nombre, fecha, observaciones)
+	VALUES (
+		".$id_maestro.",
+		".$id_estado_sql.",
+		".$_SESSION['usuario_id'].",
+		".GetSQLValue($nombre, "text").",
+		NOW(),
+		".GetSQLValue($observaciones, "text")."
+	)";
+	sql_insert($sqlhist);
+}
+
 // Leer Datos    ############################  
 if ($accion=="v") {
 	$cid=0;
@@ -266,6 +288,21 @@ if ($accion=="g") {
 			
 		}
 
+		$estado_historial = get_dato_sql("orden_traslado","id_estado"," WHERE id=".intval($cid));
+		if ($nuevoreg==true) {
+			traslado_historial_guardar($cid, $estado_historial, "Nueva Orden de Traslado", "");
+		} else {
+			if (isset($_REQUEST['at'])) {
+				traslado_historial_guardar($cid, $estado_historial, "Atender Traslado", "Se registro salida del traslado");
+			} elseif (isset($_REQUEST['cp'])) {
+				traslado_historial_guardar($cid, $estado_historial, "Completar Traslado", "Se registro entrada/finalizacion del traslado");
+			} elseif (isset($_REQUEST['aut'])) {
+				traslado_historial_guardar($cid, $estado_historial, "Autorizar Traslado", "");
+			} else {
+				traslado_historial_guardar($cid, $estado_historial, "Guardar Orden de Traslado", "");
+			}
+		}
+
 
 	}
 
@@ -307,6 +344,8 @@ if ($accion=="b") {
 		if ($verror=="") {
    
    
+		$estado_historial_borrar = get_dato_sql("orden_traslado","id_estado"," WHERE id=".intval($cid));
+		traslado_historial_guardar($cid, $estado_historial_borrar, "Borrar Orden de Traslado", "Orden eliminada");
 		$result=sql_delete("delete from orden_traslado where id=$cid limit 1");
 	
 	 
@@ -352,6 +391,7 @@ if ($accion=="adpc") {
 				$stud_arr[0]["pcode"] = 1;
 				$stud_arr[0]["pmsg"] ="Guardado";
 				$stud_arr[0]["pcid"] = $cid;
+				traslado_historial_guardar($cid, 3, "Revision ADPC", $_REQUEST["observaciones_adpc"]);
 			 }   
 		 }else{
 				$stud_arr[0]["pcode"] = 0;
@@ -475,6 +515,20 @@ $modificar_salida=$nuevoreg;
 
 
 ?>
+
+<ul class="nav nav-tabs mb-3" role="tablist">
+	<li class="nav-item" role="presentation">
+		<a class="nav-link active" id="tras_tabdetalle" data-toggle="tab" href="#nav_traslado_detalle" onclick="traslado_cambiartab('nav_traslado_detalle');" role="tab">Detalle</a>
+	</li>
+	<?php if ($nuevoreg==false) { ?>
+	<li class="nav-item" role="presentation">
+		<a class="nav-link" id="tras_tabhistorial" data-toggle="tab" href="#nav_traslado_historial" onclick="traslado_cambiartab('nav_traslado_historial');" role="tab">Historial</a>
+	</li>
+	<?php } ?>
+</ul>
+
+<div class="tab-content">
+<div class="tab-pane fade show active" id="nav_traslado_detalle" role="tabpanel">
 
 <div class="row mb-2"> 
             
@@ -778,12 +832,20 @@ $modificar_salida=$nuevoreg;
   </div> 
 </div>
 
+</div>
+<?php if ($nuevoreg==false) { ?>
+<div class="tab-pane fade" id="nav_traslado_historial" role="tabpanel">
+	<div id="traslado_historial_panel"></div>
+</div>
+<?php } ?>
+</div>
+
 
 <?php 
 
 ?>
 	</div>
-	<div class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top ">
+	<div id="botones_accion_traslado" class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top ">
 		<div class="row">
         <?php if (tiene_permiso(140)) {
             if (($id_estado<3)) {
@@ -909,4 +971,32 @@ function cambiartipo_destino(valor){
 		$("#id_tienda_destino").val('');
 		}
 	}
+
+function cargar_historial_traslado() {
+	var cid = $('#cid').val();
+	if (cid=="" || cid=="0") { return; }
+	$('#traslado_historial_panel').load('traslado_historial.php?cid='+cid);
+}
+
+function traslado_cambiartab(eltab) {
+	if (eltab=='nav_traslado_historial') {
+		cargar_historial_traslado();
+	}
+	if ($('#botones_accion_traslado').length>0) {
+		if (eltab=='nav_traslado_historial') {
+			$('#botones_accion_traslado').hide();
+		} else {
+			$('#botones_accion_traslado').show();
+		}
+	}
+}
+
+$(document).on('shown.bs.tab', 'a[data-toggle="tab"]', function (e) {
+	var destino = $(e.target).attr('href');
+	if (destino=='#nav_traslado_historial') {
+		traslado_cambiartab('nav_traslado_historial');
+	} else if (destino=='#nav_traslado_detalle') {
+		traslado_cambiartab('nav_traslado_detalle');
+	}
+});
 </script>

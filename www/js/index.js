@@ -35,7 +35,7 @@ function login(){
 		
 	$("#login-btn").addClass("disabled");
 
-	data={ a: "201", u: vuser, p: vpass };
+	data={ a: "201", u: vuser, p: vpass, csrf_token: (window.APP_CSRF_TOKEN || "") };
 
 	 $.post( "index.php",data, function(json) {
 	 			
@@ -92,7 +92,7 @@ function recover(){
 	$("#email-btn").addClass("disabled");	
 	//$.mobile.loading('show');	
 
-	data={ a: "301", m: vemail};
+	data={ a: "301", m: vemail, csrf_token: (window.APP_CSRF_TOKEN || "") };
 
 	 $.post( "index.php",data, function(json) {
 	 			
