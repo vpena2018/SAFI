@@ -36,6 +36,7 @@ if ($accion == "g") {
     $stud_arr[0]["pcode"] = 0;
     $stud_arr[0]["pmsg"] = "ERROR DB101";
 
+    $archivo_original = "";
     $archivo_final = "";
     if (isset($_REQUEST['arch'])) {
         $archivo_original = basename(urldecode($_REQUEST["arch"]));
@@ -44,16 +45,30 @@ if ($accion == "g") {
         if ($archivo_final !== $archivo_original) {
             $ruta_origen = app_dir . "uploa_d/" . $archivo_original;
             $ruta_destino = app_dir . "uploa_d/" . $archivo_final;
+            $renombrado = false;
             if (file_exists($ruta_origen) && !file_exists($ruta_destino)) {
-                @rename($ruta_origen, $ruta_destino);
+                $renombrado = @rename($ruta_origen, $ruta_destino);
+            } elseif (file_exists($ruta_destino)) {
+                $renombrado = true;
             }
 
-            $thumb_origen = app_dir . "uploa_d/thumbnail/" . $archivo_original;
-            $thumb_destino = app_dir . "uploa_d/thumbnail/" . $archivo_final;
-            if (file_exists($thumb_origen) && !file_exists($thumb_destino)) {
-                @rename($thumb_origen, $thumb_destino);
+            if ($renombrado) {
+                $thumb_origen = app_dir . "uploa_d/thumbnail/" . $archivo_original;
+                $thumb_destino = app_dir . "uploa_d/thumbnail/" . $archivo_final;
+                if (file_exists($thumb_origen) && !file_exists($thumb_destino)) {
+                    @rename($thumb_origen, $thumb_destino);
+                }
+            } else {
+                $archivo_final = $archivo_original;
             }
         }
+    }
+
+    if ($archivo_final == "") {
+        $stud_arr[0]["pcode"] = 0;
+        $stud_arr[0]["pmsg"] = "Archivo invalido";
+        salida_json($stud_arr);
+        exit;
     }
     $arch = GetSQLValue($archivo_final, "text");
 
@@ -61,7 +76,9 @@ if ($accion == "g") {
     $cid = $result;
 
     $archivo_nombre = $archivo_final;
-    foto_reducir_tamano(app_dir . "uploa_d/" . $archivo_nombre);
+    if (file_exists(app_dir . "uploa_d/" . $archivo_nombre)) {
+        foto_reducir_tamano(app_dir . "uploa_d/" . $archivo_nombre);
+    }
 
     if ($result != false) {
         $stud_arr[0]["pcode"] = 1;
