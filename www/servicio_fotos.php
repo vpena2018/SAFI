@@ -36,18 +36,38 @@ if ($accion == "g") {
     $stud_arr[0]["pcode"] = 0;
     $stud_arr[0]["pmsg"] = "ERROR DB101";
 
-    if (isset($_REQUEST['arch'])) { $arch = GetSQLValue(urldecode($_REQUEST["arch"]), "text"); } else { $arch = ""; }
+    $archivo_final = "";
+    if (isset($_REQUEST['arch'])) {
+        $archivo_original = basename(urldecode($_REQUEST["arch"]));
+        $archivo_final = preg_replace('/\s+/', '_', $archivo_original);
+
+        if ($archivo_final !== $archivo_original) {
+            $ruta_origen = app_dir . "uploa_d/" . $archivo_original;
+            $ruta_destino = app_dir . "uploa_d/" . $archivo_final;
+            if (file_exists($ruta_origen) && !file_exists($ruta_destino)) {
+                @rename($ruta_origen, $ruta_destino);
+            }
+
+            $thumb_origen = app_dir . "uploa_d/thumbnail/" . $archivo_original;
+            $thumb_destino = app_dir . "uploa_d/thumbnail/" . $archivo_final;
+            if (file_exists($thumb_origen) && !file_exists($thumb_destino)) {
+                @rename($thumb_origen, $thumb_destino);
+            }
+        }
+    }
+    $arch = GetSQLValue($archivo_final, "text");
 
     $result = sql_insert("INSERT INTO servicio_foto (id_servicio, archivo, fecha, id_usuario) VALUES ($cid, $arch, CURDATE(), " . $_SESSION['usuario_id'] . ")");
     $cid = $result;
 
-    $archivo_nombre = basename(urldecode($_REQUEST["arch"]));
+    $archivo_nombre = $archivo_final;
     foto_reducir_tamano(app_dir . "uploa_d/" . $archivo_nombre);
 
     if ($result != false) {
         $stud_arr[0]["pcode"] = 1;
         $stud_arr[0]["pmsg"] = "Guardado";
         $stud_arr[0]["pcid"] = $cid;
+        $stud_arr[0]["parch"] = $archivo_nombre;
     }
 
     salida_json($stud_arr);
@@ -289,10 +309,11 @@ function insp_guardar_foto(arch, campo) {
                 mytoast('error', json[0].pmsg, 3000);
             }
             if (json[0].pcode == 1) {
-                $('#'+campo).val(arch);
+                var archivoFinal = (json[0].parch && json[0].parch !== '') ? json[0].parch : arch;
+                $('#'+campo).val(archivoFinal);
                 $('#files_'+campo).text('Guardado');
-                $('#lk'+campo).html(arch);
-                thumb_agregar2(arch, campo);
+                $('#lk'+campo).html(archivoFinal);
+                thumb_agregar2(archivoFinal, campo);
             }
         } else {
             mytoast('error', 'Error inesperado', 3000);
