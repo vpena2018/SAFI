@@ -50,7 +50,10 @@ function unique_name($conn, $baseName, $excludeId, $uploadDir) {
     return $baseName . '_fix';
 }
 
-$sql = "SELECT id, id_servicio, archivo, fecha FROM servicio_foto WHERE archivo REGEXP '[[:space:]]'";
+$sql = "SELECT id, id_servicio, archivo, fecha
+        FROM servicio_foto
+        WHERE archivo REGEXP '[[:space:]]'
+          AND LOWER(archivo) LIKE '%.pdf'";
 $result = $conn->query($sql);
 
 echo '<h2>Fix espacios en servicio_foto</h2>';
