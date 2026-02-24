@@ -587,7 +587,7 @@ function descargarVentaPDF($id_venta, $soloValidar = false)
         ========================== */
         //$templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo.docx';
 
-        $templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo_v2.docx';
+        $templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo_PN_v2.docx';
 
 
         if (!file_exists($templatePath)) {
@@ -800,6 +800,8 @@ if ($accion=="v") {
     ,ventas.persona_juridica
     ,ventas.representante_legal_persona_juridica
     ,ventas.representante_legal_identidad
+    ,ventas.representante_legal_profesion
+    ,ventas.representante_legal_direccion
 
         FROM ventas
         LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)        
@@ -1057,6 +1059,14 @@ if ($accion=="g") {
                 if (empty(trim($_REQUEST['representante_legal_identidad'] ?? ''))) {
                     $verror .= 'La Identidad del Representante Legal es obligatoria. ';
                 }
+
+                if (empty(trim($_REQUEST['representante_legal_profesion'] ?? ''))) {
+                    $verror .= 'La profesion del Representante Legal es obligatoria. ';
+                }
+
+                if (empty(trim($_REQUEST['representante_legal_direccion'] ?? ''))) {
+                    $verror .= 'La direccion del Representante Legal es obligatoria. ';
+                }
             }
 
     }
@@ -1225,6 +1235,8 @@ if ($foto_original_tele !== '') {
 
             $rep_legal = trim($_REQUEST['representante_legal_persona_juridica'] ?? '');
             $rep_id    = trim($_REQUEST['representante_legal_identidad'] ?? '');
+            $rep_profesion   = trim($_REQUEST['representante_legal_profesion'] ?? '');
+            $rep_direccion    = trim($_REQUEST['representante_legal_direccion'] ?? '');
 
             $sqlcampos .= " , representante_legal_persona_juridica = "
                         . GetSQLValue($rep_legal, "text");
@@ -1232,14 +1244,23 @@ if ($foto_original_tele !== '') {
             $sqlcampos .= " , representante_legal_identidad = "
                         . GetSQLValue($rep_id, "text");
 
+            $sqlcampos .= " , representante_legal_profesion = "
+            . GetSQLValue($rep_profesion, "text");
+
+             $sqlcampos .= " , representante_legal_direccion = "
+            . GetSQLValue($rep_direccion, "text");
+
 
 
         } else {
 
             // Si NO es persona jurídica, limpiamos los campos
+            $sqlcampos .= " , persona_juridica =0";
             $sqlcampos .= " , representante_legal_persona_juridica = NULL";
             $sqlcampos .= " , representante_legal_identidad = NULL";
-            $sqlcampos .= " , persona_juridica =0";
+            $sqlcampos .= " , representante_legal_profesion = NULL";
+            $sqlcampos .= " , representante_legal_direccion = NULL";
+            
         }
         
 
@@ -1698,6 +1719,9 @@ if ($foto_original_tele !== '') {
     if (isset($row["representante_legal_persona_juridica"])) {$representante_legal_persona_juridica= $row["representante_legal_persona_juridica"]; } else {$representante_legal_persona_juridica= "";}
     if (isset($row["representante_legal_identidad"])) {$representante_legal_identidad= $row["representante_legal_identidad"]; } else {$representante_legal_identidad= "";}
 
+    if (isset($row["representante_legal_profesion"])) {$representante_legal_profesion= $row["representante_legal_profesion"]; } else {$representante_legal_profesion= "";}
+    if (isset($row["representante_legal_direccion"])) {$representante_legal_direccion= $row["representante_legal_direccion"]; } else {$representante_legal_direccion= "";}
+
 
 
     if (isset($row["cilindraje"])) {$cilindraje= $row["cilindraje"]; } else {$cilindraje= "";}
@@ -1816,8 +1840,6 @@ if ($foto_original_tele !== '') {
 
         <?php
         $nombre_cliente='';
-        $representante_legal_direccion='';
-        $representante_legal_profesion='';
 
         echo campo("nombre_cliente","",'hidden',$nombre_cliente,'','','');
         echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1,'get.php?a=2&t=1',$cliente_nombre);
