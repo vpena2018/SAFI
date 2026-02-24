@@ -82,6 +82,7 @@ function generarContratoVenta(
     string $nombreUsuario,
     string $apellidoUsuario,
     string $usuarioSistema,
+    bool $persona_juridica,
     bool $sologuardar = false
 ) {
     try {
@@ -359,187 +360,6 @@ function convertirDocxAPdf(string $docxPath): string
     }
 }
 
-
-function descargarVentaPDFOld2($id_venta)
-{
-    try {
-        appLog('===== descargarVentaPDF INICIO =====');
-        appLog('ID_VENTA: ' . $id_venta);
-
-        if (empty($id_venta)) {
-            throw new RuntimeException('ID de venta inválido');
-        }
-
-        /* =========================
-           CONSULTA DE LA VENTA
-        ========================== */
-        $datos_venta = sql_select("
-            SELECT ventas.id_tienda,
-                   entidad.nombre AS cliente_nombre,
-                   entidad.rtn AS identidad_cliente,
-                   entidad.direccion AS direccion,
-                   entidad.codigo_alterno AS codigo_cliente,
-                   entidad.direccion AS direccion_cliente,
-                   entidad.telefono AS telefono_cliente,
-                   producto.codigo_alterno AS cod_vehiculo,
-                   producto.placa AS placa,
-                   producto.marca AS marca,
-                   producto.modelo AS modelo,
-                   producto.tipo_vehiculo AS tipo,
-                   producto.chasis AS chasis,
-                   producto.motor AS motor,
-                   producto.color AS color,
-                   producto.anio AS anio,
-                   ventas.cilindraje AS cilindraje,
-                   '' AS departamento,
-                   '' AS combustible,
-                   ventas.precio_venta AS precio_venta,
-                   ventas.prima_venta AS prima_venta
-            FROM ventas
-            LEFT JOIN tienda ON ventas.id_tienda = tienda.id
-            LEFT JOIN producto ON ventas.id_producto = producto.id
-            LEFT JOIN entidad ON ventas.cliente_id = entidad.id
-            WHERE ventas.id = $id_venta
-            LIMIT 1
-        ");
-
-        if (!$datos_venta || $datos_venta->num_rows === 0) {
-            throw new RuntimeException('Venta no encontrada');
-        }
-
-        $venta = $datos_venta->fetch_assoc();
-        appLog('Venta encontrada. ID_TIENDA: ' . $venta['id_tienda']);
-
-        /* =========================
-           DATOS DE LA TIENDA
-        ========================== */
-        $datos_tienda = sql_select("
-            SELECT * FROM tienda
-            WHERE id = {$venta['id_tienda']}
-            LIMIT 1
-        ");
-
-        if (!$datos_tienda || $datos_tienda->num_rows === 0) {
-            throw new RuntimeException('Tienda no encontrada');
-        }
-
-        $tienda = $datos_tienda->fetch_assoc();
-        appLog('Tienda cargada: ' . $tienda['nombre']);
-
-        /* =========================
-           TEMPLATE DOCX
-        ========================== */
-        $templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo_PN_v2.docx';
-
-        if (!file_exists($templatePath)) {
-            throw new RuntimeException('Template DOCX no encontrado');
-        }
-
-        $template = new TemplateProcessor($templatePath);
-
-        // Representante
-        $template->setValue('REPRESENTANTE_LEGAL', $tienda['representante_legal']);
-        $template->setValue('R_IDENTIDAD', $tienda['representante_identidad']);
-        $template->setValue('CIUDAD', $tienda['nombre']);
-
-        // Cliente
-        $template->setValue('CLIENTE', $venta['cliente_nombre']);
-        $template->setValue('IDENTIDAD_CLIENTE', $venta['identidad_cliente']);
-        $template->setValue('CODIGO_CLIENTE', $venta['codigo_cliente']);
-        $template->setValue('DIRECCION_CLIENTE', $venta['direccion_cliente']);
-        $template->setValue('TELEFONO_CLIENTE', $venta['telefono_cliente']);
-
-        // Precios
-        $precioVenta = (float)$venta['precio_venta'];
-        $template->setValue('PRECIO_VENTA', number_format($precioVenta, 2, '.', ','));
-        $template->setValue('PRECIO_VENTA_LETRAS', numeroALetras($precioVenta));
-
-        $primaVenta = (float)$venta['prima_venta'];
-        $template->setValue('PRIMA_VENTA', number_format($primaVenta, 2, '.', ','));
-        $template->setValue('PRIMA_VENTA_LETRAS', numeroALetras($primaVenta));
-
-        // Vehículo
-        $template->setValue('CODIGO_VEHICULO', $venta['cod_vehiculo']);
-        $template->setValue('PLACA', $venta['placa']);
-        $template->setValue('MARCA', $venta['marca']);
-        $template->setValue('MODELO', $venta['modelo']);
-        $template->setValue('TIPO', $venta['tipo']);
-        $template->setValue('CHASIS', $venta['chasis']);
-        $template->setValue('MOTOR', $venta['motor']);
-        $template->setValue('COLOR', $venta['color']);
-        $template->setValue('ANIO', $venta['anio']);
-        $template->setValue('CILINDRAJE', $venta['cilindraje']);
-        $template->setValue('COMBUSTIBLE', $venta['combustible']);
-
-        // Fecha
-        date_default_timezone_set('America/Tegucigalpa');
-        $meses = [
-            1=>'enero',2=>'febrero',3=>'marzo',4=>'abril',5=>'mayo',6=>'junio',
-            7=>'julio',8=>'agosto',9=>'septiembre',10=>'octubre',11=>'noviembre',12=>'diciembre'
-        ];
-        $template->setValue('DIAS', date('j'));
-        $template->setValue('MES', $meses[(int)date('n')]);
-        $template->setValue('ANIO_ACTUAL', date('Y'));
-
-        appLog('Template procesado');
-
-        /* =========================
-           GUARDAR DOCX TEMPORAL
-        ========================== */
-        $tmpDir  = sys_get_temp_dir();
-        $tmpDocx = $tmpDir . '/venta_' . $id_venta . '_' . time() . '.docx';
-
-        $template->saveAs($tmpDocx);
-        appLog('DOCX generado: ' . $tmpDocx);
-
-        if (!file_exists($tmpDocx)) {
-            throw new RuntimeException('No se pudo generar el DOCX');
-        }
-
-        /* =========================
-           CONVERTIR A PDF
-        ========================== */
-        $pdfPath = convertirDocxAPdf($tmpDocx);
-        appLog('PDF generado: ' . $pdfPath);
-
-        if (!file_exists($pdfPath) || !is_readable($pdfPath)) {
-            throw new RuntimeException('PDF no disponible');
-        }
-
-        /* =========================
-           DESCARGA
-        ========================== */
-        if (ob_get_length()) {
-            ob_end_clean();
-        }
-
-        header('Content-Type: application/pdf');
-        header(
-            'Content-Disposition: attachment; filename="Venta_' .
-            $id_venta . '_' . date('Ymd_His') . '.pdf"'
-        );
-        header('Content-Length: ' . filesize($pdfPath));
-        header('Cache-Control: no-store, no-cache, must-revalidate');
-        header('Pragma: no-cache');
-
-        $bytes = readfile($pdfPath);
-        appLog('BYTES ENVIADOS: ' . $bytes);
-
-        /* =========================
-           LIMPIEZA
-        ========================== */
-        unlink($tmpDocx);
-        unlink($pdfPath);
-
-        appLog('===== descargarVentaPDF FIN OK =====');
-        exit;
-
-    } catch (Throwable $e) {
-        appLog('EXCEPTION descargarVentaPDF: ' . $e->getMessage());
-        throw $e;
-    }
-}
-
 function descargarVentaPDF($id_venta, $soloValidar = false)
 {
     try {
@@ -726,7 +546,11 @@ if ($nuevo=='N'){
 if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
 
         $id_venta = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
+        $persona_juridica = isset($_REQUEST['persona_juridica'])? (bool) $_REQUEST['persona_juridica']: false;
         $id_usuario=$_SESSION['usuario_id'];
+
+
+        
 
         $id_usuario = intval($_SESSION['usuario_id']);
 
@@ -755,7 +579,8 @@ if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
             $id_venta,
             $nombreUsuario,
             $apellidoUsuario,
-            $usuarioSistema
+            $usuarioSistema,
+            $persona_juridica
         );
 
         header('Content-Type: application/json');
@@ -2168,6 +1993,8 @@ $('#btnActualizarContrato').on('click', function (e) {
     e.preventDefault();
 
     const id = $('#id').val();
+    const persona_juridica=$('#persona_juridica').val();
+
     if (!id) {
         alert('No hay ID');
         return;
@@ -2184,7 +2011,8 @@ $('#btnActualizarContrato').on('click', function (e) {
                         dataType: 'json',
                         data: {
                             a: 'actcontrato',
-                            id: id
+                            id: id,
+                            persona_juridica:persona_juridica
                         },
                         success: function (resp) {
                             if (resp.ok) {
