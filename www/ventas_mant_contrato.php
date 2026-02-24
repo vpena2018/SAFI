@@ -371,7 +371,7 @@ function convertirDocxAPdf(string $docxPath): string
     }
 }
 
-function descargarVentaPDF($id_venta, $soloValidar = false)
+function descargarVentaPDF($id_venta,$juridico, $soloValidar = false)
 {
     try {
         appLog('===== descargarVentaPDF INICIO =====');
@@ -418,7 +418,12 @@ function descargarVentaPDF($id_venta, $soloValidar = false)
         ========================== */
         //$templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo.docx';
 
-        $templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo_PN_v2.docx';
+        if($juridico)
+        {
+            $templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo_PJ_v2.docx';
+        }else{
+            $templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo_PN_v2.docx';
+        }
 
 
         if (!file_exists($templatePath)) {
@@ -441,12 +446,27 @@ function descargarVentaPDF($id_venta, $soloValidar = false)
         $template->setValue('CIUDAD', $data['representante']['ciudad']);
         $template->setValue('DEPARTAMENTO', $data['representante']['departamento']);
 
+
+
+        //datos juridicos
+        $template->setValue('R_LEGAL_J', $data['datos_juridicos']['representante_legal']);
+        $template->setValue('R_LEGAL_PROFESION_J', $data['datos_juridicos']['representante_legal_profesion']);
+        $template->setValue('R_LEGAL_DENTIDAD_J', $data['datos_juridicos']['representante_legal_identidad']);
+        $template->setValue('R_LEGAL_DIR', $data['datos_juridicos']['representante_legal_direccion']);
+        //datos cliente juridico
+        $template->setValue('NOMBRE_EMPRESA_J', $data['cliente']['nombre']);
+        $template->setValue('EMPRESA_RTN_J', $data['cliente']['identidad']);
+        $template->setValue('COD_CLIENTE_EMPRESA_J', $data['cliente']['codigo']);
+        $template->setValue('EMPRESA_TELEFONO', $data['cliente']['telefono']);
+
+
         // Cliente
         $template->setValue('CLIENTE', $data['cliente']['nombre']);
         $template->setValue('IDENTIDAD_CLIENTE', $data['cliente']['identidad']);
         $template->setValue('CODIGO_CLIENTE', $data['cliente']['codigo']);
         $template->setValue('DIRECCION_CLIENTE', $data['cliente']['direccion']);
         $template->setValue('TELEFONO_CLIENTE', $data['cliente']['telefono']);
+
 
         $template->setValue('m_f','o');
 
@@ -604,14 +624,19 @@ if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
 // VALIDAR (AJAX)
     if ($_GET['a'] === 'print_check') {
         $id = intval($_GET['id']);
-        echo json_encode(descargarVentaPDF($id, true));
+        $persona_juridica = isset($_REQUEST['persona_juridica'])? (bool) $_REQUEST['persona_juridica']: false;
+
+
+        echo json_encode(descargarVentaPDF($id,$persona_juridica, true));
         exit;
     }
 
     // DESCARGAR (NAVEGADOR)
     if ($_GET['a'] === 'print') {
         $id = intval($_GET['id']);
-        descargarVentaPDF($id); // descarga real
+        $persona_juridica = isset($_REQUEST['persona_juridica'])? (bool) $_REQUEST['persona_juridica']: false;
+
+        descargarVentaPDF($id,$persona_juridica); // descarga real
         exit;
     }
 
@@ -1898,7 +1923,7 @@ if ($foto_original_tele !== '') {
            color:#fff;
            border:1px solid #e5533d;
        ">
-        <i class="fas fa-file-pdf"></i> imprimir contrato
+        <i class="fas fa-file-pdf"></i> descargar contrato
     </a>
 </div>
 
@@ -1942,6 +1967,11 @@ $('#btnContrato').on('click', function (e) {
         return;
     }
 
+    //const persona_juridica=$('#persona_juridica').val();
+    const persona_juridica = $('#persona_juridica').is(':checked') ? 1 : 0;
+
+
+
 
             popupconfirmar(
             'Confirmación',
@@ -1954,7 +1984,8 @@ $('#btnContrato').on('click', function (e) {
                     dataType: 'json',
                     data: {
                         a: 'print_check',
-                        id: id
+                        id: id,
+                        persona_juridica:persona_juridica
                     },
                     success: function (resp) {
                         if (resp.ok) {
@@ -1972,7 +2003,9 @@ $('#btnContrato').on('click', function (e) {
                             // 👉 ahora sí descargar
                             window.location.href =
                                 'ventas_mant_contrato.php?a=print&id=' +
-                                encodeURIComponent(id);
+                                encodeURIComponent(id) +
+                                '&persona_juridica=' +
+                                persona_juridica;
 
                         } else {
                             mytoast(
@@ -2004,7 +2037,8 @@ $('#btnActualizarContrato').on('click', function (e) {
     e.preventDefault();
 
     const id = $('#id').val();
-    const persona_juridica=$('#persona_juridica').val();
+    //const persona_juridica=$('#persona_juridica').val();
+    const persona_juridica = $('#persona_juridica').is(':checked') ? 1 : 0;
 
     if (!id) {
         alert('No hay ID');
