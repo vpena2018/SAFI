@@ -4,6 +4,7 @@ require __DIR__ . '/../vendor/autoload.php';
 use PhpOffice\PhpWord\TemplateProcessor;
 
 
+
 function appLog(string $message): void
 {
     return; // Desactivar logs en producción
@@ -113,7 +114,7 @@ function generarContratoVenta(
                 producto.motor,
                 producto.color,
                 producto.anio,
-                '' AS combustible
+                producto.combustible AS combustible
             FROM ventas
             LEFT JOIN entidad  ON ventas.cliente_id = entidad.id
             LEFT JOIN producto ON ventas.id_producto = producto.id
@@ -428,7 +429,7 @@ function descargarVentaPDFOld2($id_venta)
         /* =========================
            TEMPLATE DOCX
         ========================== */
-        $templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo.docx';
+        $templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo_PN_v2.docx';
 
         if (!file_exists($templatePath)) {
             throw new RuntimeException('Template DOCX no encontrado');
@@ -584,7 +585,11 @@ function descargarVentaPDF($id_venta, $soloValidar = false)
         /* =========================
            2️⃣ TEMPLATE DOCX
         ========================== */
-        $templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo.docx';
+        //$templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo.docx';
+
+        $templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo_v2.docx';
+
+
         if (!file_exists($templatePath)) {
             throw new RuntimeException('Template DOCX no encontrado');
         }
@@ -611,6 +616,8 @@ function descargarVentaPDF($id_venta, $soloValidar = false)
         $template->setValue('CODIGO_CLIENTE', $data['cliente']['codigo']);
         $template->setValue('DIRECCION_CLIENTE', $data['cliente']['direccion']);
         $template->setValue('TELEFONO_CLIENTE', $data['cliente']['telefono']);
+
+        $template->setValue('m_f','o');
 
         // Precios
         $template->setValue(
@@ -1804,32 +1811,78 @@ if ($foto_original_tele !== '') {
 </div>  
 
 
-    <div class="row">
-        <div id="clientediv" style="display:none;" class="col-md-8">                     
-            <?php   
-                $nombre_cliente='';
-                echo campo("nombre_cliente","",'hidden',$nombre_cliente,'','','');         
-                echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1  ,'get.php?a=2&t=1',$cliente_nombre);  
-                
-                //$persona_juridica=false;  
-                //echo campo("persona_juridica","persona juridica",'checkbox',$oferta,' ',$disable_sec2);
-                echo campo("persona_juridica","persona juridica",'checkboxCustom',$persona_juridica,' ',$disable_sec2);
-                //echo campo("oferta","Oferta Web",'checkboxCustom',$oferta,' ',$disable_sec2); 
+<div class="row">
+    <div id="clientediv" style="display:none;" class="col-md-12">
 
-                //$representante_legal_persona_juridica='';
-                echo campo("representante_legal_persona_juridica","Representante Legal",'text',$representante_legal_persona_juridica,' ',$disable_sec2); 
+        <?php
+        $nombre_cliente='';
+        $representante_legal_direccion='';
+        $representante_legal_profesion='';
 
-                //$representante_legal_identidad='';
-                echo campo("representante_legal_identidad","Identidad de Representante Legal",'text',$representante_legal_identidad,' ',$disable_sec2);
-            ?>   
-            
-                <script>
-                    $(document).ready(function () {
-                    toggleClientePorEstado();
-                });
-                </script>
+        echo campo("nombre_cliente","",'hidden',$nombre_cliente,'','','');
+        echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1,'get.php?a=2&t=1',$cliente_nombre);
+        echo campo("persona_juridica","persona juridica",'checkboxCustom',$persona_juridica,' ',$disable_sec2);
+        ?>
+
+        <div class="row">
+            <div class="col-md-12">
+                <?php echo campo(
+                    "representante_legal_persona_juridica",
+                    "Nombre representante Legal",
+                    'text',
+                    $representante_legal_persona_juridica,
+                    ' ',
+                    $disable_sec2
+                ); ?>
+            </div>
+         </div>
+
+        <div class="row">    
+
+            <div class="col-md-6">
+                <?php echo campo(
+                    "representante_legal_identidad",
+                    "Identidad de Representante Legal",
+                    'text',
+                    $representante_legal_identidad,
+                    ' ',
+                    $disable_sec2
+                ); ?>
+            </div>
+            <div class="col-md-6">
+                <?php echo campo(
+                    "representante_legal_profesion",
+                    "Profesión de Representante Legal",
+                    'text',
+                    $representante_legal_profesion,
+                    ' ',
+                    $disable_sec2
+                ); ?>
+            </div>
         </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <?php echo campo(
+                    "representante_legal_direccion",
+                    "Direccion de Representante Legal",
+                    'text',
+                    $representante_legal_direccion,
+                    ' ',
+                    $disable_sec2
+                ); ?>
+            </div>
+
+        </div>
+
+        <script>
+            $(document).ready(function () {
+                toggleClientePorEstado();
+            });
+        </script>
+
     </div>
+</div>
 
 
 
