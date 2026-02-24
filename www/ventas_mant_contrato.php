@@ -100,6 +100,11 @@ function generarContratoVenta(
                 ventas.prima_venta,
                 ventas.cilindraje,
 
+                ventas.representante_legal_persona_juridica,
+                ventas.representante_legal_identidad,
+                ventas.representante_legal_profesion,
+                ventas.representante_legal_direccion,
+
                 entidad.nombre   AS cliente_nombre,
                 entidad.rtn      AS identidad_cliente,
                 entidad.direccion AS direccion_cliente,
@@ -258,6 +263,12 @@ function generarContratoVenta(
                 'dia' => date('j'),
                 'mes' => $meses[(int)date('n')],
                 'anio' => date('Y')
+            ],
+            'datos_juridicos' => [
+                'representante_legal' => $venta['representante_legal_persona_juridica'],
+                'representante_legal_identidad' => $venta['representante_legal_identidad'],
+                'representante_legal_profesion' => $venta['representante_legal_profesion'],
+                'representante_legal_direccion' => $venta['representante_legal_direccion']
             ],
             'meta' => [
                 'id_contrato' => $idContrato,
