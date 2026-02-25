@@ -45,6 +45,7 @@ $forzar_cambio_clave = (isset($_SESSION['force_pwd_change']) && intval($_SESSION
         }
 
         input[type=number] {
+            appearance: textfield;
             -moz-appearance: textfield;
         }
     </style>
