@@ -57,6 +57,31 @@ function leer_permisos_asignados($grupo_id)
     return $salida;
 }
 
+function generar_password_temporal_segura($largo = 12)
+{
+    if ($largo < 10) {
+        $largo = 10;
+    }
+
+    $minus = "abcdefghijkmnpqrstuvwxyz";
+    $mayus = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    $nums = "23456789";
+    $simb = "@#$%*-_";
+    $todo = $minus . $mayus . $nums . $simb;
+
+    $password = "";
+    $password .= $minus[random_int(0, strlen($minus) - 1)];
+    $password .= $mayus[random_int(0, strlen($mayus) - 1)];
+    $password .= $nums[random_int(0, strlen($nums) - 1)];
+    $password .= $simb[random_int(0, strlen($simb) - 1)];
+
+    for ($i = strlen($password); $i < $largo; $i++) {
+        $password .= $todo[random_int(0, strlen($todo) - 1)];
+    }
+
+    return str_shuffle($password);
+}
+
 //#######################################################
 
 $txt_mensaje = "";
@@ -133,6 +158,10 @@ if (isset($_REQUEST["a"])) {
                             " limit 1"
                     );
                 } else {
+                    $primer_login = false;
+                    if (!isset($row_login["acceso_ultimo"]) || is_null($row_login["acceso_ultimo"]) || trim($row_login["acceso_ultimo"]) == "" || trim($row_login["acceso_ultimo"]) == "0000-00-00 00:00:00") {
+                        $primer_login = true;
+                    }
                     // registro de acceso
                     $conn->query(
                         "update usuario set acceso_ultimo=now(), acceso_intentos=0 where id=" .
@@ -188,6 +217,7 @@ if (isset($_REQUEST["a"])) {
                     $_SESSION["formato_fecha"] = "dd/mm/yyyy";
                     $_SESSION["formato_fecha_php"] = "d/m/Y";
                     $_SESSION["formato_fecha_jquery"] = "dd/mm/yy";
+                    $_SESSION["force_pwd_change"] = $primer_login ? 1 : 0;
 
                     //colocar_cookie
                     $randomid = generate_id();
@@ -307,7 +337,7 @@ if (isset($_REQUEST["a"])) {
 
                 $userid = $row["usuario"];
                 $email = $row["email"];
-                $newpass = substr(md5($email . date("Y-m-d H:i:s")), 1, 6);
+                $newpass = generar_password_temporal_segura(12);
                 $newpassenc = password_hash($newpass, PASSWORD_BCRYPT);
                 $conn->query(
                     "update usuario set clave='$newpassenc' where id=" .
