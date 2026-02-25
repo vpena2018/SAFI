@@ -324,6 +324,22 @@ function guardarforma() {
 if ($accion=="u") {
 
 if ($rid==0) {$nuevo_registro=true;} else {$rid=GetSQLValue(($rid),"int");}
+
+if ($tabla=="usuario") {
+	$clave_tmp = "";
+	if (isset($_REQUEST["clave"])) {
+		$clave_tmp = trim($_REQUEST["clave"]);
+	}
+	if ($nuevo_registro==true || $clave_tmp!="") {
+		$verror = validar_politica_password($clave_tmp);
+		if ($verror!="") {
+			$stud_arr[0]["pcode"] = 0;
+			$stud_arr[0]["pmsg"] ='<div class="alert alert-danger">'.$verror.'</div>';
+			echo salida_json($stud_arr);
+			exit;
+		}
+	}
+}
 	
 	 	$i=0;
 		$sqlcampos="";
