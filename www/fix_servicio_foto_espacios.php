@@ -6,6 +6,8 @@ header('Content-Type: text/html; charset=UTF-8');
 $apply = isset($_GET['apply']) && $_GET['apply'] === '1';
 $uploadDir = __DIR__ . '/uploa_d/';
 $thumbDir = __DIR__ . '/uploa_d/thumbnail/';
+$s3Dir = __DIR__ . '/aws_bucket_s3/';
+$s3ThumbDir = __DIR__ . '/aws_bucket_s3/thumbnail/';
 
 $conn = new mysqli(db_ip, db_user, db_pw, db_name);
 if (mysqli_connect_errno()) {
@@ -34,16 +36,20 @@ function db_name_exists($conn, $name, $excludeId) {
     return ($result && $result->num_rows > 0);
 }
 
-function unique_name($conn, $baseName, $excludeId, $uploadDir) {
+function unique_name($conn, $baseName, $excludeId, $primaryDir, $secondaryDir = '') {
     $candidate = $baseName;
-    if (!db_name_exists($conn, $candidate, $excludeId) && !file_exists($uploadDir . $candidate)) {
+    $existsPrimary = file_exists($primaryDir . $candidate);
+    $existsSecondary = ($secondaryDir !== '') ? file_exists($secondaryDir . $candidate) : false;
+    if (!db_name_exists($conn, $candidate, $excludeId) && !$existsPrimary && !$existsSecondary) {
         return $candidate;
     }
 
     list($namePart, $extPart) = split_name_ext($baseName);
     for ($i = 1; $i <= 5000; $i++) {
         $candidate = $namePart . '_' . $i . $extPart;
-        if (!db_name_exists($conn, $candidate, $excludeId) && !file_exists($uploadDir . $candidate)) {
+        $existsPrimary = file_exists($primaryDir . $candidate);
+        $existsSecondary = ($secondaryDir !== '') ? file_exists($secondaryDir . $candidate) : false;
+        if (!db_name_exists($conn, $candidate, $excludeId) && !$existsPrimary && !$existsSecondary) {
             return $candidate;
         }
     }
@@ -75,7 +81,7 @@ $warn = 0;
 $rows = 0;
 
 echo '<table border="1" cellpadding="6" cellspacing="0">';
-echo '<tr><th>ID</th><th>Servicio</th><th>Original</th><th>Nuevo</th><th>Archivo</th><th>Thumb</th><th>DB</th><th>Estado</th></tr>';
+echo '<tr><th>ID</th><th>Servicio</th><th>Original</th><th>Nuevo</th><th>Origen</th><th>Archivo</th><th>Thumb</th><th>DB</th><th>Estado</th></tr>';
 
 while ($row = $result->fetch_assoc()) {
     $rows++;
@@ -85,14 +91,28 @@ while ($row = $result->fetch_assoc()) {
     $normalized = normalize_spaces($original);
     $final = $normalized;
 
-    if ($final !== $original) {
-        $final = unique_name($conn, $final, $id, $uploadDir);
+    $storageDir = '';
+    $storageThumbDir = '';
+    $origen = 'NONE';
+    if (file_exists($uploadDir . $original)) {
+        $storageDir = $uploadDir;
+        $storageThumbDir = $thumbDir;
+        $origen = 'uploa_d';
+    } elseif (file_exists($s3Dir . $original)) {
+        $storageDir = $s3Dir;
+        $storageThumbDir = $s3ThumbDir;
+        $origen = 'aws_bucket_s3';
     }
 
-    $fileOld = $uploadDir . $original;
-    $fileNew = $uploadDir . $final;
-    $thumbOld = $thumbDir . $original;
-    $thumbNew = $thumbDir . $final;
+    if ($final !== $original && $storageDir !== '') {
+        $dirAlterno = ($storageDir === $uploadDir) ? $s3Dir : $uploadDir;
+        $final = unique_name($conn, $final, $id, $storageDir, $dirAlterno);
+    }
+
+    $fileOld = $storageDir . $original;
+    $fileNew = $storageDir . $final;
+    $thumbOld = $storageThumbDir . $original;
+    $thumbNew = $storageThumbDir . $final;
 
     $fileStatus = 'NA';
     $thumbStatus = 'NA';
@@ -100,12 +120,23 @@ while ($row = $result->fetch_assoc()) {
     $state = 'PENDIENTE';
 
     if ($apply) {
-        if ($original !== $final) {
+        if ($storageDir === '') {
+            $fileStatus = 'NOT_FOUND_BOTH';
+            $thumbStatus = 'NOT_FOUND_BOTH';
+            $dbStatus = 'SKIPPED';
+            $warn++;
+            $state = 'REVISAR';
+        } elseif ($original !== $final) {
+            $canUpdateDb = false;
             if (file_exists($fileOld)) {
                 if (!file_exists($fileNew)) {
                     $fileStatus = @rename($fileOld, $fileNew) ? 'RENAMED' : 'ERROR';
+                    if ($fileStatus === 'RENAMED') {
+                        $canUpdateDb = true;
+                    }
                 } else {
                     $fileStatus = 'TARGET_EXISTS';
+                    $canUpdateDb = true;
                 }
             } else {
                 $fileStatus = 'NOT_FOUND';
@@ -121,9 +152,13 @@ while ($row = $result->fetch_assoc()) {
                 $thumbStatus = 'NOT_FOUND';
             }
 
-            $newEsc = $conn->real_escape_string($final);
-            $sqlUp = "UPDATE servicio_foto SET archivo='$newEsc' WHERE id=$id LIMIT 1";
-            $dbStatus = $conn->query($sqlUp) ? 'UPDATED' : 'ERROR';
+            if ($canUpdateDb) {
+                $newEsc = $conn->real_escape_string($final);
+                $sqlUp = "UPDATE servicio_foto SET archivo='$newEsc' WHERE id=$id LIMIT 1";
+                $dbStatus = $conn->query($sqlUp) ? 'UPDATED' : 'ERROR';
+            } else {
+                $dbStatus = 'SKIPPED_FILE_ERROR';
+            }
         } else {
             $state = 'SIN_CAMBIO';
         }
@@ -146,6 +181,7 @@ while ($row = $result->fetch_assoc()) {
     echo '<td>' . $idServicio . '</td>';
     echo '<td>' . htmlspecialchars($original, ENT_QUOTES, 'UTF-8') . '</td>';
     echo '<td>' . htmlspecialchars($final, ENT_QUOTES, 'UTF-8') . '</td>';
+    echo '<td>' . $origen . '</td>';
     echo '<td>' . $fileStatus . '</td>';
     echo '<td>' . $thumbStatus . '</td>';
     echo '<td>' . $dbStatus . '</td>';
