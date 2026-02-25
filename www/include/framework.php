@@ -129,7 +129,7 @@ renovar_cookie();
 //####################### CONFIG ##############################
 
 define("app_title", "Sistema Mant. Flotas");  // Titulo Applicacion
-define("app_version", "1.2.0");  // Version de Applicacion
+define("app_version", "2.0.0");  // Version de Applicacion
 
 define("app_combo_si_no", '<option value="0">NO</option><option value="1">'.'SI'.'</option>');
 define("app_combo_a_i", '<option value="A">Activo</option><option value="I">'.'Inactivo'.'</option>');
@@ -238,6 +238,31 @@ function sanear_string($campo) {
 
 function sanear_date($campo) {   	
     return  preg_replace("([^0-9-])", "", $campo);
+}
+
+function validar_politica_password($password) {
+	$password = trim((string)$password);
+
+	if ($password === "") {
+		return "La contrasena es obligatoria";
+	}
+	if (strlen($password) < 8) {
+		return "La contrasena debe tener al menos 8 caracteres";
+	}
+	if (!preg_match('/[a-z]/', $password)) {
+		return "La contrasena debe incluir al menos una letra minuscula";
+	}
+	if (!preg_match('/[A-Z]/', $password)) {
+		return "La contrasena debe incluir al menos una letra mayuscula";
+	}
+	if (!preg_match('/[0-9]/', $password)) {
+		return "La contrasena debe incluir al menos un numero";
+	}
+	if (preg_match('/\s/', $password)) {
+		return "La contrasena no debe contener espacios";
+	}
+
+	return "";
 }
 
 function formato_numero($numero,$decimales=0,$moneda="") 
