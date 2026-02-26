@@ -31,13 +31,23 @@ require_once ('include/framework.php');
                   $correo_row = $correo_servicio_result -> fetch_assoc(); 
            }
         } 
-        $email_enviar='admon.sps@inglosa.hn';
-        $subject='Venta de Vehiculo'; 
-        $cuerpo_html="
-        Notificación de reparacion de vehículo completada  
-        <br><br>            
-        <b>Tienda:</b> ".$correo_row["latienda"]."<br><br>";
-        $cuerpo_html.= "<b>Fecha Completada:</b> ".formato_fecha_de_mysql($correo_row["fecha_reparacion_completada"]);                            
+        
+        $email_enviar='admon.sps@inglosa.hn';             
+        if ($nuevoregistro==true) {
+            $subject='Creacion de Vehiculo'; 
+            $cuerpo_html="
+            Notificación de reparacion de vehículo para la venta  
+            <br><br>            
+            <b>Tienda:</b> ".$correo_row["latienda"]."<br><br>";
+            $cuerpo_html.= "<b>Fecha Creacion:</b> ".formato_fecha_de_mysql($correo_row["fecha"]);                            
+        }else{
+            $subject='Venta de Vehiculo'; 
+            $cuerpo_html="
+            Notificación de reparacion de vehículo completada  
+            <br><br>            
+            <b>Tienda:</b> ".$correo_row["latienda"]."<br><br>";
+            $cuerpo_html.= "<b>Fecha Completada:</b> ".formato_fecha_de_mysql($correo_row["fecha_reparacion_completada"]);                          
+        }
         $cuerpo_html.="        
         <br><br>
         <b>Usuario:</b> ".$correo_row["vendedor"]."
@@ -46,7 +56,7 @@ require_once ('include/framework.php');
         <br><br>
         <b>Observaciones:</b> ".$correo_row["observaciones"]."
         ";             
-   
+        
              
      $cuerpo_sinhtml=strip_tags($cuerpo_html);    
 

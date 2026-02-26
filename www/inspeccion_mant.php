@@ -757,7 +757,7 @@ if ($nuevoreg==true) {
       $kilometraje_minimo= $row_anterior["kilometraje_entrada"];
       $plantilla_vehiculo= $row_anterior["plantilla_vehiculo"]; 
       $combustible_tipo= $row_anterior["combustible_tipo"];
-      $llanta_delantera_izq= $row_anterior["llanta_delantera_izq"]; 
+      /*$llanta_delantera_izq= $row_anterior["llanta_delantera_izq"]; 
       $llanta_delantera_izq_num= $row_anterior["llanta_delantera_izq_num"]; 
       $llanta_delantera_der= $row_anterior["llanta_delantera_der"]; 
       $llanta_delantera_der_num= $row_anterior["llanta_delantera_der_num"];
@@ -776,7 +776,7 @@ if ($nuevoreg==true) {
       $llanta_delantera_izq_cali= $row_anterior["llanta_delantera_izq_cali"]; 
       $llanta_delantera_der_cali= $row_anterior["llanta_delantera_der_cali"]; 
       $llanta_trasera_der_cali= $row_anterior["llanta_trasera_der_cali"]; 
-      $llanta_trasera_izq_cali= $row_anterior["llanta_trasera_izq_cali"];
+      $llanta_trasera_izq_cali= $row_anterior["llanta_trasera_izq_cali"];*/
 
       $bateria_marca= $row_anterior["bateria_marca"]; 
       $bateria_num= $row_anterior["bateria_num"]; 

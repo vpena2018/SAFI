@@ -196,70 +196,59 @@ if ($accion=="g") {
 
         if ($nuevoregistro==false) {    
             //si modifica se guarda el registo del cambio
-            $venta_actual = array();
-            $result_actual = sql_select("SELECT id_tienda, kilometraje, id_estado_pintura, id_estado_interior, id_estado_mecanica, observaciones_reparacion, fecha_promesa, fecha_promesa_taller, precio_minimo, precio_maximo
-                                         FROM ventas
-                                         WHERE id=".$cid." LIMIT 1");
-            if ($result_actual!=false && $result_actual->num_rows > 0) {
-                $venta_actual = $result_actual->fetch_assoc();
-            }
-
-            $id_tienda = isset($venta_actual['id_tienda']) ? intval($venta_actual['id_tienda']) : 0;
+            $id_tienda=intval(get_dato_sql("ventas","id_tienda"," where id=".$cid));
             if ($id_tienda!=intval($_REQUEST['id_tienda'])){   
                $id_tienda_name=get_dato_sql("tienda","nombre"," where id=".$_REQUEST['id_tienda']);
                registrar_historial_ventas($cid, 99, 'Modificacion de Tienda', $id_tienda_name);
             }
-
-            $kilometraje = isset($venta_actual['kilometraje']) ? intval($venta_actual['kilometraje']) : 0;
+            $kilometraje=intval(get_dato_sql("ventas","kilometraje"," where id=".$cid));
             if ($kilometraje!=intval($_REQUEST['kilometraje'])){   
                 registrar_historial_ventas($cid, 99, 'Modificacion de Kilometraje', $_REQUEST['kilometraje']);
             }
 
-             $id_pintura = isset($venta_actual['id_estado_pintura']) ? intval($venta_actual['id_estado_pintura']) : 0;
+             $id_pintura=intval(get_dato_sql("ventas","id_estado_pintura"," where id=".$cid));
              if ($id_pintura!=intval($_REQUEST['id_estado_pintura'])){   
                  $id_pintura_name=get_dato_sql("ventas_estado","nombre"," where id=".$_REQUEST['id_estado_pintura']);
                  registrar_historial_ventas($cid, $_REQUEST['id_estado_pintura'], 'Modificacion de Estado de Pintura', $id_pintura_name);
              }
 
-             $id_interior = isset($venta_actual['id_estado_interior']) ? intval($venta_actual['id_estado_interior']) : 0;
+             $id_interior=intval(get_dato_sql("ventas","id_estado_interior"," where id=".$cid));
              if ($id_interior!=intval($_REQUEST['id_estado_interior'])){   
                  $id_interior_name=get_dato_sql("ventas_estado","nombre"," where id=".$_REQUEST['id_estado_interior']);
                  registrar_historial_ventas($cid, $_REQUEST['id_estado_interior'], 'Modificacion de Estado de Interior', $id_interior_name);
              }            
 
-             $id_mecanica = isset($venta_actual['id_estado_mecanica']) ? intval($venta_actual['id_estado_mecanica']) : 0;
+             $id_mecanica=intval(get_dato_sql("ventas","id_estado_mecanica"," where id=".$cid));
              if ($id_mecanica!=intval($_REQUEST['id_estado_mecanica'])){   
                 $id_mecanica_name=get_dato_sql("ventas_estado","nombre"," where id=".$_REQUEST['id_estado_mecanica']);
                  registrar_historial_ventas($cid, $_REQUEST['id_estado_mecanica'], 'Modificacion de Estado de Mecanica', $id_mecanica_name);
              }
 
-             $observaciones = isset($venta_actual['observaciones_reparacion']) ? trim((string)$venta_actual['observaciones_reparacion']) : '';
+             $observaciones=trim(get_dato_sql("ventas","observaciones_reparacion"," where id=".$cid));
              if ($observaciones!=trim($_REQUEST['observaciones_reparacion'])){   
                 registrar_historial_ventas($cid, 99, 'Modificacion de Observaciones', $_REQUEST['observaciones_reparacion']);
              }
 
-             $fecha_promesa = isset($venta_actual['fecha_promesa']) ? trim((string)$venta_actual['fecha_promesa']) : '';
+             $fecha_promesa=trim(get_dato_sql("ventas","fecha_promesa"," where id=".$cid));
              if ($fecha_promesa!=trim($_REQUEST['fecha_promesa'])){   
                 registrar_historial_ventas($cid, 99, 'Modificacion de Fecha de Promesa', $_REQUEST['fecha_promesa']);
              }
 
-             $fecha_promesa_taller = isset($venta_actual['fecha_promesa_taller']) ? trim((string)$venta_actual['fecha_promesa_taller']) : '';
-             
+             $fecha_promesa_taller=trim(get_dato_sql("ventas","fecha_promesa_taller"," where id=".$cid));
+            
              if ($fecha_promesa_taller!=trim($_REQUEST['fecha_promesa_taller'])){   
                 registrar_historial_ventas($cid, 99, 'Modificacion de Fecha de Promesa Taller', $_REQUEST['fecha_promesa_taller']);
              }
 
-             $precio_minimo = isset($venta_actual['precio_minimo']) ? intval($venta_actual['precio_minimo']) : 0;
+             $precio_minimo=intval(get_dato_sql("ventas","precio_minimo"," where id=".$cid));
              if ($precio_minimo!=intval($_REQUEST['precio_minimo'])){   
                  registrar_historial_ventas($cid, 99, 'Modificacion de Precio Minimo', $_REQUEST['precio_minimo']);
              }
 
-             $precio_maximo = isset($venta_actual['precio_maximo']) ? intval($venta_actual['precio_maximo']) : 0;
+             $precio_maximo=intval(get_dato_sql("ventas","precio_maximo"," where id=".$cid));
              if ($precio_maximo!=intval($_REQUEST['precio_maximo'])){   
                  registrar_historial_ventas($cid, 99, 'Modificacion de Precio Maximo', $_REQUEST['precio_maximo']);
-             }
-
-         
+             }         
              
             $sql="update ventas set ".$sqlcampos." where id=".$cid." limit 1";
 
@@ -283,8 +272,6 @@ if ($accion=="g") {
             registrar_historial_ventas($cid, 99, 'Nuevo registro de vehiculo', 'Nuevo');
 
             registrar_historial_ventas($cid, 99, 'Nuevo registro de vehiculo', $_REQUEST['observaciones_reparacion']);
-
-            require_once ('correo_reparacion.php');
         }
 
         
