@@ -387,6 +387,62 @@ function cargando(mostrar){
 	}
 }
 
+function procesarAsync(url, forma, adicional) {
+    return new Promise((resolve) => {
+
+        const flagFormaVentas = forma === 'forma_ventas';
+
+        $("#" + forma + " .xfrm").addClass("disabled");
+        cargando(true);
+
+        const datos = $("#" + forma).serialize();
+
+        $.post(url, datos)
+            .done(function (json) {
+
+                // 🔹 Respuesta válida
+                if (Array.isArray(json) && json.length > 0) {
+
+                    // ❌ Error de negocio
+                    if (json[0].pcode == 0) {
+                        resolve({
+                            ok: false,
+                            msg: json[0].pmsg
+                        });
+                        return;
+                    }
+
+                    // ✅ Éxito
+                    if (json[0].pcode == 1) {
+                        $("#" + forma + ' #id').val(json[0].pcid);
+
+                        resolve({
+                            ok: true,
+                            msg: json[0].pmsg
+                        });
+                        return;
+                    }
+                }
+
+                // ❌ Respuesta inválida
+                resolve({
+                    ok: false,
+                    msg: 'Respuesta inválida del servidor'
+                });
+            })
+            .fail(function () {
+                resolve({
+                    ok: false,
+                    msg: 'Error de comunicación con el servidor'
+                });
+            })
+            .always(function () {
+                cargando(false);
+                $("#" + forma + " .xfrm").removeClass("disabled");
+            });
+    });
+}
+
 
 function procesar(url,forma,adicional){
 	
