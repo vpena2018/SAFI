@@ -159,6 +159,20 @@ if ($accion=="ec") {
       if (isset($_REQUEST['eti'])) { $etiqueta = ($_REQUEST['eti']); } else	{exit ;}
       if (isset($_REQUEST['val'])) { $valor = intval($_REQUEST['val']); } else	{exit ;}
       //Auditado
+      $estado_actual = 0;
+      $result_estado = sql_select("SELECT id_estado FROM servicio WHERE id=$sid LIMIT 1");
+      if ($result_estado!=false){
+          if ($result_estado->num_rows > 0) {
+              $row_estado = $result_estado->fetch_assoc();
+              $estado_actual = intval($row_estado['id_estado']);
+          }
+      }
+      if ($estado_actual === 22){
+        if (!(tiene_permiso(164) || tiene_permiso(163))) {
+           echo '<div class="card-body">No tiene privilegios para modificar esta orden de servicio.</div>';
+           exit;
+        }       
+      }
   
    
   ?>
