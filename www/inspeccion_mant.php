@@ -454,32 +454,32 @@ if ($nuevoreg==true) {
 
         $ordenesborrador=intval($chkVehiculo["ordenesborrador"]);
         if ($ordenesborrador>0) {
-          $valerror=mensaje("No puede crear una nueva Hoja de InspecciÃ³n porque actualmente se encontraron $ordenesborrador  Hojas de InspecciÃ³n en estado de borrador, para continuar debe completar estas  Hojas de InspecciÃ³n o borrarlas",'warning');
+          $valerror=mensaje("No puede crear una nueva Hoja de Inspeccion porque actualmente se encontraron $ordenesborrador  Hojas de Inspeccion en estado de borrador, para continuar debe completar estas  Hojas de InspecciÃ³n o borrarlas",'warning');
           $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de InspecciÃ³n</a>';
         } 
         
         $trasladosP=intval($chkVehiculo["trasladosP"]);
         if ($trasladosP>0) {
-          $valerror=mensaje("No puede crear una nueva Hoja de InspecciÃ³n porque existe una Orden de Traslado sin completar del vehiculo",'warning');
+          $valerror=mensaje("No puede crear una nueva Hoja de Inspeccion porque existe una Orden de Traslado sin completar del vehiculo",'warning');
           $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de InspecciÃ³n</a>';
         }
         
         if($tipo_doc=='2'){
           $EstadoReparacion=intval($chkVehiculo["EstadoReparacion"]);
           if (!es_nulo($EstadoReparacion)){
-              $valerror=mensaje("No puede crear una nueva Hoja de InspecciÃ³n porque el Vehiculo esta en proceso de reparacion",'warning');
+              $valerror=mensaje("No puede crear una nueva Hoja de Inspeccion porque el Vehiculo esta en proceso de reparacion",'warning');
               $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de InspecciÃ³n</a>';
           }       
           $ParoPorRepuesto=intval($chkVehiculo["ParoPorRepuesto"]);                 
           $Oservicio=intval($chkVehiculo["Oservicio"]);                 
           $Ocombustible=intval($chkVehiculo["Ocombustible"]);                 
           if (!es_nulo($Oservicio) or !es_nulo($ParoPorRepuesto)){
-              $valerror=mensaje("No puede crear una nueva Hoja de InspecciÃ³n, porque existe una Orden de Servicio sin completar del vehiculo",'warning');
+              $valerror=mensaje("No puede crear una nueva Hoja de Inspeccion, porque existe una Orden de Servicio sin completar del vehiculo",'warning');
               $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de InspecciÃ³n</a>';
           }
 
           if (!es_nulo($Ocombustible)){
-              $valerror=mensaje("No puede crear una nueva Hoja de InspecciÃ³n, porque existe una Orden de Combustible sin completar del vehiculo",'warning');
+              $valerror=mensaje("No puede crear una nueva Hoja de Inspeccion, porque existe una Orden de Combustible sin completar del vehiculo",'warning');
               $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de InspecciÃ³n</a>';
           }
         }
@@ -1424,32 +1424,32 @@ if ($id_estado>=2 ) { //completado solo ver
             <div class="col-md">  
             <u>Delantera Izquierda</u>     
               <p> <?php echo campo("llanta_delantera_izq","Marca",'text',$llanta_delantera_izq,' ',$disable_sec4 .' required');?>  </p>
-              <p> <?php echo campo("llanta_delantera_izq_num","NumeraciÃ³n",'text',$llanta_delantera_izq_num,' ',$disable_sec4 .' required');?>  </p>              
+              <p> <?php echo campo("llanta_delantera_izq_num","Numeracion",'text',$llanta_delantera_izq_num,' ',$disable_sec4 .' required');?>  </p>              
               <p> <?php echo campo("llanta_delantera_izq_cali","CalibraciÃ³n",$visible_sec5,$llanta_delantera_izq_cali,' ',$disable_sec4 .' required');?>  </p>
             </div>
             <div class="col-md">  
             <u>Trasera Izquierda</u>     
               <p> <?php echo campo("llanta_trasera_izq","Marca",'text',$llanta_trasera_izq,' ',$disable_sec4 .' required');?>  </p>
-              <p> <?php echo campo("llanta_trasera_izq_num","NumeraciÃ³n",'text',$llanta_trasera_izq_num,' ',$disable_sec4 .' required');?>  </p>              
+              <p> <?php echo campo("llanta_trasera_izq_num","Numeracion",'text',$llanta_trasera_izq_num,' ',$disable_sec4 .' required');?>  </p>              
               <p> <?php echo campo("llanta_trasera_izq_cali","CalibraciÃ³n",$visible_sec5,$llanta_trasera_izq_cali,' ',$disable_sec4 .' required');?>  </p>
               <a href="#" class="btn btn-sm <?php echo $visible_sec4; ?>" onclick="insp_copiar_llantas(); return false;" ><i class="fa fa-copy"></i> Copiar Todos</a>
             </div>
             <div class="col-md bg-light">  
             <u>Llanta de Repuesto</u>    
               <p> <?php echo campo("llanta_repuesto","Marca",'text',$llanta_repuesto,' ',$disable_sec4 .' required');?>  </p>
-              <p> <?php echo campo("llanta_repuesto_num","NumeraciÃ³n",'text',$llanta_repuesto_num,' ',$disable_sec4 .' required');?>  </p>              
+              <p> <?php echo campo("llanta_repuesto_num","Numeracion",'text',$llanta_repuesto_num,' ',$disable_sec4 .' required');?>  </p>              
             </div>
             <div class="col-md">  
             <u>Trasera Derecha</u>     
               <p> <?php echo campo("llanta_trasera_der","Marca",'text',$llanta_trasera_der,' ',$disable_sec4 .' required');?>  </p>
-              <p> <?php echo campo("llanta_trasera_der_num","NumeraciÃ³n",'text',$llanta_trasera_der_num,' ',$disable_sec4 .' required');?>  </p>              
+              <p> <?php echo campo("llanta_trasera_der_num","Numeracion",'text',$llanta_trasera_der_num,' ',$disable_sec4 .' required');?>  </p>              
               <p> <?php echo campo("llanta_trasera_der_cali","CalibraciÃ³n",$visible_sec5,$llanta_trasera_der_cali,' ',$disable_sec4 .' required');?>  </p>
             </div>
             <div class="col-md">  
               <u>Delantera Derecha</u>      
               <p> <?php echo campo("llanta_delantera_der","Marca",'text',$llanta_delantera_der,' ',$disable_sec4 .' required');?>  </p>
-              <p> <?php echo campo("llanta_delantera_der_num","NumeraciÃ³n",'text',$llanta_delantera_der_num,' ',$disable_sec4 .' required');?>  </p>
-              <p> <?php echo campo("llanta_delantera_der_cali","CalibraciÃ³n",$visible_sec5,$llanta_delantera_der_cali,' ',$disable_sec4 .' required');?>  </p>
+              <p> <?php echo campo("llanta_delantera_der_num","Numeracion",'text',$llanta_delantera_der_num,' ',$disable_sec4 .' required');?>  </p>
+              <p> <?php echo campo("llanta_delantera_der_cali","Calibracion",$visible_sec5,$llanta_delantera_der_cali,' ',$disable_sec4 .' required');?>  </p>
               <a href="#" class="btn btn-sm <?php echo $visible_sec4; ?>" onclick="$('#llanta_extra').show(); return false;" ><i class="fa fa-plus"></i> Llantas adicionales</a>
             </div>
 
@@ -1460,13 +1460,13 @@ if ($id_estado>=2 ) { //completado solo ver
             <div class="col-md">  
               <u>Extra 1</u>      
               <p> <?php echo campo("llanta_extra1","Marca",'text',$llanta_extra1,' ',$disable_sec4 .' ');?>  </p>
-              <p> <?php echo campo("llanta_extra1_num","NumeraciÃ³n",'text',$llanta_extra1_num,' ',$disable_sec4 .' ');?>  </p>
+              <p> <?php echo campo("llanta_extra1_num","Numeracion",'text',$llanta_extra1_num,' ',$disable_sec4 .' ');?>  </p>
             </div>
 
             <div class="col-md">  
               <u>Extra 2</u>      
               <p> <?php echo campo("llanta_extra2","Marca",'text',$llanta_extra2,' ',$disable_sec4 .' ');?>  </p>
-              <p> <?php echo campo("llanta_extra2_num","NumeraciÃ³n",'text',$llanta_extra2_num,' ',$disable_sec4 .' ');?>  </p>
+              <p> <?php echo campo("llanta_extra2_num","Numeracion",'text',$llanta_extra2_num,' ',$disable_sec4 .' ');?>  </p>
             </div>
 
             <div class="col-md">  
