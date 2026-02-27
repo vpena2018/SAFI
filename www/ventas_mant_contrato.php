@@ -1927,34 +1927,47 @@ if ($foto_original_tele !== '') {
     </a>
 </div>
 
-<div>
-    <a href="javascript:void(0);"
-       id="btnActualizarContrato"
-       class="btn btn-block mb-1"
-       style="background-color:#f0ad4e;color:#fff;border:1px solid #f0ad4e;">
-       <i class="fas fa-file-pdf"></i> Generar contrato
-    </a>
-</div>
+
+        <?php if ($id_estado!=20){ ?>
+              <div>
+                <a href="javascript:void(0);"
+                id="btnActualizarContrato"
+                class="btn btn-block mb-1"
+                style="background-color:#f0ad4e;color:#fff;border:1px solid #f0ad4e;">
+                <i class="fas fa-file-pdf"></i> Generar contrato
+                </a>
+            </div>	              
+          <?php } ?> 
+
+
 
 
 <script>
 $(function () {
 
-    $('#btnguardar').on('click', function (e) {   
+$('#btnguardar').on('click', function (e) {
     e.preventDefault();
 
-        const estado = $('#id_estado').val();
-
-        popupconfirmar(
+    popupconfirmar(
         'Confirmación',
         '¿Seguro desea guardar?',
-        function () {
-            procesar('ventas_mant_contrato.php?a=g', 'forma_ventas', '');
+        async function () {
+
+            const resultado = await procesarAsync(
+                'ventas_mant_contrato.php?a=g',
+                'forma_ventas',
+                ''
+            );
+
+            if (!resultado.ok) {
+                mytoast('error', resultado.msg, 3000);
+            } else {
+                mytoast('success', resultado.msg, 3000);
+                $('#ModalWindow2').modal('hide');
+            }
         }
     );
-
-
-    });
+});
 
 
 
@@ -1969,9 +1982,6 @@ $('#btnContrato').on('click', function (e) {
 
     //const persona_juridica=$('#persona_juridica').val();
     const persona_juridica = $('#persona_juridica').is(':checked') ? 1 : 0;
-
-
-
 
             popupconfirmar(
             'Confirmación',
@@ -2037,6 +2047,16 @@ $('#btnActualizarContrato').on('click', function (e) {
     e.preventDefault();
 
     const id = $('#id').val();
+
+    const estado = $('#id_estado').val();
+
+    if(estado==20)
+    {
+       mytoast('error','No puede generar contrato en estado Vendido o entregado');
+       return;
+    }
+
+
     //const persona_juridica=$('#persona_juridica').val();
     const persona_juridica = $('#persona_juridica').is(':checked') ? 1 : 0;
 
