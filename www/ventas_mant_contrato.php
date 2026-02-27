@@ -7,7 +7,7 @@ use PhpOffice\PhpWord\TemplateProcessor;
 
 function appLog(string $message): void
 {
-    return; // Desactivar logs en producción
+    return; // Desactivar logs en produccion
     try {
         $logFile = app_logs_folder . 'ventas_contrato.log';
         $date = date('Y-m-d H:i:s');
@@ -18,7 +18,7 @@ function appLog(string $message): void
             FILE_APPEND | LOCK_EX
         );
     } catch (Throwable $e) {
-        // Nunca romper producción por un log
+        // Nunca romper produccion por un log
         error_log('LOGGER ERROR: ' . $e->getMessage());
     }
 }
@@ -107,7 +107,7 @@ function generarContratoVenta(
         sql_update("START TRANSACTION");
 
         /* ===============================
-           1️⃣ CONSULTA COMPLETA DE LA VENTA
+           1ï¸âƒ£ CONSULTA COMPLETA DE LA VENTA
         =============================== */
         $datos_venta = sql_select("
             SELECT
@@ -152,7 +152,7 @@ function generarContratoVenta(
         $venta = $datos_venta->fetch_assoc();
 
         /* ===============================
-           2️⃣ DATOS DE LA TIENDA
+           2ï¸âƒ£ DATOS DE LA TIENDA
         =============================== */
         $datos_tienda = sql_select("
             SELECT representante_legal, representante_identidad, nombre, departamento,abr_ciudad
@@ -168,7 +168,7 @@ function generarContratoVenta(
         $tienda = $datos_tienda->fetch_assoc();
 
         /* ===============================
-           3️⃣ ANULAR CONTRATOS ANTERIORES
+           3ï¸âƒ£ ANULAR CONTRATOS ANTERIORES
         =============================== */
         sql_update("
             UPDATE ventas_contratos
@@ -184,7 +184,7 @@ function generarContratoVenta(
         ");
 
         /* ===============================
-           4️⃣ CORRELATIVO
+           4ï¸âƒ£ CORRELATIVO
         =============================== */
         $datos_corr = sql_select("
             SELECT id, correlativo_actual
@@ -206,7 +206,7 @@ function generarContratoVenta(
         ");
 
         /* ===============================
-           5️⃣ NÚMERO DE CONTRATO
+           5ï¸âƒ£ NUMERO DE CONTRATO
         =============================== */
         $anio = date('Y'); 
         //$anio = date('y'); //26
@@ -218,7 +218,7 @@ function generarContratoVenta(
         $numeroContrato = "{$tienda['abr_ciudad']}-{$anio}-{$correlativo5}-{$letrasUsuario}";
 
         /* ===============================
-           6️⃣ INSERTAR CONTRATO
+           6ï¸âƒ£ INSERTAR CONTRATO
         =============================== */
         sql_insert("
             INSERT INTO ventas_contratos
@@ -231,7 +231,7 @@ function generarContratoVenta(
         $idContrato = $resId->fetch_assoc()['id'];
 
         /* ===============================
-           7️⃣ JSON CONTRACTUAL
+           7ï¸âƒ£ JSON CONTRACTUAL
         =============================== */
         date_default_timezone_set('America/Tegucigalpa');
 
@@ -358,7 +358,7 @@ function convertirDocxAPdf(string $docxPath): string
         appLog('OUTPUT: ' . implode(' | ', $output));
 
         if ($code !== 0) {
-            throw new RuntimeException('LibreOffice falló al convertir');
+            throw new RuntimeException('LibreOffice fallo al convertir');
         }
 
         $files = glob($tmpDir . '/*.pdf');
@@ -367,7 +367,7 @@ function convertirDocxAPdf(string $docxPath): string
         appLog('PDF DETECTADO: ' . $pdfPath);
 
         if (!$pdfPath || !file_exists($pdfPath)) {
-            throw new RuntimeException('No se encontró el PDF generado');
+            throw new RuntimeException('No se encontro el PDF generado');
         }
 
 
@@ -398,7 +398,7 @@ function descargarVentaPDF($id_venta,$juridico, $soloValidar = false)
         }
 
         /* =========================
-           1️⃣ CONTRATO ACTIVO
+           1ï¸âƒ£ CONTRATO ACTIVO
         ========================== */
         $resContrato = sql_select("
             SELECT datos_json
@@ -422,7 +422,7 @@ function descargarVentaPDF($id_venta,$juridico, $soloValidar = false)
             throw new RuntimeException('JSON del contrato inválido');
         }
 
-        // 🔹 Modo AJAX (solo validar)
+        // ðŸ”¹ Modo AJAX (solo validar)
         if ($soloValidar === true) {
             return [
                 'ok' => true,
@@ -431,7 +431,7 @@ function descargarVentaPDF($id_venta,$juridico, $soloValidar = false)
         }
 
         /* =========================
-           2️⃣ TEMPLATE DOCX
+           2ï¸âƒ£ TEMPLATE DOCX
         ========================== */
         //$templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo.docx';
 
@@ -450,7 +450,7 @@ function descargarVentaPDF($id_venta,$juridico, $soloValidar = false)
         $template = new TemplateProcessor($templatePath);
 
         /* =========================
-           3️⃣ REEMPLAZOS (DESDE JSON)
+           3ï¸âƒ£ REEMPLAZOS (DESDE JSON)
         ========================== */
 
         //correlativo
@@ -506,7 +506,7 @@ function descargarVentaPDF($id_venta,$juridico, $soloValidar = false)
             $data['precios']['prima_venta_letras']
         );
 
-        // Vehículo
+        // Vehiculo
         $template->setValue('CODIGO_VEHICULO', $data['vehiculo']['codigo']);
         $template->setValue('PLACA', $data['vehiculo']['placa']);
         $template->setValue('MARCA', $data['vehiculo']['marca']);
@@ -527,7 +527,7 @@ function descargarVentaPDF($id_venta,$juridico, $soloValidar = false)
         appLog('Template procesado desde JSON');
 
         /* =========================
-           4️⃣ GENERAR DOCX
+           4ï¸âƒ£ GENERAR DOCX
         ========================== */
         $tmpDir  = sys_get_temp_dir();
         $tmpDocx = $tmpDir . '/contrato_' . $id_venta . '_' . time() . '.docx';
@@ -539,7 +539,7 @@ function descargarVentaPDF($id_venta,$juridico, $soloValidar = false)
         }
 
         /* =========================
-           5️⃣ CONVERTIR A PDF
+           5ï¸âƒ£ CONVERTIR A PDF
         ========================== */
         $pdfPath = convertirDocxAPdf($tmpDocx);
 
@@ -548,7 +548,7 @@ function descargarVentaPDF($id_venta,$juridico, $soloValidar = false)
         }
 
         /* =========================
-           6️⃣ DESCARGA
+           6ï¸âƒ£ DESCARGA
         ========================== */
         if (ob_get_length()) {
             ob_end_clean();
@@ -751,7 +751,7 @@ if ($accion=="dfoto") {
    exit;  
 }
 
-if($accion=="gfoto")
+ if($accion=="gfoto")
 {
     $stud_arr[0]["pcode"] = 0;
     $stud_arr[0]["pmsg"] ="Error";
@@ -799,6 +799,7 @@ if($accion=="gfoto")
          $stud_arr[0]["pcode"] = 1;
          $stud_arr[0]["pmsg"] ="Foto guardada";     
          $stud_arr[0]["pcid"] = $cid;     
+         $stud_arr[0]["parch"] = $foto;
     }else{
          $stud_arr[0]["pmsg"] ="Error al guardar la foto";     
     } 
@@ -907,7 +908,7 @@ if ($accion=="g") {
     if (es_nulo($cid)){
         $id_producto=intval($_REQUEST['id_producto']);
         $vehiculo=get_dato_sql("ventas","count(*)"," where id_producto=".$id_producto);
-        if (!es_nulo($vehiculo) && es_nulo($cid)){ $verror.='Vehiculo ya esta registrado'; }   
+        if (!es_nulo($vehiculo) && es_nulo($cid)){ $verror.='Vehículo ya está registrado'; }   
     }  
     
     $carShopPerfil=get_dato_sql("usuario","grupo_id"," WHERE id=".$_SESSION["usuario_id"]);
@@ -939,11 +940,11 @@ if ($accion=="g") {
                 }
 
                 if (empty(trim($_REQUEST['representante_legal_profesion'] ?? ''))) {
-                    $verror .= 'La profesion del Representante Legal es obligatoria. ';
+                    $verror .= 'La profesión del Representante Legal es obligatoria. ';
                 }
 
                 if (empty(trim($_REQUEST['representante_legal_direccion'] ?? ''))) {
-                    $verror .= 'La direccion del Representante Legal es obligatoria. ';
+                    $verror .= 'La dirección del Representante Legal es obligatoria. ';
                 }
             }
 
@@ -956,7 +957,7 @@ if (!es_nulo($cid) && in_array($id_estado, [11, 20], true)) {
         $verror .= 'Ingrese el precio de venta del vehículo. ';
     }
 
-    // Prima: puede ser 0, pero no vacía
+    // Prima: puede ser 0, pero no vacia
     if (trim($prima_raw) === '') {
         $verror .= 'Ingrese la prima de venta del vehículo. ';
     }
@@ -1217,31 +1218,31 @@ if ($foto_original_tele !== '') {
             $id_tienda = isset($venta_actual["id_tienda"]) ? intval($venta_actual["id_tienda"]) : 0;
             if ($id_tienda!=intval($_REQUEST['id_tienda'])){   
                $id_tienda_name=get_dato_sql("tienda","nombre"," where id=".$_REQUEST['id_tienda']);
-               registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificacion de Tienda', $id_tienda_name);
+               registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificación de Tienda', $id_tienda_name);
             }
             $kilometraje = isset($venta_actual["kilometraje"]) ? intval($venta_actual["kilometraje"]) : 0;
             if ($kilometraje!=intval($_REQUEST['kilometraje'])){   
-                registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificacion de Kilometraje', $_REQUEST['kilometraje']);
+                registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificación de Kilometraje', $_REQUEST['kilometraje']);
             }
 
              $precio_minimo = isset($venta_actual["precio_minimo"]) ? intval($venta_actual["precio_minimo"]) : 0;
              if ($precio_minimo!=intval($_REQUEST['precio_minimo'])){   
-                 registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificacion de Precio Minimo', $_REQUEST['precio_minimo']);
+                 registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificación de Precio Mínimo', $_REQUEST['precio_minimo']);
              }
 
              $precio_maximo = isset($venta_actual["precio_maximo"]) ? intval($venta_actual["precio_maximo"]) : 0;
              if ($precio_maximo!=intval($_REQUEST['precio_maximo'])){   
-                 registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificacion de Precio Maximo', $_REQUEST['precio_maximo']);
+                 registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificación de Precio Máximo', $_REQUEST['precio_maximo']);
              }
 
              $precio_venta = isset($venta_actual["precio_venta"]) ? intval($venta_actual["precio_venta"]) : 0;
              if ($precio_venta!=intval($_REQUEST['precio_venta'])){   
-                 registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificacion de Precio de Venta', $_REQUEST['precio_venta']);
+                 registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificación de Precio de Venta', $_REQUEST['precio_venta']);
              }
 
              $prima_venta = isset($venta_actual["prima_venta"]) ? intval($venta_actual["prima_venta"]) : 0;
              if ($prima_venta!=intval($_REQUEST['prima_venta'])){   
-                 registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificacion de Prima de Venta', $_REQUEST['prima_venta']);
+                 registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificación de Prima de Venta', $_REQUEST['prima_venta']);
              }
 
 
@@ -1264,7 +1265,7 @@ if ($foto_original_tele !== '') {
                 $_REQUEST['cliente_id'] === '0'
             ) ? null : intval($_REQUEST['cliente_id']);
 
-            // 👉 SOLO aquí se detecta el cambio
+            // ðŸ‘‰ SOLO aqui se detecta el cambio
             if ($cliente_viejo !== $cliente_nuevo) {
 
                 $nombre_viejo = $cliente_viejo
@@ -1275,22 +1276,11 @@ if ($foto_original_tele !== '') {
                     ? get_dato_sql("entidad", "nombre", " WHERE id = ".$cliente_nuevo)
                     : 'Vacío';
 
-                $observacion = "'Cliente: {$nombre_viejo} → {$nombre_nuevo}'";
+                $observacion = "Cliente: {$nombre_viejo} -> {$nombre_nuevo}";
 
                 if($nombre_viejo!=$nombre_nuevo)
                 {
-                    sql_insert("
-                        INSERT INTO ventas_historial_estado
-                        (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
-                        VALUES (
-                            $cid,
-                            ".$_SESSION['usuario_id'].",
-                            ".$_REQUEST['id_estado'].",
-                            'Modificación de cliente',
-                            NOW(),
-                            $observacion
-                        )
-                    ");
+                    registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificación de cliente', $observacion);
                 }
             }
 
@@ -1330,22 +1320,11 @@ if ($foto_original_tele !== '') {
                  $fotoRegistro1=get_dato_sql("ventas_estado","foto"," where foto=1 and id=".$id_estado);
                  $id_estado_name=get_dato_sql("ventas_estado","nombre"," where id=".$_REQUEST['id_estado']);
 
-                 registrar_historial_ventas_contrato($cid, $id_estado, 'Modificacion de Estado', $id_estado_name);
+                 registrar_historial_ventas_contrato($cid, $id_estado, 'Modificación de Estado', $id_estado_name);
 
                  if($id_estado_name!='en negociacion')
                  {
-                                    sql_insert("
-                    INSERT INTO ventas_historial_estado
-                    (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
-                    VALUES (
-                        $cid,
-                        ".$_SESSION['usuario_id'].",
-                        ".$_REQUEST['id_estado'].",
-                        'Modificación de cliente',
-                        NOW(),
-                        'Cliente eliminado al quitar estado de en negociacion'
-                    )
-                ");
+                    registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificación de cliente', 'Cliente eliminado al quitar estado de en negociación');
                  }
                  
              }
@@ -1367,30 +1346,30 @@ if ($foto_original_tele !== '') {
              $id_impuesto = isset($venta_actual["id_impuesto"]) ? intval($venta_actual["id_impuesto"]) : 0;
              if ($id_impuesto!=intval($_REQUEST['id_impuesto'])){   
                  $id_impuesto_name=get_dato_sql("ventas_impuestos","nombre"," where id=".$_REQUEST['id_impuesto']);
-                 registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificacion de Impuestos', $id_impuesto_name);
+                 registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificación de Impuestos', $id_impuesto_name);
              }
 
              $id_factura = isset($venta_actual["id_factura"]) ? intval($venta_actual["id_factura"]) : 0;
              if ($id_factura!=intval($_REQUEST['id_factura'])){   
                  $id_factura_name=get_dato_sql("ventas_factura","nombre"," where id=".$_REQUEST['id_factura']);
-                 registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificacion de Factura', $id_factura_name);
+                 registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificación de Factura', $id_factura_name);
              }            
 
              $id_vendedor = isset($venta_actual["id_vendedor"]) ? intval($venta_actual["id_vendedor"]) : 0;
              if ($id_vendedor!=intval($_REQUEST['id_vendedor'])){   
                 $id_vendedor_name=get_dato_sql("usuario","nombre"," where id=".$_REQUEST['id_vendedor']);
-                 registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificacion de Vendedor', $id_vendedor_name);
+                 registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificación de Vendedor', $id_vendedor_name);
              }
 
              $id_televentas = isset($venta_actual["id_televentas"]) ? intval($venta_actual["id_televentas"]) : 0;
              if ($id_televentas!=intval($_REQUEST['id_televentas'])){   
                  $id_televentas_name=get_dato_sql("usuario","nombre"," where id=".$_REQUEST['id_televentas']);
-                 registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificacion de Televentas', $id_televentas_name);
+                 registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificación de Televentas', $id_televentas_name);
              }
 
              $observaciones = isset($venta_actual["observaciones"]) ? trim((string)$venta_actual["observaciones"]) : '';
              if ($observaciones!=trim($_REQUEST['observaciones'])){   
-                registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificacion de Observaciones', $_REQUEST['observaciones']); 
+                registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Modificación de Observaciones', $_REQUEST['observaciones']); 
              }
             
              
@@ -1409,7 +1388,7 @@ if ($foto_original_tele !== '') {
             $result = sql_insert($sql);
             $cid=$result; //last insert id 
 
-            registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Nuevo registro de vehiculo', 'Nuevo');
+            registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Nuevo registro de vehículo', 'Nuevo');
             
             // RL. 20251121 - Para nuevo registro en estado 5, verificar fotos
             $id_estado = intval($_REQUEST['id_estado']);
@@ -1646,10 +1625,10 @@ if ($foto_original_tele !== '') {
     </div>    
     <?php if(!es_nulo($diff)) { ?>
         <div class="col-md">
-            <?php echo campo("dias","Dias en Negociacion",'label',$diff->days,' ',' '); ?>      
+            <?php echo campo("dias","Días en Negociación",'label',$diff->days,' ',' '); ?>      
         </div>                
         <div class="col-md">    
-            <?php echo campo("fecha_neg","Fecha en Negociacion",'label',formato_fechahora_de_mysql($fecha_negociacion),' ',' '); ?>    
+            <?php echo campo("fecha_neg","Fecha en Negociación",'label',formato_fechahora_de_mysql($fecha_negociacion),' ',' '); ?>    
         </div>        
     <?php } ?>        
     <?php echo campo("id_inspeccion","Numero",'hidden',$id_inspeccion,' ',' '); ?>          
@@ -1709,7 +1688,7 @@ if ($foto_original_tele !== '') {
 
         echo campo("nombre_cliente","",'hidden',$nombre_cliente,'','','');
         echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1,'get.php?a=2&t=1',$cliente_nombre);
-        echo campo("persona_juridica","persona juridica",'checkboxCustom',$persona_juridica,' ',$disable_sec2);
+        echo campo("persona_juridica","Persona jurídica",'checkboxCustom',$persona_juridica,' ',$disable_sec2);
         ?>
 
         <div class="row">
@@ -1740,7 +1719,7 @@ if ($foto_original_tele !== '') {
             <div class="col-md-6">
                 <?php echo campo(
                     "representante_legal_profesion",
-                    "Profesión de Representante Legal",
+                    "Profesion de Representante Legal",
                     'text',
                     $representante_legal_profesion,
                     ' ',
@@ -1915,7 +1894,7 @@ if ($foto_original_tele !== '') {
           <?php } ?>  
 
         <?php if (!es_nulo($id_inspeccion)){ ?>            
-            <a href="#" onclick="abrir_hoja(); return false;" class="btn btn-outline-secondary mr-2 mb-2 xfrm" ><i class="fa fa-file-medical-alt"></i> Abrir Inspección</a>
+            <a href="#" onclick="abrir_hoja(); return false;" class="btn btn-outline-secondary mr-2 mb-2 xfrm" ><i class="fa fa-file-medical-alt"></i> Abrir Inspeccion</a>
         <?php } ?> 
 
 <div style="margin-right:10px;">
@@ -1955,7 +1934,7 @@ $('#btnguardar').on('click', function (e) {
 
     popupconfirmar(
         'Confirmación',
-        '¿Seguro desea guardar?',
+        'Seguro desea guardar?',
         async function () {
 
             const resultado = await procesarAsync(
@@ -1968,7 +1947,6 @@ $('#btnguardar').on('click', function (e) {
                 mytoast('error', resultado.msg, 3000);
             } else {
                 mytoast('success', resultado.msg, 3000);
-                $('#ModalWindow2').modal('hide');
             }
         }
     );
@@ -1990,7 +1968,7 @@ $('#btnContrato').on('click', function (e) {
 
             popupconfirmar(
             'Confirmación',
-            '¿Deseas descargar el contrato?',
+            'Deseas descargar el contrato?',
             function () {
 
                 $.ajax({
@@ -2011,11 +1989,11 @@ $('#btnContrato').on('click', function (e) {
                                 3000
                             );
 
-                            // 🔥 quitar aviso de salida
+                            // ðŸ”¥ quitar aviso de salida
                             window.onbeforeunload = null;
                             $(window).off('beforeunload');
 
-                            // 👉 ahora sí descargar
+                            // ðŸ‘‰ ahora si descargar
                             window.location.href =
                                 'ventas_mant_contrato.php?a=print&id=' +
                                 encodeURIComponent(id) +
@@ -2072,7 +2050,7 @@ $('#btnActualizarContrato').on('click', function (e) {
 
             popupconfirmar(
                 'Confirmación',
-                '¿Seguro desea generar el contrato? Los datos se sustituirán si previamente ya existía un contrato.',
+                'Seguro desea generar el contrato? Los datos se sustituirán si previamente ya existía un contrato.',
                 function () {
 
                     $.ajax({
@@ -2263,7 +2241,7 @@ $('#btnActualizarContrato').on('click', function (e) {
 function abrir_hoja(){    
     hinspeccion = $('#id_inspeccion').val();
     $('#ModalWindow2').modal('hide');
-    get_page('pagina','inspeccion_mant.php?a=v&cid='+hinspeccion,'Hoja de Inspección',false);
+    get_page('pagina','inspeccion_mant.php?a=v&cid='+hinspeccion,'Hoja de Inspeccion',false);
 }
 
 function insp_guardar_foto(arch,campo){
@@ -2290,6 +2268,16 @@ function mostrar_foto2(imagen,folder="aws_bucket_s3/") {
 
 }); 
 
+}
+
+function recargar_tab_fotos_venta(cid){
+    $('#nav_Fotos_venta').load('ventas_fotos_admin.php?cid=' + cid, function(response, status, xhr) {
+        if (status == "error") {
+            mytoast('error','Error al cargar fotos...',3000);
+            return;
+        }
+        $('#insp_tabFotos').tab('show');
+    });
 }
 
 
@@ -2343,7 +2331,7 @@ Swal.fire({
 	}).then((result) => {
 	  if (result.value) {
 	    
-            $.post( 'ventas_mant_contrato.php',datos, function(json) {
+            $.post( 'ventas_fotos_admin.php',datos, function(json) {
                 
                 if (json.length > 0) {
                     if (json[0].pcode == 0) {
@@ -2358,12 +2346,7 @@ Swal.fire({
                 } else {mytoast('error',json[0].pmsg,3000) ; }
                 
             })
-            .done(function() {	abrir_ventas(cid); 
-                    setTimeout(function() {
-                        ventas_cambiartab('nav_Fotos_venta');
-                        $('#insp_tabFotos').tab('show');
-
-                    }, 300);
+            .done(function() {	recargar_tab_fotos_venta(cid);
                     mytoast('success','Borrado',3000) ; 
             })
             .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
@@ -2391,7 +2374,7 @@ Swal.fire({
 	}).then((result) => {
 	  if (result.value) {
 	    
-            $.post( 'ventas_mant_contrato.php',datos, function(json) {
+            $.post( 'ventas_fotos_admin.php',datos, function(json) {
                 
                 if (json.length > 0) {
                     if (json[0].pcode == 0) {
@@ -2408,13 +2391,8 @@ Swal.fire({
                 
             })
             .done(function() {	  
-                abrir_ventas(cid); 
-                    setTimeout(function() {
-                        ventas_cambiartab('nav_Fotos_venta');
-                        $('#insp_tabFotos').tab('show');
-                    }, 300);
-
-                    mytoast('success','Borrado',3000) ; 
+                recargar_tab_fotos_venta(cid);
+                mytoast('success','Borrado',3000) ; 
             })
             .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
             .always(function() {	  });
@@ -2432,7 +2410,7 @@ function marcar_portada(codid,arch){
     var datos= { a: "ufotoportadaventas", cid: cid, pid: $("#pid").val() , cod: codid, arch: encodeURI(arch)} ;
   
 Swal.fire({
-	  title: '⭐Foto de portada',
+	  title: 'â­Foto de portada',
 	  text:  'Desea Marcar la foto como portada?',
 	  showCancelButton: true,
 	  confirmButtonColor: '#3085d6',
@@ -2442,7 +2420,7 @@ Swal.fire({
 	}).then((result) => {
 	  if (result.value) {
 	    
-            $.post( 'ventas_mant_contrato.php',datos, function(json) {
+            $.post( 'ventas_fotos_admin.php',datos, function(json) {
                
                 if (json.length > 0) {
                     if (json[0].pcode == 0) {
@@ -2459,12 +2437,7 @@ Swal.fire({
                 
             })
             .done(function() {	  
-                    abrir_ventas(cid); 
-                    setTimeout(function() {
-                        ventas_cambiartab('nav_Fotos_venta');
-                        $('#insp_tabFotos').tab('show');
-                    }, 300);
-
+                    recargar_tab_fotos_venta(cid);
                     mytoast('success','Actualizado',3000) ; 
             })
             .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
@@ -2478,44 +2451,35 @@ Swal.fire({
 
 }
 
-    function insp_guardar_foto_ventas(arch,campo,isMain){
+function insp_guardar_foto_ventas(arch,campo,isMain){
      
     var cid=$("#id").val();
     var datos= { a: "gfoto", arch: encodeURI(arch),cid:cid,isMain:isMain}; 
+    var archivoFinal = arch;
 
 
- 	 $.post( 'ventas_mant_contrato.php',datos, function(json) {
+ 	 $.post( 'ventas_fotos_admin.php',datos, function(json) {
 	 			
-		if (json.length > 0) {
-			if (json[0].pcode == 0) {
-				
-				mytoast('error',json[0].pmsg,3000) ;   
-			}
+		if (json && json.length > 0) {
 			if (json[0].pcode == 1) {
-                $('#'+campo).val(arch);                
+                if (json[0].parch != undefined && json[0].parch != '') {
+                    archivoFinal = json[0].parch;
+                }
+                $('#'+campo).val(archivoFinal);                
                 $('#files_'+campo).text('Guardado');
-                $('#lk'+campo).html(arch);
-               // thumb_agregar(arch);
-               thumb_agregar_foto_venta(arch,campo);
-			
-			}
-		} else {mytoast('error',json[0].pmsg,3000) ; }
-		  
-	})
-	  .done(function() { 
-
-        abrir_ventas(cid); 
-        setTimeout(function() {
-            ventas_cambiartab('nav_Fotos_venta');
-
-            $('#insp_tabFotos').tab('show');
-        }, 300);
-
-        mytoast('success','Guardado',3000) ;   
-    
-    })
-	  .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
-	  .always(function() {	  }); 
+                $('#lk'+campo).html(archivoFinal);
+               thumb_agregar_foto_venta(archivoFinal,campo);
+                recargar_tab_fotos_venta(cid);
+                mytoast('success', (json[0].pmsg ? json[0].pmsg : 'Guardado'), 3000);
+			} else {
+                mytoast('error', (json[0].pmsg ? json[0].pmsg : 'Error al guardar la foto'), 3000);
+            }
+		} else {
+            mytoast('error','Error al guardar la foto',3000);
+        }
+	}).fail(function() {
+        mytoast('error','Error al guardar la foto',3000);
+    });
     
     }
 
@@ -2532,7 +2496,7 @@ $('#forma_ventas input[id=placa] ').val(datos.placa);
 function ventas_anular(){
     Swal.fire({
 	  title: 'Borrar',
-	  text:  'Desea Borrar este vehiculo?',
+	  text:  'Desea Borrar este vehículo?',
 	  icon: 'question',
 	  showCancelButton: true,
 	  confirmButtonColor: '#3085d6',
@@ -2579,11 +2543,13 @@ function ventas_procesar(url,forma,adicional){
 		if (json.length > 0) {
 			if (json[0].pcode == 0) {
 				cargando(false);
-				mytoast('error',json[0].pmsg,3000) ;   
+				var msgError = (json[0].pmsg && (json[0].pmsg + '').trim() !== '') ? json[0].pmsg : 'No se pudo guardar';
+				mytoast('error',msgError,3000) ;   
 			}
 			if (json[0].pcode == 1) {
 				cargando(false);
-				mytoast('success',json[0].pmsg,3000) ;
+				var msgOk = (json[0].pmsg && (json[0].pmsg + '').trim() !== '') ? json[0].pmsg : 'Guardado';
+				mytoast('success',msgOk,3000) ;
 
 					$("#"+forma+' #id').val(json[0].pcid);
 
@@ -2630,6 +2596,9 @@ function ventas_cambiartab(eltab) {
   if (eltab=='nav_historial') {
      procesar_ventas_historial('nav_historial');
   }
+  if (eltab=='nav_Fotos_venta') {
+     procesar_ventas_fotos('nav_Fotos_venta');
+  }
 
   
   if (continuar==true){
@@ -2668,5 +2637,23 @@ $("#"+campo).load(url, function(response, status, xhr) {
   
 }
 
+function procesar_ventas_fotos(campo){
+var cid=$("#id").val();
+var url='ventas_fotos_admin.php?cid='+cid;
+
+$(window).scrollTop(0);
+$("#"+campo).html('<div class="text-center mt-5 mb-5"><i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><br><span class="">Cargando</span></div>');
+
+$("#"+campo).load(url, function(response, status, xhr) {
+  if (status == "error") {
+    $("#"+campo).html('<p>&nbsp;</p>');
+    mytoast('error','Error al cargar la pagina...',6000) ;
+  }
+});
+}
+
 
 </script>
+
+
+
