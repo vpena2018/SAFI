@@ -454,33 +454,33 @@ if ($nuevoreg==true) {
 
         $ordenesborrador=intval($chkVehiculo["ordenesborrador"]);
         if ($ordenesborrador>0) {
-          $valerror=mensaje("No puede crear una nueva Hoja de Inspeccion porque actualmente se encontraron $ordenesborrador  Hojas de Inspeccion en estado de borrador, para continuar debe completar estas  Hojas de InspecciÃ³n o borrarlas",'warning');
+          $valerror=mensaje("No puede crear una nueva Hoja de Inspeccion porque actualmente se encontraron $ordenesborrador  Hojas de Inspeccion en estado de borrador, para continuar debe completar estas  Hojas de Inspeccion o borrarlas",'warning');
           $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de InspecciÃ³n</a>';
         } 
         
         $trasladosP=intval($chkVehiculo["trasladosP"]);
         if ($trasladosP>0) {
           $valerror=mensaje("No puede crear una nueva Hoja de Inspeccion porque existe una Orden de Traslado sin completar del vehiculo",'warning');
-          $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de InspecciÃ³n</a>';
+          $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspeccion</a>';
         }
         
         if($tipo_doc=='2'){
           $EstadoReparacion=intval($chkVehiculo["EstadoReparacion"]);
           if (!es_nulo($EstadoReparacion)){
               $valerror=mensaje("No puede crear una nueva Hoja de Inspeccion porque el Vehiculo esta en proceso de reparacion",'warning');
-              $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de InspecciÃ³n</a>';
+              $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspeccion</a>';
           }       
           $ParoPorRepuesto=intval($chkVehiculo["ParoPorRepuesto"]);                 
           $Oservicio=intval($chkVehiculo["Oservicio"]);                 
           $Ocombustible=intval($chkVehiculo["Ocombustible"]);                 
           if (!es_nulo($Oservicio) or !es_nulo($ParoPorRepuesto)){
               $valerror=mensaje("No puede crear una nueva Hoja de Inspeccion, porque existe una Orden de Servicio sin completar del vehiculo",'warning');
-              $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de InspecciÃ³n</a>';
+              $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspeccion</a>';
           }
 
           if (!es_nulo($Ocombustible)){
               $valerror=mensaje("No puede crear una nueva Hoja de Inspeccion, porque existe una Orden de Combustible sin completar del vehiculo",'warning');
-              $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de InspecciÃ³n</a>';
+              $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspeccion</a>';
           }
         }
     /*
