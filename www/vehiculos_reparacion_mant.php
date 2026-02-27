@@ -257,15 +257,9 @@ if ($accion=="g") {
              $precio_maximo = isset($venta_actual['precio_maximo']) ? intval($venta_actual['precio_maximo']) : 0;
              if ($precio_maximo!=intval($_REQUEST['precio_maximo'])){   
                  registrar_historial_ventas($cid, 99, 'Modificacion de Precio Maximo', $_REQUEST['precio_maximo']);
-             }
-
-         
+             }         
              
-            $sql="update ventas set ".$sqlcampos." where id=".$cid." limit 1";
-
-
-
-             
+            $sql="update ventas set ".$sqlcampos." where id=".$cid." limit 1";           
 
             $result = sql_update($sql);
         } else {
