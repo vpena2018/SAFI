@@ -1,165 +1,5 @@
-﻿
+
 var mnu_opening=false;
-
-function _safi_parse_json(value){
-	if (!value || value === '' || value === '[object Object]') { return null; }
-	try { return JSON.parse(value); } catch(e) { return null; }
-}
-
-function _safi_insp_init_canvases() {
-	if (typeof window.fabric === 'undefined') { return; }
-	if (!document.getElementById('c') || !document.getElementById('firma1') || !document.getElementById('firma2')) { return; }
-
-	if (typeof window.cv_cargar !== 'function') {
-		window.cv_cargar = function(thecanvas, json) {
-			var parsed = (typeof json === 'string') ? _safi_parse_json(json) : json;
-			if (!parsed) { return; }
-			thecanvas.loadFromJSON(parsed, function() {
-				thecanvas.selection = false;
-				thecanvas.forEachObject(function(o) {
-					o.selectable = false;
-					o.evented = false;
-					o.hoverCursor = 'default';
-				});
-				thecanvas.renderAll();
-			});
-		};
-	}
-
-	if (!window.canvas || !window.canvas.lowerCanvasEl || window.canvas.lowerCanvasEl.id !== 'c') {
-		window.canvas = new fabric.Canvas('c');
-	}
-	if (!window.canvas_firma1 || !window.canvas_firma1.lowerCanvasEl || window.canvas_firma1.lowerCanvasEl.id !== 'firma1') {
-		window.canvas_firma1 = new fabric.Canvas('firma1');
-	}
-	if (!window.canvas_firma2 || !window.canvas_firma2.lowerCanvasEl || window.canvas_firma2.lowerCanvasEl.id !== 'firma2') {
-		window.canvas_firma2 = new fabric.Canvas('firma2');
-	}
-
-	window.canvas_firma1.isDrawingMode = true;
-	window.canvas_firma2.isDrawingMode = true;
-	if (window.canvas_firma1.freeDrawingBrush) { window.canvas_firma1.freeDrawingBrush.width = 2; }
-	if (window.canvas_firma2.freeDrawingBrush) { window.canvas_firma2.freeDrawingBrush.width = 2; }
-
-	var plantilla = $('#plantilla_vehiculo').val() || 'turismo';
-	var bg = 'img/hoja_inspeccion/' + plantilla + '.jpg';
-	window.canvas.setBackgroundImage(bg, window.canvas.renderAll.bind(window.canvas), { originX: 'left', originY: 'top' });
-
-	var d = $('#detalles_canvas').val();
-	if (d && d !== '' && d !== '[object Object]') { window.cv_cargar(window.canvas, d); }
-	var f1 = $('#firma1_canvas').val();
-	if (f1 && f1 !== '') { window.cv_cargar(window.canvas_firma1, f1); }
-	var f2 = $('#firma2_canvas').val();
-	if (f2 && f2 !== '') { window.cv_cargar(window.canvas_firma2, f2); }
-}
-
-// Fallback global para ambientes donde el script inline del modulo no se ejecuta.
-if (typeof window.insp_cambiartab !== 'function') {
-	window.insp_cambiartab = function(eltab) {
-		var codigo = $('#id').val();
-		var continuar = true;
-		$('.tab-pane').hide();
-
-		if (eltab !== 'nav_detalle') {
-			if (codigo === "0" || codigo === "" || codigo === undefined) {
-				continuar = false;
-				if ($('#nav_deshabilitado').length) {
-					$('#nav_deshabilitado').show();
-					$('#nav_deshabilitado').tab('show');
-				}
-			}
-		}
-
-		if (eltab === 'nav_fotos' && typeof window.procesar_inspeccion_foto === 'function') {
-			window.procesar_inspeccion_foto('nav_fotos');
-		}
-		if (eltab === 'nav_fotos' && typeof window.procesar_inspeccion_foto !== 'function') {
-			var pidf = ($('#id_producto').val() || $('#pid').val() || 0);
-			var urlf = 'inspeccion_fotos.php?cid=' + (codigo || 0) + '&pid=' + (pidf || 0);
-			$('#nav_fotos').html('<div class="text-center mt-5 mb-5"><i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><br><span>Cargando</span></div>');
-			$('#nav_fotos').load(urlf, function(response, status, xhr) {
-				if (status == "error") {
-					$('#nav_fotos').html('<p>&nbsp;</p>');
-					mytoast('error','Error al cargar la pagina...',6000);
-				}
-			});
-		}
-		if (eltab === 'nav_historial' && typeof window.procesar_inspeccion_historial === 'function') {
-			window.procesar_inspeccion_historial('nav_historial');
-		}
-		if (eltab === 'nav_historial' && typeof window.procesar_inspeccion_historial !== 'function') {
-			var pidh = ($('#id_producto').val() || $('#pid').val() || 0);
-			var urlh = 'inspeccion_historial.php?cid=' + (codigo || 0) + '&pid=' + (pidh || 0);
-			$('#nav_historial').html('<div class="text-center mt-5 mb-5"><i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><br><span>Cargando</span></div>');
-			$('#nav_historial').load(urlh, function(response, status, xhr) {
-				if (status == "error") {
-					$('#nav_historial').html('<p>&nbsp;</p>');
-					mytoast('error','Error al cargar la pagina...',6000);
-				}
-			});
-		}
-
-		if (continuar === true) {
-			$('#'+eltab).show();
-			$('#'+eltab).tab('show');
-		}
-	};
-}
-
-if (typeof window.insp_limpiar_firma !== 'function') {
-	window.insp_limpiar_firma = function(objeto) {
-		try {
-			if (parseInt(objeto, 10) === 1 && window.canvas_firma1 && typeof window.canvas_firma1.clear === 'function') {
-				window.canvas_firma1.clear();
-			}
-			if (parseInt(objeto, 10) === 2 && window.canvas_firma2 && typeof window.canvas_firma2.clear === 'function') {
-				window.canvas_firma2.clear();
-			}
-		} catch (e) {}
-	};
-}
-
-if (typeof window.insp_canvas_zoom !== 'function') {
-	window.insp_canvas_zoom = function(inout, valor) {
-		if (!window.canvas || typeof window.canvas.setZoom !== 'function') { return; }
-		if (inout === 'OUT') {
-			window.canvas.setZoom(1);
-			return;
-		}
-		var z = parseFloat(valor || 2);
-		if (isNaN(z) || z <= 0) { z = 1; }
-		window.canvas.setZoom(z);
-	};
-}
-
-if (typeof window.procesar_inspeccion !== 'function') {
-	window.procesar_inspeccion = function(url, forma, adicional) {
-		_safi_insp_init_canvases();
-		if (window.canvas && $('#detalles_canvas').length) {
-			window.canvas.includeDefaultValues = false;
-			$('#detalles_canvas').val(JSON.stringify(window.canvas.toJSON()));
-		}
-		if (window.canvas_firma1 && $('#firma1_canvas').length) {
-			$('#firma1_canvas').val(JSON.stringify(window.canvas_firma1.toJSON()));
-		}
-		if (window.canvas_firma2 && $('#firma2_canvas').length) {
-			$('#firma2_canvas').val(JSON.stringify(window.canvas_firma2.toJSON()));
-		}
-		procesar(url, forma, adicional);
-	};
-}
-
-if (typeof window.inspeccion_generar_pdf !== 'function') {
-	window.inspeccion_generar_pdf = function() {
-		_safi_insp_init_canvases();
-		if (!document.getElementById('pdfform')) { return; }
-		if (window.canvas && $('#pdfimg1').length) { $('#pdfimg1').val(window.canvas.toDataURL('image/png')); }
-		if (window.canvas_firma1 && $('#pdffirma1').length) { $('#pdffirma1').val(window.canvas_firma1.toDataURL('image/png')); }
-		if (window.canvas_firma2 && $('#pdffirma2').length) { $('#pdffirma2').val(window.canvas_firma2.toDataURL('image/png')); }
-		if ($('#pdfcod').length && $('#id').length) { $('#pdfcod').val($('#id').val()); }
-		$('#pdfform').submit();
-	};
-}
 
 
 
@@ -246,8 +86,6 @@ if (mnu_opening==false) {
 			mytoast('error','Error al cargar la pagina...',6000) ;
 		}
 
-		_safi_insp_init_canvases();
-
 	});
 
 
@@ -313,17 +151,22 @@ function modalwindow2(titulo,contenido_url,datos=null) {
 		$('#ModalWindow2Body').html('<div id="cargando" class="oculto"  align="center" > <img src="img/load.gif"/></div>');
 		// <button type="button" class="btn btn-secondary xfrm" data-dismiss="modal">Close</button>        
 		// <button type="button" class="btn btn-primary xfrm">Guardar</button>
-		$.post(contenido_url, datos, function(data) {
-			$('#ModalWindow2Body').html(data);
-			_safi_insp_init_canvases();
+	
+	 
+		$.post( contenido_url,datos, function(data) {
+	
+					$('#ModalWindow2Body').html(data); 
+			   
 		})
-		.done(function() {
-		})
-		.fail(function(xhr, status, error) {
-			$('#ModalWindow2Body').html("Se produjo un error. Favor vuelva a intentar"+'<br><br><button type="button" class="btn btn-secondary" data-dismiss="modal">'+'Cerrar'+'</button>');
-		})
-		.always(function() {
-		});
+		  .done(function() {
+		   
+		  })
+		  .fail(function(xhr, status, error) {
+				   $('#ModalWindow2Body').html("Se produjo un error. Favor vuelva a intentar"+'<br><br><button type="button" class="btn btn-secondary" data-dismiss="modal">'+'Cerrar'+'</button>'); 
+		  })
+		  .always(function() {
+	
+		  });
 	
 		$('#ModalWindow2').modal('show');
 	
@@ -344,7 +187,7 @@ function popupWeb(titulo, contenidoHtml) {
     $('#ModalWindow2Body').html(contenidoEstilizado);
     $('#ModalWindow2').modal('show');
 
-    // Asignar evento al botón despuÃ©s de inyectarlo en el DOM
+    // Asignar evento al botón después de inyectarlo en el DOM
     $('#btnCerrarModal').on('click', function () {
 		$('#ModalWindow').modal('hide');
         $('#ModalWindow2').modal('hide');
@@ -403,7 +246,7 @@ function popupconfirmar(titulo, mensaje, onSi) {
                     padding:7px 16px;
                     cursor:pointer;
                     font-weight:bold;
-                ">SÃ­</button>
+                ">Sí</button>
 
 				<button id="btnNoSimple" style="
                     background:#6c757d;
@@ -557,10 +400,10 @@ function procesarAsync(url, forma, adicional) {
         $.post(url, datos)
             .done(function (json) {
 
-                // ðŸ”¹ Respuesta vÃ¡lida
+                // 🔹 Respuesta válida
                 if (Array.isArray(json) && json.length > 0) {
 
-                    // âŒ Error de negocio
+                    // ❌ Error de negocio
                     if (json[0].pcode == 0) {
                         resolve({
                             ok: false,
@@ -569,7 +412,7 @@ function procesarAsync(url, forma, adicional) {
                         return;
                     }
 
-                    // âœ… Ã‰xito
+                    // ✅ Éxito
                     if (json[0].pcode == 1) {
                         $("#" + forma + ' #id').val(json[0].pcid);
 
@@ -581,10 +424,10 @@ function procesarAsync(url, forma, adicional) {
                     }
                 }
 
-                // âŒ Respuesta invÃ¡lida
+                // ❌ Respuesta inválida
                 resolve({
                     ok: false,
-                    msg: 'Respuesta invÃ¡lida del servidor'
+                    msg: 'Respuesta inválida del servidor'
                 });
             })
             .fail(function () {
@@ -966,4 +809,3 @@ function rf_fechas(rango,cdesde='rfdesde',chasta='rfhasta') {
 			   z(d.getDate()) ; 
 	  }
 	  
-
