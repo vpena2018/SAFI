@@ -94,17 +94,17 @@ if ($accion == "d") {
 
     if ($cod != '' or $arch != '') {
         $borrado_directorio = borrar_foto_directorio2($cid, $cod, $arch, "averia");
-        if ($borrado_directorio) {
-            $result = sql_delete("DELETE FROM averia_foto
-                                WHERE id_maestro=$cid
-                                $arch
-                                $cod
-                                LIMIT 1");
-            if (!$result) {
-                file_put_contents(app_logs_folder . date("Y-m-d") . "_averia_fotos.log", "Error en sql Delete averia_foto" . PHP_EOL, FILE_APPEND);
-            }
-        } else {
-            $result = false;
+        if (!$borrado_directorio) {
+            file_put_contents(app_logs_folder . date("Y-m-d") . "_averia_fotos.log", "Advertencia: no se pudo borrar archivo físico en averia_foto, se continuará con borrado en DB" . PHP_EOL, FILE_APPEND);
+        }
+
+        $result = sql_delete("DELETE FROM averia_foto
+                            WHERE id_maestro=$cid
+                            $arch
+                            $cod
+                            LIMIT 1");
+        if (!$result) {
+            file_put_contents(app_logs_folder . date("Y-m-d") . "_averia_fotos.log", "Error en sql Delete averia_foto" . PHP_EOL, FILE_APPEND);
         }
     } else {
         $result = false;
