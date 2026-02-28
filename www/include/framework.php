@@ -2118,7 +2118,8 @@ function foto_reducir_tamano($archivo){
         if (in_array($filetype, $allowedTypes)) {        
             try {
                 //1200 pixeles , calidad 90% 
-                shell_exec('mogrify -resize 1200 -quality 90 -quiet '.$archivo.' > /dev/null 2>/dev/null &');
+                $archivo_seguro = escapeshellarg($archivo);
+                shell_exec('mogrify -resize 1200 -quality 90 -quiet ' . $archivo_seguro . ' > /dev/null 2>/dev/null &');
             } catch (\Throwable $th) {
                 //throw $th;
             }
