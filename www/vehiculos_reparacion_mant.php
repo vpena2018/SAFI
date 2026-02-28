@@ -188,7 +188,7 @@ if ($accion=="g") {
         $estadocompletar="";
         if (isset($_REQUEST['est'])) { $estadocompletar = trim($_REQUEST["est"]); }
         if (!es_nulo($estadocompletar) && $estadocompletar=='cmp'){
-             $sqlcampos.= ", id_estado=0";
+             if (isset($_REQUEST["id_estado_anterior_reproceso"])) { $sqlcampos.= " , id_estado_anterior_reproceso =".GetSQLValue($_REQUEST["id_estado_anterior_reproceso"],"int"); } 
              $sqlcampos.= ", tipo_ventas_reparacion=2";
              $sqlcampos.= ", reproceso='' ";  
              $sqlcampos.= ", fecha_reparacion_completada=now() ";    		  	 
@@ -406,7 +406,8 @@ if ($accion =="d") {
     if (isset($row["precio_maximo"])) {$precio_maximo= $row["precio_maximo"]; } else {$precio_maximo= "";}
     if (isset($row["trasmision"])) {$trasmision= $row["trasmision"]; } else {$trasmision= "";}
     if (isset($row["id_vendedor"])) {$id_vendedor= $row["id_vendedor"]; } else {$id_vendedor= "";}
-
+    if (isset($row["id_estado_anterior_reproceso"])) {$id_estado_anterior_reproceso= $row["id_estado_anterior_reproceso"]; } else {$id_estado_anterior_reproceso= "";}
+    
     //$observaciones_reparacion= "";
     if ($id_estado=='' || $id_estado==99){
        $disable_sec1=' ';  
@@ -432,7 +433,7 @@ if ($accion =="d") {
     }
 
     echo campo("id",("Codigo"),'hidden',$id,' ','');
-
+    echo campo("id_estado_anterior_reproceso",("Estado"),'hidden',$id_estado_anterior_reproceso,' ','');
 ?>
 
 

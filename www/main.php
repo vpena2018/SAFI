@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
@@ -468,7 +468,8 @@ $forzar_cambio_clave = (isset($_SESSION['force_pwd_change']) && intval($_SESSION
 <script type="text/javascript" src="plugins/fileupload/jquery.fileupload.js"></script>
 
 
-<script type="text/javascript" src="js/app5.js"></script>
+<?php $app5v = @filemtime(__DIR__ . '/js/app5.js'); if (!$app5v) { $app5v = time(); } ?>
+<script type="text/javascript" src="js/app5.js?v=<?php echo intval($app5v); ?>"></script>
 
 <script src="plugins/chart/Chart.min.js"></script>
 
@@ -551,3 +552,4 @@ $forzar_cambio_clave = (isset($_SESSION['force_pwd_change']) && intval($_SESSION
 
 </body>
 </html>
+

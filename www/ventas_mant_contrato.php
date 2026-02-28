@@ -1204,10 +1204,11 @@ if ($foto_original_tele !== '') {
                            $nombreReproceso='Mecanica';
                            $sqlcampos.= " , id_estado_mecanica = 30";
                             break;
-                    }
+                    }    
                     $sqlcampos.= " , tipo_ventas_reparacion = 1";
                     $sqlcampos.= " , id_estado = 99";
                     $sqlcampos.= " , reproceso = 'R'";
+                    $sqlcampos.= " , id_estado_anterior_reproceso = ".$_REQUEST['id_estado'];                    
                     registrar_historial_ventas_contrato($cid, $_REQUEST['id_estado'], 'Vehiculo a Reproceso', $nombreReproceso);
                 }
             }
