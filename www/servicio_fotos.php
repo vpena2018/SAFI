@@ -13,14 +13,8 @@ function render_foto_thumbnail_servicio($row, $mostrar_borrar = false, $puede_bo
     $es_imagen = in_array($fext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
 
     if ($es_imagen) {
-        $ruta_local = 'uploa_d/' . $row['archivo'];
-        if (file_exists($ruta_local)) {
-            $onclick = "mostrar_foto('" . $archivo . "', 'local'); return false;";
-            $src = 'uploa_d/thumbnail/' . $archivo;
-        } else {
-            $onclick = "mostrar_foto('" . $archivo . "', 's3'); return false;";
-            $src = 'aws_bucket_s3/thumbnail/' . $archivo;
-        }
+        $onclick = "mostrar_foto('" . $archivo . "'); return false;";
+        $src = 'uploa_d/thumbnail/' . $archivo;
         echo '<a href="#" class="foto_br' . $id . '" onclick="' . $onclick . '"><img class="img img-thumbnail mb-3 mr-3" style="width: 180px; height: auto;" src="' . $src . '" data-cod="' . $id . '"></a> ';
         if ($mostrar_borrar) {
             if ($row["id_estado"] <= 2 or $puede_borrar_por_permiso) {
@@ -279,8 +273,8 @@ function esImagen(archivo) {
     return ['jpg', 'jpeg', 'png', 'gif', 'webp'].indexOf(ext) !== -1;
 }
 
-function mostrar_foto(imagen, origen) {
-    var prefijo = (origen === 's3') ? 'aws_bucket_s3/' : 'uploa_d/';
+function mostrar_foto(imagen) {
+    var prefijo = 'uploa_d/';
     $('#ModalWindowTitle').html('');
     $('#ModalWindowBody').html('<img class="img-fluid" src="' + prefijo + encodeURI(imagen) + '">');
     $('#ModalWindow').modal('show');
@@ -346,7 +340,7 @@ function thumb_agregar2(archivo, campo) {
     var salida = '';
     if (archivo != '' && archivo != undefined) {
         if (esImagen(archivo)) {
-            salida = '<a href="#" onclick="mostrar_foto(\'' + archivo + '\', \'local\'); return false;"><img class="img img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/' + archivo + '"></a> ';
+            salida = '<a href="#" onclick="mostrar_foto(\'' + archivo + '\'); return false;"><img class="img img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/' + archivo + '"></a> ';
         } else {
             salida = '<a href="uploa_d/' + archivo + '" target="_blank" class="img-thumbnail mb-3 mr-3">' + archivo + '</a>';
         }
