@@ -911,6 +911,10 @@ if ($accion=="g") {
                 $verror .= 'Seleccione un cliente. ';
             }
 
+            if (empty(trim($_REQUEST['representante_legal_profesion'] ?? ''))) {
+                $verror .= 'La profesion u oficio del comprador es obligatoria. ';
+            }
+
             if ($persona_juridica == 1) {
 
                 if (empty(trim($_REQUEST['representante_legal_persona_juridica'] ?? ''))) {
@@ -921,9 +925,7 @@ if ($accion=="g") {
                     $verror .= 'La Identidad del Representante Legal es obligatoria. ';
                 }
 
-                if (empty(trim($_REQUEST['representante_legal_profesion'] ?? ''))) {
-                    $verror .= 'La profesion del Representante Legal es obligatoria. ';
-                }
+
 
                 if (empty(trim($_REQUEST['representante_legal_direccion'] ?? ''))) {
                     $verror .= 'La direccion del Representante Legal es obligatoria. ';
@@ -1086,7 +1088,7 @@ if ($foto_original_tele !== '') {
         if (isset($_REQUEST["precio_venta"])) { $sqlcampos.= " , precio_venta =".GetSQLValue($_REQUEST["precio_venta"],"int"); } 
 
         if (isset($_REQUEST["prima_venta"])) { $sqlcampos.= " , prima_venta =".GetSQLValue($_REQUEST["prima_venta"],"int"); } 
-
+        
 
         
 
@@ -1096,7 +1098,7 @@ if ($foto_original_tele !== '') {
 
             $rep_legal = trim($_REQUEST['representante_legal_persona_juridica'] ?? '');
             $rep_id    = trim($_REQUEST['representante_legal_identidad'] ?? '');
-            $rep_profesion   = trim($_REQUEST['representante_legal_profesion'] ?? '');
+            
             $rep_direccion    = trim($_REQUEST['representante_legal_direccion'] ?? '');
 
             $sqlcampos .= " , representante_legal_persona_juridica = "
@@ -1105,8 +1107,7 @@ if ($foto_original_tele !== '') {
             $sqlcampos .= " , representante_legal_identidad = "
                         . GetSQLValue($rep_id, "text");
 
-            $sqlcampos .= " , representante_legal_profesion = "
-            . GetSQLValue($rep_profesion, "text");
+
 
              $sqlcampos .= " , representante_legal_direccion = "
             . GetSQLValue($rep_direccion, "text");
@@ -1119,7 +1120,7 @@ if ($foto_original_tele !== '') {
             $sqlcampos .= " , persona_juridica =0";
             $sqlcampos .= " , representante_legal_persona_juridica = NULL";
             $sqlcampos .= " , representante_legal_identidad = NULL";
-            $sqlcampos .= " , representante_legal_profesion = NULL";
+            //$sqlcampos .= " , representante_legal_profesion = NULL";
             $sqlcampos .= " , representante_legal_direccion = NULL";
             
         }
@@ -1150,9 +1151,13 @@ if ($foto_original_tele !== '') {
         if (isset($_REQUEST["oferta"])) { $sqlcampos.= " , oferta =".GetSQLValue($_REQUEST["oferta"],"int"); } 
 
         if($id_estado==11 || $id_estado==20){
+            $rep_profesion   = trim($_REQUEST['representante_legal_profesion'] ?? '');
+
+            $sqlcampos .= " , representante_legal_profesion = ". GetSQLValue($rep_profesion, "text");
+
             if (isset($_REQUEST["cliente_id"])) { $sqlcampos.= " , cliente_id =".GetSQLValue($_REQUEST["cliente_id"],"int"); }  
         }else{
-            $sqlcampos.= " , cliente_id =null";
+            $sqlcampos.= " , cliente_id =null, representante_legal_profesion = null";
         }
 
 
@@ -1300,7 +1305,7 @@ if ($foto_original_tele !== '') {
                     $sqlcampos.=" , fecha_negociacion=null";  
                  }                                 
                  if ($id_estado_vendido==1){                
-                     $sqlcampos.=" , fecha_vendido=null, precio_venta=null";  
+                     $sqlcampos.=" , fecha_vendido=null, precio_venta=null, prima_venta=null";  
                  } 
                  
 
@@ -1704,7 +1709,9 @@ if ($foto_original_tele !== '') {
 
         echo campo("nombre_cliente","",'hidden',$nombre_cliente,'','','');
         echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1,'get.php?a=2&t=1',$cliente_nombre);
+        echo campo("representante_legal_profesion","Profesión u oficio de comprador",'text',$representante_legal_profesion,' ',$disable_sec2);
         echo campo("persona_juridica","persona juridica",'checkboxCustom',$persona_juridica,' ',$disable_sec2);
+
         ?>
 
         <div class="row">
@@ -1722,7 +1729,7 @@ if ($foto_original_tele !== '') {
 
         <div class="row">    
 
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <?php echo campo(
                     "representante_legal_identidad",
                     "Identidad de Representante Legal",
@@ -1732,7 +1739,7 @@ if ($foto_original_tele !== '') {
                     $disable_sec2
                 ); ?>
             </div>
-            <div class="col-md-6">
+<!--             <div class="col-md-6">
                 <?php echo campo(
                     "representante_legal_profesion",
                     "Profesión de Representante Legal",
@@ -1741,7 +1748,7 @@ if ($foto_original_tele !== '') {
                     ' ',
                     $disable_sec2
                 ); ?>
-            </div>
+            </div> -->
         </div>
 
         <div class="row">
