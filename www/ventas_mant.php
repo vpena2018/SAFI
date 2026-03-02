@@ -1,514 +1,5 @@
 <?php
 require_once ('include/framework.php');
-require __DIR__ . '/../vendor/autoload.php';
-use PhpOffice\PhpWord\TemplateProcessor;
-
-
-function appLog(string $message): void
-{
-    return; // Desactivar logs en producción
-    try {
-        $logFile = app_logs_folder . 'ventas_contrato.log';
-        $date = date('Y-m-d H:i:s');
-
-        file_put_contents(
-            $logFile,
-            "[$date] $message\n",
-            FILE_APPEND | LOCK_EX
-        );
-    } catch (Throwable $e) {
-        // Nunca romper producción por un log
-        error_log('LOGGER ERROR: ' . $e->getMessage());
-    }
-}
-
-//contrato de venta en PDF
-function getSofficeCommand()
-{
-    // Windows
-    if (stripos(PHP_OS, 'WIN') === 0) {
-        $paths = [
-            'C:\Program Files\LibreOffice\program\soffice.exe',
-            'C:\Program Files (x86)\LibreOffice\program\soffice.exe',
-        ];
-
-        foreach ($paths as $path) {
-            if (file_exists($path)) {
-                return '"' . $path . '"';
-            }
-        }
-
-        throw new Exception('LibreOffice no encontrado en Windows');
-    }
-
-    // Linux / Unix
-    return 'soffice';
-}
-
-//para produccion
-function getSofficeCommandProd()
-{
-    try {
-        appLog('Entrando a getSofficeCommand');
-
-        $path = '/usr/bin/soffice';
-
-        if (!file_exists($path)) {
-            appLog('ERROR: soffice no existe en ' . $path);
-            throw new RuntimeException('LibreOffice no encontrado');
-        }
-
-        if (!is_executable($path)) {
-            appLog('ERROR: soffice no es ejecutable');
-            throw new RuntimeException('LibreOffice sin permisos');
-        }
-
-        appLog('LibreOffice OK');
-        return $path;
-
-    } catch (Throwable $e) {
-        appLog('EXCEPTION: ' . $e->getMessage());
-        throw $e; // mantiene el 500 pero ahora con info real
-    }
-}
-
-function convertirDocxAPdfOld($docxPath)
-{
-    $tmpDir = sys_get_temp_dir();
-    $soffice = getSofficeCommand();
-
-    $cmd = $soffice .
-        ' --headless --convert-to pdf --outdir ' .
-        escapeshellarg($tmpDir) . ' ' .
-        escapeshellarg($docxPath);
-
-    exec($cmd, $output, $code);
-
-    if ($code !== 0) {
-        throw new Exception('Error al convertir DOCX a PDF');
-    }
-
-    $pdfPath = $tmpDir . '/' . pathinfo($docxPath, PATHINFO_FILENAME) . '.pdf';
-
-    if (!file_exists($pdfPath)) {
-        throw new Exception('El PDF no fue generado');
-    }
-
-    return $pdfPath;
-}
-
-function convertirDocxAPdf(string $docxPath): string
-{
-    try {
-        appLog('--- convertirDocxAPdf INICIO ---');
-        appLog('DOCX: ' . $docxPath);
-
-        if (!file_exists($docxPath)) {
-            appLog('ERROR: DOCX no existe');
-            throw new RuntimeException('Archivo DOCX no encontrado');
-        }
-
-        $tmpDir = sys_get_temp_dir();
-        appLog('TMP DIR: ' . $tmpDir);
-
-        $soffice = getSofficeCommand();
-        appLog('SOFFICE: ' . $soffice);
-
-        $cmd = $soffice .
-            ' --headless --convert-to pdf --outdir ' .
-            escapeshellarg($tmpDir) . ' ' .
-            escapeshellarg($docxPath) . ' 2>&1';
-
-        appLog('CMD: ' . $cmd);
-
-        exec($cmd, $output, $code);
-
-        appLog('RETURN CODE: ' . $code);
-        appLog('OUTPUT: ' . implode(' | ', $output));
-
-        if ($code !== 0) {
-            throw new RuntimeException('LibreOffice falló al convertir');
-        }
-
-        $files = glob($tmpDir . '/*.pdf');
-        $pdfPath = end($files);
-
-        appLog('PDF DETECTADO: ' . $pdfPath);
-
-        if (!$pdfPath || !file_exists($pdfPath)) {
-            throw new RuntimeException('No se encontró el PDF generado');
-        }
-
-
-        appLog('PDF ESPERADO: ' . $pdfPath);
-
-        if (!file_exists($pdfPath)) {
-            throw new RuntimeException('El PDF no fue generado');
-        }
-
-        appLog('PDF GENERADO OK');
-        appLog('--- convertirDocxAPdf FIN ---');
-
-        return $pdfPath;
-
-    } catch (Throwable $e) {
-        appLog('EXCEPTION convertirDocxAPdf: ' . $e->getMessage());
-        throw $e; // mantiene el 500 pero ahora con log claro
-    }
-}
-
-
-
-function descargarVentaPDFOld($id_venta)
-{
-
-    //sacamos el representante legal
-    //$datos_venta = sql_select("");
-    //$datos_representante_legal = sql_select("");
-
-    $datos_venta = sql_select
-        ("SELECT ventas.id_tienda,
-        /*datos cliente*/
-        entidad.nombre AS cliente_nombre
-        ,entidad.rtn AS identidad_cliente
-        ,entidad.direccion AS direccion
-        ,entidad.codigo_alterno AS codigo_cliente
-        ,entidad.direccion AS direccion_cliente
-        ,entidad.telefono AS telefono_cliente
-        
-        /*datos vehiculo*/
-        ,producto.codigo_alterno AS cod_vehiculo
-        ,producto.placa AS placa
-        ,producto.marca AS marca
-        ,producto.modelo AS modelo
-        ,producto.tipo_vehiculo AS tipo
-        ,producto.chasis AS chasis
-        ,producto.motor AS motor
-        ,producto.color AS color
-        ,producto.anio AS anio
-        ,ventas.cilindraje AS cilindraje
-        ,'' AS departamento
-        ,'' AS combustible
-
-        /*datos venta*/
-        ,ventas.precio_venta AS precio_venta
-        ,ventas.prima_venta AS prima_venta
-
-        FROM ventas
-        LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)        
-        LEFT OUTER JOIN producto ON (ventas.id_producto=producto.id)        
-        LEFT OUTER JOIN ventas_estado ON (ventas.id_estado=ventas_estado.id)
-        LEFT OUTER JOIN ventas_impuestos ON (ventas.id_impuesto=ventas_impuestos.id)
-        LEFT OUTER JOIN ventas_factura ON (ventas.id_factura=ventas_factura.id)
-        LEFT OUTER JOIN entidad ON (ventas.cliente_id=entidad.id)
-        
-    where ventas.id=$id_venta limit 1");
-
-	if ($datos_venta!=false){
-		if ($datos_venta -> num_rows > 0) { 
-			$row_datos_venta = $datos_venta -> fetch_assoc(); 
-
-            $datos_tienda = sql_select("SELECT * FROM tienda WHERE id=$row_datos_venta[id_tienda] limit 1");
-
-            if($datos_tienda!=false){
-                if($datos_tienda -> num_rows > 0)
-                {
-                    $row_tienda = $datos_tienda -> fetch_assoc();
-                    //$representante_legal=$row_representante['representante_legal'];
-
-                        $template = new TemplateProcessor(__DIR__ . '/../plantillas/venta_contrato_vehiculo.docx');
-
-                        // representante legal
-                        $template->setValue('REPRESENTANTE_LEGAL', $row_tienda['representante_legal']);
-                        $template->setValue('R_IDENTIDAD', $row_tienda['representante_identidad']);
-                        //ciudad
-
-                        $template->setValue('CIUDAD', $row_tienda['nombre']);
-
-                        //datos del cliente
-                        $template->setValue('CLIENTE', $row_datos_venta['cliente_nombre']);
-                        $template->setValue('IDENTIDAD_CLIENTE', $row_datos_venta['identidad_cliente']);
-                        $template->setValue('CODIGO_CLIENTE', $row_datos_venta['codigo_cliente']);
-                        $template->setValue('DIRECCION_CLIENTE', $row_datos_venta['direccion_cliente']);
-                        $template->setValue('TELEFONO_CLIENTE', $row_datos_venta['telefono_cliente']);
-
-                        //datos de la venta
-                        $precioVenta = (float)$row_datos_venta['precio_venta'];
-
-                        $template->setValue('PRECIO_VENTA',number_format($precioVenta, 2, '.', ','));
-                        $PRECIO_LETRAS = numeroALetras($precioVenta);
-                        $template->setValue('PRECIO_VENTA_LETRAS', $PRECIO_LETRAS);
-
-                         $primaVenta = (float)$row_datos_venta['prima_venta'];
-
-                        $template->setValue('PRIMA_VENTA',number_format($primaVenta, 2, '.', ','));
-                        $PRIMA_LETRAS = numeroALetras($primaVenta);
-                        $template->setValue('PRIMA_VENTA_LETRAS', $PRIMA_LETRAS);
-
-
-                        //datos vehiculo
-                        $template->setValue('CODIGO_VEHICULO', $row_datos_venta['cod_vehiculo']);
-                        $template->setValue('PLACA',$row_datos_venta['placa']);
-                        $template->setValue('MARCA',$row_datos_venta['marca']);
-                        $template->setValue('MODELO',$row_datos_venta['modelo']);
-                        $template->setValue('TIPO',$row_datos_venta['tipo']);
-                        $template->setValue('CHASIS',$row_datos_venta['chasis']);
-                        $template->setValue('MOTOR',$row_datos_venta['motor']);
-                        $template->setValue('COLOR',$row_datos_venta['color']);
-                        $template->setValue('ANIO',$row_datos_venta['anio']);
-                        $template->setValue('CILINDRAJE',$row_datos_venta['cilindraje']);
-                        $template->setValue('COMBUSTIBLE',$row_datos_venta['combustible']);
-
-                        //pie de pagina
-                        $template->setValue('DEPARTAMENTO',$row_datos_venta['departamento']);
-
-                        // Fecha en español
-                        date_default_timezone_set('America/Tegucigalpa');
-
-                        // Fecha actual
-                        $dia  = date('j');   // 1–31 (sin cero)
-                        $anio = date('Y');   // 2026
-
-                        // Mes en español
-                        $meses = [
-                            1 => 'enero',
-                            2 => 'febrero',
-                            3 => 'marzo',
-                            4 => 'abril',
-                            5 => 'mayo',
-                            6 => 'junio',
-                            7 => 'julio',
-                            8 => 'agosto',
-                            9 => 'septiembre',
-                            10 => 'octubre',
-                            11 => 'noviembre',
-                            12 => 'diciembre'
-                        ];
-
-                        $mes = $meses[(int)date('n')];
-
-                        // Reemplazos en el template
-                        $template->setValue('DIAS', $dia);
-                        $template->setValue('MES', $mes);
-                        $template->setValue('ANIO_ACTUAL', $anio);
-
-
-
-
-
-                }
-
-
-		}
-        }else{
-            exit;
-        }
-    }
-
-
-    $tmpDir  = sys_get_temp_dir();
-    $tmpDocx = tempnam($tmpDir, 'venta_') . '.docx';
-
-    $template->saveAs($tmpDocx);
-
-    $pdfPath = convertirDocxAPdf($tmpDocx);
-
-    header('Content-Type: application/pdf');
-    header('Content-Disposition: attachment; filename="Venta_' . date('Ymd_His') . '.pdf"');
-    header('Content-Length: ' . filesize($pdfPath));
-    header('Cache-Control: no-cache');
-
-    readfile($pdfPath);
-
-    // Limpiar
-    unlink($tmpDocx);
-    unlink($pdfPath);
-
-
-
-    exit;
-}
-
-function descargarVentaPDF($id_venta)
-{
-    try {
-        appLog('===== descargarVentaPDF INICIO =====');
-        appLog('ID_VENTA: ' . $id_venta);
-
-        if (empty($id_venta)) {
-            throw new RuntimeException('ID de venta inválido');
-        }
-
-        /* =========================
-           CONSULTA DE LA VENTA
-        ========================== */
-        $datos_venta = sql_select("
-            SELECT ventas.id_tienda,
-                   entidad.nombre AS cliente_nombre,
-                   entidad.rtn AS identidad_cliente,
-                   entidad.direccion AS direccion,
-                   entidad.codigo_alterno AS codigo_cliente,
-                   entidad.direccion AS direccion_cliente,
-                   entidad.telefono AS telefono_cliente,
-                   producto.codigo_alterno AS cod_vehiculo,
-                   producto.placa AS placa,
-                   producto.marca AS marca,
-                   producto.modelo AS modelo,
-                   producto.tipo_vehiculo AS tipo,
-                   producto.chasis AS chasis,
-                   producto.motor AS motor,
-                   producto.color AS color,
-                   producto.anio AS anio,
-                   ventas.cilindraje AS cilindraje,
-                   '' AS departamento,
-                   '' AS combustible,
-                   ventas.precio_venta AS precio_venta,
-                   ventas.prima_venta AS prima_venta
-            FROM ventas
-            LEFT JOIN tienda ON ventas.id_tienda = tienda.id
-            LEFT JOIN producto ON ventas.id_producto = producto.id
-            LEFT JOIN entidad ON ventas.cliente_id = entidad.id
-            WHERE ventas.id = $id_venta
-            LIMIT 1
-        ");
-
-        if (!$datos_venta || $datos_venta->num_rows === 0) {
-            throw new RuntimeException('Venta no encontrada');
-        }
-
-        $venta = $datos_venta->fetch_assoc();
-        appLog('Venta encontrada. ID_TIENDA: ' . $venta['id_tienda']);
-
-        /* =========================
-           DATOS DE LA TIENDA
-        ========================== */
-        $datos_tienda = sql_select("
-            SELECT * FROM tienda
-            WHERE id = {$venta['id_tienda']}
-            LIMIT 1
-        ");
-
-        if (!$datos_tienda || $datos_tienda->num_rows === 0) {
-            throw new RuntimeException('Tienda no encontrada');
-        }
-
-        $tienda = $datos_tienda->fetch_assoc();
-        appLog('Tienda cargada: ' . $tienda['nombre']);
-
-        /* =========================
-           TEMPLATE DOCX
-        ========================== */
-        $templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo.docx';
-
-        if (!file_exists($templatePath)) {
-            throw new RuntimeException('Template DOCX no encontrado');
-        }
-
-        $template = new TemplateProcessor($templatePath);
-
-        // Representante
-        $template->setValue('REPRESENTANTE_LEGAL', $tienda['representante_legal']);
-        $template->setValue('R_IDENTIDAD', $tienda['representante_identidad']);
-        $template->setValue('CIUDAD', $tienda['nombre']);
-
-        // Cliente
-        $template->setValue('CLIENTE', $venta['cliente_nombre']);
-        $template->setValue('IDENTIDAD_CLIENTE', $venta['identidad_cliente']);
-        $template->setValue('CODIGO_CLIENTE', $venta['codigo_cliente']);
-        $template->setValue('DIRECCION_CLIENTE', $venta['direccion_cliente']);
-        $template->setValue('TELEFONO_CLIENTE', $venta['telefono_cliente']);
-
-        // Precios
-        $precioVenta = (float)$venta['precio_venta'];
-        $template->setValue('PRECIO_VENTA', number_format($precioVenta, 2, '.', ','));
-        $template->setValue('PRECIO_VENTA_LETRAS', numeroALetras($precioVenta));
-
-        $primaVenta = (float)$venta['prima_venta'];
-        $template->setValue('PRIMA_VENTA', number_format($primaVenta, 2, '.', ','));
-        $template->setValue('PRIMA_VENTA_LETRAS', numeroALetras($primaVenta));
-
-        // Vehículo
-        $template->setValue('CODIGO_VEHICULO', $venta['cod_vehiculo']);
-        $template->setValue('PLACA', $venta['placa']);
-        $template->setValue('MARCA', $venta['marca']);
-        $template->setValue('MODELO', $venta['modelo']);
-        $template->setValue('TIPO', $venta['tipo']);
-        $template->setValue('CHASIS', $venta['chasis']);
-        $template->setValue('MOTOR', $venta['motor']);
-        $template->setValue('COLOR', $venta['color']);
-        $template->setValue('ANIO', $venta['anio']);
-        $template->setValue('CILINDRAJE', $venta['cilindraje']);
-        $template->setValue('COMBUSTIBLE', $venta['combustible']);
-
-        // Fecha
-        date_default_timezone_set('America/Tegucigalpa');
-        $meses = [
-            1=>'enero',2=>'febrero',3=>'marzo',4=>'abril',5=>'mayo',6=>'junio',
-            7=>'julio',8=>'agosto',9=>'septiembre',10=>'octubre',11=>'noviembre',12=>'diciembre'
-        ];
-        $template->setValue('DIAS', date('j'));
-        $template->setValue('MES', $meses[(int)date('n')]);
-        $template->setValue('ANIO_ACTUAL', date('Y'));
-
-        appLog('Template procesado');
-
-        /* =========================
-           GUARDAR DOCX TEMPORAL
-        ========================== */
-        $tmpDir  = sys_get_temp_dir();
-        $tmpDocx = $tmpDir . '/venta_' . $id_venta . '_' . time() . '.docx';
-
-        $template->saveAs($tmpDocx);
-        appLog('DOCX generado: ' . $tmpDocx);
-
-        if (!file_exists($tmpDocx)) {
-            throw new RuntimeException('No se pudo generar el DOCX');
-        }
-
-        /* =========================
-           CONVERTIR A PDF
-        ========================== */
-        $pdfPath = convertirDocxAPdf($tmpDocx);
-        appLog('PDF generado: ' . $pdfPath);
-
-        if (!file_exists($pdfPath) || !is_readable($pdfPath)) {
-            throw new RuntimeException('PDF no disponible');
-        }
-
-        /* =========================
-           DESCARGA
-        ========================== */
-        if (ob_get_length()) {
-            ob_end_clean();
-        }
-
-        header('Content-Type: application/pdf');
-        header(
-            'Content-Disposition: attachment; filename="Venta_' .
-            $id_venta . '_' . date('Ymd_His') . '.pdf"'
-        );
-        header('Content-Length: ' . filesize($pdfPath));
-        header('Cache-Control: no-store, no-cache, must-revalidate');
-        header('Pragma: no-cache');
-
-        $bytes = readfile($pdfPath);
-        appLog('BYTES ENVIADOS: ' . $bytes);
-
-        /* =========================
-           LIMPIEZA
-        ========================== */
-        unlink($tmpDocx);
-        unlink($pdfPath);
-
-        appLog('===== descargarVentaPDF FIN OK =====');
-        exit;
-
-    } catch (Throwable $e) {
-        appLog('EXCEPTION descargarVentaPDF: ' . $e->getMessage());
-        throw $e;
-    }
-}
-
 
 
 
@@ -519,16 +10,7 @@ if ($nuevo=='N'){
    pagina_permiso(167);
 }
 
-
-
- if (isset($_GET['a']) && $_GET['a'] === 'print') {
-
- 	$id_venta=0;
-     if (isset($_REQUEST['id'])) { $id_venta = intval($_REQUEST["id"]); } 
-
-    descargarVentaPDF($id_venta);
-    exit;
-}
+ 
 
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="v";}
 
@@ -547,14 +29,12 @@ if ($accion=="v") {
     ,producto.nombre AS vehiculo
     ,producto.codigo_alterno AS codvehiculo
     ,tienda.nombre AS latienda
-    ,entidad.nombre AS cliente_nombre
         FROM ventas
         LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)        
         LEFT OUTER JOIN producto ON (ventas.id_producto=producto.id)        
         LEFT OUTER JOIN ventas_estado ON (ventas.id_estado=ventas_estado.id)
         LEFT OUTER JOIN ventas_impuestos ON (ventas.id_impuesto=ventas_impuestos.id)
         LEFT OUTER JOIN ventas_factura ON (ventas.id_factura=ventas_factura.id)
-        LEFT OUTER JOIN entidad ON (ventas.cliente_id=entidad.id)
         
     where ventas.id=$cid limit 1");
 
@@ -777,26 +257,12 @@ if ($accion=="g") {
     $carShopPerfil=get_dato_sql("usuario","grupo_id"," WHERE id=".$_SESSION["usuario_id"]);
     $id_estado=intval($_REQUEST['id_estado']);
     $precio_venta=intval($_REQUEST['precio_venta']);
-    $prima_venta=intval($_REQUEST['prima_venta']);
-
-    if ($id_estado == 11) {
-
-            $client_id_val = isset($_REQUEST['cliente_id'])
-                ? (int) $_REQUEST['cliente_id']
-                : 0;
-
-            if ($client_id_val <= 0) {
-                $verror .= 'Seleccione un cliente para el estado En Negociación. ';
-            }
-    }
    
     if (!es_nulo($cid) && $id_estado==20){
-       if (es_nulo($precio_venta)||es_nulo($prima_venta)) { $verror.='Ingrese el precio y la prima de venta del vehiculo'; }    
-    }
-    
-    
+       if (es_nulo($precio_venta)) { $verror.='Ingrese el precio de venta del vehiculo'; }    
+    }    
     if (!es_nulo($cid) && $id_estado<20){
-       if (!es_nulo($precio_venta)||!es_nulo($prima_venta)) { $verror.='Precio de venta y prima solo se ingresan, estado de vendido entregado'; }    
+       if (!es_nulo($precio_venta)) { $verror.='Precio de venta solo se ingresa, estado de vendido entregado'; }    
     }  
     if ($carShopPerfil=='18'){
         $verror.=validar("Estado",$_REQUEST['id_estado'], "int", true);
@@ -830,56 +296,9 @@ if ($accion=="g") {
         $cid= intval($_REQUEST["id"]);
         if (es_nulo($cid)) {
             $nuevoregistro=true;
-        }
+        }     
 
-        $foto_original_comp = $_REQUEST['foto'] ?? '';
-        $foto_original_tele = $_REQUEST['foto_televentas'] ?? '';
-
-
-
-// FOTO NORMAL
-if ($foto_original_comp !== '') {
-
-    $foto_original_comp = urldecode($foto_original_comp);
-    $foto = str_replace(' ', '_', $foto_original_comp);
-
-    $ruta1  = 'uploa_d/' . $foto_original_comp;
-    $ruta2  = 'uploa_d/thumbnail/' . $foto_original_comp;
-    $nueva1 = 'uploa_d/' . $foto;
-    $nueva2 = 'uploa_d/thumbnail/' . $foto;
-
-    if (file_exists($ruta1)) {
-        @rename($ruta1, $nueva1);
-    }
-    if (file_exists($ruta2)) {
-        @rename($ruta2, $nueva2);
-    }
-
-} 
-
-// FOTO TELEVENTAS
-if ($foto_original_tele !== '') {
-
-    $foto_original_tele = urldecode($foto_original_tele);
-    $foto_televentas = str_replace(' ', '_', $foto_original_tele);
-
-    $ruta3  = 'uploa_d/' . $foto_original_tele;
-    $ruta4  = 'uploa_d/thumbnail/' . $foto_original_tele;
-    $nueva3 = 'uploa_d/' . $foto_televentas;
-    $nueva4 = 'uploa_d/thumbnail/' . $foto_televentas;
-
-    if (file_exists($ruta3)) {
-        @rename($ruta3, $nueva3);
-    }
-    if (file_exists($ruta4)) {
-        @rename($ruta4, $nueva4);
-    }
-
-}
-
-             
-
-        /* if ($foto_original_comp !== '' || $foto_original_tele !== ''){
+        if(isset($_REQUEST['foto']) || isset($_REQUEST['foto_televentas'])) {
             $foto_original_comp = urldecode($_REQUEST['foto']);
             $foto_original_tele = urldecode($_REQUEST['foto_televentas']);
 
@@ -913,25 +332,14 @@ if ($foto_original_tele !== '') {
             if (file_exists($ruta4)) {
                 rename($ruta4, $nueva4);
             }        
-        } */ 
-
-
-
-
-
-
-
+        } 
         if (isset($_REQUEST["id_producto"])) { $sqlcampos.= "  id_producto =".GetSQLValue($_REQUEST["id_producto"],"int"); } 
         if (isset($_REQUEST["id_tienda"])) { $sqlcampos.= " , id_tienda =".GetSQLValue($_REQUEST["id_tienda"],"int"); }    
         if (isset($_REQUEST["id_estado"])) { $sqlcampos.= " , id_estado =".GetSQLValue($_REQUEST["id_estado"],"int"); }    
         
         if (isset($_REQUEST["precio_minimo"])) { $sqlcampos.= " , precio_minimo =".GetSQLValue($_REQUEST["precio_minimo"],"int"); } 
         if (isset($_REQUEST["precio_maximo"])) { $sqlcampos.= " , precio_maximo =".GetSQLValue($_REQUEST["precio_maximo"],"int"); } 
-        
         if (isset($_REQUEST["precio_venta"])) { $sqlcampos.= " , precio_venta =".GetSQLValue($_REQUEST["precio_venta"],"int"); } 
-        if (isset($_REQUEST["prima_venta"])) { $sqlcampos.= " , prima_venta =".GetSQLValue($_REQUEST["prima_venta"],"int"); } 
-
-
         if (isset($_REQUEST["kilometraje"])) { $sqlcampos.= " , kilometraje =".GetSQLValue($_REQUEST["kilometraje"],"int"); } 
         if (isset($_REQUEST["cilindraje"])) { $sqlcampos.= " , cilindraje =".GetSQLValue($_REQUEST["cilindraje"],"int"); } 
         if (isset($_REQUEST["trasmision"])) { $sqlcampos.= " , trasmision =".GetSQLValue($_REQUEST["trasmision"],"text"); } 
@@ -940,27 +348,10 @@ if ($foto_original_tele !== '') {
         if (isset($_REQUEST["id_vendedor"])) { $sqlcampos.= " , id_vendedor =".GetSQLValue($_REQUEST["id_vendedor"],"int"); } 
         if (isset($_REQUEST["id_televentas"])) { $sqlcampos.= " , id_televentas =".GetSQLValue($_REQUEST["id_televentas"],"int"); } 
         if (isset($_REQUEST["observaciones"])) { $sqlcampos.= " , observaciones =".GetSQLValue($_REQUEST["observaciones"],"text"); }         
-        //if (isset($_REQUEST["foto"])) { $sqlcampos.= " , foto ='$foto'"; } 
-        //if (isset($_REQUEST["foto_televentas"])) { $sqlcampos.= " , foto_televentas = '$foto_televentas'"; } 
-
-        if (!empty($_REQUEST["foto"])) {
-            $sqlcampos .= " , foto = " . GetSQLValue($foto, "text");
-
-        }
-
-        if (!empty($_REQUEST["foto_televentas"])) {
-            $sqlcampos .= " , foto_televentas = " . GetSQLValue($foto_televentas, "text");
-        }
-
+        if (isset($_REQUEST["foto"])) { $sqlcampos.= " , foto ='$foto'"; } 
+        if (isset($_REQUEST["foto_televentas"])) { $sqlcampos.= " , foto_televentas = '$foto_televentas'"; } 
         if (isset($_REQUEST["reproceso"])) { $sqlcampos.= " , reproceso =".GetSQLValue($_REQUEST["reproceso"],"text"); } 
         if (isset($_REQUEST["oferta"])) { $sqlcampos.= " , oferta =".GetSQLValue($_REQUEST["oferta"],"int"); } 
-
-        if($id_estado==11 || $id_estado==20){
-            if (isset($_REQUEST["cliente_id"])) { $sqlcampos.= " , cliente_id =".GetSQLValue($_REQUEST["cliente_id"],"int"); }  
-        }else{
-            $sqlcampos.= " , cliente_id =null";
-        }
-
 
         if ($nuevoregistro==false) {
             $reproceso="";  
@@ -1023,65 +414,6 @@ if ($foto_original_tele !== '') {
                  VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Modificacion de Precio de Venta', NOW(), ".$_REQUEST['precio_venta'].")");
              }
 
-             $prima_venta=intval(get_dato_sql("ventas","prima_venta"," where id=".$cid));
-             if ($prima_venta!=intval($_REQUEST['prima_venta'])){   
-                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Modificacion de Prima de Venta', NOW(), ".$_REQUEST['prima_venta'].")");
-             }
-
-
-
-             
-
-
-             $cliente_viejo = get_dato_sql(
-                "ventas",
-                "cliente_id",
-                " WHERE id = ".$cid
-            );
-
-            // Normalizar viejo
-            $cliente_viejo = ($cliente_viejo == 0 || $cliente_viejo === null)
-                ? null
-                : intval($cliente_viejo);
-
-            // Normalizar nuevo (lo que viene del form)
-            $cliente_nuevo = (
-                !isset($_REQUEST['cliente_id']) ||
-                $_REQUEST['cliente_id'] === '' ||
-                $_REQUEST['cliente_id'] === '0'
-            ) ? null : intval($_REQUEST['cliente_id']);
-
-            // 👉 SOLO aquí se detecta el cambio
-            if ($cliente_viejo !== $cliente_nuevo) {
-
-                $nombre_viejo = $cliente_viejo
-                    ? get_dato_sql("entidad", "nombre", " WHERE id = ".$cliente_viejo)
-                    : 'Vacío';
-
-                $nombre_nuevo = $cliente_nuevo
-                    ? get_dato_sql("entidad", "nombre", " WHERE id = ".$cliente_nuevo)
-                    : 'Vacío';
-
-                $observacion = "'Cliente: {$nombre_viejo} → {$nombre_nuevo}'";
-
-                if($nombre_viejo!=$nombre_nuevo)
-                {
-                    sql_insert("
-                        INSERT INTO ventas_historial_estado
-                        (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
-                        VALUES (
-                            $cid,
-                            ".$_SESSION['usuario_id'].",
-                            ".$_REQUEST['id_estado'].",
-                            'Modificación de cliente',
-                            NOW(),
-                            $observacion
-                        )
-                    ");
-                }
-            }
-
              $id_estado=intval(get_dato_sql("ventas","id_estado"," where id=".$cid));             
              $id_estado_vendido=intval(get_dato_sql("ventas_estado","envio_correo"," where id=".$id_estado));             
              $id_estado_modifico=false;
@@ -1117,26 +449,8 @@ if ($foto_original_tele !== '') {
                  
                  $fotoRegistro1=get_dato_sql("ventas_estado","foto"," where foto=1 and id=".$id_estado);
                  $id_estado_name=get_dato_sql("ventas_estado","nombre"," where id=".$_REQUEST['id_estado']);
-
                  sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",$id_estado,'Modificacion de Estado', NOW(),'$id_estado_name')");
-
-                 if($id_estado_name!='en negociacion')
-                 {
-                                    sql_insert("
-                    INSERT INTO ventas_historial_estado
-                    (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
-                    VALUES (
-                        $cid,
-                        ".$_SESSION['usuario_id'].",
-                        ".$_REQUEST['id_estado'].",
-                        'Modificación de cliente',
-                        NOW(),
-                        'Cliente eliminado al quitar estado de en negociacion'
-                    )
-                ");
-                 }
-                 
+                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",$id_estado,'Modificacion de Estado', NOW(),'$id_estado_name')");               
              }
 
 
@@ -1267,6 +581,7 @@ if ($foto_original_tele !== '') {
       <li class="nav-item">
         <a class="nav-link " id="insp_tabhistorial" data-toggle="tab" href="#" onclick="ventas_cambiartab('nav_historial');"   role="tab"  >Historial</a>
       </li> 
+      
         <li class="nav-item">
             <a class="nav-link " id="insp_tabFotos" data-toggle="tab" href="#" onclick="ventas_cambiartab('nav_Fotos_venta');"   role="tab"  >Fotos</a>
         </li> 
@@ -1307,11 +622,7 @@ if ($foto_original_tele !== '') {
     if (isset($row["kilometraje"])) {$kilometraje= $row["kilometraje"]; } else {$kilometraje= "";}
     if (isset($row["precio_minimo"])) {$precio_minimo= $row["precio_minimo"]; } else {$precio_minimo= "";}
     if (isset($row["precio_maximo"])) {$precio_maximo= $row["precio_maximo"]; } else {$precio_maximo= "";}
-
     if (isset($row["precio_venta"])) {$precio_venta= $row["precio_venta"]; } else {$precio_venta= "";}
-    if (isset($row["prima_venta"])) {$prima_venta= $row["prima_venta"]; } else {$prima_venta= "";}
-
-
     if (isset($row["cilindraje"])) {$cilindraje= $row["cilindraje"]; } else {$cilindraje= "";}
     if (isset($row["trasmision"])) {$trasmision= $row["trasmision"]; } else {$trasmision= "";}
     if (isset($row["id_vendedor"])) {$id_vendedor= $row["id_vendedor"]; } else {$id_vendedor= "";}
@@ -1323,11 +634,6 @@ if ($foto_original_tele !== '') {
     if (isset($row["id_inspeccion"])) {$id_inspeccion=$row["id_inspeccion"]; } else {$id_inspeccion= "";}
     if (isset($row["reproceso"])) {$reproceso=$row["reproceso"]; } else {$reproceso= "";}
     $oferta = (isset($row["oferta"]) && $row["oferta"] == 1) ? true : false;
-
-    if (isset($row["cliente_id"])) {$cliente_id= $row["cliente_id"]; } else {$cliente_id= "";}
-    if (isset($row["cliente_nombre"])) {$cliente_nombre= $row["cliente_nombre"]; } else {$cliente_nombre= "";}
-
-
    
     $carShopPerfil="";
     $carShopPerfil=get_dato_sql("usuario","grupo_id"," WHERE id=".$_SESSION["usuario_id"]);
@@ -1380,7 +686,7 @@ if ($foto_original_tele !== '') {
 <div class="row">
     <div class="col-md-4">                
          <?php if (tiene_permiso(167) && $id_estado<20 || es_nulo($id_estado)) {            
-             echo campo("id_tienda","Sucursal",'select2',valores_combobox_db("tienda",$id_tienda,"nombre"," ",'','...'),' ',' required '.$disable_sec1,''); 
+             echo campo("id_tienda","Sucursall",'select2',valores_combobox_db("tienda",$id_tienda,"nombre"," ",'','...'),' ',' required '.$disable_sec1,''); 
          }else{
              echo campo("id_tienda","sucursal",'hidden',$id_tienda,'','','');
              echo campo("id_tienda_label","Sucursal",'label',$latienda,'','','');
@@ -1422,25 +728,6 @@ if ($foto_original_tele !== '') {
     </div>    
 </div>  
 
-
-    <div class="row">
-        <div id="clientediv" style="display:none;" class="col-md-8">                     
-            <?php   
-                $nombre_cliente='';
-                echo campo("nombre_cliente","",'hidden',$nombre_cliente,'','','');         
-                echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1  ,'get.php?a=2&t=1',$cliente_nombre);                            
-            ?>   
-            
-                <script>
-                    $(document).ready(function () {
-                    toggleClientePorEstado();
-                });
-                </script>
-        </div>
-    </div>
-
-
-
 <div class="row">
     <div class="col-md">
          <?php echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where ventas_reparacion=2 ",'','...'),' ',' required '.$disable_sec2)  ?> 
@@ -1476,9 +763,6 @@ if ($foto_original_tele !== '') {
     <div class="col-md">            
          <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',$disable_sec2); ?>                 
     </div>   
-        <div class="col-md">            
-         <?php echo campo("prima_venta","Prima de Venta",'number',$prima_venta,' ',$disable_sec2); ?>                 
-    </div> 
 </div>
 
 <div class="row">
@@ -1517,7 +801,6 @@ if ($foto_original_tele !== '') {
   <?php
   if ($foto<>'') {
      $fext = substr($foto, -3);
-     $fext = strtolower($fext);
             if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {    
                 $ruta1 = 'uploa_d/' . $foto;           
                 if (file_exists($ruta1)) {
@@ -1540,7 +823,6 @@ if ($foto_original_tele !== '') {
   }
    if ($foto_televentas<>'') {
      $fext = substr($foto_televentas, -3);
-     $fext = strtolower($fext);
             if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {   
                 $ruta1 = 'uploa_d/' . $foto_televentas;           
                 if (file_exists($ruta1)) {
@@ -1579,47 +861,7 @@ if ($foto_original_tele !== '') {
 
         <?php if (!es_nulo($id_inspeccion)){ ?>            
             <a href="#" onclick="abrir_hoja(); return false;" class="btn btn-outline-secondary mr-2 mb-2 xfrm" ><i class="fa fa-file-medical-alt"></i> Abrir Inspección</a>
-        <?php } ?> 
-
-<div class="col-sm">
-    <a href="javascript:void(0);"
-       id="btnContrato"
-       target="_blank"
-       class="btn btn-block mb-2"
-       style="
-           background-color:#e5533d;
-           color:#fff;
-           border:1px solid #e5533d;
-           pointer-events:none;
-           opacity:0.6;
-       ">
-        <i class="fas fa-file-pdf"></i> Generar contrato
-    </a>
-</div>
-
-<script>
-$(function () {
-    const id = $('#id').val();
-    //const tienda = $('#tienda').val();
-
-    if (id) {
-        $('#btnContrato')
-            .attr(
-                'href',
-                'ventas_mant.php?a=print&id=' +
-                encodeURIComponent(id)
-            )
-            .css({
-                'pointer-events': 'auto',
-                'opacity': '1'
-            });
-    }
-});
-</script>
-
-
-
-         
+        <?php } ?>  
 
         <div class="col-sm"><a href="#" onclick="$('#ModalWindow2').modal('hide');  return false;" class="btn btn-light btn-block mb-2 xfrm" >  <?php echo 'Cerrar'; ?></a></div>
 		</div>
@@ -1644,6 +886,7 @@ $(function () {
 
 
 <!-- fotos ventas -->
+ 
 <div class="tab-pane fade " id="nav_Fotos_venta" role="tabpanel" >
     <div class="" id="insp_fotos_thumbs_ventas">
     </div>
@@ -1720,8 +963,6 @@ $(function () {
 
 
 
-
-
     if (tiene_permiso(186)){
         $a=$total_filas;
         while ($a < 10) {            
@@ -1740,26 +981,12 @@ $(function () {
 </div>
 </div>
 
-
 <!-- errores -->
 <div class="tab-pane fade mt-5 mb-5" id="nav_deshabilitado" role="tabpanel" ><div class="alert alert-warning" role="alert">Debe Guardar el documento para poder continuar con esta sección</div></div>
 
 
 
 <script>
-
-        function toggleClientePorEstado() {
-        
-        let valor = $('#id_estado option:selected').text().toLowerCase();
-        // o si prefieres por value:
-        // let valor = $('#id_estado').val();
-
-        if (valor === 'en negociacion' || valor === 'vendido entregado') {
-            $('#clientediv').slideDown();
-        } else {
-            $('#clientediv').slideUp();
-        }
-    }
 
 function abrir_hoja(){    
     hinspeccion = $('#id_inspeccion').val();
@@ -1984,6 +1211,8 @@ Swal.fire({
     var cid=$("#id").val();
     var datos= { a: "gfoto", arch: encodeURI(arch),cid:cid,isMain:isMain}; 
 
+    debugger;
+    
 
  	 $.post( 'ventas_mant.php',datos, function(json) {
 	 			
@@ -2131,7 +1360,6 @@ function ventas_cambiartab(eltab) {
   if (eltab=='nav_historial') {
      procesar_ventas_historial('nav_historial');
   }
-
   
   if (continuar==true){
     $('#'+eltab).show();
@@ -2143,9 +1371,6 @@ function ventas_cambiartab(eltab) {
 // nav_doctos 
 
 }
-
-
-
 
 function procesar_ventas_historial(campo){
 
