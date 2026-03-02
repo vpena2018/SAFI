@@ -2635,6 +2635,7 @@ function ventas_procesar(url,forma,adicional){
 	  });		
 }
 
+
 function ventas_cambiartab(eltab) {
   var codigo= $('#id').val();
   var continuar=true;
