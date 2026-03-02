@@ -2641,6 +2641,7 @@ function ventas_cambiartab(eltab) {
 
 
 
+
 function procesar_ventas_historial(campo){
 
 var cid=$("#id").val();
