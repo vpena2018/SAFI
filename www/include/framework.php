@@ -696,6 +696,28 @@ function valores_sino($valor){
      return $salida;    
 }
 
+function valores_combobox_array(
+    $datos,
+    $codigo = '',
+    $texto_primera = '',
+    $key_valor = 'valor',
+    $key_texto = 'texto'
+) {
+    $salida = '';
+
+    if ($texto_primera != '') {
+        $salida .= "<option value=\"\">$texto_primera</option>";
+    }
+
+    foreach ($datos as $item) {
+        $seleccionado = ($item[$key_valor] == $codigo) ? ' selected' : '';
+        $salida .= '<option value="' . $item[$key_valor] . '"' . $seleccionado . '>'
+                 . $item[$key_texto] . '</option>';
+    }
+
+    return $salida;
+}
+
 
 function valores_combobox_db($tabla,$codigo,$campo,$where,$campo_etiqueta='',$texto_primera='',$campo_id='id'){
 	 global $conn;

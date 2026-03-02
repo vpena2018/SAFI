@@ -663,6 +663,7 @@ if ($accion=="v") {
     ,ventas.representante_legal_identidad
     ,ventas.representante_legal_profesion
     ,ventas.representante_legal_direccion
+    ,ventas.tipo_documento_ident_venta
 
         FROM ventas
         LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)        
@@ -1134,7 +1135,10 @@ if ($foto_original_tele !== '') {
         if (isset($_REQUEST["id_factura"])) { $sqlcampos.= " , id_factura =".GetSQLValue($_REQUEST["id_factura"],"int"); } 
         if (isset($_REQUEST["id_vendedor"])) { $sqlcampos.= " , id_vendedor =".GetSQLValue($_REQUEST["id_vendedor"],"int"); } 
         if (isset($_REQUEST["id_televentas"])) { $sqlcampos.= " , id_televentas =".GetSQLValue($_REQUEST["id_televentas"],"int"); } 
-        if (isset($_REQUEST["observaciones"])) { $sqlcampos.= " , observaciones =".GetSQLValue($_REQUEST["observaciones"],"text"); }         
+        if (isset($_REQUEST["observaciones"])) { $sqlcampos.= " , observaciones =".GetSQLValue($_REQUEST["observaciones"],"text"); }   
+        
+
+        if (isset($_REQUEST["tipo_documento_ident_venta"])) { $sqlcampos.= " , tipo_documento_ident_venta =".GetSQLValue($_REQUEST["tipo_documento_ident_venta"],"text"); } 
         //if (isset($_REQUEST["foto"])) { $sqlcampos.= " , foto ='$foto'"; } 
         //if (isset($_REQUEST["foto_televentas"])) { $sqlcampos.= " , foto_televentas = '$foto_televentas'"; } 
 
@@ -1588,6 +1592,8 @@ if ($foto_original_tele !== '') {
     if (isset($row["representante_legal_profesion"])) {$representante_legal_profesion= $row["representante_legal_profesion"]; } else {$representante_legal_profesion= "";}
     if (isset($row["representante_legal_direccion"])) {$representante_legal_direccion= $row["representante_legal_direccion"]; } else {$representante_legal_direccion= "";}
 
+    if (isset($row["tipo_documento_ident_venta"])) {$tipo_documento_ident_venta= $row["tipo_documento_ident_venta"]; } else {$tipo_documento_ident_venta= "";}
+
 
 
     if (isset($row["cilindraje"])) {$cilindraje= $row["cilindraje"]; } else {$cilindraje= "";}
@@ -1604,6 +1610,8 @@ if ($foto_original_tele !== '') {
 
     if (isset($row["cliente_id"])) {$cliente_id= $row["cliente_id"]; } else {$cliente_id= "";}
     if (isset($row["cliente_nombre"])) {$cliente_nombre= $row["cliente_nombre"]; } else {$cliente_nombre= "";}
+
+    if (isset($row["tipo_documento_ident_venta"])) {$tipo_documento_ident_venta= $row["tipo_documento_ident_venta"]; } else {$tipo_documento_ident_venta= "";}
 
 
    
@@ -1710,6 +1718,19 @@ if ($foto_original_tele !== '') {
         echo campo("nombre_cliente","",'hidden',$nombre_cliente,'','','');
         echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1,'get.php?a=2&t=1',$cliente_nombre);
         echo campo("representante_legal_profesion","Profesión u oficio de comprador",'text',$representante_legal_profesion,' ',$disable_sec2);
+
+
+        $opciones = [
+            ['valor' => 'dni', 'texto' => 'DNI'],
+            ['valor' => 'pasaporte', 'texto' => 'pasaporte'],
+            ['valor' => 'carnet_residente', 'texto' => 'carnet de residente'],
+        ];
+
+        //echo valores_combobox_array($opciones, 'T02', 'Seleccione una opción');
+
+        //$tipo_documento_ident_venta='$tipo_documento';
+        echo campo("tipo_documento_ident_venta","Tipo Documento de identificacion del comprador",'select2',valores_combobox_array($opciones, $tipo_documento_ident_venta, '')); 
+
         echo campo("persona_juridica","persona juridica",'checkboxCustom',$persona_juridica,' ',$disable_sec2);
 
         ?>
@@ -1732,7 +1753,7 @@ if ($foto_original_tele !== '') {
             <div class="col-md-12">
                 <?php echo campo(
                     "representante_legal_identidad",
-                    "Identidad de Representante Legal",
+                    "Numero de identificacion de documento",
                     'text',
                     $representante_legal_identidad,
                     ' ',
