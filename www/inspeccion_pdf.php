@@ -30,6 +30,25 @@ padding-left: 10px;
 } 
 </style> ";
 
+function get_base64_png_from_request($key) {
+    if (!isset($_REQUEST[$key])) {
+        return "";
+    }
+    $data_url = trim((string)$_REQUEST[$key]);
+    if ($data_url === "" || strpos($data_url, "data:image/png;base64,") !== 0) {
+        return "";
+    }
+    $raw = substr($data_url, strlen("data:image/png;base64,"));
+    if ($raw === "") {
+        return "";
+    }
+    $decoded = base64_decode($raw, true);
+    if ($decoded === false || strlen($decoded) < 64) {
+        return "";
+    }
+    return $decoded;
+}
+
 
 if (isset($guardar_archivo)) {
     $cid = $elcodigo ;
@@ -303,8 +322,10 @@ $detallespos=$pdf->getY();
     
     //***foto del vehiculo */
   
-    $imgdata = base64_decode(str_replace('data:image/png;base64,','',($_REQUEST['pdfimg1'])));
-    $pdf->Image('@'.$imgdata,113,$detallespos,100,125);
+    $imgdata = get_base64_png_from_request('pdfimg1');
+    if ($imgdata !== "") {
+        $pdf->Image('@'.$imgdata,113,$detallespos,100,125);
+    }
     $leyendapos=$pdf->getY()-12;
     $pdf->Image('img/golpes1.png',115,$leyendapos,40,8);
     $pdf->Image('img/golpes2.png',160,$leyendapos+1,30,4);
@@ -408,11 +429,15 @@ $detallespos=$pdf->getY();
     $pdf->SetX(100);
     $pdf->Cell(100, 4, 'Firma Cliente / Client Signature: ______________________', '', 0, 'L', true );             
     
-    $imgfirma1 = base64_decode(str_replace('data:image/png;base64,','',($_REQUEST['pdffirma2'])));
-    $pdf->Image('@'.$imgfirma1,60,251,28,12);
+    $imgfirma1 = get_base64_png_from_request('pdffirma2');
+    if ($imgfirma1 !== "") {
+        $pdf->Image('@'.$imgfirma1,60,251,28,12);
+    }
 
-    $imgfirma2 = base64_decode(str_replace('data:image/png;base64,','',($_REQUEST['pdffirma1'])));
-    $pdf->Image('@'.$imgfirma2,145,251,28,12);
+    $imgfirma2 = get_base64_png_from_request('pdffirma1');
+    if ($imgfirma2 !== "") {
+        $pdf->Image('@'.$imgfirma2,145,251,28,12);
+    }
    
     $pdf->SetY(264);
     $pdf->SetX(60);

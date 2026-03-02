@@ -26,6 +26,7 @@ $visible_modificar=' oculto';
 $kilometraje_minimo=0;
 $detalles="";
 $detalles2="";
+$cliente=0;
 
 if (isset($_REQUEST['ti'])) { $tipo_insp = $_REQUEST['ti']; } else   {$tipo_insp ="1";}
 if (isset($_REQUEST['tie'])) { $tipo_insp_especial = $_REQUEST['tie']; } else   {$tipo_insp_especial ="";}
@@ -303,11 +304,12 @@ if ($accion=="g") {
             $sqlcampos.= " , id_estado =".GetSQLValue($nuevo_estado,"int");
             $sqlcampos.= " , id_usuario_completado =".$_SESSION["usuario_id"];
             $actualizarkm=true;
-        }else{
+      }else{
             $lbl_estado="Revision ADPC";
             $sqlcampos.= " , fecha_auditado =NOW()";            
             $sqlcampos.= " , id_usuario_auditado =".$_SESSION["usuario_id"]; 
-            $sqlcampos.= " , observaciones_adpc =".GetSQLValue($_REQUEST["observaciones_adpc"],"text");  
+            $obs_adpc = isset($_REQUEST["observaciones_adpc"]) ? $_REQUEST["observaciones_adpc"] : "";
+            $sqlcampos.= " , observaciones_adpc =".GetSQLValue($obs_adpc,"text");  
         }
       } 
      
@@ -368,19 +370,27 @@ if ($accion=="g") {
             
         }
         //actualizar Km
-        if($actualizarkm==true) {sql_update("UPDATE producto SET km=".GetSQLValue($_REQUEST["kilometraje_entrada"],"int")."  WHERE id=".GetSQLValue($_REQUEST["id_producto"],"int"));}
+        $km_entrada_upd = isset($_REQUEST["kilometraje_entrada"]) ? $_REQUEST["kilometraje_entrada"] : 0;
+        $id_producto_upd = isset($_REQUEST["id_producto"]) ? $_REQUEST["id_producto"] : 0;
+        if($actualizarkm==true and !es_nulo($id_producto_upd)) {
+          sql_update("UPDATE producto SET km=".GetSQLValue($km_entrada_upd,"int")."  WHERE id=".GetSQLValue($id_producto_upd,"int"));
+        }
                   
           $stud_arr[0]["pcode"] = 1;
           $stud_arr[0]["pmsg"] ="Guardado";
           $stud_arr[0]["pcid"] = $cid;
 
           if ($enviar_orden_email==true) {
-              require_once ('correo_inspeccion_pdf.php');
+              try {
+                require_once ('correo_inspeccion_pdf.php');
+              } catch (Throwable $e) {
+                // No bloquear guardado por fallos en generacion/envio de correo-PDF.
+              }
               ///Valido el vehiculo con el cliente de Ventas de carro usado CVU
               if (isset($_REQUEST['cliente_id'])){                
                   $clienteCvu=substr(get_dato_sql("entidad","codigo_alterno"," WHERE id=".GetSQLValue($_REQUEST["cliente_id"],"int")),0,4);    
-                  if ($clienteCvu=="CVU-") {
-                    sql_update("UPDATE ventas SET id_inspeccion=".$cid."  WHERE id_producto=".GetSQLValue($_REQUEST["id_producto"],"int"));     
+                  if ($clienteCvu=="CVU-" and !es_nulo($id_producto_upd)) {
+                    sql_update("UPDATE ventas SET id_inspeccion=".$cid."  WHERE id_producto=".GetSQLValue($id_producto_upd,"int"));     
                   }
               }                
           }
@@ -1504,7 +1514,7 @@ if ($tipo_inspeccion=='2'){ // TALLER
         <div class="card-body">   
           <div class="row"> 
             <div class="col-3">       
-                <?php echo campo("grua","Vino en GrÃºa",'select',valores_combobox_texto(app_combo_si_no,$grua),'',$disable_sec7); ?>  
+                <?php echo campo("grua","Vino en Grúa",'select',valores_combobox_texto(app_combo_si_no,$grua),'',$disable_sec7); ?>  
             </div>
             
             <?php
@@ -1585,7 +1595,9 @@ if ($tipo_inspeccion=='2'){ // TALLER
           <?php //  ?>
           <div class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top ">
             <a href="#" onclick="procesar_inspeccion('inspeccion_mant.php?a=g&gg_est=1','forma','1'); return false;" class="btn btn-outline-secondary mr-2 mb-2 xfrm <?php echo $visible_guardar; ?>" ><i class="fa fa-check"></i> Guardar Borrador</a>
-            <a href="#" onclick="procesar_inspeccion('inspeccion_mant.php?a=g&gg_est=2','forma','2'); return false;" class="btn btn-primary mr-2 mb-2 xfrm <?php echo $visible_guardar; ?>" ><i class="fa fa-check "></i> Guardar Completado</a>
+            <?php if (!es_nulo($numero)) { ?>
+              <a href="#" onclick="procesar_inspeccion('inspeccion_mant.php?a=g&gg_est=2','forma','2'); return false;" class="btn btn-primary mr-2 mb-2 xfrm <?php echo $visible_guardar; ?>" ><i class="fa fa-check "></i> Guardar Completado</a>
+            <?php } ?>
             <?php if (tiene_permiso(163)) { ?>
                  <a href="#" onclick="procesar_inspeccion('inspeccion_mant.php?a=g&gg_est=0','forma','0'); return false;" class="btn btn-primary mr-2 mb-2 xfrm <?php echo $visible_auditar; ?>" ><i class="fa fa-check "></i>Revision ADPC</a>
             <?php } ?>
