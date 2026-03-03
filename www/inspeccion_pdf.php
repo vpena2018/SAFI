@@ -4,7 +4,11 @@ header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
-require_once ('include/framework.php');  
+if (defined('SAFI_CRON_CONTEXT') && SAFI_CRON_CONTEXT === true) {
+    require_once('include/framework_cron.php');
+} else {
+    require_once('include/framework.php');
+}
 if (!isset($guardar_archivo)) { pagina_permiso(22);}
 
 

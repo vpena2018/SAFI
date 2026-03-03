@@ -22,6 +22,7 @@ if (php_sapi_name() !== 'cli') {
 // Tiempo máximo de ejecución: 5 minutos
 set_time_limit(300);
 
+define('SAFI_CRON_CONTEXT', true);
 require_once(__DIR__ . '/include/framework_cron.php');
 
 $log_file = __DIR__ . '/logs/cron_correo_inspeccion.log';
