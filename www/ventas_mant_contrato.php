@@ -173,8 +173,12 @@ function generarContratoVenta(
                 ventas.representante_legal_profesion,
                 ventas.representante_legal_direccion,
 
+                ventas.nacionalidad_venta,
+                ventas.ciudad_venta,
+                ventas.tipo_documento_ident_venta,
+
                 entidad.nombre   AS cliente_nombre,
-                entidad.rtn      AS identidad_cliente,
+                entidad.identidad      AS identidad_cliente,
                 entidad.direccion AS direccion_cliente,
                 entidad.codigo_alterno AS codigo_cliente,
                 entidad.telefono AS telefono_cliente,
@@ -306,7 +310,11 @@ function generarContratoVenta(
                 'identidad' => $venta['identidad_cliente'],
                 'codigo' => $venta['codigo_cliente'],
                 'direccion' => $venta['direccion_cliente'],
-                'telefono' => $venta['telefono_cliente']
+                'telefono' => $venta['telefono_cliente'],
+                'nacionalidad' => $venta['nacionalidad_venta'],
+                'ciudad' => $venta['ciudad_venta'],
+                'tipo_documento_ident_venta'=> $venta['tipo_documento_ident_venta']
+                
             ],
             'precios' => [
                 'precio_venta' => $precioVenta,
@@ -514,6 +522,25 @@ function descargarVentaPDF($id_venta,$juridico, $soloValidar = false)
         $template->setValue('CIUDAD', $data['representante']['ciudad']);
         $template->setValue('DEPARTAMENTO', $data['representante']['departamento']);
 
+        //datos globales
+        $template->setValue('PROFESION_COMPRADOR', $data['datos_juridicos']['representante_legal_profesion']);
+        $template->setValue('NACIONALIDAD', $data['cliente']['nacionalidad']);
+        $template->setValue('CIUDAD', $data['cliente']['ciudad']);
+
+        if($data['cliente']['tipo_documento_ident_venta'] == 'dni')
+        {
+            $desc='con ducumento nacional de identificacion numero '.$data['cliente']['identidad'];
+            $template->setValue('DESC_DOCUMENTO', $desc);   
+        }else if($data['cliente']['tipo_documento_ident_venta'] == 'pasaporte')
+        {
+            $desc='con pasaporte numero '.$data['cliente']['identidad'];
+            $template->setValue('DESC_DOCUMENTO', $desc);
+        }else if($data['cliente']['tipo_documento_ident_venta'] == 'carnet_residente')
+        {
+            $desc='con carnet de residente numero '.$data['cliente']['identidad'];
+            $template->setValue('DESC_DOCUMENTO', $desc);
+        }
+
 
 
         //datos juridicos
@@ -536,7 +563,7 @@ function descargarVentaPDF($id_venta,$juridico, $soloValidar = false)
         $template->setValue('TELEFONO_CLIENTE', $data['cliente']['telefono']);
 
 
-        $template->setValue('m_f','o');
+        
 
         // Precios
         $template->setValue(
@@ -686,8 +713,6 @@ if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
         echo json_encode($resp);
         exit;
 }
-
-
 
 // VALIDAR (AJAX)
     if ($_GET['a'] === 'print_check') {
