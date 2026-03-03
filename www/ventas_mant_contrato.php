@@ -174,6 +174,7 @@ function generarContratoVenta(
                 ventas.representante_legal_direccion,
 
                 ventas.nacionalidad_venta,
+                ventas.departamento_venta,
                 ventas.ciudad_venta,
                 ventas.tipo_documento_ident_venta,
 
@@ -313,6 +314,7 @@ function generarContratoVenta(
                 'telefono' => $venta['telefono_cliente'],
                 'nacionalidad' => $venta['nacionalidad_venta'],
                 'ciudad' => $venta['ciudad_venta'],
+                'departamento' => $venta['departamento_venta'],
                 'tipo_documento_ident_venta'=> $venta['tipo_documento_ident_venta']
                 
             ],
@@ -519,17 +521,22 @@ function descargarVentaPDF($id_venta,$juridico, $soloValidar = false)
         // Representante
         $template->setValue('REPRESENTANTE_LEGAL', $data['representante']['nombre']);
         $template->setValue('R_IDENTIDAD', $data['representante']['identidad']);
-        $template->setValue('CIUDAD', $data['representante']['ciudad']);
-        $template->setValue('DEPARTAMENTO', $data['representante']['departamento']);
+        
+        //$template->setValue('CIUDAD', $data['representante']['ciudad']);
+
+        //$template->setValue('DEPARTAMENTO', $data['representante']['departamento']);
+
+        
 
         //datos globales
         $template->setValue('PROFESION_COMPRADOR', $data['datos_juridicos']['representante_legal_profesion']);
         $template->setValue('NACIONALIDAD', $data['cliente']['nacionalidad']);
         $template->setValue('CIUDAD', $data['cliente']['ciudad']);
+        $template->setValue('DEPARTAMENTO', $data['cliente']['departamento']);
 
         if($data['cliente']['tipo_documento_ident_venta'] == 'dni')
         {
-            $desc='con ducumento nacional de identificacion numero '.$data['cliente']['identidad'];
+            $desc='con documento nacional de identificacion numero '.$data['cliente']['identidad'];
             $template->setValue('DESC_DOCUMENTO', $desc);   
         }else if($data['cliente']['tipo_documento_ident_venta'] == 'pasaporte')
         {
@@ -601,6 +608,10 @@ function descargarVentaPDF($id_venta,$juridico, $soloValidar = false)
         $template->setValue('DIAS', $data['fecha']['dia']);
         $template->setValue('MES', $data['fecha']['mes']);
         $template->setValue('ANIO_ACTUAL', $data['fecha']['anio']);
+
+        $template->setValue('DIAS_LETRAS', FechanumeroALetras((int)$data['fecha']['dia']));
+        $template->setValue('MES_LETRAS', mesEnLetras((int)$data['fecha']['mes']));
+        $template->setValue('ANIO_LETRAS', FechanumeroALetras((int)$data['fecha']['anio']));
 
         appLog('Template procesado desde JSON');
 
@@ -759,6 +770,7 @@ if ($accion=="v") {
     ,ventas.tipo_documento_ident_venta
     ,ventas.nacionalidad_venta
     ,ventas.ciudad_venta
+    ,ventas.departamento_venta
 
         FROM ventas
         LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)        
@@ -1242,6 +1254,10 @@ if ($foto_original_tele !== '') {
 
         if (isset($_REQUEST["nacionalidad_venta"])) { $sqlcampos.= " , nacionalidad_venta =".GetSQLValue($_REQUEST["nacionalidad_venta"],"text"); } 
         if (isset($_REQUEST["ciudad_venta"])) { $sqlcampos.= " , ciudad_venta =".GetSQLValue($_REQUEST["ciudad_venta"],"text"); } 
+        if (isset($_REQUEST["departamento_venta"])) { $sqlcampos.= " , departamento_venta =".GetSQLValue($_REQUEST["departamento_venta"],"text"); }
+
+
+        
 
         //if (isset($_REQUEST["foto"])) { $sqlcampos.= " , foto ='$foto'"; } 
         //if (isset($_REQUEST["foto_televentas"])) { $sqlcampos.= " , foto_televentas = '$foto_televentas'"; } 
@@ -1265,7 +1281,7 @@ if ($foto_original_tele !== '') {
 
             if (isset($_REQUEST["cliente_id"])) { $sqlcampos.= " , cliente_id =".GetSQLValue($_REQUEST["cliente_id"],"int"); }  
         }else{
-            $sqlcampos.= " , cliente_id =null, representante_legal_profesion = null,tipo_documento_ident_venta=null, nacionalidad_venta=null, ciudad_venta=null";
+            $sqlcampos.= " , cliente_id =null, representante_legal_profesion = null,tipo_documento_ident_venta=null, nacionalidad_venta=null, ciudad_venta=null,departamento_venta=null";
         }
 
 
@@ -1700,7 +1716,7 @@ if ($foto_original_tele !== '') {
 
     if (isset($row["nacionalidad_venta"])) {$nacionalidad_venta= $row["nacionalidad_venta"]; } else {$nacionalidad_venta= "";}
     if (isset($row["ciudad_venta"])) {$ciudad_venta= $row["ciudad_venta"]; } else {$ciudad_venta= "";}
-
+    if (isset($row["departamento_venta"])) {$departamento_venta= $row["departamento_venta"]; } else {$departamento_venta= "";}
 
 
     if (isset($row["cilindraje"])) {$cilindraje= $row["cilindraje"]; } else {$cilindraje= "";}
@@ -1722,6 +1738,7 @@ if ($foto_original_tele !== '') {
 
     if (isset($row["nacionalidad_venta"])) {$nacionalidad_venta= $row["nacionalidad_venta"]; } else {$nacionalidad_venta= "";}
     if (isset($row["ciudad_venta"])) {$ciudad_venta= $row["ciudad_venta"]; } else {$ciudad_venta= "";}
+    if (isset($row["departamento_venta"])) {$departamento_venta= $row["departamento_venta"]; } else {$departamento_venta= "";}
 
 
    
@@ -1842,7 +1859,10 @@ if ($foto_original_tele !== '') {
         echo campo("tipo_documento_ident_venta","Tipo Documento de identificacion del comprador",'select2',valores_combobox_array($tipos_docu, $tipo_documento_ident_venta, '')); 
         
         echo campo("nacionalidad_venta","Nacionalidad",'select2',valores_combobox_array($nacionalidades, $nacionalidad_venta, '')); 
+        echo campo("departamento_venta","Departamento",'text',$departamento_venta,' ',$disable_sec2);
         echo campo("ciudad_venta","Ciudad",'text',$ciudad_venta,' ',$disable_sec2);
+
+        
 
         echo campo("persona_juridica","persona juridica",'checkboxCustom',$persona_juridica,' ',$disable_sec2);
         
