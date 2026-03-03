@@ -88,6 +88,33 @@ if (!es_nulo($cid)) {
         if (trim($row['modificada'])<>'') {
             $modificada="Modificada el ".$row['modificada'];
         }
+
+        // En contexto cron no existe POST del navegador; reutilizar la funcion
+        // get_base64_png_from_request() precargando $_REQUEST con datos guardados.
+        if (!isset($_REQUEST['pdfimg1']) && isset($row['detalles_canvas'])) {
+            $tmp = trim((string)$row['detalles_canvas']);
+            if (strpos($tmp, 'data:image/png;base64,') === 0) {
+                $_REQUEST['pdfimg1'] = $tmp;
+            } elseif (preg_match('/data:image\/png;base64,[A-Za-z0-9+\/=]+/', $tmp, $m)) {
+                $_REQUEST['pdfimg1'] = $m[0];
+            }
+        }
+        if (!isset($_REQUEST['pdffirma1']) && isset($row['firma1_canvas'])) {
+            $tmp = trim((string)$row['firma1_canvas']);
+            if (strpos($tmp, 'data:image/png;base64,') === 0) {
+                $_REQUEST['pdffirma1'] = $tmp;
+            } elseif (preg_match('/data:image\/png;base64,[A-Za-z0-9+\/=]+/', $tmp, $m)) {
+                $_REQUEST['pdffirma1'] = $m[0];
+            }
+        }
+        if (!isset($_REQUEST['pdffirma2']) && isset($row['firma2_canvas'])) {
+            $tmp = trim((string)$row['firma2_canvas']);
+            if (strpos($tmp, 'data:image/png;base64,') === 0) {
+                $_REQUEST['pdffirma2'] = $tmp;
+            } elseif (preg_match('/data:image\/png;base64,[A-Za-z0-9+\/=]+/', $tmp, $m)) {
+                $_REQUEST['pdffirma2'] = $m[0];
+            }
+        }
         
     
     }
