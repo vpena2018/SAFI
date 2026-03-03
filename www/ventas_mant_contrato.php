@@ -986,6 +986,10 @@ if ($accion=="g") {
                 $verror .= 'La profesion u oficio del comprador es obligatoria. ';
             }
 
+            if (empty(trim($_REQUEST['ciudad_venta'] ?? ''))) {
+                $verror .= 'Ingrese la ciudad.';
+            }
+
             if ($persona_juridica == 1) {
 
                 if (empty(trim($_REQUEST['representante_legal_persona_juridica'] ?? ''))) {
