@@ -4,6 +4,74 @@ require __DIR__ . '/../vendor/autoload.php';
 use PhpOffice\PhpWord\TemplateProcessor;
 
 
+        $tipos_docu = [
+            ['valor' => 'dni', 'texto' => 'DNI'],
+            ['valor' => 'pasaporte', 'texto' => 'pasaporte'],
+            ['valor' => 'carnet_residente', 'texto' => 'carnet de residente'],
+        ];
+
+$nacionalidades = [
+
+    // ===== AMÉRICA =====
+    ['valor' => 'argentino', 'texto' => 'Argentino'],
+    ['valor' => 'boliviano', 'texto' => 'Boliviano'],
+    ['valor' => 'brasileño', 'texto' => 'Brasileño'],
+    ['valor' => 'canadiense', 'texto' => 'Canadiense'],
+    ['valor' => 'chileno', 'texto' => 'Chileno'],
+    ['valor' => 'colombiano', 'texto' => 'Colombiano'],
+    ['valor' => 'costarricense', 'texto' => 'Costarricense'],
+    ['valor' => 'cubano', 'texto' => 'Cubano'],
+    ['valor' => 'ecuatoriano', 'texto' => 'Ecuatoriano'],
+    ['valor' => 'salvadoreño', 'texto' => 'Salvadoreño'],
+    ['valor' => 'estadounidense', 'texto' => 'Estadounidense'],
+    ['valor' => 'guatemalteco', 'texto' => 'Guatemalteco'],
+    ['valor' => 'haitiano', 'texto' => 'Haitiano'],
+    ['valor' => 'hondureño', 'texto' => 'Hondureño'],
+    ['valor' => 'jamaicano', 'texto' => 'Jamaicano'],
+    ['valor' => 'mexicano', 'texto' => 'Mexicano'],
+    ['valor' => 'nicaragüense', 'texto' => 'Nicaragüense'],
+    ['valor' => 'panameño', 'texto' => 'Panameño'],
+    ['valor' => 'paraguayo', 'texto' => 'Paraguayo'],
+    ['valor' => 'peruano', 'texto' => 'Peruano'],
+    ['valor' => 'dominicano', 'texto' => 'Dominicano'],
+    ['valor' => 'uruguayo', 'texto' => 'Uruguayo'],
+    ['valor' => 'venezolano', 'texto' => 'Venezolano'],
+
+    // ===== EUROPA =====
+    ['valor' => 'alemán', 'texto' => 'Alemán'],
+    ['valor' => 'austriaco', 'texto' => 'Austriaco'],
+    ['valor' => 'belga', 'texto' => 'Belga'],
+    ['valor' => 'búlgaro', 'texto' => 'Búlgaro'],
+    ['valor' => 'croata', 'texto' => 'Croata'],
+    ['valor' => 'checo', 'texto' => 'Checo'],
+    ['valor' => 'danés', 'texto' => 'Danés'],
+    ['valor' => 'español', 'texto' => 'Español'],
+    ['valor' => 'finlandés', 'texto' => 'Finlandés'],
+    ['valor' => 'francés', 'texto' => 'Francés'],
+    ['valor' => 'griego', 'texto' => 'Griego'],
+    ['valor' => 'húngaro', 'texto' => 'Húngaro'],
+    ['valor' => 'irlandés', 'texto' => 'Irlandés'],
+    ['valor' => 'islandés', 'texto' => 'Islandés'],
+    ['valor' => 'italiano', 'texto' => 'Italiano'],
+    ['valor' => 'letón', 'texto' => 'Letón'],
+    ['valor' => 'lituano', 'texto' => 'Lituano'],
+    ['valor' => 'luxemburgués', 'texto' => 'Luxemburgués'],
+    ['valor' => 'neerlandés', 'texto' => 'Neerlandés'],
+    ['valor' => 'noruego', 'texto' => 'Noruego'],
+    ['valor' => 'polaco', 'texto' => 'Polaco'],
+    ['valor' => 'portugués', 'texto' => 'Portugués'],
+    ['valor' => 'rumano', 'texto' => 'Rumano'],
+    ['valor' => 'ruso', 'texto' => 'Ruso'],
+    ['valor' => 'serbio', 'texto' => 'Serbio'],
+    ['valor' => 'sueco', 'texto' => 'Sueco'],
+    ['valor' => 'suizo', 'texto' => 'Suizo'],
+    ['valor' => 'ucraniano', 'texto' => 'Ucraniano'],
+    ['valor' => 'británico', 'texto' => 'Británico'],
+];
+
+
+
+
 
 function appLog(string $message): void
 {
@@ -664,6 +732,8 @@ if ($accion=="v") {
     ,ventas.representante_legal_profesion
     ,ventas.representante_legal_direccion
     ,ventas.tipo_documento_ident_venta
+    ,ventas.nacionalidad_venta
+    ,ventas.ciudad_venta
 
         FROM ventas
         LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)        
@@ -1139,6 +1209,11 @@ if ($foto_original_tele !== '') {
         
 
         if (isset($_REQUEST["tipo_documento_ident_venta"])) { $sqlcampos.= " , tipo_documento_ident_venta =".GetSQLValue($_REQUEST["tipo_documento_ident_venta"],"text"); } 
+
+
+        if (isset($_REQUEST["nacionalidad_venta"])) { $sqlcampos.= " , nacionalidad_venta =".GetSQLValue($_REQUEST["nacionalidad_venta"],"text"); } 
+        if (isset($_REQUEST["ciudad_venta"])) { $sqlcampos.= " , ciudad_venta =".GetSQLValue($_REQUEST["ciudad_venta"],"text"); } 
+
         //if (isset($_REQUEST["foto"])) { $sqlcampos.= " , foto ='$foto'"; } 
         //if (isset($_REQUEST["foto_televentas"])) { $sqlcampos.= " , foto_televentas = '$foto_televentas'"; } 
 
@@ -1161,7 +1236,7 @@ if ($foto_original_tele !== '') {
 
             if (isset($_REQUEST["cliente_id"])) { $sqlcampos.= " , cliente_id =".GetSQLValue($_REQUEST["cliente_id"],"int"); }  
         }else{
-            $sqlcampos.= " , cliente_id =null, representante_legal_profesion = null";
+            $sqlcampos.= " , cliente_id =null, representante_legal_profesion = null,tipo_documento_ident_venta=null, nacionalidad_venta=null, ciudad_venta=null";
         }
 
 
@@ -1594,6 +1669,9 @@ if ($foto_original_tele !== '') {
 
     if (isset($row["tipo_documento_ident_venta"])) {$tipo_documento_ident_venta= $row["tipo_documento_ident_venta"]; } else {$tipo_documento_ident_venta= "";}
 
+    if (isset($row["nacionalidad_venta"])) {$nacionalidad_venta= $row["nacionalidad_venta"]; } else {$nacionalidad_venta= "";}
+    if (isset($row["ciudad_venta"])) {$ciudad_venta= $row["ciudad_venta"]; } else {$ciudad_venta= "";}
+
 
 
     if (isset($row["cilindraje"])) {$cilindraje= $row["cilindraje"]; } else {$cilindraje= "";}
@@ -1612,6 +1690,9 @@ if ($foto_original_tele !== '') {
     if (isset($row["cliente_nombre"])) {$cliente_nombre= $row["cliente_nombre"]; } else {$cliente_nombre= "";}
 
     if (isset($row["tipo_documento_ident_venta"])) {$tipo_documento_ident_venta= $row["tipo_documento_ident_venta"]; } else {$tipo_documento_ident_venta= "";}
+
+    if (isset($row["nacionalidad_venta"])) {$nacionalidad_venta= $row["nacionalidad_venta"]; } else {$nacionalidad_venta= "";}
+    if (isset($row["ciudad_venta"])) {$ciudad_venta= $row["ciudad_venta"]; } else {$ciudad_venta= "";}
 
 
    
@@ -1719,19 +1800,23 @@ if ($foto_original_tele !== '') {
         echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1,'get.php?a=2&t=1',$cliente_nombre);
         echo campo("representante_legal_profesion","Profesión u oficio de comprador",'text',$representante_legal_profesion,' ',$disable_sec2);
 
+        //opciones
 
-        $opciones = [
-            ['valor' => 'dni', 'texto' => 'DNI'],
-            ['valor' => 'pasaporte', 'texto' => 'pasaporte'],
-            ['valor' => 'carnet_residente', 'texto' => 'carnet de residente'],
-        ];
 
         //echo valores_combobox_array($opciones, 'T02', 'Seleccione una opción');
+        if($nacionalidad_venta=='')
+        {
+            $nacionalidad_venta='hondureño';
+        }
 
         //$tipo_documento_ident_venta='$tipo_documento';
-        echo campo("tipo_documento_ident_venta","Tipo Documento de identificacion del comprador",'select2',valores_combobox_array($opciones, $tipo_documento_ident_venta, '')); 
+        echo campo("tipo_documento_ident_venta","Tipo Documento de identificacion del comprador",'select2',valores_combobox_array($tipos_docu, $tipo_documento_ident_venta, '')); 
+        
+        echo campo("nacionalidad_venta","Nacionalidad",'select2',valores_combobox_array($nacionalidades, $nacionalidad_venta, '')); 
+        echo campo("ciudad_venta","Ciudad",'text',$ciudad_venta,' ',$disable_sec2);
 
         echo campo("persona_juridica","persona juridica",'checkboxCustom',$persona_juridica,' ',$disable_sec2);
+        
 
         ?>
 
