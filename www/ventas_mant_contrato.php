@@ -1024,7 +1024,11 @@ if ($accion=="g") {
             }
 
             if (empty(trim($_REQUEST['ciudad_venta'] ?? ''))) {
-                $verror .= 'Ingrese la ciudad.';
+                $verror .= 'Ingrese la ciudad. ';
+            }
+
+            if (empty(trim($_REQUEST['departamento_venta'] ?? ''))) {
+                $verror .= 'Ingrese el departamento.';
             }
 
             if ($persona_juridica == 1) {
