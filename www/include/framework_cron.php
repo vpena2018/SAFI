@@ -62,3 +62,35 @@ function get_dato_sql($tabla, $campo, $condicion) {
     }
     return null;
 }
+
+function formato_numero($numero,$decimales=0,$moneda="") 
+{
+	return  $moneda. number_format($numero,$decimales);
+}
+
+function formato_fecha_de_mysql($fecha) {
+    $salida="";
+    if(!es_nulo($fecha)){
+        $date1=date_create($fecha);
+        if ($_SESSION['formato_fecha']=="mm/dd/yyyy") {
+            $salida= date_format($date1,'m/d/Y');
+        }
+
+        if ($_SESSION['formato_fecha']=="dd/mm/yyyy") {
+            $salida= date_format($date1,'d/m/Y');
+        }
+    }
+    return $salida;
+
+}
+
+function formato_solohora_de_mysql($fecha) {
+    $salida="";
+    if(!es_nulo($fecha)){
+        $date1=date_create($fecha);
+        
+        $salida= date_format($date1,'h:i a');
+    }
+
+ return $salida;
+}
