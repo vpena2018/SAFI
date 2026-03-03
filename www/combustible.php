@@ -539,14 +539,9 @@ echo campo("id",("Codigo"),'hidden',$id,' ','');
 
     function buscar_archivo_s3($camino,$filename){
         // Implementar la logica para buscar el archivo en S3 si es necesario
-        global $onclick,$src;
-        if (file_exists($camino)) {    
-            $onclick = 'mostrar_foto(\'' . $filename . '\'); return false;';        
-            $src= 'uploa_d/thumbnail/'.$filename;
-        } else {            
-            $onclick = 'mostrar_foto2(\'' . $filename . '\'); return false;';        
-            $src= 'aws_bucket_s3/thumbnail/'.$filename;
-        }    
+        global $onclick,$src;        
+        $onclick = 'mostrar_foto(\'' . $filename . '\'); return false;';        
+        $src= 'uploa_d/thumbnail/'.$filename;        
         return false;
     }
 ?>
@@ -674,12 +669,6 @@ function mostrar_foto(imagen) {
   Swal.fire({
   imageUrl: 'uploa_d/'+imagen,
 
-});
-}
-
-function mostrar_foto2(imagen) {  
-  Swal.fire({
-  imageUrl: 'aws_bucket_s3/'+imagen,
 });
 }
 
