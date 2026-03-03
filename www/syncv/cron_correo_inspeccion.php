@@ -13,7 +13,7 @@
 // Evitar que se ejecute desde el navegador directamente
 if (php_sapi_name() !== 'cli') {
     // Permitir también llamada via URL protegida con token (útil si no tienes cron)
-    if (!isset($_GET['token']) || $_GET['token'] !== 'PON_AQUI_UN_TOKEN_SECRETO_123') {
+    if (!isset($_GET['token']) || $_GET['token'] !== 'e1f2a1b857abfe33b6f63c05159e0c8b53818d523fd674af14342fbcaf8285bb') {
         http_response_code(403);
         die('Acceso denegado');
     }
