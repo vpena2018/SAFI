@@ -6,6 +6,7 @@ header("Pragma: no-cache");
 
 if (defined('SAFI_CRON_CONTEXT') && SAFI_CRON_CONTEXT === true) {
     require_once('include/framework_cron.php');
+    if (!isset($guardar_archivo));
 } else {
     require_once('include/framework.php');
     if (!isset($guardar_archivo)) { pagina_permiso(22);}
