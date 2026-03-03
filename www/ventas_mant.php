@@ -801,7 +801,7 @@ if ($accion=="g") {
   <?php
   if ($foto<>'') {
      $fext = substr($foto, -3);
-            if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {    
+            if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif' or $fext=='pdf') {    
                 $ruta1 = 'uploa_d/' . $foto;           
                 if (file_exists($ruta1)) {
                     $onclick = 'mostrar_foto(\'' . $foto . '\'); return false;';
@@ -822,8 +822,8 @@ if ($accion=="g") {
             }
   }
    if ($foto_televentas<>'') {
-     $fext = substr($foto_televentas, -3);
-            if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {   
+      $fext = substr($foto_televentas, -3);
+            if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif' or $fext=='pdf') {   
                 $ruta1 = 'uploa_d/' . $foto_televentas;           
                 if (file_exists($ruta1)) {
                     $onclick = 'mostrar_foto(\'' . $foto_televentas . '\'); return false;';

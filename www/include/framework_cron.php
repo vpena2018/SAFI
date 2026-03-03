@@ -1,21 +1,17 @@
 <?php
-// Version del framework SIN validacion de sesion.
-// Solo para uso del cron.
+// framework_cron.php
+// NO carga framework.php — evita validacion de sesion/cookies.
+// Carga config.php directamente y define las funciones necesarias.
+// Subir a: /syncv/include/framework_cron.php
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-if (!isset($_SESSION['usuario'])) {
-    $_SESSION['usuario']          = 'cron';
-    $_SESSION['usuario_id']       = 0;
-    $_SESSION['tienda_id']        = 1;
-    $_SESSION['seg']              = array();
-    $_SESSION['formato_fecha']    = 'dd/mm/yyyy';
-    $_SESSION['hora_ultima_tran'] = time();
-}
-
+// Conexion directa usando las constantes de config.php
 require_once(__DIR__ . '/config.php');
+
+$conn = new mysqli(db_ip, db_user, db_pw, db_name);
+if (mysqli_connect_errno()) {
+    die('Error BD: ' . mysqli_connect_error());
+}
+$conn->set_charset('utf8');
 
 $now_fecha     = date('Y-m-d');
 $now_fechahora = date('Y-m-d H:i:s');
@@ -32,7 +28,7 @@ function GetSQLValue($theValue, $theType) {
         case "text":
             $theValue = $conn->real_escape_string($theValue);
             return "'" . $theValue . "'";
-        case "int":   return intval($theValue);
+        case "int":    return intval($theValue);
         case "double": return doubleval($theValue);
         default:
             $theValue = $conn->real_escape_string($theValue);
