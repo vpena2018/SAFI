@@ -381,9 +381,8 @@ if ($accion=="g") {
           $stud_arr[0]["pcid"] = $cid;
 
           if ($enviar_orden_email==true) {
-              try {
- 
-                 // Generar PDF en segundo plano (no bloquea al usuario)
+             
+                // Generar PDF en segundo plano (no bloquea al usuario)
                 /* $cmd = "php /var/www/htmlinspeccion_pdf.php pdfcod=$cid guardar=1 > /dev/null 2>&1 &";
                  exec($cmd);
                 
@@ -392,10 +391,7 @@ if ($accion=="g") {
                             VALUES ($cid, $numero, 0, NOW())");*/
 
                 require_once ('correo_inspeccion_pdf.php'); //ojo no quitar porque correo_inspeccion_pdf.php es el que genera el PDF y el correo, si falla el PDF o el correo no bloquea el guardado de la HI.
-                
-              } catch (Throwable $e) {
-                // No bloquear guardado por fallos en generacion/envio de correo-PDF.
-              }
+      
               ///Valido el vehiculo con el cliente de Ventas de carro usado CVU
               if (isset($_REQUEST['cliente_id'])){                
                   $clienteCvu=substr(get_dato_sql("entidad","codigo_alterno"," WHERE id=".GetSQLValue($_REQUEST["cliente_id"],"int")),0,4);    
