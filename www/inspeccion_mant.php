@@ -382,8 +382,18 @@ if ($accion=="g") {
 
           if ($enviar_orden_email==true) {
               try {
-                require_once ('correo_inspeccion_pdf.php'); //ojo no quitar porque correo_inspeccion_pdf.php es el que genera el PDF y el correo, si falla el PDF o el correo no bloquea el guardado de la HI.
-               /* sql_insert("INSERT INTO cola_correo_inspeccion (id_inspeccion, numero, estado, fecha_creado) 
+ 
+                // Generar PDF mientras aún existe $_REQUEST con las imágenes
+                $guardar_archivo = app_dir . 'reportes/Inspeccion_' . $numero . '.pdf';
+                $elcodigo = $cid;
+                require_once('inspeccion_pdf.php');
+                
+                // Encolar solo el envío del correo
+                sql_insert("INSERT INTO cola_correo_inspeccion (id_inspeccion, numero, estado, fecha_creado) 
+                            VALUES ($cid, $numero, 0, NOW())");
+
+               /* require_once ('correo_inspeccion_pdf.php'); //ojo no quitar porque correo_inspeccion_pdf.php es el que genera el PDF y el correo, si falla el PDF o el correo no bloquea el guardado de la HI.
+                sql_insert("INSERT INTO cola_correo_inspeccion (id_inspeccion, numero, estado, fecha_creado) 
                 VALUES ($cid, $numero, 0, NOW())");*/
               } catch (Throwable $e) {
                 // No bloquear guardado por fallos en generacion/envio de correo-PDF.
