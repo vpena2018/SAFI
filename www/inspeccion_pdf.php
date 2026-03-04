@@ -122,9 +122,7 @@ if (!es_nulo($cid)) {
 }    else {exit;}
     
    
-  
-    
-     
+ 
 
 
 // Extend the TCPDF class to create custom Header and Footer

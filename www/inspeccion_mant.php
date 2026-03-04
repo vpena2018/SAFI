@@ -383,13 +383,12 @@ if ($accion=="g") {
           if ($enviar_orden_email==true) {
               try {
  
-                // Generar PDF mientras aún existe $_REQUEST con las imágenes
-                $guardar_archivo = app_dir . 'reportes/Inspeccion_' . $numero . '.pdf';
-                $elcodigo = $cid;
-                require_once('inspeccion_pdf.php');
+                 // Generar PDF en segundo plano (no bloquea al usuario)
+                 $cmd = "php " . app_dir . "inspeccion_pdf.php pdfcod=$cid guardar=1 > /dev/null 2>&1 &";
+                 exec($cmd);
                 
-                // Encolar solo el envío del correo
-                sql_insert("INSERT INTO cola_correo_inspeccion (id_inspeccion, numero, estado, fecha_creado) 
+                 // Encolar solo el envío del correo
+                 sql_insert("INSERT INTO cola_correo_inspeccion (id_inspeccion, numero, estado, fecha_creado) 
                             VALUES ($cid, $numero, 0, NOW())");
 
                /* require_once ('correo_inspeccion_pdf.php'); //ojo no quitar porque correo_inspeccion_pdf.php es el que genera el PDF y el correo, si falla el PDF o el correo no bloquea el guardado de la HI.
