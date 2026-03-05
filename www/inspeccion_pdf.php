@@ -4,6 +4,7 @@ header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
+/*
 if (defined('SAFI_CRON_CONTEXT') && SAFI_CRON_CONTEXT === true) {
     require_once('include/framework_cron.php');
     if (!isset($guardar_archivo));
@@ -11,6 +12,22 @@ if (defined('SAFI_CRON_CONTEXT') && SAFI_CRON_CONTEXT === true) {
     require_once('include/framework.php');
     if (!isset($guardar_archivo)) { pagina_permiso(22);}
 }
+*/
+
+if (defined('SAFI_CRON_CONTEXT') && SAFI_CRON_CONTEXT === true) {
+    require_once('include/framework_cron.php');
+} elseif (php_sapi_name() === 'cli') {
+    // Ejecutando desde linea de comandos o segundo plano
+    chdir('/var/www/html');
+    require_once('include/framework_cron.php');
+    parse_str(implode('&', array_slice($argv, 1)), $_REQUEST);
+    $elcodigo = intval($_REQUEST['pdfcod']);
+    $guardar_archivo = '/var/www/html/reportes/Inspeccion_' . $elcodigo . '.pdf';
+} else {
+    require_once('include/framework.php');
+    if (!isset($guardar_archivo)) { pagina_permiso(22); }
+}
+
 
 
 // require_once('include/tcpdf/config/lang/spa.php');
@@ -18,6 +35,7 @@ require_once('include/tcpdf/tcpdf.php');
  
 
 $contenido="" ;
+$fecha_hora_pdf_footer = '';
 
 
 $style="<style>
@@ -35,23 +53,38 @@ padding-left: 10px;
 } 
 </style> ";
 
-function get_base64_png_from_request($key) {
-    if (!isset($_REQUEST[$key])) {
-        return "";
+if (!function_exists('get_base64_png_from_request')) {
+    function get_base64_png_from_request($key) {
+        if (!isset($_REQUEST[$key])) {
+            return "";
+        }
+        $data_url = trim((string)$_REQUEST[$key]);
+        if ($data_url === "" || strpos($data_url, "data:image/png;base64,") !== 0) {
+            return "";
+        }
+        $raw = substr($data_url, strlen("data:image/png;base64,"));
+        if ($raw === "") {
+            return "";
+        }
+        $decoded = base64_decode($raw, true);
+        if ($decoded === false || strlen($decoded) < 64) {
+            return "";
+        }
+        return $decoded;
     }
-    $data_url = trim((string)$_REQUEST[$key]);
-    if ($data_url === "" || strpos($data_url, "data:image/png;base64,") !== 0) {
-        return "";
+}
+
+if (!function_exists('formato_fecha_pdf_seguro')) {
+    function formato_fecha_pdf_seguro($fecha) {
+        if (es_nulo($fecha)) {
+            return '';
+        }
+        $d = date_create($fecha);
+        if ($d === false) {
+            return '';
+        }
+        return date_format($d, 'd/m/Y');
     }
-    $raw = substr($data_url, strlen("data:image/png;base64,"));
-    if ($raw === "") {
-        return "";
-    }
-    $decoded = base64_decode($raw, true);
-    if ($decoded === false || strlen($decoded) < 64) {
-        return "";
-    }
-    return $decoded;
 }
 
 
@@ -89,6 +122,9 @@ if (!es_nulo($cid)) {
         if (trim($row['modificada'])<>'') {
             $modificada="Modificada el ".$row['modificada'];
         }
+        $fecha_ref_pdf = !es_nulo($row['fecha_entrada']) ? $row['fecha_entrada'] : $row['fecha'];
+        $hora_ref_pdf = !es_nulo($row['hora_entrada']) ? $row['hora_entrada'] : $row['hora'];
+        $fecha_hora_pdf_footer = trim(formato_fecha_pdf_seguro($fecha_ref_pdf).' '.formato_solohora_de_mysql($hora_ref_pdf));
 
         // En contexto cron no existe POST del navegador; reutilizar la funcion
         // get_base64_png_from_request() precargando $_REQUEST con datos guardados.
@@ -158,7 +194,7 @@ class MYPDF extends TCPDF {
         
             // Page footer
             public function Footer() {
-               global $modificada;
+               global $modificada, $fecha_hora_pdf_footer;
                 
                               
                 $this->SetY(-13);
@@ -175,7 +211,7 @@ class MYPDF extends TCPDF {
                $this->SetX(20);
                 $this->Cell(0, 10, 'Pagina '.$this->getAliasNumPage().' de '.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');
                 $this->SetX(130);
-                $this->Cell(0, 10, '         '.date('d/m/Y H:ia'), 0, false, 'R', 0, '', 0, false, 'T', 'M');
+                $this->Cell(0, 10, '         '.$fecha_hora_pdf_footer, 0, false, 'R', 0, '', 0, false, 'T', 'M');
             }
         }
     }
@@ -272,9 +308,11 @@ $pdf->AddPage();
         //linea 3
         $pdf->Ln();
         $pdf->SetFillColor(255, 255, 255 );
+        $fecha_pdf = !es_nulo($row["fecha_entrada"]) ? $row["fecha_entrada"] : $row["fecha"];
+        $hora_pdf = !es_nulo($row["hora_entrada"]) ? $row["hora_entrada"] : $row["hora"];
         $pdf->Cell(47, 4, formato_numero($row["kilometraje_entrada"],0) , 'LTRB', 0, 'C', false );
-        $pdf->Cell(50, 4, formato_fecha_de_mysql($row["fecha_entrada"]) , 'LTRB', 0, 'C', false );
-        $pdf->Cell(50, 4, formato_solohora_de_mysql($row["hora_entrada"]) , 'LTRB', 0, 'C', false );
+        $pdf->Cell(50, 4, formato_fecha_pdf_seguro($fecha_pdf) , 'LTRB', 0, 'C', false );
+        $pdf->Cell(50, 4, formato_solohora_de_mysql($hora_pdf) , 'LTRB', 0, 'C', false );
         $pdf->Cell(53, 4, $row["combustible_tipo"] , 'LTRB', 0, 'C', false );
                      
 

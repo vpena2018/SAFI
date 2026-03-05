@@ -696,6 +696,28 @@ function valores_sino($valor){
      return $salida;    
 }
 
+function valores_combobox_array(
+    $datos,
+    $codigo = '',
+    $texto_primera = '',
+    $key_valor = 'valor',
+    $key_texto = 'texto'
+) {
+    $salida = '';
+
+    if ($texto_primera != '') {
+        $salida .= "<option value=\"\">$texto_primera</option>";
+    }
+
+    foreach ($datos as $item) {
+        $seleccionado = ($item[$key_valor] == $codigo) ? ' selected' : '';
+        $salida .= '<option value="' . $item[$key_valor] . '"' . $seleccionado . '>'
+                 . $item[$key_texto] . '</option>';
+    }
+
+    return $salida;
+}
+
 
 function valores_combobox_db($tabla,$codigo,$campo,$where,$campo_etiqueta='',$texto_primera='',$campo_id='id'){
 	 global $conn;
@@ -722,6 +744,76 @@ function valores_combobox_db($tabla,$codigo,$campo,$where,$campo_etiqueta='',$te
 
 	 return $salida;
 	
+}
+
+function mesEnLetras(int $mes): string
+{
+    $meses = [
+        1  => 'enero',
+        2  => 'febrero',
+        3  => 'marzo',
+        4  => 'abril',
+        5  => 'mayo',
+        6  => 'junio',
+        7  => 'julio',
+        8  => 'agosto',
+        9  => 'septiembre',
+        10 => 'octubre',
+        11 => 'noviembre',
+        12 => 'diciembre'
+    ];
+
+    return $meses[$mes] ?? '';
+}
+
+function FechanumeroALetras(int $numero): string
+{
+    if ($numero === 0) return 'cero';
+
+    $unidades = [
+        '', 'uno', 'dos', 'tres', 'cuatro', 'cinco',
+        'seis', 'siete', 'ocho', 'nueve', 'diez',
+        'once', 'doce', 'trece', 'catorce', 'quince',
+        'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve'
+    ];
+
+    $decenas = [
+        '', '', 'veinte', 'treinta', 'cuarenta',
+        'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'
+    ];
+
+    $centenas = [
+        '', 'ciento', 'doscientos', 'trescientos', 'cuatrocientos',
+        'quinientos', 'seiscientos', 'setecientos', 'ochocientos', 'novecientos'
+    ];
+
+    if ($numero < 20) return $unidades[$numero];
+
+    if ($numero < 100) {
+        if ($numero < 30) return 'veinti' . $unidades[$numero - 20];
+        return $decenas[intdiv($numero, 10)]
+            . (($numero % 10) ? ' y ' . $unidades[$numero % 10] : '');
+    }
+
+    if ($numero === 100) return 'cien';
+
+    if ($numero < 1000) {
+        return $centenas[intdiv($numero, 100)]
+            . (($numero % 100) ? ' ' . FechanumeroALetras($numero % 100) : '');
+    }
+
+    if ($numero < 2000) {
+        return 'mil'
+            . (($numero % 1000) ? ' ' . FechanumeroALetras($numero % 1000) : '');
+    }
+
+    if ($numero < 10000) {
+        return FechanumeroALetras(intdiv($numero, 1000))
+            . ' mil'
+            . (($numero % 1000) ? ' ' . FechanumeroALetras($numero % 1000) : '');
+    }
+
+    return '';
 }
 
 

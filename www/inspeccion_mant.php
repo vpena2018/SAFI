@@ -3,9 +3,27 @@
 require_once ('include/framework.php');
 pagina_permiso(22);
 
+function safi_guardar_png_temporal_desde_dataurl($dataUrl, $rutaSalida) {
+  $valor = trim((string)$dataUrl);
+  if ($valor === '' || strpos($valor, 'data:image/png;base64,') !== 0) {
+    return false;
+  }
+  $base64 = substr($valor, strlen('data:image/png;base64,'));
+  if ($base64 === '') {
+    return false;
+  }
+  $binario = base64_decode($base64, true);
+  if ($binario === false || strlen($binario) < 64) {
+    return false;
+  }
+  return file_put_contents($rutaSalida, $binario) !== false;
+}
+
 
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="";}
 $cid=0;
+$now_fecha = date('Y-m-d');
+$now_hora  = date('H:i');
 
 $disable_sec1='';
 $disable_sec2='';
@@ -381,16 +399,26 @@ if ($accion=="g") {
           $stud_arr[0]["pcid"] = $cid;
 
           if ($enviar_orden_email==true) {
-             
-                // Generar PDF en segundo plano (no bloquea al usuario)
-                /* $cmd = "php /var/www/htmlinspeccion_pdf.php pdfcod=$cid guardar=1 > /dev/null 2>&1 &";
-                 exec($cmd);
-                
-                 // Encolar solo el envío del correo
-                 sql_insert("INSERT INTO cola_correo_inspeccion (id_inspeccion, numero, estado, fecha_creado) 
-                            VALUES ($cid, $numero, 0, NOW())");*/
+                $tmpDir = app_dir.'reportes/tmp_inspeccion/'.intval($cid).'/';
+                if (!is_dir($tmpDir)) {
+                  @mkdir($tmpDir, 0755, true);
+                }
 
-                require_once ('correo_inspeccion_pdf.php'); //ojo no quitar porque correo_inspeccion_pdf.php es el que genera el PDF y el correo, si falla el PDF o el correo no bloquea el guardado de la HI.
+                $numeroArchivo = isset($numero) ? intval($numero) : intval(get_dato_sql('inspeccion', 'numero', ' WHERE id='.intval($cid)));
+                if ($numeroArchivo > 0 && is_dir($tmpDir)) {
+                  if (isset($_REQUEST['pdfimg1'])) {
+                    safi_guardar_png_temporal_desde_dataurl($_REQUEST['pdfimg1'], $tmpDir.'Inspeccion_'.$numeroArchivo.'_pdfimg1.png');
+                  }
+                  if (isset($_REQUEST['pdffirma1'])) {
+                    safi_guardar_png_temporal_desde_dataurl($_REQUEST['pdffirma1'], $tmpDir.'Inspeccion_'.$numeroArchivo.'_pdffirma1.png');
+                  }
+                  if (isset($_REQUEST['pdffirma2'])) {
+                    safi_guardar_png_temporal_desde_dataurl($_REQUEST['pdffirma2'], $tmpDir.'Inspeccion_'.$numeroArchivo.'_pdffirma2.png');
+                  }
+                }
+
+                sql_insert("INSERT INTO cola_correo_inspeccion (id_inspeccion, numero, estado, fecha_creado) 
+                           VALUES (".intval($cid).", ".intval($numeroArchivo).", 0, NOW())");
       
               ///Valido el vehiculo con el cliente de Ventas de carro usado CVU
               if (isset($_REQUEST['cliente_id'])){                
@@ -2412,7 +2440,6 @@ var validation = Array.prototype.filter.call(forms, function(form) {
           validado=false;
           }    
         }   
-        
         if (validado==true) {
           if ($("#cliente_contacto").val()=='') {
           mytoast('warning','Debe ingresar el Nombre del contacto',3000) ;

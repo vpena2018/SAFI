@@ -38,6 +38,30 @@ function escribir_log($mensaje) {
     file_put_contents($log_file, $linea, FILE_APPEND);
 }
 
+function leer_png_como_dataurl($rutaArchivo) {
+    if (!is_file($rutaArchivo)) {
+        return '';
+    }
+    $bin = @file_get_contents($rutaArchivo);
+    if ($bin === false || strlen($bin) < 64) {
+        return '';
+    }
+    return 'data:image/png;base64,' . base64_encode($bin);
+}
+
+function limpiar_tmp_inspeccion($idInspeccion) {
+    $tmpDir = app_dir . 'reportes/tmp_inspeccion/' . intval($idInspeccion) . '/';
+    if (!is_dir($tmpDir)) {
+        return;
+    }
+    foreach (glob($tmpDir . '*') as $f) {
+        if (is_file($f)) {
+            @unlink($f);
+        }
+    }
+    @rmdir($tmpDir);
+}
+
 escribir_log('---- Inicio cron ----');
 
 // Buscar hasta 5 correos pendientes (para no sobrecargar el servidor)
@@ -107,9 +131,15 @@ while ($item = $pendientes->fetch_assoc()) {
             throw new Exception("La inspección id=$elcodigo no tiene email configurado. Se omite.");
         }
 
+        // Cargar snapshots PNG temporales para el PDF en segundo plano
+        $tmpDir = app_dir . 'reportes/tmp_inspeccion/' . intval($elcodigo) . '/';
+        $_REQUEST['pdfimg1'] = leer_png_como_dataurl($tmpDir . 'Inspeccion_' . $correo_row["numero"] . '_pdfimg1.png');
+        $_REQUEST['pdffirma1'] = leer_png_como_dataurl($tmpDir . 'Inspeccion_' . $correo_row["numero"] . '_pdffirma1.png');
+        $_REQUEST['pdffirma2'] = leer_png_como_dataurl($tmpDir . 'Inspeccion_' . $correo_row["numero"] . '_pdffirma2.png');
+
         // Generar el PDF
         $guardar_archivo = app_dir . 'reportes/' . 'Inspeccion_' . $correo_row["numero"] . '.pdf';
-        require_once(__DIR__ . '/inspeccion_pdf.php'); // genera el PDF en $guardar_archivo
+        include(__DIR__ . '/inspeccion_pdf.php'); // genera el PDF en $guardar_archivo
 
         // Armar el correo
         $subject = 'HOJA DE INSPECCION # ' . $correo_row['numero'];
@@ -129,6 +159,8 @@ while ($item = $pendientes->fetch_assoc()) {
         sql_update("UPDATE cola_correo_inspeccion 
                     SET estado = 1, fecha_enviado = NOW(), mensaje_error = NULL 
                     WHERE id = $cola_id");
+
+        limpiar_tmp_inspeccion($elcodigo);
 
         escribir_log("OK: Correo enviado para inspección #" . $correo_row['numero'] . " → $email_enviar");
 
