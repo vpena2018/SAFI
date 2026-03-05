@@ -592,20 +592,20 @@ echo campo("id",("Codigo"),'hidden',$id,' ','');
 		<div class="row">
 		<div class="col-sm">
             <?php if (es_nulo($id_usuario_autoriza)) { ?>
-                 <a href="#" onclick="procesar('combustible.php?a=g','forma_combustible',''); return false;" class="btn btn-primary btn-block mb-2 xfrm" ><i class="fa fa-check"></i> Guardar</a>
+                 <a href="#" onclick="combustible_procesar_seguro('combustible.php?a=g','forma_combustible',''); return false;" class="btn btn-primary btn-block mb-2 xfrm" ><i class="fa fa-check"></i> Guardar</a>
             <?php } else {
                 if ($id_estado==2) {
                 ?>
                 
-                <a href="#" onclick="procesar('combustible.php?a=g&compl=1','forma_combustible',''); return false;" class="btn btn-success btn-block mb-2 xfrm" ><i class="fa fa-check"></i> Completar</a>   
+                <a href="#" onclick="combustible_procesar_seguro('combustible.php?a=g&compl=1','forma_combustible',''); return false;" class="btn btn-success btn-block mb-2 xfrm" ><i class="fa fa-check"></i> Completar</a>   
             <?php }} ?>   
         </div>
         <div class="col-sm">
             <?php if (es_nulo($id_usuario_autoriza)) { ?>
-                  <a href="#" onclick="procesar('combustible.php?a=g&au=1','forma_combustible',''); return false;" class="btn btn-warning btn-block mb-2 xfrm" ><i class="fa fa-lock"></i> Autorizar</a>                  
+                  <a href="#" onclick="combustible_procesar_seguro('combustible.php?a=g&au=1','forma_combustible',''); return false;" class="btn btn-warning btn-block mb-2 xfrm" ><i class="fa fa-lock"></i> Autorizar</a>                  
             <?php }else{ 
                   if (es_nulo($id_usuario_auditado) and tiene_permiso(163)) {?>      
-                     <a href="#" onclick="procesar('combustible.php?a=adpc&adpc=1','forma_combustible',''); return false;" class="btn btn-warning btn-block mb-2 xfrm" ><i class="fa fa-check"></i> Revision ADPC</a>
+                     <a href="#" onclick="combustible_procesar_seguro('combustible.php?a=adpc&adpc=1','forma_combustible',''); return false;" class="btn btn-warning btn-block mb-2 xfrm" ><i class="fa fa-check"></i> Revision ADPC</a>
             <?php }} ?>
         </div>               		
         <?php if ($id_estado<=2) { ?>
@@ -642,6 +642,25 @@ echo campo("id",("Codigo"),'hidden',$id,' ','');
 
 </div>
 <script>
+var combustible_subidas_pendientes = 0;
+
+$(function () {
+    $(document).on('fileuploadstart', '[id^=fileupload_]', function () {
+        combustible_subidas_pendientes++;
+    });
+    $(document).on('fileuploadstop', '[id^=fileupload_]', function () {
+        combustible_subidas_pendientes = Math.max(0, combustible_subidas_pendientes - 1);
+    });
+});
+
+function combustible_procesar_seguro(url, forma, adicional) {
+    if (combustible_subidas_pendientes > 0) {
+        mytoast('warning', 'Espere a que termine la carga de fotos antes de guardar', 3000);
+        return false;
+    }
+    procesar(url, forma, adicional);
+    return false;
+}
 
 function combustible_generar_pdf(){
     var codcomb=$("#forma_combustible input[name=id]").val();
