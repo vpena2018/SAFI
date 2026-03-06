@@ -3,27 +3,9 @@
 require_once ('include/framework.php');
 pagina_permiso(22);
 
-function safi_guardar_png_temporal_desde_dataurl($dataUrl, $rutaSalida) {
-  $valor = trim((string)$dataUrl);
-  if ($valor === '' || strpos($valor, 'data:image/png;base64,') !== 0) {
-    return false;
-  }
-  $base64 = substr($valor, strlen('data:image/png;base64,'));
-  if ($base64 === '') {
-    return false;
-  }
-  $binario = base64_decode($base64, true);
-  if ($binario === false || strlen($binario) < 64) {
-    return false;
-  }
-  return file_put_contents($rutaSalida, $binario) !== false;
-}
-
 
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="";}
 $cid=0;
-$now_fecha = date('Y-m-d');
-$now_hora  = date('H:i');
 
 $disable_sec1='';
 $disable_sec2='';
@@ -399,27 +381,11 @@ if ($accion=="g") {
           $stud_arr[0]["pcid"] = $cid;
 
           if ($enviar_orden_email==true) {
-                $tmpDir = app_dir.'reportes/tmp_inspeccion/'.intval($cid).'/';
-                if (!is_dir($tmpDir)) {
-                  @mkdir($tmpDir, 0755, true);
-                }
-
-                $numeroArchivo = isset($numero) ? intval($numero) : intval(get_dato_sql('inspeccion', 'numero', ' WHERE id='.intval($cid)));
-                if ($numeroArchivo > 0 && is_dir($tmpDir)) {
-                  if (isset($_REQUEST['pdfimg1'])) {
-                    safi_guardar_png_temporal_desde_dataurl($_REQUEST['pdfimg1'], $tmpDir.'Inspeccion_'.$numeroArchivo.'_pdfimg1.png');
-                  }
-                  if (isset($_REQUEST['pdffirma1'])) {
-                    safi_guardar_png_temporal_desde_dataurl($_REQUEST['pdffirma1'], $tmpDir.'Inspeccion_'.$numeroArchivo.'_pdffirma1.png');
-                  }
-                  if (isset($_REQUEST['pdffirma2'])) {
-                    safi_guardar_png_temporal_desde_dataurl($_REQUEST['pdffirma2'], $tmpDir.'Inspeccion_'.$numeroArchivo.'_pdffirma2.png');
-                  }
-                }
-
-                sql_insert("INSERT INTO cola_correo_inspeccion (id_inspeccion, numero, estado, fecha_creado) 
-                           VALUES (".intval($cid).", ".intval($numeroArchivo).", 0, NOW())");
-      
+              try {
+                require_once ('correo_inspeccion_pdf.php');
+              } catch (Throwable $e) {
+                // No bloquear guardado por fallos en generacion/envio de correo-PDF.
+              }
               ///Valido el vehiculo con el cliente de Ventas de carro usado CVU
               if (isset($_REQUEST['cliente_id'])){                
                   $clienteCvu=substr(get_dato_sql("entidad","codigo_alterno"," WHERE id=".GetSQLValue($_REQUEST["cliente_id"],"int")),0,4);    
@@ -1548,7 +1514,7 @@ if ($tipo_inspeccion=='2'){ // TALLER
         <div class="card-body">   
           <div class="row"> 
             <div class="col-3">       
-                <?php echo campo("grua","Vino en Grúa",'select',valores_combobox_texto(app_combo_si_no,$grua),'',$disable_sec7); ?>  
+                <?php echo campo("grua","Vino en GrÃºa",'select',valores_combobox_texto(app_combo_si_no,$grua),'',$disable_sec7); ?>  
             </div>
             
             <?php
@@ -1629,9 +1595,7 @@ if ($tipo_inspeccion=='2'){ // TALLER
           <?php //  ?>
           <div class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top ">
             <a href="#" onclick="procesar_inspeccion('inspeccion_mant.php?a=g&gg_est=1','forma','1'); return false;" class="btn btn-outline-secondary mr-2 mb-2 xfrm <?php echo $visible_guardar; ?>" ><i class="fa fa-check"></i> Guardar Borrador</a>
-            <?php if (!es_nulo($numero)) { ?>
-              <a href="#" onclick="procesar_inspeccion('inspeccion_mant.php?a=g&gg_est=2','forma','2'); return false;" class="btn btn-primary mr-2 mb-2 xfrm <?php echo $visible_guardar; ?>" ><i class="fa fa-check "></i> Guardar Completado</a>
-            <?php } ?>
+            <a href="#" onclick="procesar_inspeccion('inspeccion_mant.php?a=g&gg_est=2','forma','2'); return false;" class="btn btn-primary mr-2 mb-2 xfrm <?php echo $visible_guardar; ?>" ><i class="fa fa-check "></i> Guardar Completado</a>
             <?php if (tiene_permiso(163)) { ?>
                  <a href="#" onclick="procesar_inspeccion('inspeccion_mant.php?a=g&gg_est=0','forma','0'); return false;" class="btn btn-primary mr-2 mb-2 xfrm <?php echo $visible_auditar; ?>" ><i class="fa fa-check "></i>Revision ADPC</a>
             <?php } ?>
@@ -2440,6 +2404,7 @@ var validation = Array.prototype.filter.call(forms, function(form) {
           validado=false;
           }    
         }   
+        
         if (validado==true) {
           if ($("#cliente_contacto").val()=='') {
           mytoast('warning','Debe ingresar el Nombre del contacto',3000) ;

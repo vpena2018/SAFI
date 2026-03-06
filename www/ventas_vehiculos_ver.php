@@ -269,7 +269,7 @@ if ($accion=="1") {
         }else{
             modalwindow2(
                 'Registro Venta de Vehiculooo',
-                'ventas_mant_contrato.php?a=v&r='+nuevo+'&cid='+codigo
+                'ventas_mant.php?a=v&r='+nuevo+'&cid='+codigo
                 );
             
         }    
