@@ -2,21 +2,6 @@
 require_once ('include/framework.php');
 pagina_permiso(10);
 
-function combustible_log_upload($mensaje, $contexto = array()) {
-    $logDir = __DIR__ . '/logs';
-    if (!is_dir($logDir)) {
-        @mkdir($logDir, 0755, true);
-    }
-    $linea = '[' . date('Y-m-d H:i:s') . '] ' . $mensaje;
-    if (!empty($contexto)) {
-        $json = json_encode($contexto, JSON_UNESCAPED_SLASHES);
-        if ($json !== false) {
-            $linea .= ' | ' . $json;
-        }
-    }
-    @file_put_contents($logDir . '/combustible_upload.log', $linea . PHP_EOL, FILE_APPEND);
-}
-
 function combustible_archivo_existe_local($archivo) {
     $archivo = trim((string)$archivo);
     if ($archivo === '') {
@@ -127,16 +112,6 @@ if ($accion=="g") {
  //sleep(3);
 	$stud_arr[0]["pcode"] = 0;
     $stud_arr[0]["pmsg"] ="ERROR";
-
-    combustible_log_upload('inicio_guardar', array(
-        'id' => isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0,
-        'au' => isset($_REQUEST['au']) ? 1 : 0,
-        'compl' => isset($_REQUEST['compl']) ? 1 : 0,
-        'foto' => isset($_REQUEST['foto']) ? $_REQUEST['foto'] : '',
-        'foto2' => isset($_REQUEST['foto2']) ? $_REQUEST['foto2'] : '',
-        'foto3' => isset($_REQUEST['foto3']) ? $_REQUEST['foto3'] : '',
-        'usuario' => isset($_SESSION['usuario_id']) ? intval($_SESSION['usuario_id']) : 0
-    ));
 
     //Validar
 	$verror="";
@@ -260,35 +235,20 @@ if ($verror=="") {
         $foto_req = trim((string)$_REQUEST["foto"]);
         if ($foto_req !== '') {
             $sqlcampos.= " , foto =".GetSQLValue($foto_req,"text");
-        } else {
-            combustible_log_upload('foto_ignorada_vacia', array('id' => isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0));
         }
     } 
     if (isset($_REQUEST["foto2"])) {
         $foto2_req = trim((string)$_REQUEST["foto2"]);
         if ($foto2_req !== '') {
             $sqlcampos.= " , foto2 =".GetSQLValue($foto2_req,"text");
-        } else {
-            combustible_log_upload('foto2_ignorada_vacia', array('id' => isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0));
         }
     } 
     if (isset($_REQUEST["foto3"])) {
         $foto3_req = trim((string)$_REQUEST["foto3"]);
         if ($foto3_req !== '') {
             $sqlcampos.= " , foto3 =".GetSQLValue($foto3_req,"text");
-        } else {
-            combustible_log_upload('foto3_ignorada_vacia', array('id' => isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0));
         }
     } 
-
-    combustible_log_upload('estado_archivos_pre_sql', array(
-        'foto' => isset($_REQUEST["foto"]) ? $_REQUEST["foto"] : '',
-        'foto_local_existe' => isset($_REQUEST["foto"]) ? (combustible_archivo_existe_local($_REQUEST["foto"]) ? 1 : 0) : 0,
-        'foto2' => isset($_REQUEST["foto2"]) ? $_REQUEST["foto2"] : '',
-        'foto2_local_existe' => isset($_REQUEST["foto2"]) ? (combustible_archivo_existe_local($_REQUEST["foto2"]) ? 1 : 0) : 0,
-        'foto3' => isset($_REQUEST["foto3"]) ? $_REQUEST["foto3"] : '',
-        'foto3_local_existe' => isset($_REQUEST["foto3"]) ? (combustible_archivo_existe_local($_REQUEST["foto3"]) ? 1 : 0) : 0
-    ));
 
     if (isset($_REQUEST["foto"])) {
         $f1 = trim((string)$_REQUEST["foto"]);
@@ -313,10 +273,6 @@ if ($verror=="") {
         $stud_arr[0]["pcode"] = 0;
         $stud_arr[0]["pmsg"] = $verror;
         $stud_arr[0]["pcid"] = 0;
-        combustible_log_upload('guardado_error_archivo_no_encontrado', array(
-            'id' => isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0,
-            'error' => $verror
-        ));
         salida_json($stud_arr);
         exit;
     }
@@ -366,14 +322,6 @@ if ($verror=="") {
     	$stud_arr[0]["pmsg"] ="Guardado";
     	$stud_arr[0]["pcid"] = $cid;
 
-        combustible_log_upload('guardado_ok', array(
-            'id' => intval($cid),
-            'nuevo' => $nuevoregistro ? 1 : 0
-        ));
-        combustible_log_upload('id_respuesta_frontend', array(
-            'pcid' => intval($stud_arr[0]["pcid"]),
-            'id_request' => isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0
-        ));
 
         //******** API Rentworks *******/
         $odocampo="";
@@ -398,10 +346,6 @@ if ($verror=="") {
 	$stud_arr[0]["pcode"] = 0;
     $stud_arr[0]["pmsg"] =$verror;
     $stud_arr[0]["pcid"] = 0;
-    combustible_log_upload('guardado_error_validacion', array(
-        'id' => isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0,
-        'error' => $verror
-    ));
 }
 
 	salida_json($stud_arr);
