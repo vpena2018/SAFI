@@ -2406,6 +2406,7 @@ $('#btnActualizarContrato').on('click', function (e) {
 
 
 
+
 <script>
 
         function toggleClientePorEstado() {
