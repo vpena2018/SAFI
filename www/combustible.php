@@ -2,6 +2,29 @@
 require_once ('include/framework.php');
 pagina_permiso(10);
 
+function combustible_log_upload($mensaje, $contexto = array()) {
+    $logDir = __DIR__ . '/logs';
+    if (!is_dir($logDir)) {
+        @mkdir($logDir, 0755, true);
+    }
+    $linea = '[' . date('Y-m-d H:i:s') . '] ' . $mensaje;
+    if (!empty($contexto)) {
+        $json = json_encode($contexto, JSON_UNESCAPED_SLASHES);
+        if ($json !== false) {
+            $linea .= ' | ' . $json;
+        }
+    }
+    @file_put_contents($logDir . '/combustible_upload.log', $linea . PHP_EOL, FILE_APPEND);
+}
+
+function combustible_archivo_existe_local($archivo) {
+    $archivo = trim((string)$archivo);
+    if ($archivo === '') {
+        return false;
+    }
+    return is_file(__DIR__ . '/uploa_d/' . $archivo);
+}
+
 
 
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="v";}
@@ -104,6 +127,16 @@ if ($accion=="g") {
  //sleep(3);
 	$stud_arr[0]["pcode"] = 0;
     $stud_arr[0]["pmsg"] ="ERROR";
+
+    combustible_log_upload('inicio_guardar', array(
+        'id' => isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0,
+        'au' => isset($_REQUEST['au']) ? 1 : 0,
+        'compl' => isset($_REQUEST['compl']) ? 1 : 0,
+        'foto' => isset($_REQUEST['foto']) ? $_REQUEST['foto'] : '',
+        'foto2' => isset($_REQUEST['foto2']) ? $_REQUEST['foto2'] : '',
+        'foto3' => isset($_REQUEST['foto3']) ? $_REQUEST['foto3'] : '',
+        'usuario' => isset($_SESSION['usuario_id']) ? intval($_SESSION['usuario_id']) : 0
+    ));
 
     //Validar
 	$verror="";
@@ -226,6 +259,15 @@ if ($verror=="") {
     if (isset($_REQUEST["foto"])) { $sqlcampos.= " , foto =".GetSQLValue($_REQUEST["foto"],"text"); } 
     if (isset($_REQUEST["foto2"])) { $sqlcampos.= " , foto2 =".GetSQLValue($_REQUEST["foto2"],"text"); } 
     if (isset($_REQUEST["foto3"])) { $sqlcampos.= " , foto3 =".GetSQLValue($_REQUEST["foto3"],"text"); } 
+
+    combustible_log_upload('estado_archivos_pre_sql', array(
+        'foto' => isset($_REQUEST["foto"]) ? $_REQUEST["foto"] : '',
+        'foto_local_existe' => isset($_REQUEST["foto"]) ? (combustible_archivo_existe_local($_REQUEST["foto"]) ? 1 : 0) : 0,
+        'foto2' => isset($_REQUEST["foto2"]) ? $_REQUEST["foto2"] : '',
+        'foto2_local_existe' => isset($_REQUEST["foto2"]) ? (combustible_archivo_existe_local($_REQUEST["foto2"]) ? 1 : 0) : 0,
+        'foto3' => isset($_REQUEST["foto3"]) ? $_REQUEST["foto3"] : '',
+        'foto3_local_existe' => isset($_REQUEST["foto3"]) ? (combustible_archivo_existe_local($_REQUEST["foto3"]) ? 1 : 0) : 0
+    ));
  
     if ($autorizando==true) {
         $sqlcampos.= " , id_usuario_autoriza =".$_SESSION['usuario_id'];
@@ -271,6 +313,11 @@ if ($verror=="") {
     	$stud_arr[0]["pmsg"] ="Guardado";
     	$stud_arr[0]["pcid"] = $cid;
 
+        combustible_log_upload('guardado_ok', array(
+            'id' => intval($cid),
+            'nuevo' => $nuevoregistro ? 1 : 0
+        ));
+
         //******** API Rentworks *******/
         $odocampo="";
         if (isset($_REQUEST["kilometraje"])) {
@@ -294,6 +341,10 @@ if ($verror=="") {
 	$stud_arr[0]["pcode"] = 0;
     $stud_arr[0]["pmsg"] =$verror;
     $stud_arr[0]["pcid"] = 0;
+    combustible_log_upload('guardado_error_validacion', array(
+        'id' => isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0,
+        'error' => $verror
+    ));
 }
 
 	salida_json($stud_arr);
@@ -508,8 +559,7 @@ echo campo("id",("Codigo"),'hidden',$id,' ','');
     if ($foto<>'') {
         $fext = substr($foto, -3);
         if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
-            buscar_archivo_s3('uploa_d/'.$foto,$foto);
-            echo '  <a href="#" onclick="'.$onclick.'" ><img class="img  img-thumbnail mb-3 mr-3" src="'.$src.'" data-cod="'.$row["id"].'"></a> ';
+            echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto.'" onerror="this.onerror=null;this.src=\'uploa_d/'.$foto.'\';" data-cod="'.$row["id"].'"></a> ';
             } else {
                 echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
             }
@@ -518,8 +568,7 @@ echo campo("id",("Codigo"),'hidden',$id,' ','');
     if ($foto2<>'') {
         $fext = substr($foto2, -3);
         if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
-            buscar_archivo_s3('uploa_d/'.$foto2,$foto2);
-            echo '  <a href="#" onclick="'.$onclick.'" ><img class="img  img-thumbnail mb-3 mr-3" src="'.$src.'" data-cod="'.$row["id"].'"></a> ';
+            echo '  <a href="#" onclick="mostrar_foto(\''.$foto2.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto2.'" onerror="this.onerror=null;this.src=\'uploa_d/'.$foto2.'\';" data-cod="'.$row["id"].'"></a> ';
         } else {
             echo '  <a href="uploa_d/'.$foto2.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto2.'</a> ';
         }
@@ -527,24 +576,11 @@ echo campo("id",("Codigo"),'hidden',$id,' ','');
     if ($foto3<>'') {
        $fext = substr($foto3, -3);
        if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
-           buscar_archivo_s3('uploa_d/'.$foto3,$foto3);
-           echo '  <a href="#" onclick="'.$onclick.'" ><img class="img  img-thumbnail mb-3 mr-3" src="'.$src.'" data-cod="'.$row["id"].'"></a> ';
+           echo '  <a href="#" onclick="mostrar_foto(\''.$foto3.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto3.'" onerror="this.onerror=null;this.src=\'uploa_d/'.$foto3.'\';" data-cod="'.$row["id"].'"></a> ';
         } else {
            echo '  <a href="uploa_d/'.$foto3.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto3.'</a> ';
         }
     } 
-
-    function buscar_archivo_s3($camino,$filename){
-        global $onclick,$src;
-        if (file_exists($camino)) {
-            $onclick = 'mostrar_foto(\'' . $filename . '\'); return false;';
-            $src= 'uploa_d/thumbnail/'.$filename;
-        } else {
-            $onclick = 'mostrar_foto2(\'' . $filename . '\'); return false;';
-            $src= 'aws_bucket_s3/thumbnail/'.$filename;
-        }
-        return false;
-    }
 ?>
 </div>
 </div>
@@ -689,12 +725,6 @@ function mostrar_foto(imagen) {
   Swal.fire({
   imageUrl: 'uploa_d/'+imagen,
 
-});
-}
-
-function mostrar_foto2(imagen) {
-  Swal.fire({
-  imageUrl: 'aws_bucket_s3/'+imagen,
 });
 }
 
