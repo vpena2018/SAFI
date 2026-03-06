@@ -256,9 +256,30 @@ if ($verror=="") {
     }
   
     if (isset($_REQUEST["placa"])) { $sqlcampos.= " , placa =".GetSQLValue($_REQUEST["placa"],"text"); } 
-    if (isset($_REQUEST["foto"])) { $sqlcampos.= " , foto =".GetSQLValue($_REQUEST["foto"],"text"); } 
-    if (isset($_REQUEST["foto2"])) { $sqlcampos.= " , foto2 =".GetSQLValue($_REQUEST["foto2"],"text"); } 
-    if (isset($_REQUEST["foto3"])) { $sqlcampos.= " , foto3 =".GetSQLValue($_REQUEST["foto3"],"text"); } 
+    if (isset($_REQUEST["foto"])) {
+        $foto_req = trim((string)$_REQUEST["foto"]);
+        if ($foto_req !== '') {
+            $sqlcampos.= " , foto =".GetSQLValue($foto_req,"text");
+        } else {
+            combustible_log_upload('foto_ignorada_vacia', array('id' => isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0));
+        }
+    } 
+    if (isset($_REQUEST["foto2"])) {
+        $foto2_req = trim((string)$_REQUEST["foto2"]);
+        if ($foto2_req !== '') {
+            $sqlcampos.= " , foto2 =".GetSQLValue($foto2_req,"text");
+        } else {
+            combustible_log_upload('foto2_ignorada_vacia', array('id' => isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0));
+        }
+    } 
+    if (isset($_REQUEST["foto3"])) {
+        $foto3_req = trim((string)$_REQUEST["foto3"]);
+        if ($foto3_req !== '') {
+            $sqlcampos.= " , foto3 =".GetSQLValue($foto3_req,"text");
+        } else {
+            combustible_log_upload('foto3_ignorada_vacia', array('id' => isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0));
+        }
+    } 
 
     combustible_log_upload('estado_archivos_pre_sql', array(
         'foto' => isset($_REQUEST["foto"]) ? $_REQUEST["foto"] : '',
@@ -715,6 +736,77 @@ echo campo("id",("Codigo"),'hidden',$id,' ','');
 
 </div>
 <script>
+if (typeof window.comprimirSiEsImagen !== 'function') {
+    window.comprimirSiEsImagen = function(file, opts) {
+        opts = opts || {};
+        var maxLado = opts.maxLado || 1600;
+        var calidad = opts.calidad || 0.82;
+        var tamanoMinimo = opts.tamanoMinimo || (400 * 1024);
+
+        if (!file || !file.type || file.type.indexOf('image/') !== 0) {
+            return Promise.resolve(file);
+        }
+
+        if (file.size < tamanoMinimo) {
+            return Promise.resolve(file);
+        }
+
+        return new Promise(function(resolve) {
+            var img = new Image();
+            var objectUrl = URL.createObjectURL(file);
+
+            img.onload = function() {
+                var w = img.naturalWidth || img.width;
+                var h = img.naturalHeight || img.height;
+                var ratio = 1;
+
+                if (w > h && w > maxLado) {
+                    ratio = maxLado / w;
+                } else if (h >= w && h > maxLado) {
+                    ratio = maxLado / h;
+                }
+
+                var newW = Math.max(1, Math.round(w * ratio));
+                var newH = Math.max(1, Math.round(h * ratio));
+
+                var canvas = document.createElement('canvas');
+                canvas.width = newW;
+                canvas.height = newH;
+                var ctx = canvas.getContext('2d', { alpha: false });
+                ctx.drawImage(img, 0, 0, newW, newH);
+
+                var mimeOut = (file.type === 'image/png') ? 'image/png' : 'image/jpeg';
+                canvas.toBlob(function(blob) {
+                    URL.revokeObjectURL(objectUrl);
+                    if (!blob || blob.size >= file.size) {
+                        resolve(file);
+                        return;
+                    }
+
+                    var nuevoNombre = file.name;
+                    if (mimeOut === 'image/jpeg') {
+                        nuevoNombre = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+                    }
+
+                    try {
+                        resolve(new File([blob], nuevoNombre, { type: mimeOut, lastModified: Date.now() }));
+                    } catch (e) {
+                        blob.name = nuevoNombre;
+                        resolve(blob);
+                    }
+                }, mimeOut, calidad);
+            };
+
+            img.onerror = function() {
+                URL.revokeObjectURL(objectUrl);
+                resolve(file);
+            };
+
+            img.src = objectUrl;
+        });
+    };
+}
+
 var combustible_subidas_pendientes = 0;
 
 $(function () {
