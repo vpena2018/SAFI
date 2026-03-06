@@ -1076,9 +1076,7 @@ class UploadHandler
             $index = null, $content_range = null) {
         $file = new \stdClass();
        // $file->name = $this->get_file_name($uploaded_file, $name, $size, $type, $error,   $index, $content_range);
-        // Use a higher-entropy prefix to avoid collisions within the same second
-        $rand = function_exists('random_bytes') ? bin2hex(random_bytes(4)) : substr(sha1(uniqid('', true)), 0, 8);
-        $tmpnombre=date('YmdHis').'_'.$rand.'_'.$name;
+       $tmpnombre=time().'_'.$name;
         $file->name = $this->get_file_name($uploaded_file, $tmpnombre, $size, $type, $error,   $index, $content_range);
 
         $file->size = $this->fix_integer_overflow((int)$size);

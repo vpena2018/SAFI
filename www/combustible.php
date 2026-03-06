@@ -299,6 +299,7 @@ if ($verror=="") {
         salida_json($stud_arr);
         exit;
     }
+
  
     if ($autorizando==true) {
         $sqlcampos.= " , id_usuario_autoriza =".$_SESSION['usuario_id'];
