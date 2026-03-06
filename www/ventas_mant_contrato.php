@@ -2129,7 +2129,7 @@ $('#btnguardar').on('click', function (e) {
                 mytoast('error', resultado.msg, 3000);
             } else {
                 mytoast('success', resultado.msg, 3000);
-                $('#ModalWindow2').modal('hide');
+                //$('#ModalWindow2').modal('hide');
             }
         }
     );
