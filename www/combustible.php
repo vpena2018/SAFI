@@ -317,6 +317,10 @@ if ($verror=="") {
             'id' => intval($cid),
             'nuevo' => $nuevoregistro ? 1 : 0
         ));
+        combustible_log_upload('id_respuesta_frontend', array(
+            'pcid' => intval($stud_arr[0]["pcid"]),
+            'id_request' => isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0
+        ));
 
         //******** API Rentworks *******/
         $odocampo="";
