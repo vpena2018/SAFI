@@ -15,14 +15,40 @@ header("Pragma: no-cache");
 //####################### SESSION ##############################
 ini_set('session.gc_maxlifetime', 86400);
 
-session_set_cookie_params([
-    'lifetime' => 0,
-    'path' => '/',
-    'domain' => $_SERVER['HTTP_HOST'],
-    'secure' => false,
-    'httponly' => true,
-    'samesite' => 'strict'
-]);
+function safi_cookie_opts() {
+    $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
+    $domain = $host;
+    if (strpos($host, ':') !== false) {
+        $domain = explode(':', $host)[0];
+    }
+    $https = !empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off';
+    // For Android/WebView and cross-site redirects, Strict can drop cookies.
+    // Use None only when HTTPS is available; otherwise fallback to Lax.
+    $sameSite = $https ? 'None' : 'Lax';
+    return [
+        'lifetime' => 0,
+        'path' => '/',
+        'domain' => $domain,
+        'secure' => $https,
+        'httponly' => true,
+        'samesite' => $sameSite
+    ];
+}
+
+function safi_cookie_params() {
+    // For setcookie() use "expires" instead of "lifetime"
+    $opts = safi_cookie_opts();
+    return [
+        'expires' => 0,
+        'path' => $opts['path'],
+        'domain' => $opts['domain'],
+        'secure' => $opts['secure'],
+        'httponly' => $opts['httponly'],
+        'samesite' => $opts['samesite']
+    ];
+}
+
+session_set_cookie_params(safi_cookie_opts());
 
 
 function renovar_session() {
@@ -35,13 +61,14 @@ function renovar_cookie() {
 	$randomid = generate_id();
 	//$cookieid = trim(sha1($randomid . $_SERVER['HTTP_USER_AGENT'] . obtener_ip2()));
 	$cookieid = trim(sha1($randomid . $_SERVER['HTTP_USER_AGENT']));
-    setcookie("urs", $cookieid, ['samesite' => 'Strict']);
-	setcookie("sgt", $randomid, ['samesite' => 'Strict']);
+    $opts = safi_cookie_params();
+    setcookie("urs", $cookieid, $opts);
+	setcookie("sgt", $randomid, $opts);
 	return $cookieid;
 }
 
 function colocar_cookie_usuario($usr) {
-	setcookie("usr", $usr, ['samesite' => 'Strict']);
+	setcookie("usr", $usr, safi_cookie_params());
 }
 
 function verificar_cookie() {
@@ -58,9 +85,10 @@ function verificar_cookie() {
 	if (trim($cookieid) === trim($_COOKIE['urs'])) {
 		return TRUE;
 	} else {
-		setcookie("urs", "", ['samesite' => 'Strict']);
-		setcookie("sgt", "",  ['samesite' => 'Strict']);
-		setcookie("PHPSESSID", "", ['samesite' => 'Strict']);
+        $opts = safi_cookie_params();
+		setcookie("urs", "", $opts);
+		setcookie("sgt", "", $opts);
+		setcookie("PHPSESSID", "", $opts);
 		return FALSE;
 
 	}
