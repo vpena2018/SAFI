@@ -508,9 +508,8 @@ echo campo("id",("Codigo"),'hidden',$id,' ','');
     if ($foto<>'') {
         $fext = substr($foto, -3);
         if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
-            /*buscar_archivo_s3('uploa_d/'.$foto,$foto);
-            echo '  <a href="#" onclick="'.$onclick.'" ><img class="img  img-thumbnail mb-3 mr-3" src="'.$src.'" data-cod="'.$row["id"].'"></a> '; */
-            echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
+            buscar_archivo_s3('uploa_d/'.$foto,$foto);
+            echo '  <a href="#" onclick="'.$onclick.'" ><img class="img  img-thumbnail mb-3 mr-3" src="'.$src.'" data-cod="'.$row["id"].'"></a> ';
             } else {
                 echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
             }
@@ -519,9 +518,8 @@ echo campo("id",("Codigo"),'hidden',$id,' ','');
     if ($foto2<>'') {
         $fext = substr($foto2, -3);
         if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
-            /*buscar_archivo_s3('uploa_d/'.$foto2,$foto2);
-            echo '  <a href="#" onclick="'.$onclick.'" ><img class="img  img-thumbnail mb-3 mr-3" src="'.$src.'" data-cod="'.$row["id"].'"></a> '; */
-            echo '  <a href="#" onclick="mostrar_foto(\''.$foto2.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto2.'" data-cod="'.$row["id"].'"></a> ';
+            buscar_archivo_s3('uploa_d/'.$foto2,$foto2);
+            echo '  <a href="#" onclick="'.$onclick.'" ><img class="img  img-thumbnail mb-3 mr-3" src="'.$src.'" data-cod="'.$row["id"].'"></a> ';
         } else {
             echo '  <a href="uploa_d/'.$foto2.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto2.'</a> ';
         }
@@ -529,19 +527,22 @@ echo campo("id",("Codigo"),'hidden',$id,' ','');
     if ($foto3<>'') {
        $fext = substr($foto3, -3);
        if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
-           /*buscar_archivo_s3('uploa_d/'.$foto3,$foto3);
-           echo '  <a href="#" onclick="'.$onclick.'" ><img class="img  img-thumbnail mb-3 mr-3" src="'.$src.'" data-cod="'.$row["id"].'"></a> '; */
-           echo '  <a href="#" onclick="mostrar_foto(\''.$foto3.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto3.'" data-cod="'.$row["id"].'"></a> ';
+           buscar_archivo_s3('uploa_d/'.$foto3,$foto3);
+           echo '  <a href="#" onclick="'.$onclick.'" ><img class="img  img-thumbnail mb-3 mr-3" src="'.$src.'" data-cod="'.$row["id"].'"></a> ';
         } else {
            echo '  <a href="uploa_d/'.$foto3.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto3.'</a> ';
         }
     } 
 
     function buscar_archivo_s3($camino,$filename){
-        // Implementar la logica para buscar el archivo en S3 si es necesario
-        global $onclick,$src;        
-        $onclick = 'mostrar_foto(\'' . $filename . '\'); return false;';        
-        $src= 'uploa_d/thumbnail/'.$filename;        
+        global $onclick,$src;
+        if (file_exists($camino)) {
+            $onclick = 'mostrar_foto(\'' . $filename . '\'); return false;';
+            $src= 'uploa_d/thumbnail/'.$filename;
+        } else {
+            $onclick = 'mostrar_foto2(\'' . $filename . '\'); return false;';
+            $src= 'aws_bucket_s3/thumbnail/'.$filename;
+        }
         return false;
     }
 ?>
@@ -691,13 +692,19 @@ function mostrar_foto(imagen) {
 });
 }
 
+function mostrar_foto2(imagen) {
+  Swal.fire({
+  imageUrl: 'aws_bucket_s3/'+imagen,
+});
+}
+
 function thumb_agregar(archivo){
 if (archivo!='' && archivo!=undefined) {
   
     var fext= archivo.substr(archivo.length - 3);
 
     if (fext=='jpg' || fext=='peg' || fext=='png' || fext=='gif') {
-       $("#insp_fotos_thumbs").append('<a href="#" onclick="mostrar_foto(\''+archivo+'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'+archivo+'" ></a>');
+       $("#insp_fotos_thumbs").append('<a href="#" onclick="mostrar_foto(\''+archivo+'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'+archivo+'" onerror="this.onerror=null;this.src=\'uploa_d/'+archivo+'\';" ></a>');
     } else {
        $("#insp_fotos_thumbs").append('<a href="uploa_d/'+archivo+'" target="_blank" class="img-thumbnail mb-3 mr-3" >'+archivo+'</a>');
     }
