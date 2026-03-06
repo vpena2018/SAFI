@@ -1850,7 +1850,7 @@ if ($foto_original_tele !== '') {
         echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1,'get.php?a=2&t=1',$cliente_nombre);
         echo campo("representante_legal_profesion","Profesión u oficio de comprador",'text',$representante_legal_profesion,' ',$disable_sec2);
 
-        //opciones
+        
 
 
         //echo valores_combobox_array($opciones, 'T02', 'Seleccione una opción');
@@ -1859,22 +1859,48 @@ if ($foto_original_tele !== '') {
             $nacionalidad_venta='hondureño';
         }
 
+        
+
         //$tipo_documento_ident_venta='$tipo_documento';
-        echo campo("tipo_documento_ident_venta","Tipo Documento de identificacion del comprador",'select2',valores_combobox_array($tipos_docu, $tipo_documento_ident_venta, '')); 
+        //echo campo("tipo_documento_ident_venta","Tipo Documento de identificacion del comprador",'select2',valores_combobox_array($tipos_docu, $tipo_documento_ident_venta, '')); 
+        //echo campo("nacionalidad_venta","Nacionalidad",'select2',valores_combobox_array($nacionalidades, $nacionalidad_venta, '')); 
+        //echo campo("departamento_venta","Departamento",'text',$departamento_venta,' ',$disable_sec2);
+        //echo campo("ciudad_venta","Ciudad",'text',$ciudad_venta,' ',$disable_sec2);
         
-        echo campo("nacionalidad_venta","Nacionalidad",'select2',valores_combobox_array($nacionalidades, $nacionalidad_venta, '')); 
-        echo campo("departamento_venta","Departamento",'text',$departamento_venta,' ',$disable_sec2);
-        echo campo("ciudad_venta","Ciudad",'text',$ciudad_venta,' ',$disable_sec2);
-
-        
-
-        echo campo("persona_juridica","persona juridica",'checkboxCustom',$persona_juridica,' ',$disable_sec2);
-        
-
         ?>
 
         <div class="row">
+            <div class="col-md-6">
+                <?php echo campo("departamento_venta","Departamento",'text',$departamento_venta,' ',$disable_sec2); ?>
+            </div>
+
+            <div class="col-md-6">
+                <?php echo campo("ciudad_venta","Ciudad",'text',$ciudad_venta,' ',$disable_sec2); ?>
+            </div>
+         </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <?php echo campo("tipo_documento_ident_venta","Tipo Documento de identificacion del comprador",'select2',valores_combobox_array($tipos_docu, $tipo_documento_ident_venta, ''));  ?>
+            </div>
+
+            <div class="col-md-6">
+                <?php echo campo("nacionalidad_venta","Nacionalidad",'select2',valores_combobox_array($nacionalidades, $nacionalidad_venta, ''));  ?>
+            </div>
+         </div>
+
+
+
+          <div class="row">
             <div class="col-md-12">
+                <?php echo campo("persona_juridica","persona juridica",'checkboxCustom',$persona_juridica,' ',$disable_sec2); ?>
+            </div>
+         </div>
+
+
+
+        <div class="row">
+            <div class="col-md-6">
                 <?php echo campo(
                     "representante_legal_persona_juridica",
                     "Nombre representante Legal",
@@ -1883,12 +1909,9 @@ if ($foto_original_tele !== '') {
                     ' ',
                     $disable_sec2
                 ); ?>
-            </div>
-         </div>
+            </div>  
 
-        <div class="row">    
-
-            <div class="col-md-12">
+            <div class="col-md-6">
                 <?php echo campo(
                     "representante_legal_identidad",
                     "Numero de identificacion de documento",
@@ -1898,16 +1921,6 @@ if ($foto_original_tele !== '') {
                     $disable_sec2
                 ); ?>
             </div>
-<!--             <div class="col-md-6">
-                <?php echo campo(
-                    "representante_legal_profesion",
-                    "Profesión de Representante Legal",
-                    'text',
-                    $representante_legal_profesion,
-                    ' ',
-                    $disable_sec2
-                ); ?>
-            </div> -->
         </div>
 
         <div class="row">
