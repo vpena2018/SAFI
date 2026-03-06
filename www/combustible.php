@@ -268,6 +268,37 @@ if ($verror=="") {
         'foto3' => isset($_REQUEST["foto3"]) ? $_REQUEST["foto3"] : '',
         'foto3_local_existe' => isset($_REQUEST["foto3"]) ? (combustible_archivo_existe_local($_REQUEST["foto3"]) ? 1 : 0) : 0
     ));
+
+    if (isset($_REQUEST["foto"])) {
+        $f1 = trim((string)$_REQUEST["foto"]);
+        if ($f1 !== '' && !combustible_archivo_existe_local($f1)) {
+            $verror .= 'La Foto del Odometro no existe en el servidor, vuelva a subirla<br>';
+        }
+    }
+    if (isset($_REQUEST["foto2"])) {
+        $f2 = trim((string)$_REQUEST["foto2"]);
+        if ($f2 !== '' && !combustible_archivo_existe_local($f2)) {
+            $verror .= 'La Foto Factura no existe en el servidor, vuelva a subirla<br>';
+        }
+    }
+    if (isset($_REQUEST["foto3"])) {
+        $f3 = trim((string)$_REQUEST["foto3"]);
+        if ($f3 !== '' && !combustible_archivo_existe_local($f3)) {
+            $verror .= 'La Foto Combustible no existe en el servidor, vuelva a subirla<br>';
+        }
+    }
+
+    if ($verror !== "") {
+        $stud_arr[0]["pcode"] = 0;
+        $stud_arr[0]["pmsg"] = $verror;
+        $stud_arr[0]["pcid"] = 0;
+        combustible_log_upload('guardado_error_archivo_no_encontrado', array(
+            'id' => isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0,
+            'error' => $verror
+        ));
+        salida_json($stud_arr);
+        exit;
+    }
  
     if ($autorizando==true) {
         $sqlcampos.= " , id_usuario_autoriza =".$_SESSION['usuario_id'];
