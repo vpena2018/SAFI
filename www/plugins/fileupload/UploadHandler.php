@@ -43,20 +43,6 @@ class UploadHandler
 
     protected $image_objects = array();
 
-    protected function log_debug($mensaje, $contexto = array()) {
-        $log_dir = dirname($this->get_server_var('SCRIPT_FILENAME')).'/../../logs';
-        if (!is_dir($log_dir)) {
-            @mkdir($log_dir, 0755, true);
-        }
-        $linea = '['.date('Y-m-d H:i:s').'] '.$mensaje;
-        if (!empty($contexto)) {
-            $json = @json_encode($contexto, JSON_UNESCAPED_SLASHES);
-            if ($json !== false) {
-                $linea .= ' | '.$json;
-            }
-        }
-        @file_put_contents($log_dir.'/uploadhandler_debug.log', $linea.PHP_EOL, FILE_APPEND);
-    }
 
     function __construct($options = null, $initialize = true, $error_messages = null) {
 
@@ -1093,62 +1079,21 @@ class UploadHandler
             if ($uploaded_file && is_uploaded_file($uploaded_file)) {
                 // multipart/formdata uploads (POST method uploads)
                 if ($append_file) {
-                    $append_result = file_put_contents(
+                    file_put_contents(
                         $file_path,
                         fopen($uploaded_file, 'r'),
                         FILE_APPEND
                     );
-                    if ($append_result === false) {
-                        $file->error = 'append_failed';
-                        $this->log_debug('append_failed', array(
-                            'tmp' => $uploaded_file,
-                            'dest' => $file_path,
-                            'name' => $file->name,
-                            'size' => $file->size
-                        ));
-                    }
                 } else {
-                    $move_ok = @move_uploaded_file($uploaded_file, $file_path);
-                    if (!$move_ok) {
-                        $file->error = 'move_uploaded_file_failed';
-                        $this->log_debug('move_failed', array(
-                            'tmp' => $uploaded_file,
-                            'dest' => $file_path,
-                            'dest_dir_exists' => is_dir(dirname($file_path)) ? 1 : 0,
-                            'dest_dir_writable' => is_writable(dirname($file_path)) ? 1 : 0,
-                            'tmp_exists' => is_file($uploaded_file) ? 1 : 0,
-                            'name' => $file->name,
-                            'size' => $file->size
-                        ));
-                    } else {
-                        $this->log_debug('move_ok', array(
-                            'dest' => $file_path,
-                            'name' => $file->name,
-                            'size' => $file->size
-                        ));
-                    }
+                    move_uploaded_file($uploaded_file, $file_path);
                 }
             } else {
                 // Non-multipart uploads (PUT method support)
-                $put_result = file_put_contents(
+                file_put_contents(
                     $file_path,
                     fopen('php://input', 'r'),
                     $append_file ? FILE_APPEND : 0
                 );
-                if ($put_result === false) {
-                    $file->error = 'put_failed';
-                    $this->log_debug('put_failed', array(
-                        'dest' => $file_path,
-                        'name' => $file->name,
-                        'size' => $file->size
-                    ));
-                }
-            }
-            if (!is_file($file_path)) {
-                $this->log_debug('dest_missing_after_write', array(
-                    'dest' => $file_path,
-                    'name' => $file->name
-                ));
             }
             $file_size = $this->get_file_size($file_path, $append_file);
             if ($file_size === $file->size) {

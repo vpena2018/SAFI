@@ -531,56 +531,85 @@ echo campo("id",("Codigo"),'hidden',$id,' ','');
         
     </div>
 
-<div class="row">
-<div class="col-md">
-<?php  
-       if ($foto=='') {  echo campo_upload("foto","Adjuntar Foto Odometro y Combustible",'upload','', '  ','',4,8,'NO',false ); }
-      
-        
-       if (!es_nulo($id_usuario_autoriza)) {
-            echo campo("precio_litro","Precio x Litro",'number',$precio_litro,' ',' onchange="combustible_totales();"');
-            echo campo("factura_proveedor","No. Factura Proveedor",'text',$factura_proveedor,' ',' ');             
-        if ($foto2=='') {  
-           // echo '<div class="row"><div class="col-12"><div class="ins_foto_div">';
-            echo campo_upload("foto2","Foto Factura",'upload','', '  ','',4,8,'NO',false ); 
-           // echo '</div></div></div>';
-        }
-        
-        if ($foto3=='') { 
-          //  echo '<div class="row"><div class="col-12"><div class="ins_foto_div">';
-            echo campo_upload("foto3","Foto Combustible",'upload','', '  ','',4,8,'NO',false ); 
-          //  echo '</div></div></div>';
-        }
-       }    
- ?>
+<?php
+if (!es_nulo($id_usuario_autoriza)) {
+    echo '<div class="row">';
+    echo '<div class="col-md">';
+    echo campo("precio_litro","Precio x Litro",'number',$precio_litro,' ',' onchange="combustible_totales();"');
+    echo '</div>';
+    echo '<div class="col-md">';
+    echo campo("factura_proveedor","No. Factura Proveedor",'text',$factura_proveedor,' ',' ');
+    echo '</div>';
+    echo '</div>';
+}
+?>
+
+<div class="row" id="combustible_fotos_uploads">
+<?php
+    echo '<div class="col-12 col-md-4 mb-2">';
+    if ($foto=='') {
+        echo campo_upload("foto","Adjuntar Foto Odometro y Combustible",'upload','', '  ','',4,8,'NO',false );
+    } else {
+        echo '<div class="small text-muted mt-4">Foto Odómetro Cargada</div>';
+    }
+    echo '</div>';
+
+    echo '<div class="col-12 col-md-4 mb-2">';
+    if (!es_nulo($id_usuario_autoriza) && $foto2=='') {
+        echo campo_upload("foto2","Foto Factura",'upload','', '  ','',4,8,'NO',false );
+    } elseif (!es_nulo($id_usuario_autoriza)) {
+        echo '<div class="small text-muted mt-4">Foto Factura Cargada</div>';
+    } else {
+        echo '<div class="small text-muted mt-4">Foto Factura (Al autorizar)</div>';
+    }
+    echo '</div>';
+
+    echo '<div class="col-12 col-md-4 mb-2">';
+    if (!es_nulo($id_usuario_autoriza) && $foto3=='') {
+        echo campo_upload("foto3","Foto Combustible",'upload','', '  ','',4,8,'NO',false );
+    } elseif (!es_nulo($id_usuario_autoriza)) {
+        echo '<div class="small text-muted mt-4">Foto Combustible Cargada</div>';
+    } else {
+        echo '<div class="small text-muted mt-4">Foto Combustible (Al autorizar)</div>';
+    }
+    echo '</div>';
+?>
 </div>
-<div class="col-md">
-<div class="" id="insp_fotos_thumbs">
+
+<div class="row">
+<div class="col-12">
+<div class="row" id="insp_fotos_thumbs">
 <?php
     if ($foto<>'') {
-        $fext = substr($foto, -3);
+        $fext = strtolower(pathinfo($foto, PATHINFO_EXTENSION));
+        echo '<div class="col-12 col-md-4 mb-3">';
         if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
-            echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto.'" onerror="this.onerror=null;this.src=\'uploa_d/'.$foto.'\';" data-cod="'.$row["id"].'"></a> ';
+            echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" class="d-inline-block"><img class="img img-thumbnail img-fluid" style="max-width:180px;height:auto;" src="uploa_d/thumbnail/'.$foto.'" onerror="this.onerror=null;this.src=\'uploa_d/'.$foto.'\';" data-cod="'.$row["id"].'"></a> ';
             } else {
-                echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
+                echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail d-inline-block text-break" >'.$foto.'</a> ';
             }
+        echo '</div>';
     }
 
     if ($foto2<>'') {
-        $fext = substr($foto2, -3);
+        $fext = strtolower(pathinfo($foto2, PATHINFO_EXTENSION));
+        echo '<div class="col-12 col-md-4 mb-3">';
         if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
-            echo '  <a href="#" onclick="mostrar_foto(\''.$foto2.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto2.'" onerror="this.onerror=null;this.src=\'uploa_d/'.$foto2.'\';" data-cod="'.$row["id"].'"></a> ';
+            echo '  <a href="#" onclick="mostrar_foto(\''.$foto2.'\'); return false;" class="d-inline-block"><img class="img img-thumbnail img-fluid" style="max-width:180px;height:auto;" src="uploa_d/thumbnail/'.$foto2.'" onerror="this.onerror=null;this.src=\'uploa_d/'.$foto2.'\';" data-cod="'.$row["id"].'"></a> ';
         } else {
-            echo '  <a href="uploa_d/'.$foto2.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto2.'</a> ';
+            echo '  <a href="uploa_d/'.$foto2.'" target="_blank" class="img-thumbnail d-inline-block text-break" >'.$foto2.'</a> ';
         }
+        echo '</div>';
     }   
     if ($foto3<>'') {
-       $fext = substr($foto3, -3);
+       $fext = strtolower(pathinfo($foto3, PATHINFO_EXTENSION));
+       echo '<div class="col-12 col-md-4 mb-3">';
        if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
-           echo '  <a href="#" onclick="mostrar_foto(\''.$foto3.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto3.'" onerror="this.onerror=null;this.src=\'uploa_d/'.$foto3.'\';" data-cod="'.$row["id"].'"></a> ';
+           echo '  <a href="#" onclick="mostrar_foto(\''.$foto3.'\'); return false;" class="d-inline-block"><img class="img img-thumbnail img-fluid" style="max-width:180px;height:auto;" src="uploa_d/thumbnail/'.$foto3.'" onerror="this.onerror=null;this.src=\'uploa_d/'.$foto3.'\';" data-cod="'.$row["id"].'"></a> ';
         } else {
-           echo '  <a href="uploa_d/'.$foto3.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto3.'</a> ';
+           echo '  <a href="uploa_d/'.$foto3.'" target="_blank" class="img-thumbnail d-inline-block text-break" >'.$foto3.'</a> ';
         }
+       echo '</div>';
     } 
 ?>
 </div>
@@ -789,7 +818,7 @@ function insp_guardar_foto(arch,campo){
            $('#'+campo).val(arch);                
            $('#files_'+campo).text('Guardado');
            $('#lk'+campo).html(arch);
-           thumb_agregar(arch);    
+           thumb_agregar(arch,campo);    
 }
 
 
@@ -800,16 +829,20 @@ function mostrar_foto(imagen) {
 });
 }
 
-function thumb_agregar(archivo){
+function thumb_agregar(archivo,campo){
 if (archivo!='' && archivo!=undefined) {
   
-    var fext= archivo.substr(archivo.length - 3);
+    var partes = archivo.split('.');
+    var fext = (partes.length > 1 ? partes.pop() : '').toLowerCase();
+    var html = '<div class="col-12 col-md-4 mb-3">';
 
     if (fext=='jpg' || fext=='peg' || fext=='png' || fext=='gif') {
-       $("#insp_fotos_thumbs").append('<a href="#" onclick="mostrar_foto(\''+archivo+'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'+archivo+'" onerror="this.onerror=null;this.src=\'uploa_d/'+archivo+'\';" ></a>');
+       html += '<a href="#" onclick="mostrar_foto(\''+archivo+'\'); return false;" class="d-inline-block"><img class="img img-thumbnail img-fluid" style="max-width:180px;height:auto;" src="uploa_d/thumbnail/'+archivo+'" onerror="this.onerror=null;this.src=\'uploa_d/'+archivo+'\';" ></a>';
     } else {
-       $("#insp_fotos_thumbs").append('<a href="uploa_d/'+archivo+'" target="_blank" class="img-thumbnail mb-3 mr-3" >'+archivo+'</a>');
+       html += '<a href="uploa_d/'+archivo+'" target="_blank" class="img-thumbnail d-inline-block text-break" >'+archivo+'</a>';
     }
+    html += '</div>';
+    $("#insp_fotos_thumbs").append(html);
   }
 }
 
