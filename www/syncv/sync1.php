@@ -256,7 +256,8 @@ foreach($entidad as $key => $value)
       $sql.= " , codigo_alterno =".GetSQLValue($value["CardCode"],"text");  
       $sql.= " , codigo_grupo =".GetSQLValue($value["GroupCode"],"text");  
       $sql.= " , nombre =".GetSQLValue($value["CardName"],"text");  
-      $sql.= " , direccion =".GetSQLValue($value["Address"],"text"); //Address 
+      $sql.= " , identidad =".GetSQLValue($value["LicTradNum"],"text"); //RFC
+      $sql.= " , direccion =".GetSQLValue($value["Address"],"text"); //Address       
       $sql.= " , ciudad =".GetSQLValue($value["City"],"text");  
      // $sql.= " , departamento =".GetSQLValue($value["departamento"],"text");  
       $sql.= " , pais =".GetSQLValue($value["Country"],"text");  
