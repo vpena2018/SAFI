@@ -20,7 +20,7 @@ function safi_guardar_png_temporal_desde_dataurl($dataUrl, $rutaSalida) {
 }
 
 function safi_es_texto_simple($valor) {
-  return preg_match('/^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñ .+\-*\/]*$/u', (string)$valor) === 1;
+  return preg_match('/^[A-Za-zÁÉÍÓÚáéíóúÑñ ]*$/u', (string)$valor) === 1;
 }
 
 function safi_es_numeracion_llanta_valida($valor) {
@@ -2310,11 +2310,11 @@ function insp_copiar_llantas(){
 }
 
 function insp_es_marca_llanta_valida(valor) {
-  return /^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñ .+\-*\/]*$/.test(valor);
+  return /^[A-Za-zÁÉÍÓÚáéíóúÑñ ]*$/.test(valor);
 }
 
 function insp_limpiar_marca_llanta(valor) {
-  return valor.replace(/[^A-Za-z0-9ÁÉÍÓÚáéíóúÑñ .+\-*\/]+/g, '');
+  return valor.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ ]+/g, '');
 }
 
 function insp_validar_marcas_llanta() {
