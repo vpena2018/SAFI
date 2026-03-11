@@ -63,26 +63,22 @@ if (!tiene_permiso(168)) {
     } else {
         $cid=0;
         if (isset($_REQUEST['id'])) { $cid = intval($_REQUEST["id"]); }
-        $result = sql_select("SELECT id_estado
-            FROM ventas
-        where id=$cid limit 1");
+            $result = sql_select("SELECT id_estado FROM ventas where id=$cid limit 1");
 
-        if ($result!=false){
-            if ($result -> num_rows > 0) { 
-                $row = $result -> fetch_assoc(); 
-                if ($row['id_estado']==99) {
-
-                    borrar_foto_directorio($cid,"","","vehiculos_reparacion");
-                    sql_delete("DELETE FROM ventas where tipo_ventas_reparacion=1 and id=$cid limit 1");
-                    
-                    $stud_arr[0]["pcode"] = 1;
-                    $stud_arr[0]["pmsg"] ="Anulada";
-                } else {
-                    $stud_arr[0]["pmsg"] ="No puede Borrar porque, la orden ya ha sido completada";
+            if ($result!=false){
+                if ($result -> num_rows > 0) { 
+                    $row = $result -> fetch_assoc(); 
+                    if ($row['id_estado']==99) {
+                        borrar_foto_directorio($cid,"","","vehiculos_reparacion");
+                        borrar_foto_directorio($cid,"","","vehiculos_reparacion_televentas");
+                        sql_delete("DELETE FROM ventas where tipo_ventas_reparacion=1 and id=$cid limit 1");                    
+                        $stud_arr[0]["pcode"] = 1;
+                        $stud_arr[0]["pmsg"] ="Anulada";
+                    } else {
+                        $stud_arr[0]["pmsg"] ="No puede Borrar porque, la orden ya ha sido completada";
+                    }
                 }
-            }
-        }
-
+           }
     }
 
 
@@ -313,8 +309,6 @@ if ($accion =="d") {
     $stud_arr[0]["pcode"] = 0;
     $stud_arr[0]["pmsg"] ="ERROR DB101";
 
-
-
     if (isset($_REQUEST['arch'])) { $arch = "and archivo=".GetSQLValue(urldecode($_REQUEST["arch"]),"text"); } else	{$arch ="" ;}
 
     if (isset($_REQUEST['cod'])) { $cod = "and id=".GetSQLValue(urldecode($_REQUEST["cod"]),"text"); } else	{$cod ="" ;}
@@ -324,20 +318,20 @@ if ($accion =="d") {
     
 
     if ($cid<>'') {
-    if ($tipo_foto==='foto_televentas') {
-        $sql="UPDATE ventas SET foto_televentas=null where id=".$cid." limit 1";
+        if ($tipo_foto==='foto_televentas') {
+            $sql="UPDATE ventas SET foto_televentas=null where id=".$cid." limit 1";
+            BORRAR_FOTO_DIRECTORIO($cid, $arch, $tipo_foto, "vehiculos_reparacion_televentas");
+        } else {
+            $sql="UPDATE ventas SET foto=null where id=".$cid." limit 1";
+            BORRAR_FOTO_DIRECTORIO($cid, $arch, $tipo_foto, "vehiculos_reparacion");
+        }        
+        $result = sql_update($sql);
+
     } else {
-        $sql="UPDATE ventas SET foto=null where id=".$cid." limit 1";
+        $result==false;
+            $stud_arr[0]["pcode"] = 0;
+            $stud_arr[0]["pmsg"] ="Error al borrar el archivo";
     }
-    $result = sql_update($sql);
-
-
-
- } else {
-    $result==false;
-        $stud_arr[0]["pcode"] = 0;
-        $stud_arr[0]["pmsg"] ="Error al borrar el archivo";
-}
 
     if ($result!=false){
 
@@ -346,8 +340,7 @@ if ($accion =="d") {
         $stud_arr[0]["pmsg"] ="Borrado";
 
     }
-  salida_json($stud_arr);
-
+    salida_json($stud_arr);
     exit;
 }
 
@@ -557,7 +550,7 @@ if ($accion =="d") {
 
 <div class="row">
     <div class="col-md-6" id="bloque_foto_pago">
-        <h6>Subida de Fotos</h6>
+        <h6>Foto Comprobante de Pago</h6>
         <?php
         if ($foto=='') {
             echo '<div id="archivofoto">';
@@ -566,24 +559,24 @@ if ($accion =="d") {
         }
         ?>
         <div id="insp_fotos_thumbs">
-        <?php
-        if ($foto<>'') {
-            $fext = substr($foto, -3);
-            if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
-                echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3 float-left" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
-                if (tiene_permiso(183))  {
-                    echo '<a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].',\'foto\'); return false;" ><i class="fa fa-eraser"></i> Borrar</a>';
+            <?php
+            if ($foto<>'') {
+                $fext = substr($foto, -3);
+                if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
+                    echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3 float-left" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
+                    if (tiene_permiso(183))  {
+                        echo '<a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].',\'foto\'); return false;" ><i class="fa fa-eraser"></i> Borrar</a>';
+                    }
+                } else {
+                    echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
                 }
-            } else {
-                echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
             }
-        }
-        ?>
+            ?>
         </div>
     </div>
 
     <div class="col-md-6" id="bloque_foto_televentas">
-        <h6>Fotos Televentas</h6>
+        <h6>Foto Comprobante de Recibo de Pago</h6>
         <?php
         if ($foto_televentas=='') {
             echo '<div id="archivofoto_televentas">';
@@ -593,17 +586,17 @@ if ($accion =="d") {
         ?>
         <div id="insp_fotos_thumbs_televentas">
         <?php
-        if ($foto_televentas<>'') {
-            $fext = substr($foto_televentas, -3);
-            if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
-                echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$foto_televentas.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3 float-left" src="uploa_d/thumbnail/'.$foto_televentas.'" data-cod="'.$row["id"].'"></a> ';
-                if (tiene_permiso(183))  {
-                    echo '<a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].',\'foto_televentas\'); return false;" ><i class="fa fa-eraser"></i> Borrar </a>';
+            if ($foto_televentas<>'') {
+                $fext = substr($foto_televentas, -3);
+                if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
+                    echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$foto_televentas.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3 float-left" src="uploa_d/thumbnail/'.$foto_televentas.'" data-cod="'.$row["id"].'"></a> ';
+                    if (tiene_permiso(183))  {
+                        echo '<a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].',\'foto_televentas\'); return false;" ><i class="fa fa-eraser"></i> Borrar </a>';
+                    }
+                } else {
+                    echo '  <a href="uploa_d/'.$foto_televentas.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto_televentas.'</a> ';
                 }
-            } else {
-                echo '  <a href="uploa_d/'.$foto_televentas.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto_televentas.'</a> ';
             }
-        }
         ?>
         </div>
     </div>
@@ -988,12 +981,12 @@ function borrar_fotodb(codid, tipoFoto) {
   Swal.fire({
         title: 'Borrar ' + etiquetaFoto,
         text: 'Desea borrar la ' + etiquetaFoto + ' o documento adjunto?',
-    icon: 'question',
-    showCancelButton: true,
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Si',
-    cancelButtonText: 'No'
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Si',
+        cancelButtonText: 'No'
   }).then((result) => {
     if (result.value) {
 
