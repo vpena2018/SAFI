@@ -1346,6 +1346,7 @@ if ($foto_original_tele !== '') {
                            $sqlcampos.= " , id_estado_mecanica = 30";
                             break;
                     }
+                    $sqlcampos.= " , id_estado_anterior_reproceso = ".GetSQLValue($_REQUEST['id_estado'], "int");
                     $sqlcampos.= " , tipo_ventas_reparacion = 1";
                     $sqlcampos.= " , id_estado = 99";
                     $sqlcampos.= " , reproceso = 'R'";
