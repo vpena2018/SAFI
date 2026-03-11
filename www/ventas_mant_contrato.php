@@ -181,6 +181,7 @@ function generarContratoVenta(
                 entidad.direccion AS direccion_cliente,
                 entidad.codigo_alterno AS codigo_cliente,
                 entidad.telefono AS telefono_cliente,
+                entidad.ciudad AS ciudad_venta,
 
                 producto.codigo_alterno AS cod_vehiculo,
                 producto.placa,
@@ -323,7 +324,8 @@ function generarContratoVenta(
                 'nacionalidad' => $venta['nacionalidad_venta'],
                 //'ciudad' => $venta['ciudad_venta'],
                 //'departamento' => $venta['departamento_venta'],
-                'tipo_documento_ident_venta'=> $venta['tipo_documento_ident_venta']
+                'tipo_documento_ident_venta'=> $venta['tipo_documento_ident_venta'],
+                'ciudad' => $venta['ciudad_venta']
                 
             ],
             'precios' => [
@@ -541,6 +543,11 @@ function descargarVentaPDF($id_venta,$juridico, $soloValidar = false)
         $template->setValue('NACIONALIDAD', $data['cliente']['nacionalidad']);
 
         //$template->setValue('CIUDAD', $data['cliente']['ciudad']);
+
+        
+        $template->setValue('CIUDAD_C', $data['cliente']['ciudad']);
+
+
         //$template->setValue('DEPARTAMENTO', $data['cliente']['departamento']);
 
         $template->setValue('CIUDAD', $data['representante']['ciudad']);
