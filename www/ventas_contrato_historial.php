@@ -10,7 +10,7 @@ SELECT
     vc.id_contrato,
     vc.numero_contrato,
     vc.correlativo,
-    vc.tipo_contrato,
+    vcd.tipo_contrato,
     vc.fecha_contrato,
     vc.estado,
     vc.creado_por,
@@ -22,6 +22,7 @@ LEFT JOIN ventas_contratos_detalle vcd
     ON vcd.id_contrato = vc.id_contrato
 
 WHERE vc.id_venta = $cid
+
 
 GROUP BY vc.id_contrato
 
@@ -51,32 +52,33 @@ if ($result && $result->num_rows > 0) {
 
     while ($row = $result->fetch_assoc()) {
 
-        $estado = ($row["estado"] == "ACTIVO") ? "Activo" : "Anulado";
-        $tipo_contrato = ($row["tipo_contrato"] == 1) ? "Persona Jurídica" : "Persona Natural";
+            $estado = ($row["estado"] == "ACTIVO") ? "Activo" : "Anulado";
+            $tipo_contrato = ($row["tipo_contrato"] == 1) ? "Persona Jurídica" : "Persona Natural";
+            $reimpresion = ($row["estado"] == "ACTIVO") ? "false" : "true";
 
-        echo '<tr>
+            echo '<tr>
 
-        <td>'.$row["numero_contrato"].'</td>
+            <td>'.$row["numero_contrato"].'</td>
 
-        <td>'.$row["correlativo"].'</td>
+            <td>'.$row["correlativo"].'</td>
 
-        <td>'.$tipo_contrato.'</td>
+            <td>'.$tipo_contrato.'</td>
 
-        <td>'.formato_fecha_de_mysql($row["fecha_contrato"]).'</td>
+            <td>'.formato_fecha_de_mysql($row["fecha_contrato"]).'</td>
 
-        <td>'.$estado.'</td>
+            <td>'.$estado.'</td>
 
-        <td>'.$row["creado_por"].'</td>
+            <td>'.$row["creado_por"].'</td>
 
-        <td>
-            <a href="#"
-            onclick="descargar_contrato (\''.$row["id_detalle"].'\'); return false;"
-            class="btn btn-sm btn-primary">
-            Generar
-            </a>
-        </td>
+            <td>
+                <a href="#"
+                onclick="descargar_contrato('.$cid.',\''.$row["id_detalle"].'\',\''.$row["tipo_contrato"].'\','.$reimpresion.'); return false;"
+                class="btn btn-sm btn-primary">
+                Descargar
+                </a>
+            </td>
 
-        </tr>';
+            </tr>';
     }
 
 }
