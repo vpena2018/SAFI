@@ -546,21 +546,40 @@ function descargarVentaPDF($id_venta,$juridico, $soloValidar = false)
         $template->setValue('CIUDAD', $data['representante']['ciudad']);
         $template->setValue('DEPARTAMENTO', $data['representante']['departamento']);
 
-        if($data['cliente']['tipo_documento_ident_venta'] == 'dni')
-        {
-            $desc='con documento nacional de identificacion numero '.$data['cliente']['identidad'];
-            $template->setValue('DESC_DOCUMENTO', $desc);   
-        }else if($data['cliente']['tipo_documento_ident_venta'] == 'pasaporte')
-        {
-            $desc='con pasaporte numero '.$data['cliente']['identidad'];
-            $template->setValue('DESC_DOCUMENTO', $desc);
-        }else if($data['cliente']['tipo_documento_ident_venta'] == 'carnet_residente')
-        {
-            $desc='con carnet de residente numero '.$data['cliente']['identidad'];
-            $template->setValue('DESC_DOCUMENTO', $desc);
-        }
 
 
+        if($juridico)
+            {
+                    if($data['cliente']['tipo_documento_ident_venta'] == 'dni')
+                    {
+                        $desc='con documento nacional de identificacion numero '.$data['datos_juridicos']['representante_legal_identidad'];
+                        $template->setValue('DESC_DOCUMENTO', $desc);   
+                    }else if($data['cliente']['tipo_documento_ident_venta'] == 'pasaporte')
+                    {
+                        $desc='con pasaporte numero '.$data['datos_juridicos']['representante_legal_identidad'];
+                        $template->setValue('DESC_DOCUMENTO', $desc);
+                    }else if($data['cliente']['tipo_documento_ident_venta'] == 'carnet_residente')
+                    {
+                        $desc='con carnet de residente numero '.$data['datos_juridicos']['representante_legal_identidad'];
+                        $template->setValue('DESC_DOCUMENTO', $desc);
+                    }
+
+            }else{
+                    if($data['cliente']['tipo_documento_ident_venta'] == 'dni')
+                    {
+                        $desc='con documento nacional de identificacion numero '.$data['cliente']['identidad'];
+                        $template->setValue('DESC_DOCUMENTO', $desc);   
+                    }else if($data['cliente']['tipo_documento_ident_venta'] == 'pasaporte')
+                    {
+                        $desc='con pasaporte numero '.$data['cliente']['identidad'];
+                        $template->setValue('DESC_DOCUMENTO', $desc);
+                    }else if($data['cliente']['tipo_documento_ident_venta'] == 'carnet_residente')
+                    {
+                        $desc='con carnet de residente numero '.$data['cliente']['identidad'];
+                        $template->setValue('DESC_DOCUMENTO', $desc);
+                    }
+
+            }
 
         //datos juridicos
         $template->setValue('R_LEGAL_J', $data['datos_juridicos']['representante_legal']);
