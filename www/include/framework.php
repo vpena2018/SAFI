@@ -2269,15 +2269,17 @@ function borrar_foto_directorio($cid,$cod,$arch, $tipo) {
             
 
            if($tipo=="averia") {
-            $result_arch=sql_select("SELECT id,archivo FROM averia_foto WHERE  id_maestro=$cid $filtro  LIMIT 1");
+                $result_arch=sql_select("SELECT id,archivo FROM averia_foto WHERE  id_maestro=$cid $filtro  LIMIT 1");
            }else if($tipo=="inspeccion") {
-            $result_arch=sql_select("SELECT id,archivo FROM inspeccion_foto WHERE id_inspeccion=$cid $filtro  LIMIT 1");
+                $result_arch=sql_select("SELECT id,archivo FROM inspeccion_foto WHERE id_inspeccion=$cid $filtro  LIMIT 1");
            }else if($tipo=="servicio") {    
-            $result_arch=sql_select("SELECT id,archivo FROM servicio_foto WHERE id_servicio=$cid $filtro LIMIT 1");
+                $result_arch=sql_select("SELECT id,archivo FROM servicio_foto WHERE id_servicio=$cid $filtro LIMIT 1");
            }else if($tipo=="vehiculos_reparacion") {    
-            $result_arch=sql_select("SELECT foto FROM ventas WHERE id=$cid LIMIT 1");
+                $result_arch=sql_select("SELECT foto FROM ventas WHERE id=$cid LIMIT 1");
+           }else if($tipo=="vehiculos_reparacion_televentas") {    
+                $result_arch=sql_select("SELECT foto_televentas FROM ventas WHERE id=$cid LIMIT 1");                
            }else if($tipo=="foto_ventas") {    
-            $result_arch=sql_select("SELECT nombre_archivo FROM ventas_fotos WHERE id_venta=$cid and nombre_archivo=$arch LIMIT 1");
+                $result_arch=sql_select("SELECT nombre_archivo FROM ventas_fotos WHERE id_venta=$cid and nombre_archivo=$arch LIMIT 1");
            }
 
         if ($result_arch -> num_rows > 0) {
@@ -2285,11 +2287,13 @@ function borrar_foto_directorio($cid,$cod,$arch, $tipo) {
 
             if($tipo=="vehiculos_reparacion") {    
                 $filename = $row['foto'];
+            }else if($tipo=="vehiculos_reparacion_televentas") {
+                $filename = $row['foto_televentas'];
             }else if($tipo=="foto_ventas") {
-                    $filename = $row['nombre_archivo'];
+                $filename = $row['nombre_archivo'];
             }else
             {
-                    $filename = $row['archivo'];
+                $filename = $row['archivo'];
             }
 
            if($filename=="" or $filename==null) {
