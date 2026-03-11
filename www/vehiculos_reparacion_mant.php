@@ -179,6 +179,7 @@ if ($accion=="g") {
         if (isset($_REQUEST["fecha_asignacion"])) { $sqlcampos.= " , fecha_asignacion =".GetSQLValue($_REQUEST["fecha_asignacion"],"date"); }      
         if (isset($_REQUEST["fecha_promesa"])) { $sqlcampos.= " , fecha_promesa =".GetSQLValue($_REQUEST["fecha_promesa"],"date"); }                            
         if (isset($_REQUEST["foto"])) { $sqlcampos.= " , foto =".GetSQLValue($_REQUEST["foto"],"text"); } 
+        if (isset($_REQUEST["foto_televentas"])) { $sqlcampos.= " , foto_televentas =".GetSQLValue($_REQUEST["foto_televentas"],"text"); } 
         if (isset($_REQUEST["precio_minimo"])) { $sqlcampos.= " , precio_minimo =".GetSQLValue($_REQUEST["precio_minimo"],"int"); } 
         if (isset($_REQUEST["precio_maximo"])) { $sqlcampos.= " , precio_maximo =".GetSQLValue($_REQUEST["precio_maximo"],"int"); } 
         if (isset($_REQUEST["trasmision"])) { $sqlcampos.= " , trasmision =".GetSQLValue($_REQUEST["trasmision"],"text"); } 
@@ -319,13 +320,15 @@ if ($accion =="d") {
     if (isset($_REQUEST['cod'])) { $cod = "and id=".GetSQLValue(urldecode($_REQUEST["cod"]),"text"); } else	{$cod ="" ;}
 
     if (isset($_REQUEST['cod'])) { $cid =GetSQLValue(urldecode($_REQUEST["cod"]),"text"); } else	{$cid ="" ;}
+    if (isset($_REQUEST['tipo_foto'])) { $tipo_foto = trim($_REQUEST["tipo_foto"]); } else {$tipo_foto = "foto";}
     
 
     if ($cid<>'') {
-
-    borrar_foto_directorio($cid,"","","vehiculos_reparacion");
-
-    $sql="UPDATE ventas SET foto=null where id=".$cid." limit 1";
+    if ($tipo_foto==='foto_televentas') {
+        $sql="UPDATE ventas SET foto_televentas=null where id=".$cid." limit 1";
+    } else {
+        $sql="UPDATE ventas SET foto=null where id=".$cid." limit 1";
+    }
     $result = sql_update($sql);
 
 
@@ -401,6 +404,7 @@ if ($accion =="d") {
     if (isset($row["fecha_promesa_taller"])) {$fecha_promesa_taller= $row["fecha_promesa_taller"]; } else {$fecha_promesa_taller= "";}
     if (isset($row["reproceso"])) {$reproceso=$row["reproceso"]; } else {$reproceso="";}
     if (isset($row["foto"])) {$foto=$row["foto"]; } else {$foto="";}
+    if (isset($row["foto_televentas"])) {$foto_televentas=$row["foto_televentas"]; } else {$foto_televentas="";}
     if (isset($row["observaciones_reparacion"])) {$observaciones_reparacion=$row["observaciones_reparacion"]; } else {$observaciones_reparacion="";}
     if (isset($row["precio_minimo"])) {$precio_minimo= $row["precio_minimo"]; } else {$precio_minimo= "";}
     if (isset($row["precio_maximo"])) {$precio_maximo= $row["precio_maximo"]; } else {$precio_maximo= "";}
@@ -552,46 +556,56 @@ if ($accion =="d") {
 
 
 <div class="row">
-<?php
-if ($foto=='')
-{
-    echo '<div class="col-md" id="archivofoto">';
-    echo campo_upload("foto","Adjuntar comprobante de pago",'upload','', '  ','',4,8,'NO',false );
-    echo '</div>';
-    /*echo '<div class="col-md"></div><div class="" id="insp_fotos_thumbs"></div></div>';*/
-}
-?>
-
-    <div class="col-md">
-    <div class="" id="insp_fotos_thumbs">
-    <?php
-    if ($foto<>'') {
-        $fext = substr($foto, -3);
-                if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {  
-                    $ruta1='uploa_d/'.$foto;
-                    if (file_exists($ruta1)) {                        
-                       $src= 'uploa_d/thumbnail/'.$foto;
-                       $mostrar=true;
-                    } else {                                   
-                       $src= 'aws_bucket_s3/thumbnail/'.$foto;
-                       $mostrar=false;                    
-                    }    
-                    $onclick = 'mostrar_foto(\'' . $foto . '\', \'' . $mostrar . '\'); return false;';        
-                    echo '  <a href="#" onclick="'.$onclick.'" ><img class="img  img-thumbnail mb-3 mr-3" src="'.$src.'" data-cod="'.$row["id"].'"></a> '; 
-                    //if ($fecha<'2025-10-01'){
-                    //   echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
-                    //}else{       
-                    //   echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3 float-left" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
-                    //}
-                    if (tiene_permiso(183))  {
-                        echo '<a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].'); return false;" ><i class="fa fa-eraser"></i> Borrar Foto</a>';
-                    }                    
-                } else {
-                    echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
+    <div class="col-md-6" id="bloque_foto_pago">
+        <h6>Subida de Fotos</h6>
+        <?php
+        if ($foto=='') {
+            echo '<div id="archivofoto">';
+            echo campo_upload("foto","Adjuntar comprobante de pago",'upload','', '  ','',4,8,'NO',false );
+            echo '</div>';
+        }
+        ?>
+        <div id="insp_fotos_thumbs">
+        <?php
+        if ($foto<>'') {
+            $fext = substr($foto, -3);
+            if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
+                echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3 float-left" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
+                if (tiene_permiso(183))  {
+                    echo '<a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].',\'foto\'); return false;" ><i class="fa fa-eraser"></i> Borrar</a>';
                 }
-    }
-    ?>
+            } else {
+                echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
+            }
+        }
+        ?>
+        </div>
     </div>
+
+    <div class="col-md-6" id="bloque_foto_televentas">
+        <h6>Fotos Televentas</h6>
+        <?php
+        if ($foto_televentas=='') {
+            echo '<div id="archivofoto_televentas">';
+            echo campo_upload("foto_televentas","Adjuntar Recibo de pago",'upload','', '  ','',4,8,'NO',false );
+            echo '</div>';
+        }
+        ?>
+        <div id="insp_fotos_thumbs_televentas">
+        <?php
+        if ($foto_televentas<>'') {
+            $fext = substr($foto_televentas, -3);
+            if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
+                echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$foto_televentas.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3 float-left" src="uploa_d/thumbnail/'.$foto_televentas.'" data-cod="'.$row["id"].'"></a> ';
+                if (tiene_permiso(183))  {
+                    echo '<a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].',\'foto_televentas\'); return false;" ><i class="fa fa-eraser"></i> Borrar </a>';
+                }
+            } else {
+                echo '  <a href="uploa_d/'.$foto_televentas.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto_televentas.'</a> ';
+            }
+        }
+        ?>
+        </div>
     </div>
 </div>
 
@@ -791,16 +805,12 @@ function insp_guardar_foto(arch,campo){
            $('#'+campo).val(arch);                
            $('#files_'+campo).text('Guardado');
            $('#lk'+campo).html(arch);
-           thumb_agregar(arch);    
+           thumb_agregar(arch,campo);    
 }
 
 
 function mostrar_foto(imagen,ruta) {
-  if (ruta==true){
-    var imagenurl='uploa_d/'+imagen;
-  } else {
-    var imagenurl='aws_bucket_s3/'+imagen;
-  }
+  var imagenurl='uploa_d/'+imagen;
   Swal.fire({
        imageUrl: imagenurl,  
   }); 
@@ -810,15 +820,20 @@ function mostrar_foto(imagen,ruta) {
 
 
 
-function thumb_agregar(archivo){
+function thumb_agregar(archivo,campo){
 if (archivo!='' && archivo!=undefined) {
+
+     var thumbsDiv = '#insp_fotos_thumbs';
+     if (campo==='foto_televentas') {
+        thumbsDiv = '#insp_fotos_thumbs_televentas';
+     }
   
     var fext= archivo.substr(archivo.length - 3);
 
     if (fext=='jpg' || fext=='peg' || fext=='png' || fext=='gif') {
-       $("#insp_fotos_thumbs").append('<a href="#" onclick="mostrar_foto(\''+archivo+'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'+archivo+'" ></a>');
+         $(thumbsDiv).append('<a href="#" onclick="mostrar_foto(\''+archivo+'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'+archivo+'" ></a>');
     } else {
-       $("#insp_fotos_thumbs").append('<a href="uploa_d/'+archivo+'" target="_blank" class="img-thumbnail mb-3 mr-3" >'+archivo+'</a>');
+         $(thumbsDiv).append('<a href="uploa_d/'+archivo+'" target="_blank" class="img-thumbnail mb-3 mr-3" >'+archivo+'</a>');
     }
   }
 }
@@ -952,17 +967,27 @@ $("#"+campo).load(url, function(response, status, xhr) {
 
 
 
-function borrar_fotodb(codid) {
+function borrar_fotodb(codid, tipoFoto) {
+    if (tipoFoto===undefined || tipoFoto==='') {
+        tipoFoto = 'foto';
+    }
+
   var datos = {
     a: "d",
     cid: $("#cid").val(),
     pid: $("#pid").val(),
-    cod: codid
+        cod: codid,
+        tipo_foto: tipoFoto
   };
 
+    var etiquetaFoto = 'Foto';
+    if (tipoFoto==='foto_televentas') {
+        etiquetaFoto = 'Foto Televentas';
+    }
+
   Swal.fire({
-    title: 'Borrar Foto',
-    text: 'Desea borrar la Foto o documento adjunto?',
+        title: 'Borrar ' + etiquetaFoto,
+        text: 'Desea borrar la ' + etiquetaFoto + ' o documento adjunto?',
     icon: 'question',
     showCancelButton: true,
     confirmButtonColor: '#3085d6',
