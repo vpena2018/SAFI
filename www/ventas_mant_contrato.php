@@ -155,6 +155,13 @@ function generarContratoVenta(
 ) {
     try {
 
+        $tipo_contrato=0;
+
+        if($persona_juridica)
+        {
+            $tipo_contrato=1;
+        }
+
         sql_update("START TRANSACTION");
 
         /* ===============================
@@ -287,9 +294,9 @@ function generarContratoVenta(
         =============================== */
         sql_insert("
             INSERT INTO ventas_contratos
-            (id_venta, correlativo, numero_contrato, estado, creado_por)
+            (id_venta,tipo_contrato, correlativo, numero_contrato, estado, creado_por)
             VALUES
-            ($id_venta, $nuevoCorrelativo, '$numeroContrato', 'ACTIVO', '$usuarioSistema')
+            ($id_venta, $tipo_contrato, $nuevoCorrelativo, '$numeroContrato', 'ACTIVO', '$usuarioSistema')
         ");
 
         $resId = sql_select("SELECT LAST_INSERT_ID() AS id");
@@ -370,9 +377,9 @@ function generarContratoVenta(
 
         sql_insert("
             INSERT INTO ventas_contratos_detalle
-            (id_contrato, id_venta, accion, usuario, estado, datos_json)
+            (id_contrato, tipo_contrato, id_venta, accion, usuario, estado, datos_json)
             VALUES
-            ($idContrato, $id_venta, 'CREACION', '$usuarioSistema', 'ACTIVO', '$contratoJson')
+            ($idContrato, $tipo_contrato, $id_venta, 'CREACION', '$usuarioSistema', 'ACTIVO', '$contratoJson')
         ");
 
         sql_update("COMMIT");
@@ -2256,10 +2263,6 @@ $('#btnContrato').on('click', function (e) {
             }
         );
 
-
-    
-
-    
 });
 
 $('#btnActualizarContrato').on('click', function (e) {
@@ -2328,6 +2331,12 @@ $('#btnActualizarContrato').on('click', function (e) {
 });
 
 });
+
+
+    function descargar_contrato(id_venta, id_detalle = 0)
+{
+    alert('Función para descargar contrato. ID Venta: ' + id_venta + ', ID Detalle: ' + id_detalle);    
+}
 </script>
 
 

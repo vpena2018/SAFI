@@ -10,6 +10,7 @@ SELECT
     vc.id_contrato,
     vc.numero_contrato,
     vc.correlativo,
+    vc.tipo_contrato,
     vc.fecha_contrato,
     vc.estado,
     vc.creado_por,
@@ -35,6 +36,7 @@ ORDER BY vc.fecha_contrato DESC
 <tr>
     <th>Contrato</th>
     <th>Correlativo</th>
+    <th>Tipo contrato</th>
     <th>Fecha</th>
     <th>Estado</th>
     <th>Creado Por</th>
@@ -50,12 +52,15 @@ if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
 
         $estado = ($row["estado"] == "ACTIVO") ? "Activo" : "Anulado";
+        $tipo_contrato = ($row["tipo_contrato"] == 1) ? "Persona Jurídica" : "Persona Natural";
 
         echo '<tr>
 
         <td>'.$row["numero_contrato"].'</td>
 
         <td>'.$row["correlativo"].'</td>
+
+        <td>'.$tipo_contrato.'</td>
 
         <td>'.formato_fecha_de_mysql($row["fecha_contrato"]).'</td>
 
@@ -65,7 +70,7 @@ if ($result && $result->num_rows > 0) {
 
         <td>
             <a href="#"
-            onclick="generar_contrato_historial(\''.$row["id_detalle"].'\'); return false;"
+            onclick="descargar_contrato (\''.$row["id_detalle"].'\'); return false;"
             class="btn btn-sm btn-primary">
             Generar
             </a>
@@ -77,10 +82,14 @@ if ($result && $result->num_rows > 0) {
 }
 else
 {
-    echo '<tr><td colspan="6" class="text-center">No hay contratos generados</td></tr>';
+    echo '<tr><td colspan="7" class="text-center">No hay contratos generados</td></tr>';
 }
 
 ?>
 
 </tbody>
 </table>
+
+<script>
+
+</script>
