@@ -2290,7 +2290,6 @@ function procesar_inspeccion_foto(campo){
 
 
 		
-		
 	
 		
 }
@@ -2636,6 +2635,12 @@ var validation = Array.prototype.filter.call(forms, function(form) {
  
  if(validado==true) {
     $("#"+forma+" .xfrm").addClass("disabled");		  
+    var $btnProcesar = $("#"+forma+" .xfrm[onclick*='procesar_inspeccion']");
+    $btnProcesar.each(function() {
+      $(this).data('txt-original', $(this).html());
+      $(this).html('<i class="fa fa-spinner fa-pulse"></i> Procesando...');
+    });
+
     cargando(true); 
   
     canvas.includeDefaultValues = false;
@@ -2647,41 +2652,54 @@ var validation = Array.prototype.filter.call(forms, function(form) {
 
     var datos=$("#"+forma).serialize();
 
-     $.post( url,datos, function(json) {
-         
-    if (json.length > 0) {
-      if (json[0].pcode == 0) {
+    $.ajax({
+      url: url,
+      type: 'POST',
+      data: datos,
+      dataType: 'json',
+      timeout: 60000
+    })
+    .done(function(json) {
+      if (json.length > 0) {
+        if (json[0].pcode == 0) {
           cargando(false);
-          mytoast('error',json[0].pmsg,3000) ;   
-      }
-      if (json[0].pcode == 1) {
-         cargando(false);
-        
-        // printJS('<?php echo app_host; ?>impr_label.php?cid='+json[0].pcid);
-        var alertar_taller='';
-        <?php 
-        if ($nuevoreg==true and $tipo_insp==2 and $tipo_doc==1) {
-          echo "alertar_taller='&alertar=1';";
+          mytoast('error',json[0].pmsg,3000) ;
         }
-        ?>
-        get_page('pagina','inspeccion_mant.php?a=v&cid='+json[0].pcid + alertar_taller,'Hoja de Inspección',false) ; 
-        mytoast('success',json[0].pmsg,3000) ;
-        
-         
-      
+        if (json[0].pcode == 1) {
+          cargando(false);
+
+          // printJS('<?php echo app_host; ?>impr_label.php?cid='+json[0].pcid);
+          var alertar_taller='';
+          <?php 
+          if ($nuevoreg==true and $tipo_insp==2 and $tipo_doc==1) {
+            echo "alertar_taller='&alertar=1';";
+          }
+          ?>
+          get_page('pagina','inspeccion_mant.php?a=v&cid='+json[0].pcid + alertar_taller,'Hoja de Inspección',false) ;
+          mytoast('success',json[0].pmsg,3000) ;
+        }
+      } else {
+        cargando(false);
+        mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar");
       }
-    } else {cargando(false);  mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar");}
-    
-  })
-  .done(function() {
-   
-  })
+    })
   .fail(function(xhr, status, error) {
-       cargando(false); mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar");
+       cargando(false);
+       if (status==='timeout') {
+         mymodal('error',"Error de conexión","Tiempo de espera agotado al guardar. Verifique su conexión y vuelva a intentar");
+       } else {
+         mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar");
+       }
   })
   .always(function() {
    
     $("#"+forma+" .xfrm").removeClass("disabled");	
+    $btnProcesar.each(function() {
+      var textoOriginal = $(this).data('txt-original');
+      if (textoOriginal !== undefined) {
+        $(this).html(textoOriginal);
+      }
+    });
   });
     
     
