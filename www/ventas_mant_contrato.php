@@ -1705,6 +1705,17 @@ if ($foto_original_tele !== '') {
         <li class="nav-item">
             <a class="nav-link " id="insp_tabFotos" data-toggle="tab" href="#" onclick="ventas_cambiartab('nav_Fotos_venta');"   role="tab"  >Fotos</a>
         </li> 
+
+                <li class="nav-item">
+            <a class="nav-link"
+               id="insp_tabContratos"
+               data-toggle="tab"
+               href="#"
+               onclick="ventas_cambiartab('nav_contratos');"
+               role="tab">
+               Historial de contratos
+            </a>
+        </li>
       
     </ul>   
  </div>
@@ -2442,6 +2453,9 @@ $('#btnActualizarContrato').on('click', function (e) {
 </div>
 </div>
 
+<!-- CONTRATO HISTORIAL -->
+<div class="tab-pane fade " id="nav_contratos" role="tabpanel" ></div>
+
 
 <!-- errores -->
 <div class="tab-pane fade mt-5 mb-5" id="nav_deshabilitado" role="tabpanel" ><div class="alert alert-warning" role="alert">Debe Guardar el documento para poder continuar con esta sección</div></div>
@@ -2818,6 +2832,7 @@ function ventas_procesar(url,forma,adicional){
 
 
 function ventas_cambiartab(eltab) {
+
   var codigo= $('#id').val();
   var continuar=true;
   $('.tab-pane').hide();
@@ -2834,6 +2849,10 @@ function ventas_cambiartab(eltab) {
 
   if (eltab=='nav_historial') {
      procesar_ventas_historial('nav_historial');
+  }
+
+    if (eltab=='nav_contratos') {
+     procesar_ventas_contrato_historial('nav_contratos');
   }
 
   
@@ -2855,6 +2874,28 @@ function procesar_ventas_historial(campo){
 var cid=$("#id").val();
 var pid=$('#id_producto').val();
 var url='ventas_historial.php?cid='+cid+'&pid='+pid ;
+
+$(window).scrollTop(0);
+$("#"+campo).html('<div class="text-center mt-5 mb-5"><i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><br><span class="">'+'Cargando'+'</span></div>');			
+
+$("#"+campo).load(url, function(response, status, xhr) {	
+   
+  if (status == "error") { 
+
+    //$("#"+campo).html("Error"; // xhr.status + " " + xhr.statusText
+    $("#"+campo).html('<p>&nbsp;</p>');
+    mytoast('error','Error al cargar la pagina...',6000) ;
+  }
+
+});
+  
+}
+
+function procesar_ventas_contrato_historial(campo){
+
+var cid=$("#id").val();
+var pid=$('#id_producto').val();
+var url='ventas_contrato_historial.php?cid='+cid+'&pid='+pid ;
 
 $(window).scrollTop(0);
 $("#"+campo).html('<div class="text-center mt-5 mb-5"><i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><br><span class="">'+'Cargando'+'</span></div>');			
