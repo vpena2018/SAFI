@@ -24,7 +24,7 @@ function safi_es_texto_simple($valor) {
 }
 
 function safi_es_numeracion_llanta_valida($valor) {
-  return preg_match('/^[0-9]{7}\/[A-Za-z]$/', (string)$valor) === 1;
+  return preg_match('/^[0-9]{3}\/[0-9]{2}[A-Za-z][0-9]{2}$/', (string)$valor) === 1;
 }
 
 
@@ -199,7 +199,7 @@ if ($accion=="g") {
         foreach ($campos_num_llanta_requeridos as $campo_num => $etiqueta_num) {
           $valor_num = isset($_REQUEST[$campo_num]) ? trim((string)$_REQUEST[$campo_num]) : '';
           if ($valor_num === '' || !safi_es_numeracion_llanta_valida($valor_num)) {
-            $verror = "Numeracion de llanta invalida en " . $etiqueta_num . ". Debe tener formato 000/00A00.";
+            $verror = "Numeracion de llanta invalida en " . $etiqueta_num . ". Debe tener formato 000/00R00.";
             break;
           }
         }
@@ -214,7 +214,7 @@ if ($accion=="g") {
         foreach ($campos_num_llanta_opcionales as $campo_num => $etiqueta_num) {
           $valor_num = isset($_REQUEST[$campo_num]) ? trim((string)$_REQUEST[$campo_num]) : '';
           if ($valor_num !== '' && !safi_es_numeracion_llanta_valida($valor_num)) {
-            $verror = "Numeracion de llanta invalida en " . $etiqueta_num . ". Debe tener formato 000/00A00.";
+            $verror = "Numeracion de llanta invalida en " . $etiqueta_num . ". Debe tener formato 000/00R00.";
             break;
           }
         }
@@ -2341,7 +2341,7 @@ function insp_validar_marcas_llanta() {
 }
 
 function insp_es_numeracion_llanta_valida(valor) {
-  return /^[0-9]{7}\/[A-Za-z]$/.test(valor);
+  return /^[0-9]{3}\/[0-9]{2}[A-Za-z][0-9]{2}$/.test(valor);
 }
 
 function insp_validar_numeracion_llantas() {
@@ -2356,7 +2356,7 @@ function insp_validar_numeracion_llantas() {
   for (var i = 0; i < requeridos.length; i++) {
     var valorReq = (($('#' + requeridos[i]).val() || '') + '').trim();
     if (!insp_es_numeracion_llanta_valida(valorReq)) {
-      mytoast('warning','La numeracion de llanta debe tener formato 000/00A00',3000);
+      mytoast('warning','La numeracion de llanta debe tener formato 000/00R00',3000);
       $('#' + requeridos[i]).focus();
       return false;
     }
@@ -2366,7 +2366,7 @@ function insp_validar_numeracion_llantas() {
   for (var j = 0; j < opcionales.length; j++) {
     var valorOpc = (($('#' + opcionales[j]).val() || '') + '').trim();
     if (valorOpc !== '' && !insp_es_numeracion_llanta_valida(valorOpc)) {
-      mytoast('warning','La numeracion de llanta debe tener formato 000/00A00',3000);
+      mytoast('warning','La numeracion de llanta debe tener formato 000/00R00',3000);
       $('#' + opcionales[j]).focus();
       return false;
     }
