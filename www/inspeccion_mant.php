@@ -19,6 +19,14 @@ function safi_guardar_png_temporal_desde_dataurl($dataUrl, $rutaSalida) {
   return file_put_contents($rutaSalida, $binario) !== false;
 }
 
+function safi_es_texto_simple($valor) {
+  return preg_match('/^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñ .+\-*\/]*$/u', (string)$valor) === 1;
+}
+
+function safi_es_numeracion_llanta_valida($valor) {
+  return preg_match('/^[0-9]{7}\/[A-Za-z]$/', (string)$valor) === 1;
+}
+
 
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="";}
 $cid=0;
@@ -157,6 +165,58 @@ if ($accion=="g") {
 
         if ($km_entrada > 0 and $km_referencia > 0 and $km_entrada < $km_referencia) {
           $verror = "El Kilometraje no puede ser menor al kilometraje anterior";
+        }
+      }
+
+      if ($verror=="") {
+        $campos_marca_llanta = array(
+          "llanta_delantera_izq" => "Delantera Izquierda",
+          "llanta_trasera_izq" => "Trasera Izquierda",
+          "llanta_repuesto" => "Llanta de Repuesto",
+          "llanta_trasera_der" => "Trasera Derecha",
+          "llanta_delantera_der" => "Delantera Derecha",
+          "llanta_extra1" => "Extra 1",
+          "llanta_extra2" => "Extra 2"
+        );
+
+        foreach ($campos_marca_llanta as $campo_marca => $etiqueta_marca) {
+          if (isset($_REQUEST[$campo_marca]) && !safi_es_texto_simple($_REQUEST[$campo_marca])) {
+            $verror = "Marca de llanta invalida en " . $etiqueta_marca . ". Solo se permiten letras.";
+            break;
+          }
+        }
+      }
+
+      if ($verror=="") {
+        $campos_num_llanta_requeridos = array(
+          "llanta_delantera_izq_num" => "Delantera Izquierda",
+          "llanta_trasera_izq_num" => "Trasera Izquierda",
+          "llanta_repuesto_num" => "Llanta de Repuesto",
+          "llanta_trasera_der_num" => "Trasera Derecha",
+          "llanta_delantera_der_num" => "Delantera Derecha"
+        );
+
+        foreach ($campos_num_llanta_requeridos as $campo_num => $etiqueta_num) {
+          $valor_num = isset($_REQUEST[$campo_num]) ? trim((string)$_REQUEST[$campo_num]) : '';
+          if ($valor_num === '' || !safi_es_numeracion_llanta_valida($valor_num)) {
+            $verror = "Numeracion de llanta invalida en " . $etiqueta_num . ". Debe tener formato 1234567/A.";
+            break;
+          }
+        }
+      }
+
+      if ($verror=="") {
+        $campos_num_llanta_opcionales = array(
+          "llanta_extra1_num" => "Extra 1",
+          "llanta_extra2_num" => "Extra 2"
+        );
+
+        foreach ($campos_num_llanta_opcionales as $campo_num => $etiqueta_num) {
+          $valor_num = isset($_REQUEST[$campo_num]) ? trim((string)$_REQUEST[$campo_num]) : '';
+          if ($valor_num !== '' && !safi_es_numeracion_llanta_valida($valor_num)) {
+            $verror = "Numeracion de llanta invalida en " . $etiqueta_num . ". Debe tener formato 1234567/A.";
+            break;
+          }
         }
       }
 
@@ -386,7 +446,7 @@ if ($accion=="g") {
             // $sql="INSERT INTO manifiesto_guia_detalle SET guia_id=".GetSQLValue($cid,"int").$sqlcampos_detalle." ";
             // $result_detalle = sql_insert($sql);
             
-        }
+            }
         //actualizar Km
         $km_entrada_upd = isset($_REQUEST["kilometraje_entrada"]) ? $_REQUEST["kilometraje_entrada"] : 0;
         $id_producto_upd = isset($_REQUEST["id_producto"]) ? $_REQUEST["id_producto"] : 0;
@@ -2249,6 +2309,79 @@ function insp_copiar_llantas(){
     $("#llanta_repuesto_num").val(numero);
 }
 
+function insp_es_marca_llanta_valida(valor) {
+  return /^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñ .+\-*\/]*$/.test(valor);
+}
+
+function insp_limpiar_marca_llanta(valor) {
+  return valor.replace(/[^A-Za-z0-9ÁÉÍÓÚáéíóúÑñ .+\-*\/]+/g, '');
+}
+
+function insp_validar_marcas_llanta() {
+  var idsMarca = [
+    'llanta_delantera_izq',
+    'llanta_trasera_izq',
+    'llanta_repuesto',
+    'llanta_trasera_der',
+    'llanta_delantera_der',
+    'llanta_extra1',
+    'llanta_extra2'
+  ];
+
+  for (var i = 0; i < idsMarca.length; i++) {
+    var valor = $('#' + idsMarca[i]).val() || '';
+    if (!insp_es_marca_llanta_valida(valor)) {
+      mytoast('warning','En Marca de llanta solo se permiten letras',3000);
+      $('#' + idsMarca[i]).focus();
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function insp_es_numeracion_llanta_valida(valor) {
+  return /^[0-9]{7}\/[A-Za-z]$/.test(valor);
+}
+
+function insp_validar_numeracion_llantas() {
+  var requeridos = [
+    'llanta_delantera_izq_num',
+    'llanta_trasera_izq_num',
+    'llanta_repuesto_num',
+    'llanta_trasera_der_num',
+    'llanta_delantera_der_num'
+  ];
+
+  for (var i = 0; i < requeridos.length; i++) {
+    var valorReq = (($('#' + requeridos[i]).val() || '') + '').trim();
+    if (!insp_es_numeracion_llanta_valida(valorReq)) {
+      mytoast('warning','La numeracion de llanta debe tener formato 1234567/A',3000);
+      $('#' + requeridos[i]).focus();
+      return false;
+    }
+  }
+
+  var opcionales = ['llanta_extra1_num', 'llanta_extra2_num'];
+  for (var j = 0; j < opcionales.length; j++) {
+    var valorOpc = (($('#' + opcionales[j]).val() || '') + '').trim();
+    if (valorOpc !== '' && !insp_es_numeracion_llanta_valida(valorOpc)) {
+      mytoast('warning','La numeracion de llanta debe tener formato 1234567/A',3000);
+      $('#' + opcionales[j]).focus();
+      return false;
+    }
+  }
+
+  return true;
+}
+
+$(document).on('input', '#llanta_delantera_izq,#llanta_trasera_izq,#llanta_repuesto,#llanta_trasera_der,#llanta_delantera_der,#llanta_extra1,#llanta_extra2', function() {
+  var limpio = insp_limpiar_marca_llanta($(this).val() || '');
+  if ($(this).val() !== limpio) {
+    $(this).val(limpio);
+  }
+});
+
 function insp_crear_servicio(){
 //   if (isset($_REQUEST['ins'])) { $id_inspeccion = intval($_REQUEST['ins']); }
 // if (isset($_REQUEST[''])) { $id_producto = intval($_REQUEST['pid']); }
@@ -2415,7 +2548,19 @@ var validation = Array.prototype.filter.call(forms, function(form) {
             mytoast('warning','Los valores de calibracion de las llantas son incorrectos ',3000) ;
             validado=false;  
         } 
-    }    
+    }
+
+    if (validado==true) {
+      if (insp_validar_marcas_llanta()==false) {
+        validado=false;
+      }
+    }
+
+    if (validado==true) {
+      if (insp_validar_numeracion_llantas()==false) {
+        validado=false;
+      }
+    }
 
     if (adicional=='1'){ //borrador
 
