@@ -253,8 +253,7 @@ foreach($entidad as $key => $value)
       $sql.= " , tipo =".GetSQLValue(ClienteProv($value["CardType"]),"int");  //cCustomer sSupplier
       $sql.= " , codigo_alterno =".GetSQLValue($value["CardCode"],"text");  
       $sql.= " , codigo_grupo =".GetSQLValue($value["GroupCode"],"text");  
-      $sql.= " , nombre =".GetSQLValue($value["CardName"],"text");  
-      $sql.= " , identidad =".GetSQLValue($value["LicTradNum"],"text"); //RFC
+      $sql.= " , nombre =".GetSQLValue($value["CardName"],"text");        
       $sql.= " , direccion =".GetSQLValue($value["Address"],"text"); //Address       
       $sql.= " , ciudad =".GetSQLValue($value["City"],"text");        
      // $sql.= " , departamento =".GetSQLValue($value["departamento"],"text");  
@@ -264,7 +263,7 @@ foreach($entidad as $key => $value)
       //$sql.= " , telefono3 =".GetSQLValue($value["telefono3"],"text");  
       $sql.= " , contacto =".GetSQLValue($value["ContactPerson"],"text");  
       $sql.= " , notas =".GetSQLValue($value["Notes"],"text");  
-    //  $sql.= " , identidad =".GetSQLValue($value["identidad"],"text");  
+      $sql.= " , identidad =".GetSQLValue($value["FederalTaxID"],"text");  
       $sql.= " , rtn =".GetSQLValue($value["U_RTN"],"text");  
       $sql.= " , habilitado =".GetSQLValue(YesNo($value["Valid"]),"int"); 
       $sql.= " , tipo_precio =".GetSQLValue(($value["PriceListNum"]),"int"); 
