@@ -141,6 +141,22 @@ function getSofficeCommandProd()
     }
 }
 
+function validar_campos_obligatorios($data, $campos, $titulo = 'Faltan campos obligatorios')
+{
+    $faltantes = [];
+
+    foreach ($campos as $campo => $nombre) {
+        if (!isset($data[$campo]) || trim($data[$campo]) === '') {
+            $faltantes[] = "• " . $nombre;
+        }
+    }
+
+    if (!empty($faltantes)) {
+        $mensaje = $titulo . ":\n" . implode("\n", $faltantes);
+        throw new Exception($mensaje);
+    }
+}
+
 
 /**
  * @return bool|array
@@ -207,11 +223,36 @@ function generarContratoVenta(
             FOR UPDATE
         ");
 
+
         if (!$datos_venta || $datos_venta->num_rows === 0) {
             throw new Exception("La venta no existe");
         }
 
         $venta = $datos_venta->fetch_assoc();
+
+
+        //validamos datos del cliente
+        validar_campos_obligatorios($venta, [
+            'cliente_nombre'    => 'Nombre del cliente',
+            'identidad_cliente' => 'Identidad',
+            'direccion_cliente' => 'Dirección',
+            'codigo_cliente'    => 'Código cliente',
+            'telefono_cliente'  => 'Teléfono',
+            'ciudad_venta'      => 'Ciudad'
+        ],  'Falta informacion de cliente');
+
+        validar_campos_obligatorios($venta, [
+            'cod_vehiculo' => 'Código del vehículo',
+            'placa'        => 'Placa',
+            'marca'        => 'Marca',
+            'modelo'       => 'Modelo',
+            'tipo'         => 'Tipo de vehículo',
+            'chasis'       => 'Chasis',
+            'motor'        => 'Motor',
+            'color'        => 'Color',
+            'anio'         => 'Año',
+            'combustible'  => 'Combustible'
+        ],  'Falta informacion del vehículo');
 
         /* ===============================
            2️⃣ DATOS DE LA TIENDA
@@ -2001,7 +2042,7 @@ if ($foto_original_tele !== '') {
                href="#"
                onclick="ventas_cambiartab('nav_contratos');"
                role="tab">
-               Historial de contratos Nulos
+               Historial de contratos
             </a>
         </li>
       
