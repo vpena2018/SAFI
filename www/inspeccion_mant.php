@@ -1584,7 +1584,7 @@ if ($id_estado>=2 ) { //completado solo ver
 
       <div class="card mb-3">
         <div class="card-header  bg-secondary text-white ">
-            Marca y Numeración de BaterÃ­a
+            Marca y Numeración de Bateria
         </div>
         <div class="card-body">   
 
@@ -1636,7 +1636,7 @@ if ($tipo_inspeccion=='2'){ // TALLER
 
 <div class="card mb-3">
         <div class="card-header  bg-secondary text-white ">
-            Servicio de GrÃºa 
+            Servicio de Grúa 
         </div>
         <div class="card-body">   
           <div class="row"> 
