@@ -224,7 +224,6 @@ if ($accion=="1") {
 
             <div class="col-sm">
                  <a id="btn-filtro" href="#" onclick="procesar_tabla_datatable('tablaver','tabla','vehiculos_reparacion_ver.php?a=1','Ventas de Vehiculos'); return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i>  <?php echo "Buscar"; ?></a>
-            
           </div>   
 
     </div>
