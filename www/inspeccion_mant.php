@@ -1074,6 +1074,7 @@ $empresa_logo ="nd";
 if ($id_empresa==1) {$empresa_logo ="hertz";}
 if ($id_empresa==2) {$empresa_logo ="dollar";}
 if ($id_empresa==3) {$empresa_logo ="thrifty";}
+if ($id_empresa==4) {$empresa_logo ="carshop";}
 
 if ($tipo_inspeccion==1 and $tipo_doc==2){
    $visible_sec5='hidden'; 
@@ -2704,6 +2705,7 @@ function insp_cambiar_logo() {
   if (valempresa==1) {empresa_logo ="hertz";}
   if (valempresa==2) {empresa_logo ="dollar";}
   if (valempresa==3) {empresa_logo ="thrifty";}
+  if (valempresa==4) {empresa_logo ="carshop";}
   $('#id_empresa').val(valempresa);
   $('#ins_logo_empresa').attr("src", "img/"+empresa_logo+".jpg"); 
 
