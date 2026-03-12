@@ -141,6 +141,22 @@ function getSofficeCommandProd()
     }
 }
 
+function validar_campos_obligatorios($data, $campos, $titulo = 'Faltan campos obligatorios')
+{
+    $faltantes = [];
+
+    foreach ($campos as $campo => $nombre) {
+        if (!isset($data[$campo]) || trim($data[$campo]) === '') {
+            $faltantes[] = "• " . $nombre;
+        }
+    }
+
+    if (!empty($faltantes)) {
+        $mensaje = $titulo . ":\n" . implode("\n", $faltantes);
+        throw new Exception($mensaje);
+    }
+}
+
 
 /**
  * @return bool|array
@@ -154,6 +170,13 @@ function generarContratoVenta(
     bool $sologuardar = false
 ) {
     try {
+
+        $tipo_contrato=0;
+
+        if($persona_juridica)
+        {
+            $tipo_contrato=1;
+        }
 
         sql_update("START TRANSACTION");
 
@@ -200,11 +223,36 @@ function generarContratoVenta(
             FOR UPDATE
         ");
 
+
         if (!$datos_venta || $datos_venta->num_rows === 0) {
             throw new Exception("La venta no existe");
         }
 
         $venta = $datos_venta->fetch_assoc();
+
+
+        //validamos datos del cliente
+        validar_campos_obligatorios($venta, [
+            'cliente_nombre'    => 'Nombre del cliente',
+            'identidad_cliente' => 'Identidad',
+            'direccion_cliente' => 'Dirección',
+            'codigo_cliente'    => 'Código cliente',
+            'telefono_cliente'  => 'Teléfono',
+            'ciudad_venta'      => 'Ciudad'
+        ],  'Falta informacion de cliente');
+
+        validar_campos_obligatorios($venta, [
+            'cod_vehiculo' => 'Código del vehículo',
+            'placa'        => 'Placa',
+            'marca'        => 'Marca',
+            'modelo'       => 'Modelo',
+            'tipo'         => 'Tipo de vehículo',
+            'chasis'       => 'Chasis',
+            'motor'        => 'Motor',
+            'color'        => 'Color',
+            'anio'         => 'Año',
+            'combustible'  => 'Combustible'
+        ],  'Falta informacion del vehículo');
 
         /* ===============================
            2️⃣ DATOS DE LA TIENDA
@@ -287,9 +335,9 @@ function generarContratoVenta(
         =============================== */
         sql_insert("
             INSERT INTO ventas_contratos
-            (id_venta, correlativo, numero_contrato, estado, creado_por)
+            (id_venta,tipo_contrato, correlativo, numero_contrato, estado, creado_por)
             VALUES
-            ($id_venta, $nuevoCorrelativo, '$numeroContrato', 'ACTIVO', '$usuarioSistema')
+            ($id_venta, $tipo_contrato, $nuevoCorrelativo, '$numeroContrato', 'ACTIVO', '$usuarioSistema')
         ");
 
         $resId = sql_select("SELECT LAST_INSERT_ID() AS id");
@@ -370,9 +418,9 @@ function generarContratoVenta(
 
         sql_insert("
             INSERT INTO ventas_contratos_detalle
-            (id_contrato, id_venta, accion, usuario, estado, datos_json)
+            (id_contrato, tipo_contrato, id_venta, accion, usuario, estado, datos_json)
             VALUES
-            ($idContrato, $id_venta, 'CREACION', '$usuarioSistema', 'ACTIVO', '$contratoJson')
+            ($idContrato, $tipo_contrato, $id_venta, 'CREACION', '$usuarioSistema', 'ACTIVO', '$contratoJson')
         ");
 
         sql_update("COMMIT");
@@ -708,6 +756,266 @@ function descargarVentaPDF($id_venta,$juridico, $soloValidar = false)
     }
 }
 
+function descargarVentaPDFReimpresion($id_contrato, $reimpresion, $juridico, $soloValidar = false)
+{
+    try {
+        appLog('===== descargarVentaPDF INICIO =====');
+
+        if (empty($id_contrato)) {
+            throw new RuntimeException('ID de venta inválido');
+        }
+
+        /* =========================
+           1️⃣ CONTRATO ACTIVO
+        ========================== */
+        $resContrato = sql_select("
+            SELECT datos_json
+            FROM ventas_contratos_detalle
+            WHERE id = $id_contrato
+            ORDER BY id DESC
+            LIMIT 1
+        ");
+
+        if (!$resContrato || $resContrato->num_rows === 0) {
+            throw new RuntimeException('Contrato activo no encontrado');
+        }
+
+        $data = json_decode(
+            $resContrato->fetch_assoc()['datos_json'],
+            true
+        );
+
+        if (!$data) {
+            throw new RuntimeException('JSON del contrato inválido');
+        }
+
+        // 🔹 Modo AJAX (solo validar)
+        if ($soloValidar === true) {
+            return [
+                'ok' => true,
+                'numero_contrato' => $data['meta']['numero_contrato']
+            ];
+        }
+
+        /* =========================
+           2️⃣ TEMPLATE DOCX
+        ========================== */
+        //$templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo.docx';
+
+        if($reimpresion==1)
+            {
+                if($juridico)
+                {
+                    $templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo_PJ_NULO_v2.docx';
+                }else{
+                    $templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo_PN_NULO_v2.docx';
+                }
+            }else{
+                if($juridico)
+                {
+                    $templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo_PJ_v2.docx';
+                }else{
+                    $templatePath = __DIR__ . '/../plantillas/venta_contrato_vehiculo_PN_v2.docx';
+                }
+            }
+
+
+
+
+        if (!file_exists($templatePath)) {
+            throw new RuntimeException('Template DOCX no encontrado');
+        }
+
+        $template = new TemplateProcessor($templatePath);
+
+        /* =========================
+           3️⃣ REEMPLAZOS (DESDE JSON)
+        ========================== */
+
+        //correlativo
+        $template->setValue('CORRELATIVO', $data['meta']['numero_contrato']);   
+
+
+        // Representante
+        $template->setValue('REPRESENTANTE_LEGAL', $data['representante']['nombre']);
+        $template->setValue('R_IDENTIDAD', $data['representante']['identidad']);
+        
+        //$template->setValue('CIUDAD', $data['representante']['ciudad']);
+
+        //$template->setValue('DEPARTAMENTO', $data['representante']['departamento']);
+
+        
+
+        //datos globales
+        $template->setValue('PROFESION_COMPRADOR', $data['datos_juridicos']['representante_legal_profesion']);
+        $template->setValue('NACIONALIDAD', $data['cliente']['nacionalidad']);
+
+        //$template->setValue('CIUDAD', $data['cliente']['ciudad']);
+
+        
+        $template->setValue('CIUDAD_C', $data['cliente']['ciudad']);
+
+
+        //$template->setValue('DEPARTAMENTO', $data['cliente']['departamento']);
+
+        $template->setValue('CIUDAD', $data['representante']['ciudad']);
+        $template->setValue('DEPARTAMENTO', $data['representante']['departamento']);
+
+
+
+        if($juridico)
+            {
+                    if($data['cliente']['tipo_documento_ident_venta'] == 'dni')
+                    {
+                        $desc='con documento nacional de identificacion numero '.$data['datos_juridicos']['representante_legal_identidad'];
+                        $template->setValue('DESC_DOCUMENTO', $desc);   
+                    }else if($data['cliente']['tipo_documento_ident_venta'] == 'pasaporte')
+                    {
+                        $desc='con pasaporte numero '.$data['datos_juridicos']['representante_legal_identidad'];
+                        $template->setValue('DESC_DOCUMENTO', $desc);
+                    }else if($data['cliente']['tipo_documento_ident_venta'] == 'carnet_residente')
+                    {
+                        $desc='con carnet de residente numero '.$data['datos_juridicos']['representante_legal_identidad'];
+                        $template->setValue('DESC_DOCUMENTO', $desc);
+                    }
+
+            }else{
+                    if($data['cliente']['tipo_documento_ident_venta'] == 'dni')
+                    {
+                        $desc='con documento nacional de identificacion numero '.$data['cliente']['identidad'];
+                        $template->setValue('DESC_DOCUMENTO', $desc);   
+                    }else if($data['cliente']['tipo_documento_ident_venta'] == 'pasaporte')
+                    {
+                        $desc='con pasaporte numero '.$data['cliente']['identidad'];
+                        $template->setValue('DESC_DOCUMENTO', $desc);
+                    }else if($data['cliente']['tipo_documento_ident_venta'] == 'carnet_residente')
+                    {
+                        $desc='con carnet de residente numero '.$data['cliente']['identidad'];
+                        $template->setValue('DESC_DOCUMENTO', $desc);
+                    }
+
+            }
+
+        //datos juridicos
+        $template->setValue('R_LEGAL_J', $data['datos_juridicos']['representante_legal']);
+        $template->setValue('R_LEGAL_PROFESION_J', $data['datos_juridicos']['representante_legal_profesion']);
+        $template->setValue('R_LEGAL_DENTIDAD_J', $data['datos_juridicos']['representante_legal_identidad']);
+        $template->setValue('R_LEGAL_DIR', $data['datos_juridicos']['representante_legal_direccion']);
+        //datos cliente juridico
+        $template->setValue('NOMBRE_EMPRESA_J', $data['cliente']['nombre']);
+        $template->setValue('EMPRESA_RTN_J', $data['cliente']['identidad']);
+        $template->setValue('COD_CLIENTE_EMPRESA_J', $data['cliente']['codigo']);
+        $template->setValue('EMPRESA_TELEFONO', $data['cliente']['telefono']);
+
+
+        // Cliente
+        $template->setValue('CLIENTE', $data['cliente']['nombre']);
+        $template->setValue('IDENTIDAD_CLIENTE', $data['cliente']['identidad']);
+        $template->setValue('CODIGO_CLIENTE', $data['cliente']['codigo']);
+        $template->setValue('DIRECCION_CLIENTE', $data['cliente']['direccion']);
+        $template->setValue('TELEFONO_CLIENTE', $data['cliente']['telefono']);
+
+
+        
+
+        // Precios
+        $template->setValue(
+            'PRECIO_VENTA',
+            number_format($data['precios']['precio_venta'], 2, '.', ',')
+        );
+        $template->setValue(
+            'PRECIO_VENTA_LETRAS',
+            $data['precios']['precio_venta_letras']
+        );
+
+        $template->setValue(
+            'PRIMA_VENTA',
+            number_format($data['precios']['prima_venta'], 2, '.', ',')
+        );
+        $template->setValue(
+            'PRIMA_VENTA_LETRAS',
+            $data['precios']['prima_venta_letras']
+        );
+
+        // Vehículo
+        $template->setValue('CODIGO_VEHICULO', $data['vehiculo']['codigo']);
+        $template->setValue('PLACA', $data['vehiculo']['placa']);
+        $template->setValue('MARCA', $data['vehiculo']['marca']);
+        $template->setValue('MODELO', $data['vehiculo']['modelo']);
+        $template->setValue('TIPO', $data['vehiculo']['tipo']);
+        $template->setValue('CHASIS', $data['vehiculo']['chasis']);
+        $template->setValue('MOTOR', $data['vehiculo']['motor']);
+        $template->setValue('COLOR', $data['vehiculo']['color']);
+        $template->setValue('ANIO', $data['vehiculo']['anio']);
+        $template->setValue('CILINDRAJE', $data['vehiculo']['cilindraje']);
+        $template->setValue('COMBUSTIBLE', $data['vehiculo']['combustible']);
+
+        // Fecha contractual (congelada)
+        $template->setValue('DIAS', $data['fecha']['dia']);
+        $template->setValue('MES', $data['fecha']['mes']);
+        $template->setValue('ANIO_ACTUAL', $data['fecha']['anio']);
+
+        $template->setValue('DIAS_LETRAS', FechanumeroALetras((int)$data['fecha']['dia']));
+        $template->setValue('MES_LETRAS', mesEnLetras((int)$data['fecha']['mes']));
+        $template->setValue('ANIO_LETRAS', FechanumeroALetras((int)$data['fecha']['anio']));
+
+        appLog('Template procesado desde JSON');
+
+        /* =========================
+           4️⃣ GENERAR DOCX
+        ========================== */
+        $tmpDir  = sys_get_temp_dir();
+        $tmpDocx = $tmpDir . '/contrato_' . $id_contrato . '_' . time() . '.docx';
+
+        $template->saveAs($tmpDocx);
+
+        if (!file_exists($tmpDocx)) {
+            throw new RuntimeException('No se pudo generar el DOCX');
+        }
+
+        /* =========================
+           5️⃣ CONVERTIR A PDF
+        ========================== */
+        $pdfPath = convertirDocxAPdf($tmpDocx);
+
+        if (!file_exists($pdfPath)) {
+            throw new RuntimeException('No se pudo generar el PDF');
+        }
+
+        /* =========================
+           6️⃣ DESCARGA
+        ========================== */
+        if (ob_get_length()) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: application/pdf');
+        header(
+            'Content-Disposition: attachment; filename="Contrato_' .
+            $data['meta']['numero_contrato'] . '.pdf"'
+        );
+        header('Content-Length: ' . filesize($pdfPath));
+        header('Cache-Control: no-store, no-cache, must-revalidate');
+        header('Pragma: no-cache');
+
+        readfile($pdfPath);
+
+        unlink($tmpDocx);
+        unlink($pdfPath);
+
+        exit;
+
+    } catch (Throwable $e) {
+
+        appLog('ERROR descargarVentaPDF: ' . $e->getMessage());
+
+        return [
+            'ok' => false,
+            'error' => $e->getMessage()
+        ];
+    }
+}
+
 
 
 if (isset($_REQUEST['r'])) { $nuevo = $_REQUEST['r']; } else   {$nuevo ="N";}
@@ -766,19 +1074,40 @@ if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
 // VALIDAR (AJAX)
     if ($_GET['a'] === 'print_check') {
         $id = intval($_GET['id']);
+        $id_contrato = intval($_GET['id_contrato']);
+
         $persona_juridica = isset($_REQUEST['persona_juridica'])? (bool) $_REQUEST['persona_juridica']: false;
 
+         //$reimpresion = isset($_REQUEST['reimpresion'])? (bool) $_REQUEST['reimpresion']: false;
 
-        echo json_encode(descargarVentaPDF($id,$persona_juridica, true));
+         $reimpresion = isset($_REQUEST['reimpresion']) ? (int)$_REQUEST['reimpresion'] : 0;
+
+        if($reimpresion==1){
+            echo json_encode(descargarVentaPDFReimpresion($id_contrato,$reimpresion,$persona_juridica, true));
+        } else {
+            echo json_encode(descargarVentaPDF($id,$persona_juridica, true));
+        }
+
+
+        //echo json_encode(descargarVentaPDF($id,$persona_juridica, true));
         exit;
     }
 
     // DESCARGAR (NAVEGADOR)
     if ($_GET['a'] === 'print') {
         $id = intval($_GET['id']);
+        $id_contrato = intval($_GET['id_contrato']);
         $persona_juridica = isset($_REQUEST['persona_juridica'])? (bool) $_REQUEST['persona_juridica']: false;
 
-        descargarVentaPDF($id,$persona_juridica); // descarga real
+        //$reimpresion = isset($_REQUEST['reimpresion'])? (bool) $_REQUEST['reimpresion']: false;
+
+        $reimpresion = isset($_REQUEST['reimpresion']) ? (int)$_REQUEST['reimpresion'] : 0;
+
+        if($reimpresion==1){
+            descargarVentaPDFReimpresion($id_contrato,$reimpresion,$persona_juridica); // descarga real
+        } else {
+            descargarVentaPDF($id,$persona_juridica); // descarga real
+        }
         exit;
     }
 
@@ -1706,6 +2035,17 @@ if ($foto_original_tele !== '') {
         <li class="nav-item">
             <a class="nav-link " id="insp_tabFotos" data-toggle="tab" href="#" onclick="ventas_cambiartab('nav_Fotos_venta');"   role="tab"  >Fotos</a>
         </li> 
+
+                <li class="nav-item">
+            <a class="nav-link"
+               id="insp_tabContratos"
+               data-toggle="tab"
+               href="#"
+               onclick="ventas_cambiartab('nav_contratos');"
+               role="tab">
+               Historial de contratos
+            </a>
+        </li>
       
     </ul>   
  </div>
@@ -2178,7 +2518,9 @@ $('#btnContrato').on('click', function (e) {
                     data: {
                         a: 'print_check',
                         id: id,
-                        persona_juridica:persona_juridica
+                        persona_juridica: persona_juridica,
+                        id_contrato: 0,
+                        reimpresion: 0
                     },
                     success: function (resp) {
                         if (resp.ok) {
@@ -2197,8 +2539,10 @@ $('#btnContrato').on('click', function (e) {
                             window.location.href =
                                 'ventas_mant_contrato.php?a=print&id=' +
                                 encodeURIComponent(id) +
-                                '&persona_juridica=' +
-                                persona_juridica;
+                                '&persona_juridica=' +encodeURIComponent(persona_juridica)
+                                '&id_contrato=' + encodeURIComponent(0) +
+                            '&reimpresion=' + encodeURIComponent(0);
+
 
                         } else {
                             mytoast(
@@ -2220,10 +2564,6 @@ $('#btnContrato').on('click', function (e) {
             }
         );
 
-
-    
-
-    
 });
 
 $('#btnActualizarContrato').on('click', function (e) {
@@ -2292,6 +2632,80 @@ $('#btnActualizarContrato').on('click', function (e) {
 });
 
 });
+
+
+function descargar_contrato(id_venta, id_contrato,persona_juridica,reimpresion)
+{
+
+    if (!id_venta) {
+        mytoast('error', 'No hay ID',3000);
+        return;
+    }
+
+    popupconfirmar(
+        'Confirmación',
+        '¿Deseas descargar el contrato?',
+        function () {
+
+            $.ajax({
+                url: 'ventas_mant_contrato.php',
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    a: 'print_check',
+                    id: id_venta,
+                    persona_juridica: persona_juridica,
+                    id_contrato: id_contrato,
+                    reimpresion: reimpresion ? 1 : 0
+                },
+                success: function (resp) {
+
+                    if (resp.ok) {
+
+                        mytoast(
+                            'success',
+                            'Contrato listo: ' + resp.numero_contrato,
+                            3000
+                        );
+
+                        window.onbeforeunload = null;
+                        $(window).off('beforeunload');
+
+
+
+                        window.location.href =
+                            'ventas_mant_contrato.php?a=print' +
+                            '&id=' + encodeURIComponent(id_venta) +
+                            '&persona_juridica=' + encodeURIComponent(persona_juridica) +
+                            '&id_contrato=' + encodeURIComponent(id_contrato) +
+                            '&reimpresion=' + encodeURIComponent(reimpresion ? 1 : 0);
+
+                    } else {
+
+                        mytoast(
+                            'error',
+                            resp.error || 'Error al generar contrato',
+                            3000
+                        );
+
+                    }
+                },
+                error: function () {
+
+                    mytoast(
+                        'error',
+                        'Error de comunicación con el servidor',
+                        3000
+                    );
+
+                }
+            });
+
+        }
+    );
+}
+
+
 </script>
 
 
@@ -2416,6 +2830,9 @@ $('#btnActualizarContrato').on('click', function (e) {
     </div>
 </div>
 </div>
+
+<!-- CONTRATO HISTORIAL -->
+<div class="tab-pane fade " id="nav_contratos" role="tabpanel" ></div>
 
 
 <!-- errores -->
@@ -2784,6 +3201,7 @@ function ventas_procesar(url,forma,adicional){
 
 
 function ventas_cambiartab(eltab) {
+
   var codigo= $('#id').val();
   var continuar=true;
   $('.tab-pane').hide();
@@ -2800,6 +3218,10 @@ function ventas_cambiartab(eltab) {
 
   if (eltab=='nav_historial') {
      procesar_ventas_historial('nav_historial');
+  }
+
+    if (eltab=='nav_contratos') {
+     procesar_ventas_contrato_historial('nav_contratos');
   }
 
   
@@ -2821,6 +3243,28 @@ function procesar_ventas_historial(campo){
 var cid=$("#id").val();
 var pid=$('#id_producto').val();
 var url='ventas_historial.php?cid='+cid+'&pid='+pid ;
+
+$(window).scrollTop(0);
+$("#"+campo).html('<div class="text-center mt-5 mb-5"><i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><br><span class="">'+'Cargando'+'</span></div>');			
+
+$("#"+campo).load(url, function(response, status, xhr) {	
+   
+  if (status == "error") { 
+
+    //$("#"+campo).html("Error"; // xhr.status + " " + xhr.statusText
+    $("#"+campo).html('<p>&nbsp;</p>');
+    mytoast('error','Error al cargar la pagina...',6000) ;
+  }
+
+});
+  
+}
+
+function procesar_ventas_contrato_historial(campo){
+
+var cid=$("#id").val();
+var pid=$('#id_producto').val();
+var url='ventas_contrato_historial.php?cid='+cid+'&pid='+pid ;
 
 $(window).scrollTop(0);
 $("#"+campo).html('<div class="text-center mt-5 mb-5"><i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><br><span class="">'+'Cargando'+'</span></div>');			
