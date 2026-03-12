@@ -23,6 +23,14 @@ function safi_es_texto_simple($valor) {
   return preg_match('/^[A-Za-zÁÉÍÓÚáéíóúÑñ ]*$/u', (string)$valor) === 1;
 }
 
+function safi_longitud_texto($valor) {
+  $texto = trim((string)$valor);
+  if (function_exists('mb_strlen')) {
+    return mb_strlen($texto, 'UTF-8');
+  }
+  return strlen($texto);
+}
+
 function safi_es_numeracion_llanta_valida($valor) {
   return preg_match('/^[0-9]{3}\/[0-9]{2}[A-Za-z][0-9]{2}$/', (string)$valor) === 1;
 }
@@ -169,19 +177,44 @@ if ($accion=="g") {
       }
 
       if ($verror=="") {
-        $campos_marca_llanta = array(
+        $campos_marca_llanta_requeridos = array(
           "llanta_delantera_izq" => "Delantera Izquierda",
           "llanta_trasera_izq" => "Trasera Izquierda",
           "llanta_repuesto" => "Llanta de Repuesto",
           "llanta_trasera_der" => "Trasera Derecha",
-          "llanta_delantera_der" => "Delantera Derecha",
+          "llanta_delantera_der" => "Delantera Derecha"
+        );
+
+        foreach ($campos_marca_llanta_requeridos as $campo_marca => $etiqueta_marca) {
+          $valor_marca = isset($_REQUEST[$campo_marca]) ? trim((string)$_REQUEST[$campo_marca]) : '';
+          if ($valor_marca === '' || !safi_es_texto_simple($valor_marca)) {
+            $verror = "Marca de llanta invalida en " . $etiqueta_marca . ". Solo se permiten letras.";
+            break;
+          }
+          if (safi_longitud_texto($valor_marca) < 5) {
+            $verror = "Marca de llanta invalida en " . $etiqueta_marca . ". Debe tener minimo 5 caracteres.";
+            break;
+          }
+        }
+      }
+
+      if ($verror=="") {
+        $campos_marca_llanta_opcionales = array(
           "llanta_extra1" => "Extra 1",
           "llanta_extra2" => "Extra 2"
         );
 
-        foreach ($campos_marca_llanta as $campo_marca => $etiqueta_marca) {
-          if (isset($_REQUEST[$campo_marca]) && !safi_es_texto_simple($_REQUEST[$campo_marca])) {
+        foreach ($campos_marca_llanta_opcionales as $campo_marca => $etiqueta_marca) {
+          $valor_marca = isset($_REQUEST[$campo_marca]) ? trim((string)$_REQUEST[$campo_marca]) : '';
+          if ($valor_marca === '') {
+            continue;
+          }
+          if (!safi_es_texto_simple($valor_marca)) {
             $verror = "Marca de llanta invalida en " . $etiqueta_marca . ". Solo se permiten letras.";
+            break;
+          }
+          if (safi_longitud_texto($valor_marca) < 5) {
+            $verror = "Marca de llanta invalida en " . $etiqueta_marca . ". Debe tener minimo 5 caracteres.";
             break;
           }
         }
@@ -1488,31 +1521,31 @@ if ($id_estado>=2 ) { //completado solo ver
           <div class="row"> 
             <div class="col-md">  
             <u>Delantera Izquierda</u>     
-              <p> <?php echo campo("llanta_delantera_izq","Marca",'text',$llanta_delantera_izq,' ',$disable_sec4 .' required');?>  </p>
+              <p> <?php echo campo("llanta_delantera_izq","Marca",'text',$llanta_delantera_izq,' ',$disable_sec4 .' required minlength="5"');?>  </p>
               <p> <?php echo campo("llanta_delantera_izq_num","Numeración",'text',$llanta_delantera_izq_num,' ',$disable_sec4 .' required');?>  </p>              
               <p> <?php echo campo("llanta_delantera_izq_cali","Calibración",$visible_sec5,$llanta_delantera_izq_cali,' ',$disable_sec4 .' required');?>  </p>
             </div>
             <div class="col-md">  
             <u>Trasera Izquierda</u>     
-              <p> <?php echo campo("llanta_trasera_izq","Marca",'text',$llanta_trasera_izq,' ',$disable_sec4 .' required');?>  </p>
+              <p> <?php echo campo("llanta_trasera_izq","Marca",'text',$llanta_trasera_izq,' ',$disable_sec4 .' required minlength="5"');?>  </p>
               <p> <?php echo campo("llanta_trasera_izq_num","Numeración",'text',$llanta_trasera_izq_num,' ',$disable_sec4 .' required');?>  </p>              
               <p> <?php echo campo("llanta_trasera_izq_cali","Calibración",$visible_sec5,$llanta_trasera_izq_cali,' ',$disable_sec4 .' required');?>  </p>
               <a href="#" class="btn btn-sm <?php echo $visible_sec4; ?>" onclick="insp_copiar_llantas(); return false;" ><i class="fa fa-copy"></i> Copiar Todos</a>
             </div>
             <div class="col-md bg-light">  
             <u>Llanta de Repuesto</u>    
-              <p> <?php echo campo("llanta_repuesto","Marca",'text',$llanta_repuesto,' ',$disable_sec4 .' required');?>  </p>
+              <p> <?php echo campo("llanta_repuesto","Marca",'text',$llanta_repuesto,' ',$disable_sec4 .' required minlength="5"');?>  </p>
               <p> <?php echo campo("llanta_repuesto_num","Numeración",'text',$llanta_repuesto_num,' ',$disable_sec4 .' required');?>  </p>              
             </div>
             <div class="col-md">  
             <u>Trasera Derecha</u>     
-              <p> <?php echo campo("llanta_trasera_der","Marca",'text',$llanta_trasera_der,' ',$disable_sec4 .' required');?>  </p>
+              <p> <?php echo campo("llanta_trasera_der","Marca",'text',$llanta_trasera_der,' ',$disable_sec4 .' required minlength="5"');?>  </p>
               <p> <?php echo campo("llanta_trasera_der_num","Numeración",'text',$llanta_trasera_der_num,' ',$disable_sec4 .' required');?>  </p>              
               <p> <?php echo campo("llanta_trasera_der_cali","Calibración",$visible_sec5,$llanta_trasera_der_cali,' ',$disable_sec4 .' required');?>  </p>
             </div>
             <div class="col-md">  
               <u>Delantera Derecha</u>      
-              <p> <?php echo campo("llanta_delantera_der","Marca",'text',$llanta_delantera_der,' ',$disable_sec4 .' required');?>  </p>
+              <p> <?php echo campo("llanta_delantera_der","Marca",'text',$llanta_delantera_der,' ',$disable_sec4 .' required minlength="5"');?>  </p>
               <p> <?php echo campo("llanta_delantera_der_num","Numeración",'text',$llanta_delantera_der_num,' ',$disable_sec4 .' required');?>  </p>
               <p> <?php echo campo("llanta_delantera_der_cali","Calibración",$visible_sec5,$llanta_delantera_der_cali,' ',$disable_sec4 .' required');?>  </p>
               <a href="#" class="btn btn-sm <?php echo $visible_sec4; ?>" onclick="$('#llanta_extra').show(); return false;" ><i class="fa fa-plus"></i> Llantas adicionales</a>
@@ -1524,13 +1557,13 @@ if ($id_estado>=2 ) { //completado solo ver
           <div  class="row">
             <div class="col-md">  
               <u>Extra 1</u>      
-              <p> <?php echo campo("llanta_extra1","Marca",'text',$llanta_extra1,' ',$disable_sec4 .' ');?>  </p>
+              <p> <?php echo campo("llanta_extra1","Marca",'text',$llanta_extra1,' ',$disable_sec4 .' minlength="5"');?>  </p>
               <p> <?php echo campo("llanta_extra1_num","Numeración",'text',$llanta_extra1_num,' ',$disable_sec4 .' ');?>  </p>
             </div>
 
             <div class="col-md">  
               <u>Extra 2</u>      
-              <p> <?php echo campo("llanta_extra2","Marca",'text',$llanta_extra2,' ',$disable_sec4 .' ');?>  </p>
+              <p> <?php echo campo("llanta_extra2","Marca",'text',$llanta_extra2,' ',$disable_sec4 .' minlength="5"');?>  </p>
               <p> <?php echo campo("llanta_extra2_num","Numeración",'text',$llanta_extra2_num,' ',$disable_sec4 .' ');?>  </p>
             </div>
 
