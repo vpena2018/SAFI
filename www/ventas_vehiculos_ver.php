@@ -216,7 +216,7 @@ if ($accion=="1") {
 
             <div class="col-sm">
                  <a id="btn-filtro" href="#" onclick="procesar_tabla_datatable('tablaver','tabla','ventas_vehiculos_ver.php?a=1','Ventas de Vehiculos'); return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i>  <?php echo "Buscar"; ?></a>
-            
+                  <a href="#" onclick="get_page_switch('pagina','dashboard_vendedor_negociacion.php','Dashboard Negociacion por Vendedor'); return false;" class="btn btn-secondary mr-2 mb-2"><i class="fa fa-chart-bar"></i> Dashboard Negociacion</a>
           </div>   
 
     </div>
