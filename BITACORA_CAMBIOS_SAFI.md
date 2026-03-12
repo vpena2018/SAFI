@@ -61,6 +61,11 @@ Registro cronologico de cambios funcionales y tecnicos aplicados al sistema.
   - Se mantiene obligatoria la validacion de `actarv_celular` y `actarv_foto_licencia` cuando aplica la regla de Acta de Recepcion.
   - Ajuste adicional: se elimino el boton `Ver Foto Licencia` de la seccion Acta de Recepcion, manteniendo la carga y validacion del archivo.
   - Ajuste adicional: se bloqueo la carga/cambio de `actarv_foto_licencia` cuando la Hoja de Inspeccion esta completada (`id_estado >= 2`) en frontend y backend.
+  - Ajuste adicional: se actualizo la regla de prefijo de cliente para Acta de Recepcion; ahora aplica para prefijos `CCO` y `CCN`.
+  - Ajuste adicional: se corrigio la regla final para que la seccion y validaciones de Acta apliquen solo para prefijo `CCO`.
+  - Para clientes sin prefijo `CCO`, se bloquea el ingreso de datos del Acta al completar.
+  - Refuerzo adicional: en `Guardar Completado`, la validacion de Acta usa fallback por `nombre_cliente` cuando `cliente_id` no viene resuelto en el POST, evitando que se omita la validacion de Foto Licencia para prefijo `CCO`.
+  - Refuerzo adicional: se habilito validacion obligatoria de cliente al `Guardar Completado` (frontend y backend).
 
 ### Modulo Vehiculos/Ventas
 - Archivo: www/dashboard_vendedor_negociacion.php
