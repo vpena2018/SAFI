@@ -483,6 +483,28 @@ if ($accion=="g") {
                   }
                 }
               */
+
+              $cliente_prefijo_cco_completar = false;
+              if (isset($_REQUEST["cliente_id"])) {
+                $id_cliente_completar = intval($_REQUEST["cliente_id"]);
+                if ($id_cliente_completar > 0) {
+                  $codigo_cliente_completar = get_dato_sql("entidad","codigo_alterno"," WHERE id=".$id_cliente_completar);
+                  $cliente_prefijo_cco_completar = safi_cliente_prefijo_actarv($codigo_cliente_completar);
+                }
+              }
+              if (!$cliente_prefijo_cco_completar && isset($_REQUEST["nombre_cliente"])) {
+                $cliente_prefijo_cco_completar = safi_cliente_prefijo_actarv($_REQUEST["nombre_cliente"]);
+              }
+
+              if ($cliente_prefijo_cco_completar) {
+                $foto_actarv_completar = isset($_REQUEST["actarv_foto_licencia"]) ? trim((string)$_REQUEST["actarv_foto_licencia"]) : '';
+                if (es_nulo($foto_actarv_completar)) {
+                  $stud_arr[0]["pmsg"] ="Debe adjuntar Foto Licencia en Datos de Acta de Recepcion del Vehiculo";
+                  salida_json($stud_arr);
+                  exit;
+                }
+              }
+
               $lbl_estado="Completado";
 
               // enviar email a cliente 
