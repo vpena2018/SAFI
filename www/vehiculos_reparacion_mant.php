@@ -7,6 +7,22 @@ if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="v";}
 $disable_sec1=' ';    
 $disable_sec2=' ';    
 
+function registrar_historial_ventas($cid, $id_estado, $nombre, $observaciones='') {
+    $cid = intval($cid);
+    $id_estado = intval($id_estado);
+    $uid = intval($_SESSION['usuario_id']);
+    $sql = "INSERT INTO ventas_historial_estado (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
+            VALUES (
+                $cid,
+                $uid,
+                $id_estado,
+                ".GetSQLValue($nombre, "text").",
+                NOW(),
+                ".GetSQLValue($observaciones, "text")."
+            )";
+    return sql_insert($sql);
+}
+
 // Leer Datos    ############################  
 if ($accion=="v") {
 	$cid=0;
@@ -47,26 +63,22 @@ if (!tiene_permiso(168)) {
     } else {
         $cid=0;
         if (isset($_REQUEST['id'])) { $cid = intval($_REQUEST["id"]); }
-        $result = sql_select("SELECT id_estado
-            FROM ventas
-        where id=$cid limit 1");
+            $result = sql_select("SELECT id_estado FROM ventas where id=$cid limit 1");
 
-        if ($result!=false){
-            if ($result -> num_rows > 0) { 
-                $row = $result -> fetch_assoc(); 
-                if ($row['id_estado']==99) {
-
-                    borrar_foto_directorio($cid,"","","vehiculos_reparacion");
-                    sql_delete("DELETE FROM ventas where tipo_ventas_reparacion=1 and id=$cid limit 1");
-                    
-                    $stud_arr[0]["pcode"] = 1;
-                    $stud_arr[0]["pmsg"] ="Anulada";
-                } else {
-                    $stud_arr[0]["pmsg"] ="No puede Borrar porque, la orden ya ha sido completada";
+            if ($result!=false){
+                if ($result -> num_rows > 0) { 
+                    $row = $result -> fetch_assoc(); 
+                    if ($row['id_estado']==99) {
+                        borrar_foto_directorio($cid,"","","vehiculos_reparacion");
+                        borrar_foto_directorio($cid,"","","vehiculos_reparacion_televentas");
+                        sql_delete("DELETE FROM ventas where tipo_ventas_reparacion=1 and id=$cid limit 1");                    
+                        $stud_arr[0]["pcode"] = 1;
+                        $stud_arr[0]["pmsg"] ="Anulada";
+                    } else {
+                        $stud_arr[0]["pmsg"] ="No puede Borrar porque, la orden ya ha sido completada";
+                    }
                 }
-            }
-        }
-
+           }
     }
 
 
@@ -163,6 +175,7 @@ if ($accion=="g") {
         if (isset($_REQUEST["fecha_asignacion"])) { $sqlcampos.= " , fecha_asignacion =".GetSQLValue($_REQUEST["fecha_asignacion"],"date"); }      
         if (isset($_REQUEST["fecha_promesa"])) { $sqlcampos.= " , fecha_promesa =".GetSQLValue($_REQUEST["fecha_promesa"],"date"); }                            
         if (isset($_REQUEST["foto"])) { $sqlcampos.= " , foto =".GetSQLValue($_REQUEST["foto"],"text"); } 
+        if (isset($_REQUEST["foto_televentas"])) { $sqlcampos.= " , foto_televentas =".GetSQLValue($_REQUEST["foto_televentas"],"text"); } 
         if (isset($_REQUEST["precio_minimo"])) { $sqlcampos.= " , precio_minimo =".GetSQLValue($_REQUEST["precio_minimo"],"int"); } 
         if (isset($_REQUEST["precio_maximo"])) { $sqlcampos.= " , precio_maximo =".GetSQLValue($_REQUEST["precio_maximo"],"int"); } 
         if (isset($_REQUEST["trasmision"])) { $sqlcampos.= " , trasmision =".GetSQLValue($_REQUEST["trasmision"],"text"); } 
@@ -172,7 +185,7 @@ if ($accion=="g") {
         $estadocompletar="";
         if (isset($_REQUEST['est'])) { $estadocompletar = trim($_REQUEST["est"]); }
         if (!es_nulo($estadocompletar) && $estadocompletar=='cmp'){
-             $sqlcampos.= ", id_estado=0";
+             $sqlcampos.= " , id_estado=".GetSQLValue($_REQUEST["id_estado_anterior_reproceso"],"int");  
              $sqlcampos.= ", tipo_ventas_reparacion=2";
              $sqlcampos.= ", reproceso='' ";  
              $sqlcampos.= ", fecha_reparacion_completada=now() ";    		  	 
@@ -180,77 +193,70 @@ if ($accion=="g") {
 
         if ($nuevoregistro==false) {    
             //si modifica se guarda el registo del cambio
-            $id_tienda=intval(get_dato_sql("ventas","id_tienda"," where id=".$cid));
+            $venta_actual = array();
+            $result_actual = sql_select("SELECT id_tienda, kilometraje, id_estado_pintura, id_estado_interior, id_estado_mecanica, observaciones_reparacion, fecha_promesa, fecha_promesa_taller, precio_minimo, precio_maximo
+                                         FROM ventas
+                                         WHERE id=".$cid." LIMIT 1");
+            if ($result_actual!=false && $result_actual->num_rows > 0) {
+                $venta_actual = $result_actual->fetch_assoc();
+            }
+
+            $id_tienda = isset($venta_actual['id_tienda']) ? intval($venta_actual['id_tienda']) : 0;
             if ($id_tienda!=intval($_REQUEST['id_tienda'])){   
                $id_tienda_name=get_dato_sql("tienda","nombre"," where id=".$_REQUEST['id_tienda']);
-               sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-               VALUES ( $cid,  ".$_SESSION['usuario_id'].",99,'Modificacion de Tienda', NOW(), '$id_tienda_name')");
-            }
-            $kilometraje=intval(get_dato_sql("ventas","kilometraje"," where id=".$cid));
-            if ($kilometraje!=intval($_REQUEST['kilometraje'])){   
-                sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                VALUES ( $cid,  ".$_SESSION['usuario_id'].",99,'Modificacion de Kilometraje', NOW(), ".$_REQUEST['kilometraje'].")");
+               registrar_historial_ventas($cid, 99, 'Modificacion de Tienda', $id_tienda_name);
             }
 
-             $id_pintura=intval(get_dato_sql("ventas","id_estado_pintura"," where id=".$cid));
+            $kilometraje = isset($venta_actual['kilometraje']) ? intval($venta_actual['kilometraje']) : 0;
+            if ($kilometraje!=intval($_REQUEST['kilometraje'])){   
+                registrar_historial_ventas($cid, 99, 'Modificacion de Kilometraje', $_REQUEST['kilometraje']);
+            }
+
+             $id_pintura = isset($venta_actual['id_estado_pintura']) ? intval($venta_actual['id_estado_pintura']) : 0;
              if ($id_pintura!=intval($_REQUEST['id_estado_pintura'])){   
                  $id_pintura_name=get_dato_sql("ventas_estado","nombre"," where id=".$_REQUEST['id_estado_pintura']);
-                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado_pintura'].",'Modificacion de Estado de Pintura', NOW(),'$id_pintura_name')");
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado_pintura'], 'Modificacion de Estado de Pintura', $id_pintura_name);
              }
 
-             $id_interior=intval(get_dato_sql("ventas","id_estado_interior"," where id=".$cid));
+             $id_interior = isset($venta_actual['id_estado_interior']) ? intval($venta_actual['id_estado_interior']) : 0;
              if ($id_interior!=intval($_REQUEST['id_estado_interior'])){   
                  $id_interior_name=get_dato_sql("ventas_estado","nombre"," where id=".$_REQUEST['id_estado_interior']);
-                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado_interior'].",'Modificacion de Estado de Interior', NOW(),'$id_interior_name')");
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado_interior'], 'Modificacion de Estado de Interior', $id_interior_name);
              }            
 
-             $id_mecanica=intval(get_dato_sql("ventas","id_estado_mecanica"," where id=".$cid));
+             $id_mecanica = isset($venta_actual['id_estado_mecanica']) ? intval($venta_actual['id_estado_mecanica']) : 0;
              if ($id_mecanica!=intval($_REQUEST['id_estado_mecanica'])){   
                 $id_mecanica_name=get_dato_sql("ventas_estado","nombre"," where id=".$_REQUEST['id_estado_mecanica']);
-                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado_mecanica'].",'Modificacion de Estado de Mecanica', NOW(), '$id_mecanica_name')");
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado_mecanica'], 'Modificacion de Estado de Mecanica', $id_mecanica_name);
              }
 
-             $observaciones=trim(get_dato_sql("ventas","observaciones_reparacion"," where id=".$cid));
+             $observaciones = isset($venta_actual['observaciones_reparacion']) ? trim((string)$venta_actual['observaciones_reparacion']) : '';
              if ($observaciones!=trim($_REQUEST['observaciones_reparacion'])){   
-                sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                VALUES ( $cid,  ".$_SESSION['usuario_id'].",99,'Modificacion de Observaciones', NOW(),'".$_REQUEST['observaciones_reparacion']."')"); 
+                registrar_historial_ventas($cid, 99, 'Modificacion de Observaciones', $_REQUEST['observaciones_reparacion']);
              }
 
-             $fecha_promesa=trim(get_dato_sql("ventas","fecha_promesa"," where id=".$cid));
+             $fecha_promesa = isset($venta_actual['fecha_promesa']) ? trim((string)$venta_actual['fecha_promesa']) : '';
              if ($fecha_promesa!=trim($_REQUEST['fecha_promesa'])){   
-                sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                VALUES ( $cid,  ".$_SESSION['usuario_id'].",99,'Modificacion de Fecha de Promesa', NOW(),'".$_REQUEST['fecha_promesa']."')"); 
+                registrar_historial_ventas($cid, 99, 'Modificacion de Fecha de Promesa', $_REQUEST['fecha_promesa']);
              }
 
-             $fecha_promesa_taller=trim(get_dato_sql("ventas","fecha_promesa_taller"," where id=".$cid));
-            
+             $fecha_promesa_taller = isset($venta_actual['fecha_promesa_taller']) ? trim((string)$venta_actual['fecha_promesa_taller']) : '';
+             
              if ($fecha_promesa_taller!=trim($_REQUEST['fecha_promesa_taller'])){   
-                sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                VALUES ( $cid,  ".$_SESSION['usuario_id'].",99,'Modificacion de Fecha de Promesa Taller', NOW(),'".$_REQUEST['fecha_promesa_taller']."')"); 
+                registrar_historial_ventas($cid, 99, 'Modificacion de Fecha de Promesa Taller', $_REQUEST['fecha_promesa_taller']);
              }
 
-             $precio_minimo=intval(get_dato_sql("ventas","precio_minimo"," where id=".$cid));
+             $precio_minimo = isset($venta_actual['precio_minimo']) ? intval($venta_actual['precio_minimo']) : 0;
              if ($precio_minimo!=intval($_REQUEST['precio_minimo'])){   
-                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",99,'Modificacion de Precio Minimo', NOW(), ".$_REQUEST['precio_minimo'].")");
+                 registrar_historial_ventas($cid, 99, 'Modificacion de Precio Minimo', $_REQUEST['precio_minimo']);
              }
 
-             $precio_maximo=intval(get_dato_sql("ventas","precio_maximo"," where id=".$cid));
+             $precio_maximo = isset($venta_actual['precio_maximo']) ? intval($venta_actual['precio_maximo']) : 0;
              if ($precio_maximo!=intval($_REQUEST['precio_maximo'])){   
-                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",99,'Modificacion de Precio Maximo', NOW(), ".$_REQUEST['precio_maximo'].")");
-             }
-
-         
+                 registrar_historial_ventas($cid, 99, 'Modificacion de Precio Maximo', $_REQUEST['precio_maximo']);
+             }         
              
-            $sql="update ventas set ".$sqlcampos." where id=".$cid." limit 1";
-
-
-
-             
+            $sql="update ventas set ".$sqlcampos." where id=".$cid." limit 1";           
 
             $result = sql_update($sql);
         } else {
@@ -265,11 +271,11 @@ if ($accion=="g") {
             $result = sql_insert($sql);
             $cid=$result; //last insert id 
 
-            sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-            VALUES ( $cid,  ".$_SESSION['usuario_id'].",99,'Nuevo registro de vehiculo', NOW(),'Nuevo')");
+            registrar_historial_ventas($cid, 99, 'Nuevo registro de vehiculo', 'Nuevo');
 
-            sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-            VALUES ( $cid,  ".$_SESSION['usuario_id'].",99,'Nuevo registro de vehiculo', NOW(),'".$_REQUEST['observaciones_reparacion']."')");
+            registrar_historial_ventas($cid, 99, 'Nuevo registro de vehiculo', $_REQUEST['observaciones_reparacion']);
+
+            require_once ('correo_reparacion.php');
         }
 
         
@@ -303,29 +309,29 @@ if ($accion =="d") {
     $stud_arr[0]["pcode"] = 0;
     $stud_arr[0]["pmsg"] ="ERROR DB101";
 
-
-
     if (isset($_REQUEST['arch'])) { $arch = "and archivo=".GetSQLValue(urldecode($_REQUEST["arch"]),"text"); } else	{$arch ="" ;}
 
     if (isset($_REQUEST['cod'])) { $cod = "and id=".GetSQLValue(urldecode($_REQUEST["cod"]),"text"); } else	{$cod ="" ;}
 
     if (isset($_REQUEST['cod'])) { $cid =GetSQLValue(urldecode($_REQUEST["cod"]),"text"); } else	{$cid ="" ;}
+    if (isset($_REQUEST['tipo_foto'])) { $tipo_foto = trim($_REQUEST["tipo_foto"]); } else {$tipo_foto = "foto";}
     
 
     if ($cid<>'') {
+        if ($tipo_foto==='foto_televentas') {
+            $sql="UPDATE ventas SET foto_televentas=null where id=".$cid." limit 1";
+            BORRAR_FOTO_DIRECTORIO($cid, $arch, $tipo_foto, "vehiculos_reparacion_televentas");
+        } else {
+            $sql="UPDATE ventas SET foto=null where id=".$cid." limit 1";
+            BORRAR_FOTO_DIRECTORIO($cid, $arch, $tipo_foto, "vehiculos_reparacion");
+        }        
+        $result = sql_update($sql);
 
-    borrar_foto_directorio($cid,"","","vehiculos_reparacion");
-
-    $sql="UPDATE ventas SET foto=null where id=".$cid." limit 1";
-    $result = sql_update($sql);
-
-
-
- } else {
-    $result==false;
-        $stud_arr[0]["pcode"] = 0;
-        $stud_arr[0]["pmsg"] ="Error al borrar el archivo";
-}
+    } else {
+        $result==false;
+            $stud_arr[0]["pcode"] = 0;
+            $stud_arr[0]["pmsg"] ="Error al borrar el archivo";
+    }
 
     if ($result!=false){
 
@@ -334,8 +340,7 @@ if ($accion =="d") {
         $stud_arr[0]["pmsg"] ="Borrado";
 
     }
-  salida_json($stud_arr);
-
+    salida_json($stud_arr);
     exit;
 }
 
@@ -392,12 +397,14 @@ if ($accion =="d") {
     if (isset($row["fecha_promesa_taller"])) {$fecha_promesa_taller= $row["fecha_promesa_taller"]; } else {$fecha_promesa_taller= "";}
     if (isset($row["reproceso"])) {$reproceso=$row["reproceso"]; } else {$reproceso="";}
     if (isset($row["foto"])) {$foto=$row["foto"]; } else {$foto="";}
+    if (isset($row["foto_televentas"])) {$foto_televentas=$row["foto_televentas"]; } else {$foto_televentas="";}
     if (isset($row["observaciones_reparacion"])) {$observaciones_reparacion=$row["observaciones_reparacion"]; } else {$observaciones_reparacion="";}
     if (isset($row["precio_minimo"])) {$precio_minimo= $row["precio_minimo"]; } else {$precio_minimo= "";}
     if (isset($row["precio_maximo"])) {$precio_maximo= $row["precio_maximo"]; } else {$precio_maximo= "";}
     if (isset($row["trasmision"])) {$trasmision= $row["trasmision"]; } else {$trasmision= "";}
     if (isset($row["id_vendedor"])) {$id_vendedor= $row["id_vendedor"]; } else {$id_vendedor= "";}
-
+    if (isset($row["id_estado_anterior_reproceso"])) {$id_estado_anterior_reproceso= $row["id_estado_anterior_reproceso"]; } else {$id_estado_anterior_reproceso= "";}
+    
     //$observaciones_reparacion= "";
     if ($id_estado=='' || $id_estado==99){
        $disable_sec1=' ';  
@@ -423,7 +430,7 @@ if ($accion =="d") {
     }
 
     echo campo("id",("Codigo"),'hidden',$id,' ','');
-
+    echo campo("id_estado_anterior_reproceso",("Estado"),'hidden',$id_estado_anterior_reproceso,' ','');
 ?>
 
 
@@ -542,46 +549,56 @@ if ($accion =="d") {
 
 
 <div class="row">
-<?php
-if ($foto=='')
-{
-    echo '<div class="col-md" id="archivofoto">';
-    echo campo_upload("foto","Adjuntar comprobante de pago",'upload','', '  ','',4,8,'NO',false );
-    echo '</div>';
-    /*echo '<div class="col-md"></div><div class="" id="insp_fotos_thumbs"></div></div>';*/
-}
-?>
-
-    <div class="col-md">
-    <div class="" id="insp_fotos_thumbs">
-    <?php
-    if ($foto<>'') {
-        $fext = substr($foto, -3);
-                if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {  
-                    $ruta1='uploa_d/'.$foto;
-                    if (file_exists($ruta1)) {                        
-                       $src= 'uploa_d/thumbnail/'.$foto;
-                       $mostrar=true;
-                    } else {                                   
-                       $src= 'aws_bucket_s3/thumbnail/'.$foto;
-                       $mostrar=false;                    
-                    }    
-                    $onclick = 'mostrar_foto(\'' . $foto . '\', \'' . $mostrar . '\'); return false;';        
-                    echo '  <a href="#" onclick="'.$onclick.'" ><img class="img  img-thumbnail mb-3 mr-3" src="'.$src.'" data-cod="'.$row["id"].'"></a> '; 
-                    //if ($fecha<'2025-10-01'){
-                    //   echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
-                    //}else{       
-                    //   echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3 float-left" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
-                    //}
+    <div class="col-md-6" id="bloque_foto_pago">
+        <h6>Foto Comprobante de Pago</h6>
+        <?php
+        if ($foto=='') {
+            echo '<div id="archivofoto">';
+            echo campo_upload("foto","Adjuntar Comprobante de Pago",'upload','', '  ','',4,8,'NO',false );
+            echo '</div>';
+        }
+        ?>
+        <div id="insp_fotos_thumbs">
+            <?php
+            if ($foto<>'') {
+                $fext = substr($foto, -3);
+                if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
+                    echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3 float-left" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
                     if (tiene_permiso(183))  {
-                        echo '<a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].'); return false;" ><i class="fa fa-eraser"></i> Borrar Foto</a>';
-                    }                    
+                        echo '<a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].',\'foto\'); return false;" ><i class="fa fa-eraser"></i> Borrar</a>';
+                    }
                 } else {
                     echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
                 }
-    }
-    ?>
+            }
+            ?>
+        </div>
     </div>
+
+    <div class="col-md-6" id="bloque_foto_televentas">
+        <h6>Foto Comprobante de Recibo de Pago</h6>
+        <?php
+        if ($foto_televentas=='') {
+            echo '<div id="archivofoto_televentas">';
+            echo campo_upload("foto_televentas","Adjuntar Recibo de Pago",'upload','', '  ','',4,8,'NO',false );
+            echo '</div>';
+        }
+        ?>
+        <div id="insp_fotos_thumbs_televentas">
+        <?php
+            if ($foto_televentas<>'') {
+                $fext = substr($foto_televentas, -3);
+                if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
+                    echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$foto_televentas.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3 float-left" src="uploa_d/thumbnail/'.$foto_televentas.'" data-cod="'.$row["id"].'"></a> ';
+                    if (tiene_permiso(183))  {
+                        echo '<a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].',\'foto_televentas\'); return false;" ><i class="fa fa-eraser"></i> Borrar </a>';
+                    }
+                } else {
+                    echo '  <a href="uploa_d/'.$foto_televentas.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto_televentas.'</a> ';
+                }
+            }
+        ?>
+        </div>
     </div>
 </div>
 
@@ -781,16 +798,12 @@ function insp_guardar_foto(arch,campo){
            $('#'+campo).val(arch);                
            $('#files_'+campo).text('Guardado');
            $('#lk'+campo).html(arch);
-           thumb_agregar(arch);    
+           thumb_agregar(arch,campo);    
 }
 
 
 function mostrar_foto(imagen,ruta) {
-  if (ruta==true){
-    var imagenurl='uploa_d/'+imagen;
-  } else {
-    var imagenurl='aws_bucket_s3/'+imagen;
-  }
+  var imagenurl='uploa_d/'+imagen;
   Swal.fire({
        imageUrl: imagenurl,  
   }); 
@@ -800,15 +813,20 @@ function mostrar_foto(imagen,ruta) {
 
 
 
-function thumb_agregar(archivo){
+function thumb_agregar(archivo,campo){
 if (archivo!='' && archivo!=undefined) {
+
+     var thumbsDiv = '#insp_fotos_thumbs';
+     if (campo==='foto_televentas') {
+        thumbsDiv = '#insp_fotos_thumbs_televentas';
+     }
   
     var fext= archivo.substr(archivo.length - 3);
 
     if (fext=='jpg' || fext=='peg' || fext=='png' || fext=='gif') {
-       $("#insp_fotos_thumbs").append('<a href="#" onclick="mostrar_foto(\''+archivo+'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'+archivo+'" ></a>');
+         $(thumbsDiv).append('<a href="#" onclick="mostrar_foto(\''+archivo+'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'+archivo+'" ></a>');
     } else {
-       $("#insp_fotos_thumbs").append('<a href="uploa_d/'+archivo+'" target="_blank" class="img-thumbnail mb-3 mr-3" >'+archivo+'</a>');
+         $(thumbsDiv).append('<a href="uploa_d/'+archivo+'" target="_blank" class="img-thumbnail mb-3 mr-3" >'+archivo+'</a>');
     }
   }
 }
@@ -942,23 +960,33 @@ $("#"+campo).load(url, function(response, status, xhr) {
 
 
 
-function borrar_fotodb(codid) {
+function borrar_fotodb(codid, tipoFoto) {
+    if (tipoFoto===undefined || tipoFoto==='') {
+        tipoFoto = 'foto';
+    }
+
   var datos = {
     a: "d",
     cid: $("#cid").val(),
     pid: $("#pid").val(),
-    cod: codid
+        cod: codid,
+        tipo_foto: tipoFoto
   };
 
+    var etiquetaFoto = 'Foto';
+    if (tipoFoto==='foto_televentas') {
+        etiquetaFoto = 'Foto Televentas';
+    }
+
   Swal.fire({
-    title: 'Borrar Foto',
-    text: 'Desea borrar la Foto o documento adjunto?',
-    icon: 'question',
-    showCancelButton: true,
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Si',
-    cancelButtonText: 'No'
+        title: 'Borrar ' + etiquetaFoto,
+        text: 'Desea borrar la ' + etiquetaFoto + ' o documento adjunto?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Si',
+        cancelButtonText: 'No'
   }).then((result) => {
     if (result.value) {
 

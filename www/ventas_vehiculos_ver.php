@@ -3,6 +3,11 @@ require_once ('include/framework.php');
 pagina_permiso(166);
 
 $accion ="";
+$pruebasContrato = "N";
+
+if (tiene_permiso(188)){
+    $pruebasContrato="S";
+}
 
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } 
 if (isset($_REQUEST['estado'])) { $id_estado = sanear_int($_REQUEST['estado']); } else {$id_estado="";}
@@ -211,7 +216,7 @@ if ($accion=="1") {
 
             <div class="col-sm">
                  <a id="btn-filtro" href="#" onclick="procesar_tabla_datatable('tablaver','tabla','ventas_vehiculos_ver.php?a=1','Ventas de Vehiculos'); return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i>  <?php echo "Buscar"; ?></a>
-            
+                  <a href="#" onclick="get_page_switch('pagina','dashboard_vendedor_negociacion.php','Dashboard Negociacion por Vendedor'); return false;" class="btn btn-secondary mr-2 mb-2"><i class="fa fa-chart-bar"></i> Dashboard Negociacion</a>
           </div>   
 
     </div>
@@ -247,17 +252,32 @@ if ($accion=="1") {
 
     function abrir_ventas(codigo){
         var nuevo="";
+        var contrato="<?php echo $pruebasContrato; ?>";
+
         if (codigo==0){
             nuevo="S"
         }else{
             nuevo="N"
         }
+        
+        if (contrato=="S"){
+            modalwindow2(
+                'Registro Venta de Vehiculo Pruebas Contrato',
+                'ventas_mant_contrato.php?a=v&r='+nuevo+'&cid='+codigo
+                );
 
-        modalwindow2(
-            'Registro Venta de Vehiculo',
-            'ventas_mant.php?a=v&r='+nuevo+'&cid='+codigo
-            );
-           
+        }else{
+
+                    modalwindow2(
+                'Registro Venta de Vehiculo Pruebas Contrato',
+                'ventas_mant_contrato.php?a=v&r='+nuevo+'&cid='+codigo
+                );
+ /*            modalwindow2(
+                'Registro Venta de Vehiculooo',
+                'ventas_mant.php?a=v&r='+nuevo+'&cid='+codigo
+                ); */
+            
+        }    
     }
 
 function abrir_ventana_foto(codigo) {

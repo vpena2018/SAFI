@@ -159,6 +159,20 @@ if ($accion=="ec") {
       if (isset($_REQUEST['eti'])) { $etiqueta = ($_REQUEST['eti']); } else	{exit ;}
       if (isset($_REQUEST['val'])) { $valor = intval($_REQUEST['val']); } else	{exit ;}
       //Auditado
+      $estado_actual = 0;
+      $result_estado = sql_select("SELECT id_estado FROM servicio WHERE id=$sid LIMIT 1");
+      if ($result_estado!=false){
+          if ($result_estado->num_rows > 0) {
+              $row_estado = $result_estado->fetch_assoc();
+              $estado_actual = intval($row_estado['id_estado']);
+          }
+      }
+      if ($estado_actual === 22){
+        if (!(tiene_permiso(164) || tiene_permiso(163))) {
+           echo '<div class="card-body">No tiene privilegios para modificar esta orden de servicio.</div>';
+           exit;
+        }       
+      }
   
    
   ?>
@@ -202,10 +216,10 @@ if ($accion=="ec") {
           if ($result!=false){
               if ($result -> num_rows > 0) { 
                  $row = $result -> fetch_assoc() ;    
-                 $salida.= campo('id_tecnico1', $etiqueta,'select2',valores_combobox_db('usuario',$row["id_tecnico1"],'nombre',' where activo=1 and grupo_id=2 or perfil_adicional=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',' required ',''); 
-                 $salida.= campo('id_tecnico2', $etiqueta,'select2',valores_combobox_db('usuario',$row["id_tecnico2"],'nombre',' where activo=1 and grupo_id=2 or perfil_adicional=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',' required ',''); 
-                 $salida.= campo('id_tecnico3', $etiqueta,'select2',valores_combobox_db('usuario',$row["id_tecnico3"],'nombre',' where activo=1 and grupo_id=2 or perfil_adicional=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',' required ',''); 
-                 $salida.= campo('id_tecnico4', $etiqueta,'select2',valores_combobox_db('usuario',$row["id_tecnico4"],'nombre',' where activo=1 and grupo_id=2 or perfil_adicional=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',' required ','');                      
+                 $salida.= campo('id_tecnico1', $etiqueta,'select2',valores_combobox_db('usuario',$row["id_tecnico1"],'nombre',' where activo=1 and grupo_id=2 or perfil_tecnico=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',' required ',''); 
+                 $salida.= campo('id_tecnico2', $etiqueta,'select2',valores_combobox_db('usuario',$row["id_tecnico2"],'nombre',' where activo=1 and grupo_id=2 or perfil_tecnico=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',' required ',''); 
+                 $salida.= campo('id_tecnico3', $etiqueta,'select2',valores_combobox_db('usuario',$row["id_tecnico3"],'nombre',' where activo=1 and grupo_id=2 or perfil_tecnico=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',' required ',''); 
+                 $salida.= campo('id_tecnico4', $etiqueta,'select2',valores_combobox_db('usuario',$row["id_tecnico4"],'nombre',' where activo=1 and grupo_id=2 or perfil_tecnico=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',' required ','');                      
               }
           }         
       } 
@@ -884,7 +898,7 @@ if ($elcodigo<>"") {
         //******** API Rentworks fin. ******/
 
         if ($enviar_orden_email==true) {
-          require_once ('correo_servicio_pdf.php');
+           require_once ('correo_servicio_pdf.php');
         }
 
 
@@ -1374,13 +1388,15 @@ if (!es_nulo($id_estado)){
             font-weight: 600; 
             letter-spacing: 0.5px;
             border-radius: 8px 8px 0 0;">
-            Detalle Actividades            
-            <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Compra Realizada','servicio_mant_repuesto.php?a=comprea&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Compra Realizada</a>
-            <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Solicitud de Compra','servicio_mant_repuesto.php?a=solcomp&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Solicitud Compra</a>
-            <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Realizado','servicio_mant_repuesto.php?a=realiza&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-check"></i> Realizado</a>
-            <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Atender','servicio_mant_repuesto.php?a=atender&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-wrench"></i> Atender</a>
-            <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Autorizar Servicio','servicio_mant_repuesto.php?a=aut&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-check"></i> Autorizar</a>
-            <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Agregar Servicio','servicio_mant_repuesto.php?a=agr&tipo=3&cid='+$('#id').val()+'&estactual='+$('#id_estado').val()+'&taller='+$('#taller_externo').val()); return false;"><i class="fa fa-plus"></i> Agregar</a>
+            Detalle Actividades     
+            <?php if ($id_estado<22 || es_nulo($id_estado)) {  ?>       
+                <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Compra Realizada','servicio_mant_repuesto.php?a=comprea&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Compra Realizada</a>
+                <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Solicitud de Compra','servicio_mant_repuesto.php?a=solcomp&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Solicitud Compra</a>
+                <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Realizado','servicio_mant_repuesto.php?a=realiza&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-check"></i> Realizado</a>
+                <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Atender','servicio_mant_repuesto.php?a=atender&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-wrench"></i> Atender</a>
+                <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Autorizar Servicio','servicio_mant_repuesto.php?a=aut&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-check"></i> Autorizar</a>
+                <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Agregar Servicio','servicio_mant_repuesto.php?a=agr&tipo=3&cid='+$('#id').val()+'&estactual='+$('#id_estado').val()+'&taller='+$('#taller_externo').val()); return false;"><i class="fa fa-plus"></i> Agregar</a>
+            <?php }  ?>
          </div>
         <div class="card-body"> 
 
@@ -1446,16 +1462,17 @@ if (!es_nulo($id_estado)){
             letter-spacing: 0.5px;
             border-radius: 8px 8px 0 0;">
            Repuestos 
-  
-           <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Devolver Repuesto','servicio_mant_repuesto.php?a=dev&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-minus"></i> Devolver</a>
-           <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Repuesto NO Recibido','servicio_mant_repuesto.php?a=norec&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-store-slash"></i> No Recibido</a>           
-           <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Compra Realizada','servicio_mant_repuesto.php?a=comprea&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Compra Realizada</a>    
-           <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Compra en Proceso','servicio_mant_repuesto.php?a=comppro&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-truck"></i>Compra Extranjero</a>           
-           <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Compra Local','servicio_mant_repuesto.php?a=complocal&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Compra Local</a>    
-           <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Solicitud Compra Repuesto','servicio_mant_repuesto.php?a=solcomp&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Solicitud Compra</a>
-           <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Recibir Repuesto','servicio_mant_repuesto.php?a=rec&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-wrench"></i> Recibir</a>
-           <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Autorizar Repuesto','servicio_mant_repuesto.php?a=aut&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-check"></i> Autorizar</a>
-           <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Solicitar Repuesto','servicio_mant_repuesto.php?a=agr&tipo=2&cid='+$('#id').val()+'&estactual='+$('#id_estado').val()); return false;"><i class="fa fa-plus"></i> Solicitar Repuesto</a>           
+           <?php if ($id_estado<22 || es_nulo($id_estado)) {  ?>       
+              <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Devolver Repuesto','servicio_mant_repuesto.php?a=dev&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-minus"></i> Devolver</a>
+              <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Repuesto NO Recibido','servicio_mant_repuesto.php?a=norec&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-store-slash"></i> No Recibido</a>           
+              <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Compra Realizada','servicio_mant_repuesto.php?a=comprea&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Compra Realizada</a>    
+              <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Compra en Proceso','servicio_mant_repuesto.php?a=comppro&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-truck"></i>Compra Extranjero</a>           
+              <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Compra Local','servicio_mant_repuesto.php?a=complocal&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Compra Local</a>    
+              <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Solicitud Compra Repuesto','servicio_mant_repuesto.php?a=solcomp&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Solicitud Compra</a>
+              <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Recibir Repuesto','servicio_mant_repuesto.php?a=rec&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-wrench"></i> Recibir</a>
+              <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Autorizar Repuesto','servicio_mant_repuesto.php?a=aut&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-check"></i> Autorizar</a>
+              <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Solicitar Repuesto','servicio_mant_repuesto.php?a=agr&tipo=2&cid='+$('#id').val()+'&estactual='+$('#id_estado').val()); return false;"><i class="fa fa-plus"></i> Solicitar Repuesto</a>           
+            <?php }  ?>    
         </div>
         <div class="card-body">   
 

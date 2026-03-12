@@ -5,6 +5,7 @@ header("Pragma: no-cache");
 require_once ('include/framework.php');
 
 get_porcentajes_sistema();
+$forzar_cambio_clave = (isset($_SESSION['force_pwd_change']) && intval($_SESSION['force_pwd_change'])===1) ? 1 : 0;
 
 
 ?>
@@ -44,6 +45,7 @@ get_porcentajes_sistema();
         }
 
         input[type=number] {
+            appearance: textfield;
             -moz-appearance: textfield;
         }
     </style>
@@ -93,6 +95,7 @@ get_porcentajes_sistema();
                     </div>
                 </div> -->
                 <!-- sidebar-menu  -->
+                <?php if ($forzar_cambio_clave!==1) { ?>
                 <div class=" sidebar-item sidebar-menu">
                     <ul>
                         <?php  
@@ -198,6 +201,7 @@ get_porcentajes_sistema();
                     </ul>
                 </div>
                 <!-- sidebar-menu  -->
+                <?php } ?>
             </div>
 
 
@@ -262,8 +266,9 @@ get_porcentajes_sistema();
 
 
 
+                <?php if ($forzar_cambio_clave!==1) { ?>
                 <div class="dropdown">
-              
+               
                     <a id="pin-sidebar" href="#"  >
                         <i class="fa fa-thumbtack"></i>
                         <span id="pin-sidebar-span" class=""></span>                        
@@ -302,6 +307,7 @@ get_porcentajes_sistema();
                    
                     </div>
                 </div>
+                <?php } ?>
 
 
                 <div>
@@ -499,7 +505,17 @@ get_porcentajes_sistema();
             $dashboard_pagina='dashboard_seguimiento.php';
         }
         ?>
-        get_page('pagina','<?php echo $dashboard_pagina; ?>','Dashboard') ;
+        <?php if ($forzar_cambio_clave===1) { ?>
+            get_page('pagina','mnt_password_forzado.php','Cambio de Clave Obligatorio') ;
+            Swal.fire({
+                icon: 'warning',
+                title: 'Cambio de clave requerido',
+                text: 'Por seguridad, debe cambiar su clave antes de continuar.',
+                confirmButtonText: 'Entendido'
+            });
+        <?php } else { ?>
+            get_page('pagina','<?php echo $dashboard_pagina; ?>','Dashboard') ;
+        <?php } ?>
         
         if (typeof(Storage) !== "undefined") {
 

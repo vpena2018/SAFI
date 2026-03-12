@@ -43,6 +43,7 @@ class UploadHandler
 
     protected $image_objects = array();
 
+
     function __construct($options = null, $initialize = true, $error_messages = null) {
 
         $customFolder = isset($_REQUEST['folder']) ? $_REQUEST['folder'] : 'uploa_d';
@@ -521,6 +522,8 @@ class UploadHandler
         // into different directories or replacing hidden system files.
         // Also remove control characters and spaces (\x00..\x20) around the filename:
         $name = trim(basename(stripslashes($name)), ".\x00..\x20");
+        // Normalize internal whitespace to underscores for stable file names.
+        $name = preg_replace('/[[:space:]]+/', '_', $name);
         // Use a timestamp for empty filenames:
         if (!$name) {
             $name = str_replace('.', '-', microtime(true));

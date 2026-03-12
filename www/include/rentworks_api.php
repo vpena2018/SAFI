@@ -124,12 +124,18 @@ function rw_api($rw_post,$suburl){
 
           if ($suburl=="NonRev") { //Traslados
               //{"TicketNumber":"78963","TicketStatus":"Open","ReturnMsg":""}
+              $rw_return_msg = "";
+              if (isset($rw_respuesta['ReturnMsg'])) {
+                  $rw_return_msg = $rw_respuesta['ReturnMsg'];
+              } elseif (isset($rw_respuesta['Message'])) {
+                  $rw_return_msg = $rw_respuesta['Message'];
+              }
               if (isset($rw_respuesta['TicketNumber'])) {                
                     $rw_salida['pcode']=1;
                     $rw_salida['pid']=$rw_respuesta['TicketNumber'];
-                    $rw_salida['pmsg']=$rw_respuesta['ReturnMsg'];
+                    $rw_salida['pmsg']=$rw_return_msg;
                 } else {
-                    file_put_contents(app_logs_folder.date("Y-m-d")."_api_rentworks_error.log", ",".date("Y-m-d g:i a").", ".$rw_respuesta['ReturnMsg'].", ".$_SERVER['REMOTE_ADDR'].", ".$_SERVER['HTTP_USER_AGENT'].""." \r\n", FILE_APPEND );
+                    file_put_contents(app_logs_folder.date("Y-m-d")."_api_rentworks_error.log", ",".date("Y-m-d g:i a").", ".$rw_return_msg.", ".$_SERVER['REMOTE_ADDR'].", ".$_SERVER['HTTP_USER_AGENT'].""." \r\n", FILE_APPEND );
                 }
                 
 

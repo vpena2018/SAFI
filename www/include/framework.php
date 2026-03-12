@@ -15,14 +15,40 @@ header("Pragma: no-cache");
 //####################### SESSION ##############################
 ini_set('session.gc_maxlifetime', 86400);
 
-session_set_cookie_params([
-    'lifetime' => 0,
-    'path' => '/',
-    'domain' => $_SERVER['HTTP_HOST'],
-    'secure' => false,
-    'httponly' => true,
-    'samesite' => 'strict'
-]);
+function safi_cookie_opts() {
+    $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
+    $domain = $host;
+    if (strpos($host, ':') !== false) {
+        $domain = explode(':', $host)[0];
+    }
+    $https = !empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off';
+    // For Android/WebView and cross-site redirects, Strict can drop cookies.
+    // Use None only when HTTPS is available; otherwise fallback to Lax.
+    $sameSite = $https ? 'None' : 'Lax';
+    return [
+        'lifetime' => 0,
+        'path' => '/',
+        'domain' => $domain,
+        'secure' => $https,
+        'httponly' => true,
+        'samesite' => $sameSite
+    ];
+}
+
+function safi_cookie_params() {
+    // For setcookie() use "expires" instead of "lifetime"
+    $opts = safi_cookie_opts();
+    return [
+        'expires' => 0,
+        'path' => $opts['path'],
+        'domain' => $opts['domain'],
+        'secure' => $opts['secure'],
+        'httponly' => $opts['httponly'],
+        'samesite' => $opts['samesite']
+    ];
+}
+
+session_set_cookie_params(safi_cookie_opts());
 
 
 function renovar_session() {
@@ -35,13 +61,14 @@ function renovar_cookie() {
 	$randomid = generate_id();
 	//$cookieid = trim(sha1($randomid . $_SERVER['HTTP_USER_AGENT'] . obtener_ip2()));
 	$cookieid = trim(sha1($randomid . $_SERVER['HTTP_USER_AGENT']));
-    setcookie("urs", $cookieid, ['samesite' => 'Strict']);
-	setcookie("sgt", $randomid, ['samesite' => 'Strict']);
+    $opts = safi_cookie_params();
+    setcookie("urs", $cookieid, $opts);
+	setcookie("sgt", $randomid, $opts);
 	return $cookieid;
 }
 
 function colocar_cookie_usuario($usr) {
-	setcookie("usr", $usr, ['samesite' => 'Strict']);
+	setcookie("usr", $usr, safi_cookie_params());
 }
 
 function verificar_cookie() {
@@ -58,9 +85,10 @@ function verificar_cookie() {
 	if (trim($cookieid) === trim($_COOKIE['urs'])) {
 		return TRUE;
 	} else {
-		setcookie("urs", "", ['samesite' => 'Strict']);
-		setcookie("sgt", "",  ['samesite' => 'Strict']);
-		setcookie("PHPSESSID", "", ['samesite' => 'Strict']);
+        $opts = safi_cookie_params();
+		setcookie("urs", "", $opts);
+		setcookie("sgt", "", $opts);
+		setcookie("PHPSESSID", "", $opts);
 		return FALSE;
 
 	}
@@ -109,6 +137,16 @@ if (!isset($_SESSION['usuario'])) {
 	sesion_expirada();
 }
 
+// Expiracion por inactividad (conservador)
+// 1800 segundos = 30 minutos
+$session_timeout_segundos = 1800;
+if (isset($_SESSION['hora_ultima_tran'])) {
+    $segundos_inactivo = time() - intval($_SESSION['hora_ultima_tran']);
+    if ($segundos_inactivo > $session_timeout_segundos) {
+        sesion_expirada();
+    }
+}
+
 renovar_session();
 renovar_cookie();
 
@@ -119,7 +157,7 @@ renovar_cookie();
 //####################### CONFIG ##############################
 
 define("app_title", "Sistema Mant. Flotas");  // Titulo Applicacion
-define("app_version", "1.2.0");  // Version de Applicacion
+define("app_version", "2.0.0");  // Version de Applicacion
 
 define("app_combo_si_no", '<option value="0">NO</option><option value="1">'.'SI'.'</option>');
 define("app_combo_a_i", '<option value="A">Activo</option><option value="I">'.'Inactivo'.'</option>');
@@ -228,6 +266,31 @@ function sanear_string($campo) {
 
 function sanear_date($campo) {   	
     return  preg_replace("([^0-9-])", "", $campo);
+}
+
+function validar_politica_password($password) {
+	$password = trim((string)$password);
+
+	if ($password === "") {
+		return "La contrasena es obligatoria";
+	}
+	if (strlen($password) < 8) {
+		return "La contrasena debe tener al menos 8 caracteres";
+	}
+	if (!preg_match('/[a-z]/', $password)) {
+		return "La contrasena debe incluir al menos una letra minuscula";
+	}
+	if (!preg_match('/[A-Z]/', $password)) {
+		return "La contrasena debe incluir al menos una letra mayuscula";
+	}
+	if (!preg_match('/[0-9]/', $password)) {
+		return "La contrasena debe incluir al menos un numero";
+	}
+	if (preg_match('/\s/', $password)) {
+		return "La contrasena no debe contener espacios";
+	}
+
+	return "";
 }
 
 function formato_numero($numero,$decimales=0,$moneda="") 
@@ -661,6 +724,28 @@ function valores_sino($valor){
      return $salida;    
 }
 
+function valores_combobox_array(
+    $datos,
+    $codigo = '',
+    $texto_primera = '',
+    $key_valor = 'valor',
+    $key_texto = 'texto'
+) {
+    $salida = '';
+
+    if ($texto_primera != '') {
+        $salida .= "<option value=\"\">$texto_primera</option>";
+    }
+
+    foreach ($datos as $item) {
+        $seleccionado = ($item[$key_valor] == $codigo) ? ' selected' : '';
+        $salida .= '<option value="' . $item[$key_valor] . '"' . $seleccionado . '>'
+                 . $item[$key_texto] . '</option>';
+    }
+
+    return $salida;
+}
+
 
 function valores_combobox_db($tabla,$codigo,$campo,$where,$campo_etiqueta='',$texto_primera='',$campo_id='id'){
 	 global $conn;
@@ -687,6 +772,76 @@ function valores_combobox_db($tabla,$codigo,$campo,$where,$campo_etiqueta='',$te
 
 	 return $salida;
 	
+}
+
+function mesEnLetras(int $mes): string
+{
+    $meses = [
+        1  => 'enero',
+        2  => 'febrero',
+        3  => 'marzo',
+        4  => 'abril',
+        5  => 'mayo',
+        6  => 'junio',
+        7  => 'julio',
+        8  => 'agosto',
+        9  => 'septiembre',
+        10 => 'octubre',
+        11 => 'noviembre',
+        12 => 'diciembre'
+    ];
+
+    return $meses[$mes] ?? '';
+}
+
+function FechanumeroALetras(int $numero): string
+{
+    if ($numero === 0) return 'cero';
+
+    $unidades = [
+        '', 'uno', 'dos', 'tres', 'cuatro', 'cinco',
+        'seis', 'siete', 'ocho', 'nueve', 'diez',
+        'once', 'doce', 'trece', 'catorce', 'quince',
+        'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve'
+    ];
+
+    $decenas = [
+        '', '', 'veinte', 'treinta', 'cuarenta',
+        'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'
+    ];
+
+    $centenas = [
+        '', 'ciento', 'doscientos', 'trescientos', 'cuatrocientos',
+        'quinientos', 'seiscientos', 'setecientos', 'ochocientos', 'novecientos'
+    ];
+
+    if ($numero < 20) return $unidades[$numero];
+
+    if ($numero < 100) {
+        if ($numero < 30) return 'veinti' . $unidades[$numero - 20];
+        return $decenas[intdiv($numero, 10)]
+            . (($numero % 10) ? ' y ' . $unidades[$numero % 10] : '');
+    }
+
+    if ($numero === 100) return 'cien';
+
+    if ($numero < 1000) {
+        return $centenas[intdiv($numero, 100)]
+            . (($numero % 100) ? ' ' . FechanumeroALetras($numero % 100) : '');
+    }
+
+    if ($numero < 2000) {
+        return 'mil'
+            . (($numero % 1000) ? ' ' . FechanumeroALetras($numero % 1000) : '');
+    }
+
+    if ($numero < 10000) {
+        return FechanumeroALetras(intdiv($numero, 1000))
+            . ' mil'
+            . (($numero % 1000) ? ' ' . FechanumeroALetras($numero % 1000) : '');
+    }
+
+    return '';
 }
 
 
@@ -1299,8 +1454,22 @@ function campo_upload_foto_ventas($nombre,$etiqueta,$tipo,$valor,$adicional,$id_
                                disableAudioPreview: true,
                                disableImagePreview: true,
                                previewThumbnail: false,
-                               
-                               done: function (e, data) {
+                                add: function (e, data) {
+                                    if (typeof Promise === 'undefined' || typeof window.comprimirSiEsImagen !== 'function') {
+                                        data.submit();
+                                        return;
+                                    }
+                                    Promise.all($.map(data.files, function (f) { return window.comprimirSiEsImagen(f); }))
+                                        .then(function (filesComprimidos) {
+                                            data.files = filesComprimidos;
+                                            data.submit();
+                                        })
+                                        .catch(function () {
+                                            data.submit();
+                                        });
+                                },
+                                
+                                done: function (e, data) {
                                      
                                    $.each(data.result.files, function (index, file) {
 
@@ -1438,8 +1607,22 @@ function campo_upload_varias($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solic
                                disableAudioPreview: true,
                                disableImagePreview: true,
                                previewThumbnail: false,
-                               
-                               done: function (e, data) {
+                                add: function (e, data) {
+                                    if (typeof Promise === 'undefined' || typeof window.comprimirSiEsImagen !== 'function') {
+                                        data.submit();
+                                        return;
+                                    }
+                                    Promise.all($.map(data.files, function (f) { return window.comprimirSiEsImagen(f); }))
+                                        .then(function (filesComprimidos) {
+                                            data.files = filesComprimidos;
+                                            data.submit();
+                                        })
+                                        .catch(function () {
+                                            data.submit();
+                                        });
+                                },
+                                
+                                done: function (e, data) {
 
                                var cantidadFotos = data.files.length;
                                      
@@ -1453,6 +1636,10 @@ function campo_upload_varias($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solic
                                     //    $('#files_$nombre').text('Guardado');
                                     //    $('#lk$nombre').html(file.name);
                                     //console.log(file.name,'$nombre'); 
+                                    if (file.error) {
+                                        $('#files_$nombre').text(file.error);
+                                        return;
+                                    }
                                     insp_guardar_foto(file.name,'$nombre',cantidadFotos);
          ";
                                       
@@ -1572,12 +1759,26 @@ function campo_upload($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solicitud=""
                                acceptFileTypes: /(\.|\/)(gif|jpe?g|png|doc|docx|pdf|txt|xls|xlsx)$/i,
                                maxFileSize: 20971520,
                                maxNumberOfFiles: 30,
-                               disableVideoPreview: true,
-                               disableAudioPreview: true,
-                               disableImagePreview: true,
-                               previewThumbnail: false,
-                               
-                               done: function (e, data) {
+                                disableVideoPreview: true,
+                                disableAudioPreview: true,
+                                disableImagePreview: true,
+                                previewThumbnail: false,
+                                add: function (e, data) {
+                                    if (typeof Promise === 'undefined' || typeof window.comprimirSiEsImagen !== 'function') {
+                                        data.submit();
+                                        return;
+                                    }
+                                    Promise.all($.map(data.files, function (f) { return window.comprimirSiEsImagen(f); }))
+                                        .then(function (filesComprimidos) {
+                                            data.files = filesComprimidos;
+                                            data.submit();
+                                        })
+                                        .catch(function () {
+                                            data.submit();
+                                        });
+                                },
+                                
+                                done: function (e, data) {
                                      
                                    $.each(data.result.files, function (index, file) {
          
@@ -1589,6 +1790,10 @@ function campo_upload($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solicitud=""
                                     //    $('#files_$nombre').text('Guardado');
                                     //    $('#lk$nombre').html(file.name);
                                     //console.log(hola file.name,'$nombre'); 
+                                    if (file.error) {
+                                        $('#files_$nombre').text(file.error);
+                                        return;
+                                    }
                                     insp_guardar_foto(file.name,'$nombre');
          ";
                                       
@@ -2041,7 +2246,8 @@ function foto_reducir_tamano($archivo){
         if (in_array($filetype, $allowedTypes)) {        
             try {
                 //1200 pixeles , calidad 90% 
-                shell_exec('mogrify -resize 1200 -quality 90 -quiet '.$archivo.' > /dev/null 2>/dev/null &');
+                $archivo_seguro = escapeshellarg($archivo);
+                shell_exec('mogrify -resize 1200 -quality 90 -quiet ' . $archivo_seguro . ' > /dev/null 2>/dev/null &');
             } catch (\Throwable $th) {
                 //throw $th;
             }
@@ -2063,15 +2269,17 @@ function borrar_foto_directorio($cid,$cod,$arch, $tipo) {
             
 
            if($tipo=="averia") {
-            $result_arch=sql_select("SELECT id,archivo FROM averia_foto WHERE  id_maestro=$cid $filtro  LIMIT 1");
+                $result_arch=sql_select("SELECT id,archivo FROM averia_foto WHERE  id_maestro=$cid $filtro  LIMIT 1");
            }else if($tipo=="inspeccion") {
-            $result_arch=sql_select("SELECT id,archivo FROM inspeccion_foto WHERE id_inspeccion=$cid $filtro  LIMIT 1");
+                $result_arch=sql_select("SELECT id,archivo FROM inspeccion_foto WHERE id_inspeccion=$cid $filtro  LIMIT 1");
            }else if($tipo=="servicio") {    
-            $result_arch=sql_select("SELECT id,archivo FROM servicio_foto WHERE id_servicio=$cid $filtro LIMIT 1");
+                $result_arch=sql_select("SELECT id,archivo FROM servicio_foto WHERE id_servicio=$cid $filtro LIMIT 1");
            }else if($tipo=="vehiculos_reparacion") {    
-            $result_arch=sql_select("SELECT foto FROM ventas WHERE id=$cid LIMIT 1");
+                $result_arch=sql_select("SELECT foto FROM ventas WHERE id=$cid LIMIT 1");
+           }else if($tipo=="vehiculos_reparacion_televentas") {    
+                $result_arch=sql_select("SELECT foto_televentas FROM ventas WHERE id=$cid LIMIT 1");                
            }else if($tipo=="foto_ventas") {    
-            $result_arch=sql_select("SELECT nombre_archivo FROM ventas_fotos WHERE id_venta=$cid and nombre_archivo=$arch LIMIT 1");
+                $result_arch=sql_select("SELECT nombre_archivo FROM ventas_fotos WHERE id_venta=$cid and nombre_archivo=$arch LIMIT 1");
            }
 
         if ($result_arch -> num_rows > 0) {
@@ -2079,11 +2287,13 @@ function borrar_foto_directorio($cid,$cod,$arch, $tipo) {
 
             if($tipo=="vehiculos_reparacion") {    
                 $filename = $row['foto'];
+            }else if($tipo=="vehiculos_reparacion_televentas") {
+                $filename = $row['foto_televentas'];
             }else if($tipo=="foto_ventas") {
-                    $filename = $row['nombre_archivo'];
+                $filename = $row['nombre_archivo'];
             }else
             {
-                    $filename = $row['archivo'];
+                $filename = $row['archivo'];
             }
 
            if($filename=="" or $filename==null) {

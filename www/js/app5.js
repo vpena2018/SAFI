@@ -195,6 +195,88 @@ function popupWeb(titulo, contenidoHtml) {
 }
 
 
+function popupconfirmar(titulo, mensaje, onSi) {
+
+    if (document.getElementById('popupSimple')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'popupSimple';
+    overlay.style = `
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,.45);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        z-index:9999;
+    `;
+
+    overlay.innerHTML = `
+        <div style="
+            background:#fff;
+            border-radius:12px;
+            padding:20px;
+            width:340px;
+            box-shadow:0 6px 18px rgba(0,0,0,.3);
+            font-family:Arial, sans-serif;
+        ">
+            <div style="
+                font-weight:bold;
+                font-size:16px;
+                margin-bottom:10px;
+            ">
+                ${titulo}
+            </div>
+
+            <div style="
+                font-size:14px;
+                margin-bottom:18px;
+                color:#333;
+            ">
+                ${mensaje}
+            </div>
+
+            <div style="text-align:right;">
+
+                <button id="btnSiSimple" style="
+                    background:#0d6efd;
+                    color:#fff;
+                    border:none;
+                    border-radius:6px;
+                    padding:7px 16px;
+                    cursor:pointer;
+                    font-weight:bold;
+                ">Sí</button>
+
+				<button id="btnNoSimple" style="
+                    background:#6c757d;
+                    color:#fff;
+                    border:none;
+                    border-radius:6px;
+                    padding:7px 14px;
+                    cursor:pointer;
+                    margin-right:8px;
+                ">No</button>
+
+
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('btnNoSimple').onclick = () => overlay.remove();
+
+    document.getElementById('btnSiSimple').onclick = () => {
+        overlay.remove();
+        if (typeof onSi === 'function') onSi();
+    };
+}
+
+
+
+
+
 
 function MostrarNotafinal(checkbox,accion) {
 
@@ -303,6 +385,62 @@ function cargando(mostrar){
 	} else {
 		swal.close();
 	}
+}
+
+function procesarAsync(url, forma, adicional) {
+    return new Promise((resolve) => {
+
+        const flagFormaVentas = forma === 'forma_ventas';
+
+        $("#" + forma + " .xfrm").addClass("disabled");
+        cargando(true);
+
+        const datos = $("#" + forma).serialize();
+
+        $.post(url, datos)
+            .done(function (json) {
+
+                // 🔹 Respuesta válida
+                if (Array.isArray(json) && json.length > 0) {
+
+                    // ❌ Error de negocio
+                    if (json[0].pcode == 0) {
+                        resolve({
+                            ok: false,
+                            msg: json[0].pmsg
+                        });
+                        return;
+                    }
+
+                    // ✅ Éxito
+                    if (json[0].pcode == 1) {
+                        $("#" + forma + ' #id').val(json[0].pcid);
+
+                        resolve({
+                            ok: true,
+                            msg: json[0].pmsg
+                        });
+                        return;
+                    }
+                }
+
+                // ❌ Respuesta inválida
+                resolve({
+                    ok: false,
+                    msg: 'Respuesta inválida del servidor'
+                });
+            })
+            .fail(function () {
+                resolve({
+                    ok: false,
+                    msg: 'Error de comunicación con el servidor'
+                });
+            })
+            .always(function () {
+                cargando(false);
+                $("#" + forma + " .xfrm").removeClass("disabled");
+            });
+    });
 }
 
 

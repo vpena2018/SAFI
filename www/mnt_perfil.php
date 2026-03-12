@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once ('include/framework.php');
 //pagina_permiso(xxx);
 
@@ -42,7 +42,7 @@ if ($accion=="g") {
 		if ($_REQUEST['npword']<>$_REQUEST['npword2']) {
 				$verror.="La contraseña no coincide con la confirmación";
 			} else {
-		if(strlen($_REQUEST['npword']) < 6) {$verror="La contraseña debe contener al menos 6 letras o numeros";}
+		$verror.=validar_politica_password($_REQUEST['npword']);
 		}
 	}
 
@@ -69,6 +69,9 @@ if ($accion=="g") {
 	if ($result!=false){
 		$stud_arr[0]["pcode"] = 1;
     	$stud_arr[0]["pmsg"] ="Guardado";
+        if ($_REQUEST['modc']=="1") {
+            $_SESSION["force_pwd_change"] = 0;
+        }
 	}
 
 } else {

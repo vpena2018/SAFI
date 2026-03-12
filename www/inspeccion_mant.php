@@ -1,11 +1,45 @@
-<?php
+﻿<?php
 
 require_once ('include/framework.php');
 pagina_permiso(22);
 
+function safi_guardar_png_temporal_desde_dataurl($dataUrl, $rutaSalida) {
+  $valor = trim((string)$dataUrl);
+  if ($valor === '' || strpos($valor, 'data:image/png;base64,') !== 0) {
+    return false;
+  }
+  $base64 = substr($valor, strlen('data:image/png;base64,'));
+  if ($base64 === '') {
+    return false;
+  }
+  $binario = base64_decode($base64, true);
+  if ($binario === false || strlen($binario) < 64) {
+    return false;
+  }
+  return file_put_contents($rutaSalida, $binario) !== false;
+}
+
+function safi_es_texto_simple($valor) {
+  return preg_match('/^[A-Za-zÁÉÍÓÚáéíóúÑñ ]*$/u', (string)$valor) === 1;
+}
+
+function safi_longitud_texto($valor) {
+  $texto = trim((string)$valor);
+  if (function_exists('mb_strlen')) {
+    return mb_strlen($texto, 'UTF-8');
+  }
+  return strlen($texto);
+}
+
+function safi_es_numeracion_llanta_valida($valor) {
+  return preg_match('/^[0-9]{3}\/[0-9]{2}[A-Za-z][0-9]{2}$/', (string)$valor) === 1;
+}
+
 
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="";}
 $cid=0;
+$now_fecha = date('Y-m-d');
+$now_hora  = date('H:i');
 
 $disable_sec1='';
 $disable_sec2='';
@@ -26,6 +60,7 @@ $visible_modificar=' oculto';
 $kilometraje_minimo=0;
 $detalles="";
 $detalles2="";
+$cliente=0;
 
 if (isset($_REQUEST['ti'])) { $tipo_insp = $_REQUEST['ti']; } else   {$tipo_insp ="1";}
 if (isset($_REQUEST['tie'])) { $tipo_insp_especial = $_REQUEST['tie']; } else   {$tipo_insp_especial ="";}
@@ -126,6 +161,97 @@ if ($accion=="g") {
       $sqlcampos_detalle="";
 
       $lbl_estado="";
+
+      // Validacion backend: kilometraje actual no puede ser menor al anterior
+      if (isset($_REQUEST["kilometraje_entrada"])) {
+        $km_entrada = intval($_REQUEST["kilometraje_entrada"]);
+        $km_referencia = 0;
+
+        if (isset($_REQUEST["kilometraje_minimo"])) {
+          $km_referencia = intval($_REQUEST["kilometraje_minimo"]);
+        }
+
+        if ($km_entrada > 0 and $km_referencia > 0 and $km_entrada < $km_referencia) {
+          $verror = "El Kilometraje no puede ser menor al kilometraje anterior";
+        }
+      }
+
+      if ($verror=="") {
+        $campos_marca_llanta_requeridos = array(
+          "llanta_delantera_izq" => "Delantera Izquierda",
+          "llanta_trasera_izq" => "Trasera Izquierda",
+          "llanta_repuesto" => "Llanta de Repuesto",
+          "llanta_trasera_der" => "Trasera Derecha",
+          "llanta_delantera_der" => "Delantera Derecha"
+        );
+
+        foreach ($campos_marca_llanta_requeridos as $campo_marca => $etiqueta_marca) {
+          $valor_marca = isset($_REQUEST[$campo_marca]) ? trim((string)$_REQUEST[$campo_marca]) : '';
+          if ($valor_marca === '' || !safi_es_texto_simple($valor_marca)) {
+            $verror = "Marca de llanta invalida en " . $etiqueta_marca . ". Solo se permiten letras.";
+            break;
+          }
+          if (safi_longitud_texto($valor_marca) < 5) {
+            $verror = "Marca de llanta invalida en " . $etiqueta_marca . ". Debe tener minimo 5 caracteres.";
+            break;
+          }
+        }
+      }
+
+      if ($verror=="") {
+        $campos_marca_llanta_opcionales = array(
+          "llanta_extra1" => "Extra 1",
+          "llanta_extra2" => "Extra 2"
+        );
+
+        foreach ($campos_marca_llanta_opcionales as $campo_marca => $etiqueta_marca) {
+          $valor_marca = isset($_REQUEST[$campo_marca]) ? trim((string)$_REQUEST[$campo_marca]) : '';
+          if ($valor_marca === '') {
+            continue;
+          }
+          if (!safi_es_texto_simple($valor_marca)) {
+            $verror = "Marca de llanta invalida en " . $etiqueta_marca . ". Solo se permiten letras.";
+            break;
+          }
+          if (safi_longitud_texto($valor_marca) < 5) {
+            $verror = "Marca de llanta invalida en " . $etiqueta_marca . ". Debe tener minimo 5 caracteres.";
+            break;
+          }
+        }
+      }
+
+      if ($verror=="") {
+        $campos_num_llanta_requeridos = array(
+          "llanta_delantera_izq_num" => "Delantera Izquierda",
+          "llanta_trasera_izq_num" => "Trasera Izquierda",
+          "llanta_repuesto_num" => "Llanta de Repuesto",
+          "llanta_trasera_der_num" => "Trasera Derecha",
+          "llanta_delantera_der_num" => "Delantera Derecha"
+        );
+
+        foreach ($campos_num_llanta_requeridos as $campo_num => $etiqueta_num) {
+          $valor_num = isset($_REQUEST[$campo_num]) ? trim((string)$_REQUEST[$campo_num]) : '';
+          if ($valor_num === '' || !safi_es_numeracion_llanta_valida($valor_num)) {
+            $verror = "Numeracion de llanta invalida en " . $etiqueta_num . ". Debe tener formato 000/00R00.";
+            break;
+          }
+        }
+      }
+
+      if ($verror=="") {
+        $campos_num_llanta_opcionales = array(
+          "llanta_extra1_num" => "Extra 1",
+          "llanta_extra2_num" => "Extra 2"
+        );
+
+        foreach ($campos_num_llanta_opcionales as $campo_num => $etiqueta_num) {
+          $valor_num = isset($_REQUEST[$campo_num]) ? trim((string)$_REQUEST[$campo_num]) : '';
+          if ($valor_num !== '' && !safi_es_numeracion_llanta_valida($valor_num)) {
+            $verror = "Numeracion de llanta invalida en " . $etiqueta_num . ". Debe tener formato 000/00R00.";
+            break;
+          }
+        }
+      }
 
       
       if (isset($_REQUEST["id_empresa"])) { $sqlcampos.= "  id_empresa =".GetSQLValue($_REQUEST["id_empresa"],"int"); } 
@@ -289,11 +415,12 @@ if ($accion=="g") {
             $sqlcampos.= " , id_estado =".GetSQLValue($nuevo_estado,"int");
             $sqlcampos.= " , id_usuario_completado =".$_SESSION["usuario_id"];
             $actualizarkm=true;
-        }else{
+      }else{
             $lbl_estado="Revision ADPC";
             $sqlcampos.= " , fecha_auditado =NOW()";            
             $sqlcampos.= " , id_usuario_auditado =".$_SESSION["usuario_id"]; 
-            $sqlcampos.= " , observaciones_adpc =".GetSQLValue($_REQUEST["observaciones_adpc"],"text");  
+            $obs_adpc = isset($_REQUEST["observaciones_adpc"]) ? $_REQUEST["observaciones_adpc"] : "";
+            $sqlcampos.= " , observaciones_adpc =".GetSQLValue($obs_adpc,"text");  
         }
       } 
      
@@ -352,21 +479,45 @@ if ($accion=="g") {
             // $sql="INSERT INTO manifiesto_guia_detalle SET guia_id=".GetSQLValue($cid,"int").$sqlcampos_detalle." ";
             // $result_detalle = sql_insert($sql);
             
-        }
+            }
         //actualizar Km
-        if($actualizarkm==true) {sql_update("UPDATE producto SET km=".GetSQLValue($_REQUEST["kilometraje_entrada"],"int")."  WHERE id=".GetSQLValue($_REQUEST["id_producto"],"int"));}
+        $km_entrada_upd = isset($_REQUEST["kilometraje_entrada"]) ? $_REQUEST["kilometraje_entrada"] : 0;
+        $id_producto_upd = isset($_REQUEST["id_producto"]) ? $_REQUEST["id_producto"] : 0;
+        if($actualizarkm==true and !es_nulo($id_producto_upd)) {
+          sql_update("UPDATE producto SET km=".GetSQLValue($km_entrada_upd,"int")."  WHERE id=".GetSQLValue($id_producto_upd,"int"));
+        }
                   
           $stud_arr[0]["pcode"] = 1;
           $stud_arr[0]["pmsg"] ="Guardado";
           $stud_arr[0]["pcid"] = $cid;
 
           if ($enviar_orden_email==true) {
-              require_once ('correo_inspeccion_pdf.php');
+                $tmpDir = app_dir.'reportes/tmp_inspeccion/'.intval($cid).'/';
+                if (!is_dir($tmpDir)) {
+                  @mkdir($tmpDir, 0755, true);
+                }
+
+                $numeroArchivo = isset($numero) ? intval($numero) : intval(get_dato_sql('inspeccion', 'numero', ' WHERE id='.intval($cid)));
+                if ($numeroArchivo > 0 && is_dir($tmpDir)) {
+                  if (isset($_REQUEST['pdfimg1'])) {
+                    safi_guardar_png_temporal_desde_dataurl($_REQUEST['pdfimg1'], $tmpDir.'Inspeccion_'.$numeroArchivo.'_pdfimg1.png');
+                  }
+                  if (isset($_REQUEST['pdffirma1'])) {
+                    safi_guardar_png_temporal_desde_dataurl($_REQUEST['pdffirma1'], $tmpDir.'Inspeccion_'.$numeroArchivo.'_pdffirma1.png');
+                  }
+                  if (isset($_REQUEST['pdffirma2'])) {
+                    safi_guardar_png_temporal_desde_dataurl($_REQUEST['pdffirma2'], $tmpDir.'Inspeccion_'.$numeroArchivo.'_pdffirma2.png');
+                  }
+                }
+
+                sql_insert("INSERT INTO cola_correo_inspeccion (id_inspeccion, numero, estado, fecha_creado) 
+                           VALUES (".intval($cid).", ".intval($numeroArchivo).", 0, NOW())");
+      
               ///Valido el vehiculo con el cliente de Ventas de carro usado CVU
               if (isset($_REQUEST['cliente_id'])){                
                   $clienteCvu=substr(get_dato_sql("entidad","codigo_alterno"," WHERE id=".GetSQLValue($_REQUEST["cliente_id"],"int")),0,4);    
-                  if ($clienteCvu=="CVU-") {
-                    sql_update("UPDATE ventas SET id_inspeccion=".$cid."  WHERE id_producto=".GetSQLValue($_REQUEST["id_producto"],"int"));     
+                  if ($clienteCvu=="CVU-" and !es_nulo($id_producto_upd)) {
+                    sql_update("UPDATE ventas SET id_inspeccion=".$cid."  WHERE id_producto=".GetSQLValue($id_producto_upd,"int"));     
                   }
               }                
           }
@@ -468,7 +619,7 @@ if ($nuevoreg==true) {
             if($tipo_doc=='1') { 
               //Entrada
               if (es_nulo($row_ult_entrada['lasalida'])) {
-                //**Deshabilitado temporalmente: Cuando lo reactivemos (yo le avisaría) lo mejor es que el cambio no fuera retroactivo, es decir que considere los cambios desde la fecha de reactivación en adelante, si fuera posible
+                //**Deshabilitado temporalmente: Cuando lo reactivemos (yo le avisarÃ­a) lo mejor es que el cambio no fuera retroactivo, es decir que considere los cambios desde la fecha de reactivación en adelante, si fuera posible
                 // $valerror=mensaje("No puede crear una nueva Hoja de Inspección porque existe una Hoja de Inspección de ENTRADA que aun no ha sido recibida, para continuar debe completar estas  Hojas de Inspección o borrarlas",'warning');
                 // $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspección</a>';
                }
@@ -476,13 +627,13 @@ if ($nuevoreg==true) {
                 //Salida
                 //$codigo_insp_ant
                 if (!es_nulo($row_ult_entrada['lasalida']) and $row_ult_entrada['lasalida']==$codigo_insp_ant) {
-                  //**Deshabilitado temporalmente: Cuando lo reactivemos (yo le avisaría) lo mejor es que el cambio no fuera retroactivo, es decir que considere los cambios desde la fecha de reactivación en adelante, si fuera posible
+                  //**Deshabilitado temporalmente: Cuando lo reactivemos (yo le avisarÃ­a) lo mejor es que el cambio no fuera retroactivo, es decir que considere los cambios desde la fecha de reactivación en adelante, si fuera posible
                   // $valerror=mensaje("No puede crear una nueva Hoja de Inspección porque existe una Hoja de Inspección de SALIDA que ya fue completada",'warning');
                   // $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspección</a>';
                 }
 
                 if(es_nulo($row_ult_entrada['lasalida']) and $row_ult_entrada['tipo_inspeccion']<>$tipo_insp){
-                  //**Deshabilitado temporalmente: Cuando lo reactivemos (yo le avisaría) lo mejor es que el cambio no fuera retroactivo, es decir que considere los cambios desde la fecha de reactivación en adelante, si fuera posible
+                  //**Deshabilitado temporalmente: Cuando lo reactivemos (yo le avisarÃ­a) lo mejor es que el cambio no fuera retroactivo, es decir que considere los cambios desde la fecha de reactivación en adelante, si fuera posible
                   // $valerror=mensaje("No puede crear una nueva Hoja de Inspección porque difiere el tipo de inspeccion RENTA/TALLER",'warning');
                   // $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspección</a>';
                 }
@@ -743,7 +894,7 @@ if ($nuevoreg==true) {
       $kilometraje_minimo= $row_anterior["kilometraje_entrada"];
       $plantilla_vehiculo= $row_anterior["plantilla_vehiculo"]; 
       $combustible_tipo= $row_anterior["combustible_tipo"];
-      $llanta_delantera_izq= $row_anterior["llanta_delantera_izq"]; 
+      /*$llanta_delantera_izq= $row_anterior["llanta_delantera_izq"]; 
       $llanta_delantera_izq_num= $row_anterior["llanta_delantera_izq_num"]; 
       $llanta_delantera_der= $row_anterior["llanta_delantera_der"]; 
       $llanta_delantera_der_num= $row_anterior["llanta_delantera_der_num"];
@@ -762,7 +913,7 @@ if ($nuevoreg==true) {
       $llanta_delantera_izq_cali= $row_anterior["llanta_delantera_izq_cali"]; 
       $llanta_delantera_der_cali= $row_anterior["llanta_delantera_der_cali"]; 
       $llanta_trasera_der_cali= $row_anterior["llanta_trasera_der_cali"]; 
-      $llanta_trasera_izq_cali= $row_anterior["llanta_trasera_izq_cali"];
+      $llanta_trasera_izq_cali= $row_anterior["llanta_trasera_izq_cali"];*/
 
       $bateria_marca= $row_anterior["bateria_marca"]; 
       $bateria_num= $row_anterior["bateria_num"]; 
@@ -1037,7 +1188,7 @@ if ($id_estado>=2 ) { //completado solo ver
               ?>
             </div>
             <div class="col-md-4"> 
-              <?php // echo campo("renta_estacion","Estación Dueña",'text',$renta_estacion,' ',$disable_sec1); 
+              <?php // echo campo("renta_estacion","Estación DueÃ±a",'text',$renta_estacion,' ',$disable_sec1); 
                ?>
             </div>
 
@@ -1370,31 +1521,31 @@ if ($id_estado>=2 ) { //completado solo ver
           <div class="row"> 
             <div class="col-md">  
             <u>Delantera Izquierda</u>     
-              <p> <?php echo campo("llanta_delantera_izq","Marca",'text',$llanta_delantera_izq,' ',$disable_sec4 .' required');?>  </p>
+              <p> <?php echo campo("llanta_delantera_izq","Marca",'text',$llanta_delantera_izq,' ',$disable_sec4 .' required minlength="5"');?>  </p>
               <p> <?php echo campo("llanta_delantera_izq_num","Numeración",'text',$llanta_delantera_izq_num,' ',$disable_sec4 .' required');?>  </p>              
               <p> <?php echo campo("llanta_delantera_izq_cali","Calibración",$visible_sec5,$llanta_delantera_izq_cali,' ',$disable_sec4 .' required');?>  </p>
             </div>
             <div class="col-md">  
             <u>Trasera Izquierda</u>     
-              <p> <?php echo campo("llanta_trasera_izq","Marca",'text',$llanta_trasera_izq,' ',$disable_sec4 .' required');?>  </p>
+              <p> <?php echo campo("llanta_trasera_izq","Marca",'text',$llanta_trasera_izq,' ',$disable_sec4 .' required minlength="5"');?>  </p>
               <p> <?php echo campo("llanta_trasera_izq_num","Numeración",'text',$llanta_trasera_izq_num,' ',$disable_sec4 .' required');?>  </p>              
               <p> <?php echo campo("llanta_trasera_izq_cali","Calibración",$visible_sec5,$llanta_trasera_izq_cali,' ',$disable_sec4 .' required');?>  </p>
               <a href="#" class="btn btn-sm <?php echo $visible_sec4; ?>" onclick="insp_copiar_llantas(); return false;" ><i class="fa fa-copy"></i> Copiar Todos</a>
             </div>
             <div class="col-md bg-light">  
             <u>Llanta de Repuesto</u>    
-              <p> <?php echo campo("llanta_repuesto","Marca",'text',$llanta_repuesto,' ',$disable_sec4 .' required');?>  </p>
+              <p> <?php echo campo("llanta_repuesto","Marca",'text',$llanta_repuesto,' ',$disable_sec4 .' required minlength="5"');?>  </p>
               <p> <?php echo campo("llanta_repuesto_num","Numeración",'text',$llanta_repuesto_num,' ',$disable_sec4 .' required');?>  </p>              
             </div>
             <div class="col-md">  
             <u>Trasera Derecha</u>     
-              <p> <?php echo campo("llanta_trasera_der","Marca",'text',$llanta_trasera_der,' ',$disable_sec4 .' required');?>  </p>
+              <p> <?php echo campo("llanta_trasera_der","Marca",'text',$llanta_trasera_der,' ',$disable_sec4 .' required minlength="5"');?>  </p>
               <p> <?php echo campo("llanta_trasera_der_num","Numeración",'text',$llanta_trasera_der_num,' ',$disable_sec4 .' required');?>  </p>              
               <p> <?php echo campo("llanta_trasera_der_cali","Calibración",$visible_sec5,$llanta_trasera_der_cali,' ',$disable_sec4 .' required');?>  </p>
             </div>
             <div class="col-md">  
               <u>Delantera Derecha</u>      
-              <p> <?php echo campo("llanta_delantera_der","Marca",'text',$llanta_delantera_der,' ',$disable_sec4 .' required');?>  </p>
+              <p> <?php echo campo("llanta_delantera_der","Marca",'text',$llanta_delantera_der,' ',$disable_sec4 .' required minlength="5"');?>  </p>
               <p> <?php echo campo("llanta_delantera_der_num","Numeración",'text',$llanta_delantera_der_num,' ',$disable_sec4 .' required');?>  </p>
               <p> <?php echo campo("llanta_delantera_der_cali","Calibración",$visible_sec5,$llanta_delantera_der_cali,' ',$disable_sec4 .' required');?>  </p>
               <a href="#" class="btn btn-sm <?php echo $visible_sec4; ?>" onclick="$('#llanta_extra').show(); return false;" ><i class="fa fa-plus"></i> Llantas adicionales</a>
@@ -1406,13 +1557,13 @@ if ($id_estado>=2 ) { //completado solo ver
           <div  class="row">
             <div class="col-md">  
               <u>Extra 1</u>      
-              <p> <?php echo campo("llanta_extra1","Marca",'text',$llanta_extra1,' ',$disable_sec4 .' ');?>  </p>
+              <p> <?php echo campo("llanta_extra1","Marca",'text',$llanta_extra1,' ',$disable_sec4 .' minlength="5"');?>  </p>
               <p> <?php echo campo("llanta_extra1_num","Numeración",'text',$llanta_extra1_num,' ',$disable_sec4 .' ');?>  </p>
             </div>
 
             <div class="col-md">  
               <u>Extra 2</u>      
-              <p> <?php echo campo("llanta_extra2","Marca",'text',$llanta_extra2,' ',$disable_sec4 .' ');?>  </p>
+              <p> <?php echo campo("llanta_extra2","Marca",'text',$llanta_extra2,' ',$disable_sec4 .' minlength="5"');?>  </p>
               <p> <?php echo campo("llanta_extra2_num","Numeración",'text',$llanta_extra2_num,' ',$disable_sec4 .' ');?>  </p>
             </div>
 
@@ -1433,7 +1584,7 @@ if ($id_estado>=2 ) { //completado solo ver
 
       <div class="card mb-3">
         <div class="card-header  bg-secondary text-white ">
-            Marca y Numeración de Batería
+            Marca y Numeración de Bateria
         </div>
         <div class="card-body">   
 
@@ -1571,7 +1722,9 @@ if ($tipo_inspeccion=='2'){ // TALLER
           <?php //  ?>
           <div class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top ">
             <a href="#" onclick="procesar_inspeccion('inspeccion_mant.php?a=g&gg_est=1','forma','1'); return false;" class="btn btn-outline-secondary mr-2 mb-2 xfrm <?php echo $visible_guardar; ?>" ><i class="fa fa-check"></i> Guardar Borrador</a>
-            <a href="#" onclick="procesar_inspeccion('inspeccion_mant.php?a=g&gg_est=2','forma','2'); return false;" class="btn btn-primary mr-2 mb-2 xfrm <?php echo $visible_guardar; ?>" ><i class="fa fa-check "></i> Guardar Completado</a>
+            <?php if (!es_nulo($numero)) { ?>
+              <a href="#" onclick="procesar_inspeccion('inspeccion_mant.php?a=g&gg_est=2','forma','2'); return false;" class="btn btn-primary mr-2 mb-2 xfrm <?php echo $visible_guardar; ?>" ><i class="fa fa-check "></i> Guardar Completado</a>
+            <?php } ?>
             <?php if (tiene_permiso(163)) { ?>
                  <a href="#" onclick="procesar_inspeccion('inspeccion_mant.php?a=g&gg_est=0','forma','0'); return false;" class="btn btn-primary mr-2 mb-2 xfrm <?php echo $visible_auditar; ?>" ><i class="fa fa-check "></i>Revision ADPC</a>
             <?php } ?>
@@ -1586,7 +1739,7 @@ if ($tipo_inspeccion=='2'){ // TALLER
                }
             ?>
             <?php if ($id_estado==2 or $id_estado==3) { ?>
-                <a href="#" onclick="insp_crear_averia(); return false;" class="btn btn-outline-secondary mr-2 mb-2"><i class="fa fa-plus"></i> Crear Avería</a>
+                <a href="#" onclick="insp_crear_averia(); return false;" class="btn btn-outline-secondary mr-2 mb-2"><i class="fa fa-plus"></i> Crear AverÃ­a</a>
                 <?php if ($tipo_inspeccion==2) {?>
                       <a href="#" onclick="insp_crear_servicio(); return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-plus"></i> Crear Orden de Servicio</a>
                 <?php }
@@ -2170,7 +2323,6 @@ function procesar_inspeccion_foto(campo){
 
 
 		
-		
 	
 		
 }
@@ -2188,6 +2340,79 @@ function insp_copiar_llantas(){
     $("#llanta_repuesto").val(nombre);
     $("#llanta_repuesto_num").val(numero);
 }
+
+function insp_es_marca_llanta_valida(valor) {
+  return /^[A-Za-zÁÉÍÓÚáéíóúÑñ ]*$/.test(valor);
+}
+
+function insp_limpiar_marca_llanta(valor) {
+  return valor.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ ]+/g, '');
+}
+
+function insp_validar_marcas_llanta() {
+  var idsMarca = [
+    'llanta_delantera_izq',
+    'llanta_trasera_izq',
+    'llanta_repuesto',
+    'llanta_trasera_der',
+    'llanta_delantera_der',
+    'llanta_extra1',
+    'llanta_extra2'
+  ];
+
+  for (var i = 0; i < idsMarca.length; i++) {
+    var valor = $('#' + idsMarca[i]).val() || '';
+    if (!insp_es_marca_llanta_valida(valor)) {
+      mytoast('warning','En Marca de llanta solo se permiten letras',3000);
+      $('#' + idsMarca[i]).focus();
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function insp_es_numeracion_llanta_valida(valor) {
+  return /^[0-9]{3}\/[0-9]{2}[A-Za-z][0-9]{2}$/.test(valor);
+}
+
+function insp_validar_numeracion_llantas() {
+  var requeridos = [
+    'llanta_delantera_izq_num',
+    'llanta_trasera_izq_num',
+    'llanta_repuesto_num',
+    'llanta_trasera_der_num',
+    'llanta_delantera_der_num'
+  ];
+
+  for (var i = 0; i < requeridos.length; i++) {
+    var valorReq = (($('#' + requeridos[i]).val() || '') + '').trim();
+    if (!insp_es_numeracion_llanta_valida(valorReq)) {
+      mytoast('warning','La numeracion de llanta debe tener formato 000/00R00',3000);
+      $('#' + requeridos[i]).focus();
+      return false;
+    }
+  }
+
+  var opcionales = ['llanta_extra1_num', 'llanta_extra2_num'];
+  for (var j = 0; j < opcionales.length; j++) {
+    var valorOpc = (($('#' + opcionales[j]).val() || '') + '').trim();
+    if (valorOpc !== '' && !insp_es_numeracion_llanta_valida(valorOpc)) {
+      mytoast('warning','La numeracion de llanta debe tener formato 000/00R00',3000);
+      $('#' + opcionales[j]).focus();
+      return false;
+    }
+  }
+
+  return true;
+}
+
+$(document).on('input', '#llanta_delantera_izq,#llanta_trasera_izq,#llanta_repuesto,#llanta_trasera_der,#llanta_delantera_der,#llanta_extra1,#llanta_extra2', function() {
+  var limpio = insp_limpiar_marca_llanta($(this).val() || '');
+  if ($(this).val() !== limpio) {
+    $(this).val(limpio);
+  }
+});
 
 function insp_crear_servicio(){
 //   if (isset($_REQUEST['ins'])) { $id_inspeccion = intval($_REQUEST['ins']); }
@@ -2232,7 +2457,7 @@ if (ccl!=null) {
   var cnb="";
 }
   
-  get_page('pagina','averia_mant_nuevo.php?ins='+inspid+'&num='+inspnum+'&pid='+pid+'&ccl='+ccl+'&km='+km+'&cnb='+encodeURI(cnb)+addicionales,'Nueva Orden de Avería - Inspeccion #'+inspnum) ; 
+  get_page('pagina','averia_mant_nuevo.php?ins='+inspid+'&num='+inspnum+'&pid='+pid+'&ccl='+ccl+'&km='+km+'&cnb='+encodeURI(cnb)+addicionales,'Nueva Orden de AverÃ­a - Inspeccion #'+inspnum) ; 
 			
 }
 
@@ -2355,7 +2580,19 @@ var validation = Array.prototype.filter.call(forms, function(form) {
             mytoast('warning','Los valores de calibracion de las llantas son incorrectos ',3000) ;
             validado=false;  
         } 
-    }    
+    }
+
+    if (validado==true) {
+      if (insp_validar_marcas_llanta()==false) {
+        validado=false;
+      }
+    }
+
+    if (validado==true) {
+      if (insp_validar_numeracion_llantas()==false) {
+        validado=false;
+      }
+    }
 
     if (adicional=='1'){ //borrador
 
@@ -2380,7 +2617,6 @@ var validation = Array.prototype.filter.call(forms, function(form) {
           validado=false;
           }    
         }   
-        
         if (validado==true) {
           if ($("#cliente_contacto").val()=='') {
           mytoast('warning','Debe ingresar el Nombre del contacto',3000) ;
@@ -2432,6 +2668,12 @@ var validation = Array.prototype.filter.call(forms, function(form) {
  
  if(validado==true) {
     $("#"+forma+" .xfrm").addClass("disabled");		  
+    var $btnProcesar = $("#"+forma+" .xfrm[onclick*='procesar_inspeccion']");
+    $btnProcesar.each(function() {
+      $(this).data('txt-original', $(this).html());
+      $(this).html('<i class="fa fa-spinner fa-pulse"></i> Procesando...');
+    });
+
     cargando(true); 
   
     canvas.includeDefaultValues = false;
@@ -2443,41 +2685,54 @@ var validation = Array.prototype.filter.call(forms, function(form) {
 
     var datos=$("#"+forma).serialize();
 
-     $.post( url,datos, function(json) {
-         
-    if (json.length > 0) {
-      if (json[0].pcode == 0) {
+    $.ajax({
+      url: url,
+      type: 'POST',
+      data: datos,
+      dataType: 'json',
+      timeout: 60000
+    })
+    .done(function(json) {
+      if (json.length > 0) {
+        if (json[0].pcode == 0) {
           cargando(false);
-          mytoast('error',json[0].pmsg,3000) ;   
-      }
-      if (json[0].pcode == 1) {
-         cargando(false);
-        
-        // printJS('<?php echo app_host; ?>impr_label.php?cid='+json[0].pcid);
-        var alertar_taller='';
-        <?php 
-        if ($nuevoreg==true and $tipo_insp==2 and $tipo_doc==1) {
-          echo "alertar_taller='&alertar=1';";
+          mytoast('error',json[0].pmsg,3000) ;
         }
-        ?>
-        get_page('pagina','inspeccion_mant.php?a=v&cid='+json[0].pcid + alertar_taller,'Hoja de Inspección',false) ; 
-        mytoast('success',json[0].pmsg,3000) ;
-        
-         
-      
+        if (json[0].pcode == 1) {
+          cargando(false);
+
+          // printJS('<?php echo app_host; ?>impr_label.php?cid='+json[0].pcid);
+          var alertar_taller='';
+          <?php 
+          if ($nuevoreg==true and $tipo_insp==2 and $tipo_doc==1) {
+            echo "alertar_taller='&alertar=1';";
+          }
+          ?>
+          get_page('pagina','inspeccion_mant.php?a=v&cid='+json[0].pcid + alertar_taller,'Hoja de Inspección',false) ;
+          mytoast('success',json[0].pmsg,3000) ;
+        }
+      } else {
+        cargando(false);
+        mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar");
       }
-    } else {cargando(false);  mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar");}
-    
-  })
-  .done(function() {
-   
-  })
+    })
   .fail(function(xhr, status, error) {
-       cargando(false); mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar");
+       cargando(false);
+       if (status==='timeout') {
+         mymodal('error',"Error de conexión","Tiempo de espera agotado al guardar. Verifique su conexión y vuelva a intentar");
+       } else {
+         mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar");
+       }
   })
   .always(function() {
    
     $("#"+forma+" .xfrm").removeClass("disabled");	
+    $btnProcesar.each(function() {
+      var textoOriginal = $(this).data('txt-original');
+      if (textoOriginal !== undefined) {
+        $(this).html(textoOriginal);
+      }
+    });
   });
     
     
@@ -2588,3 +2843,4 @@ function insp_canvas_zoom(inout='IN',valor=2){
 
 
 </script>
+
