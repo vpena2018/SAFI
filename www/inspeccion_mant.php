@@ -39,6 +39,11 @@ function safi_es_celular_valido($valor) {
   return preg_match('/^[0-9\+\-\s\(\)]{7,35}$/', (string)$valor) === 1;
 }
 
+function safi_cliente_prefijo_actarv($codigoCliente) {
+  $codigo = strtoupper(trim((string)$codigoCliente));
+  return (strpos($codigo, 'CCO') === 0);
+}
+
 
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="";}
 $cid=0;
@@ -284,18 +289,42 @@ if ($accion=="g") {
           $id_cliente_req = intval($_REQUEST["cliente_id"]);
           if ($id_cliente_req > 0) {
             $codigo_cliente_req = strtoupper(trim((string)get_dato_sql("entidad","codigo_alterno"," WHERE id=".$id_cliente_req)));
-            if (strpos($codigo_cliente_req, 'CCO') === 0) {
+            if (safi_cliente_prefijo_actarv($codigo_cliente_req)) {
               $cliente_prefijo_cco_req = true;
             }
           }
         }
 
-        // Obligatorio al completar cuando sea Renta+Salida o cliente con prefijo CCO.
-        if ($estado_guardar==2 && (($tipo_insp_req==1 && $tipo_doc_req==2) || $cliente_prefijo_cco_req)) {
+        if ($estado_guardar==2 && (!isset($_REQUEST["cliente_id"]) || intval($_REQUEST["cliente_id"])<=0)) {
+          $verror = "Debe seleccionar el cliente para completar la Hoja de Inspeccion";
+        }
+
+        // Respaldo: cuando cliente_id no venga resuelto en el POST, validar por el texto del cliente.
+        if (!$cliente_prefijo_cco_req && isset($_REQUEST["nombre_cliente"])) {
+          $cliente_prefijo_cco_req = safi_cliente_prefijo_actarv($_REQUEST["nombre_cliente"]);
+        }
+
+        // Obligatorio solo al completar para clientes con prefijo CCO.
+        if ($estado_guardar==2 && $cliente_prefijo_cco_req) {
           if (!isset($_REQUEST["actarv_celular"]) || es_nulo(trim((string)$_REQUEST["actarv_celular"]))) {
             $verror = "Debe ingresar Celular en Datos de Acta de Recepcion del Vehiculo";
           } elseif (!isset($_REQUEST["actarv_foto_licencia"]) || es_nulo(trim((string)$_REQUEST["actarv_foto_licencia"]))) {
             $verror = "Debe adjuntar Foto Licencia en Datos de Acta de Recepcion del Vehiculo";
+          }
+        }
+
+        if ($estado_guardar==2 && !$cliente_prefijo_cco_req) {
+          $campos_actarv_req = array(
+            "actarv_asignado_depto",
+            "actarv_jefe_depto",
+            "actarv_celular",
+            "actarv_foto_licencia"
+          );
+          foreach ($campos_actarv_req as $campo_actarv_req) {
+            if (isset($_REQUEST[$campo_actarv_req]) && !es_nulo(trim((string)$_REQUEST[$campo_actarv_req]))) {
+              $verror = "No se permite ingresar Datos de Acta de Recepcion para clientes sin prefijo CCO";
+              break;
+            }
           }
         }
       }
@@ -1059,11 +1088,11 @@ if ($id_estado>=2 ) { //completado solo ver
 $cliente_prefijo_cco = false;
 if (!es_nulo($cliente_id)) {
   $codigo_cliente_actarv = strtoupper(trim((string)get_dato_sql("entidad","codigo_alterno"," WHERE id=".intval($cliente_id))));
-  if (strpos($codigo_cliente_actarv, 'CCO') === 0) {
+  if (safi_cliente_prefijo_actarv($codigo_cliente_actarv)) {
     $cliente_prefijo_cco = true;
   }
 }
-$mostrar_actarv = (($tipo_inspeccion==1 and $tipo_doc==2) || $cliente_prefijo_cco);
+$mostrar_actarv = $cliente_prefijo_cco;
 
 
 ?>
@@ -2617,8 +2646,7 @@ function insp_cliente_es_prefijo_cco() {
 }
 
 function insp_aplica_actarv() {
-  var esRentaSalida = <?php echo (($tipo_inspeccion=='1' and $tipo_doc=='2') ? 'true' : 'false'); ?>;
-  return esRentaSalida || insp_cliente_es_prefijo_cco();
+  return insp_cliente_es_prefijo_cco();
 }
 
 function insp_toggle_actarv() {
@@ -2763,12 +2791,12 @@ var validation = Array.prototype.filter.call(forms, function(form) {
     }
     if (adicional=='2'){ //Completado
 
-      // if (validado==true) {
-      //   if ($("#cliente_id").val()=='' || $("#cliente_id").val()=='0' || $("#cliente_id").val()==null) {
-      //   mytoast('warning','Debe seleccionar el cliente',3000) ;
-      //   validado=false;
-      //   }           
-      // }
+      if (validado==true) {
+        if ($("#cliente_id").val()=='' || $("#cliente_id").val()=='0' || $("#cliente_id").val()==null) {
+          mytoast('warning','Debe seleccionar el cliente',3000) ;
+          validado=false;
+        }           
+      }
                 
 
    
