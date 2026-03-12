@@ -791,7 +791,7 @@ if ($accion=="g") {
 <?php  
     
     if ($foto=='') {  echo campo_upload("foto","Adjuntar comprobante de pago",'upload','', '  ','',4,8,'NO',false ); }                   
-    if ($foto_televentas=='') {  echo campo_upload("foto_televentas","Adjuntar de Chat TeleVentas",'upload','', '  ','',4,8,'NO',false ); }                   
+    if ($foto_televentas=='') {  echo campo_upload("foto_televentas","Adjuntar recibo de pago",'upload','', '  ','',4,8,'NO',false ); }                   
 
 ?>
 </div>
@@ -801,8 +801,8 @@ if ($accion=="g") {
   <?php
   if ($foto<>'') {
      $fext = substr($foto, -3);
-            if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif' or $fext=='pdf') {    
-                $ruta1 = 'uploa_d/' . $foto;           
+            if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {    
+                /*$ruta1 = 'uploa_d/' . $foto;           
                 if (file_exists($ruta1)) {
                     $onclick = 'mostrar_foto(\'' . $foto . '\'); return false;';
                     $src= 'uploa_d/thumbnail/'.$foto;
@@ -813,9 +813,9 @@ if ($accion=="g") {
                 echo '  <a href="#" onclick="'.$onclick.'" ><img class="img  img-thumbnail mb-3 mr-3" src="'.$src.'" data-cod="'.$row["id"].'"></a> ';
                // if ($fecha<'2025-10-01'){                   
                     //echo '  <a href="#" onclick="mostrar_foto2(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="aws_bucket_s3/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
-               // }else{
-                //    echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';                   
-                //
+               // }else{*/
+                echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';                   
+                
                 if(tiene_permiso(168))  { echo '  <a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="ventas_dfoto(1); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';}
             } else {                
                 echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
@@ -823,8 +823,8 @@ if ($accion=="g") {
   }
    if ($foto_televentas<>'') {
       $fext = substr($foto_televentas, -3);
-            if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif' or $fext=='pdf') {   
-                $ruta1 = 'uploa_d/' . $foto_televentas;           
+            if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {   
+                /*$ruta1 = 'uploa_d/' . $foto_televentas;           
                 if (file_exists($ruta1)) {
                     $onclick = 'mostrar_foto(\'' . $foto_televentas . '\'); return false;';
                     $src= 'uploa_d/thumbnail/'.$foto_televentas;
@@ -835,9 +835,8 @@ if ($accion=="g") {
                 echo '  <a href="#" onclick="'.$onclick.'" ><img class="img  img-thumbnail mb-3 mr-3" src="'.$src.'" data-cod="'.$row["id"].'"></a> ';
                 //if ($fecha<'2025-10-01'){                   
                  //    echo '  <a href="#" onclick="mostrar_foto2(\''.$foto_televentas.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="aws_bucket_s3/thumbnail/'.$foto_televentas.'" data-cod="'.$row["id"].'"></a> ';
-                //}else{
-                //    echo '  <a href="#" onclick="mostrar_foto(\''.$foto_televentas.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto_televentas.'" data-cod="'.$row["id"].'"></a> ';                   
-                //}
+                //}else{*/
+                echo '  <a href="#" onclick="mostrar_foto(\''.$foto_televentas.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto_televentas.'" data-cod="'.$row["id"].'"></a> ';                                   
                 if(tiene_permiso(168))  { echo '  <a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="ventas_dfoto(2); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';}
             } else {                
                 echo '  <a href="uploa_d/'.$foto_televentas.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto_televentas.'</a> ';
