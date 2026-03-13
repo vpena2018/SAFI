@@ -35,6 +35,15 @@ function safi_es_numeracion_llanta_valida($valor) {
   return preg_match('/^[0-9]{3}\/[0-9]{2}[A-Za-z][0-9]{2}$/', (string)$valor) === 1;
 }
 
+function safi_es_celular_valido($valor) {
+  return preg_match('/^[0-9\+\-\s\(\)]{7,35}$/', (string)$valor) === 1;
+}
+
+function safi_cliente_prefijo_actarv($codigoCliente) {
+  $codigo = strtoupper(trim((string)$codigoCliente));
+  return (strpos($codigo, 'CCO') === 0);
+}
+
 
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="";}
 $cid=0;
@@ -253,6 +262,73 @@ if ($accion=="g") {
         }
       }
 
+      if ($verror=="" && isset($_REQUEST["actarv_celular"])) {
+        $valor_celular = trim((string)$_REQUEST["actarv_celular"]);
+        if ($valor_celular !== '' && !safi_es_celular_valido($valor_celular)) {
+          $verror = "Celular invalido en Acta de Recepcion. Solo se permiten numeros y los simbolos + - ( )";
+        }
+      }
+
+      if ($verror=="" && $nuevoreg==false && isset($_REQUEST["actarv_foto_licencia"])) {
+        $estado_actual_inspeccion = intval(get_dato_sql("inspeccion","id_estado"," WHERE id=".intval($elcodigo)));
+        if ($estado_actual_inspeccion>=2) {
+          $foto_actual_inspeccion = trim((string)get_dato_sql("inspeccion","actarv_foto_licencia"," WHERE id=".intval($elcodigo)));
+          $foto_recibida = trim((string)$_REQUEST["actarv_foto_licencia"]);
+          if ($foto_recibida !== $foto_actual_inspeccion) {
+            $verror = "No se permite subir o cambiar Foto Licencia cuando la Hoja de Inspeccion esta completada";
+          }
+        }
+      }
+
+      if ($verror=="") {
+        $tipo_insp_req = isset($_REQUEST["tipo_inspeccion"]) ? intval($_REQUEST["tipo_inspeccion"]) : 0;
+        $tipo_doc_req = isset($_REQUEST["tipo_doc"]) ? intval($_REQUEST["tipo_doc"]) : 0;
+        $estado_guardar = isset($_REQUEST["gg_est"]) ? intval($_REQUEST["gg_est"]) : 0;
+        $cliente_prefijo_cco_req = false;
+        if (isset($_REQUEST["cliente_id"])) {
+          $id_cliente_req = intval($_REQUEST["cliente_id"]);
+          if ($id_cliente_req > 0) {
+            $codigo_cliente_req = strtoupper(trim((string)get_dato_sql("entidad","codigo_alterno"," WHERE id=".$id_cliente_req)));
+            if (safi_cliente_prefijo_actarv($codigo_cliente_req)) {
+              $cliente_prefijo_cco_req = true;
+            }
+          }
+        }
+
+        if ($estado_guardar==2 && (!isset($_REQUEST["cliente_id"]) || intval($_REQUEST["cliente_id"])<=0)) {
+          $verror = "Debe seleccionar el cliente para completar la Hoja de Inspeccion";
+        }
+
+        // Respaldo: cuando cliente_id no venga resuelto en el POST, validar por el texto del cliente.
+        if (!$cliente_prefijo_cco_req && isset($_REQUEST["nombre_cliente"])) {
+          $cliente_prefijo_cco_req = safi_cliente_prefijo_actarv($_REQUEST["nombre_cliente"]);
+        }
+
+        // Obligatorio solo al completar para clientes con prefijo CCO.
+        if ($estado_guardar==2 && $cliente_prefijo_cco_req) {
+          if (!isset($_REQUEST["actarv_celular"]) || es_nulo(trim((string)$_REQUEST["actarv_celular"]))) {
+            $verror = "Debe ingresar Celular en Datos de Acta de Recepcion del Vehiculo";
+          } elseif (!isset($_REQUEST["actarv_foto_licencia"]) || es_nulo(trim((string)$_REQUEST["actarv_foto_licencia"]))) {
+            $verror = "Debe adjuntar Foto Licencia en Datos de Acta de Recepcion del Vehiculo";
+          }
+        }
+
+        if ($estado_guardar==2 && !$cliente_prefijo_cco_req) {
+          $campos_actarv_req = array(
+            "actarv_asignado_depto",
+            "actarv_jefe_depto",
+            "actarv_celular",
+            "actarv_foto_licencia"
+          );
+          foreach ($campos_actarv_req as $campo_actarv_req) {
+            if (isset($_REQUEST[$campo_actarv_req]) && !es_nulo(trim((string)$_REQUEST[$campo_actarv_req]))) {
+              $verror = "No se permite ingresar Datos de Acta de Recepcion para clientes sin prefijo CCO";
+              break;
+            }
+          }
+        }
+      }
+
       
       if (isset($_REQUEST["id_empresa"])) { $sqlcampos.= "  id_empresa =".GetSQLValue($_REQUEST["id_empresa"],"int"); } 
        
@@ -328,6 +404,10 @@ if ($accion=="g") {
       if (isset($_REQUEST["grua"])) { $sqlcampos.= " , grua =".GetSQLValue($_REQUEST["grua"],"int"); } 
       if (isset($_REQUEST["grua_orden"])) { $sqlcampos.= " , grua_orden =".GetSQLValue($_REQUEST["grua_orden"],"text"); } 
       if (isset($_REQUEST["grua_factura"])) { $sqlcampos.= " , grua_factura =".GetSQLValue($_REQUEST["grua_factura"],"text"); } 
+      if (isset($_REQUEST["actarv_asignado_depto"])) { $sqlcampos.= " , actarv_asignado_depto =".GetSQLValue($_REQUEST["actarv_asignado_depto"],"text"); }
+      if (isset($_REQUEST["actarv_jefe_depto"])) { $sqlcampos.= " , actarv_jefe_depto =".GetSQLValue($_REQUEST["actarv_jefe_depto"],"text"); }
+      if (isset($_REQUEST["actarv_celular"])) { $sqlcampos.= " , actarv_celular =".GetSQLValue($_REQUEST["actarv_celular"],"text"); }
+      if (isset($_REQUEST["actarv_foto_licencia"])) { $sqlcampos.= " , actarv_foto_licencia =".GetSQLValue($_REQUEST["actarv_foto_licencia"],"text"); }
       if (isset($_REQUEST["observaciones"])) { $sqlcampos.= " , observaciones =".GetSQLValue($_REQUEST["observaciones"],"text"); } 
      
       if (isset($_REQUEST["trabajo_realizar"])) { $sqlcampos.= " , trabajo_realizar =".GetSQLValue($_REQUEST["trabajo_realizar"],"text"); } 
@@ -403,6 +483,28 @@ if ($accion=="g") {
                   }
                 }
               */
+
+              $cliente_prefijo_cco_completar = false;
+              if (isset($_REQUEST["cliente_id"])) {
+                $id_cliente_completar = intval($_REQUEST["cliente_id"]);
+                if ($id_cliente_completar > 0) {
+                  $codigo_cliente_completar = get_dato_sql("entidad","codigo_alterno"," WHERE id=".$id_cliente_completar);
+                  $cliente_prefijo_cco_completar = safi_cliente_prefijo_actarv($codigo_cliente_completar);
+                }
+              }
+              if (!$cliente_prefijo_cco_completar && isset($_REQUEST["nombre_cliente"])) {
+                $cliente_prefijo_cco_completar = safi_cliente_prefijo_actarv($_REQUEST["nombre_cliente"]);
+              }
+
+              if ($cliente_prefijo_cco_completar) {
+                $foto_actarv_completar = isset($_REQUEST["actarv_foto_licencia"]) ? trim((string)$_REQUEST["actarv_foto_licencia"]) : '';
+                if (es_nulo($foto_actarv_completar)) {
+                  $stud_arr[0]["pmsg"] ="Debe adjuntar Foto Licencia en Datos de Acta de Recepcion del Vehiculo";
+                  salida_json($stud_arr);
+                  exit;
+                }
+              }
+
               $lbl_estado="Completado";
 
               // enviar email a cliente 
@@ -749,6 +851,10 @@ if (isset($row["bateria_num"])) {$bateria_num= $row["bateria_num"]; } else {$bat
 if (isset($row["grua"])) {$grua= $row["grua"]; } else {$grua= "0";}
 if (isset($row["grua_orden"])) {$grua_orden= $row["grua_orden"]; } else {$grua_orden= "";}
 if (isset($row["grua_factura"])) {$grua_factura= $row["grua_factura"]; } else {$grua_factura= "";}
+if (isset($row["actarv_asignado_depto"])) {$actarv_asignado_depto= $row["actarv_asignado_depto"]; } else {$actarv_asignado_depto= "";}
+if (isset($row["actarv_jefe_depto"])) {$actarv_jefe_depto= $row["actarv_jefe_depto"]; } else {$actarv_jefe_depto= "";}
+if (isset($row["actarv_celular"])) {$actarv_celular= $row["actarv_celular"]; } else {$actarv_celular= "";}
+if (isset($row["actarv_foto_licencia"])) {$actarv_foto_licencia= $row["actarv_foto_licencia"]; } else {$actarv_foto_licencia= "";}
 if (isset($row["observaciones"])) {$observaciones= $row["observaciones"]; } else {$observaciones= "";}
 
 if (isset($row["trabajo_realizar"])) {$trabajo_realizar= $row["trabajo_realizar"]; } else {$trabajo_realizar= "";}
@@ -968,6 +1074,7 @@ $empresa_logo ="nd";
 if ($id_empresa==1) {$empresa_logo ="hertz";}
 if ($id_empresa==2) {$empresa_logo ="dollar";}
 if ($id_empresa==3) {$empresa_logo ="thrifty";}
+if ($id_empresa==4) {$empresa_logo ="carshop";}
 
 if ($tipo_inspeccion==1 and $tipo_doc==2){
    $visible_sec5='hidden'; 
@@ -1000,6 +1107,15 @@ if ($id_estado>=2 ) { //completado solo ver
        $visible_auditar=' oculto'; 
     }
  }
+
+$cliente_prefijo_cco = false;
+if (!es_nulo($cliente_id)) {
+  $codigo_cliente_actarv = strtoupper(trim((string)get_dato_sql("entidad","codigo_alterno"," WHERE id=".intval($cliente_id))));
+  if (safi_cliente_prefijo_actarv($codigo_cliente_actarv)) {
+    $cliente_prefijo_cco = true;
+  }
+}
+$mostrar_actarv = $cliente_prefijo_cco;
 
 
 ?>
@@ -1658,6 +1774,47 @@ if ($tipo_inspeccion=='2'){ // TALLER
 
         </div>
       </div>      
+
+      <div id="card_actarv" class="card mb-3 <?php echo $mostrar_actarv ? '' : 'oculto'; ?>">
+        <div class="card-header  bg-secondary text-white ">
+            Datos de Acta de Recepcion del Vehiculo
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md">
+              <?php echo campo("actarv_asignado_depto","Asignado Depto",'text',$actarv_asignado_depto,' ',' maxlength="200" '.$disable_sec7); ?>
+            </div>
+            <div class="col-md">
+              <?php echo campo("actarv_jefe_depto","Jefe Depto",'text',$actarv_jefe_depto,' ',' maxlength="200" '.$disable_sec7); ?>
+            </div>
+            <div class="col-md">
+              <?php echo campo("actarv_celular","Celular",'text',$actarv_celular,' ',' maxlength="35" pattern="[0-9\+\-\s\(\)]{7,35}" title="Use numeros y opcionalmente + - ( )" '.$disable_sec7); ?>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md">
+              <?php
+                if ($id_estado>=2) {
+                  if ($actarv_foto_licencia=='') {
+                    echo '<div class="alert alert-light border">No se permite subir Foto Licencia cuando la Hoja de Inspeccion esta completada.</div>';
+                  } else {
+                    echo campo_upload("actarv_foto_licencia","Foto Licencia",'upload',$actarv_foto_licencia, '  ','',4,8,'NO',false );
+                  }
+                } else {
+                  if ($actarv_foto_licencia=='') {
+                    echo '<div id="archivofoto_actarv">';
+                    echo campo_upload("actarv_foto_licencia","Foto Licencia",'upload','', '  ','',4,8,'NO',false );
+                    echo '</div>';
+                  } else {
+                    echo campo_upload("actarv_foto_licencia","Foto Licencia",'upload',$actarv_foto_licencia, '  ','',4,8,'SI',false );
+                  }
+                }
+              ?>
+            </div>
+          </div>
+        </div>
+      </div>
    
       <div class="card mb-3">
         <div class="card-header  bg-secondary text-white ">
@@ -2464,10 +2621,65 @@ if (ccl!=null) {
 
 
 function insp_actualizar_email_cliente(){
+  var dataCliente = $('#cliente_id').select2('data');
+  if (dataCliente && dataCliente.length > 0) {
+    var email = dataCliente[0].email || '';
+    var texto = dataCliente[0].text || '';
+    $('#cliente_email').val(email);
+    $('#nombre_cliente').val(texto);
+  }
+  insp_toggle_actarv();
+}
 
-  var emailcliente=$('#cliente_id').select2('data')[0];
+function insp_guardar_foto(arch,campo){
+  $('#'+campo).val(arch);
+  $('#files_'+campo).text('Guardado');
+  $('#lk'+campo).html(arch);
+}
 
-  $('#cliente_email').val(emailcliente.email);
+function mostrar_foto(imagen){
+  if (!imagen) {
+    mytoast('warning','No hay archivo para mostrar',2500);
+    return;
+  }
+
+  var ruta = 'uploa_d/' + imagen;
+  var ext = (imagen.split('.').pop() || '').toLowerCase();
+  var esImagen = ['jpg','jpeg','png','gif','webp','bmp'].indexOf(ext) >= 0;
+
+  if (esImagen) {
+    Swal.fire({ imageUrl: ruta });
+    return;
+  }
+
+  window.open(ruta, '_blank');
+}
+
+function insp_cliente_es_prefijo_cco() {
+  var texto = '';
+  var dataCliente = $('#cliente_id').select2('data');
+  if (dataCliente && dataCliente.length > 0 && dataCliente[0].text) {
+    texto = dataCliente[0].text;
+  }
+  if (texto === '') {
+    texto = $('#nombre_cliente').val() || '';
+  }
+  texto = $.trim(texto).toUpperCase();
+  return texto.indexOf('CCO') === 0;
+}
+
+function insp_aplica_actarv() {
+  return insp_cliente_es_prefijo_cco();
+}
+
+function insp_toggle_actarv() {
+  var aplica = insp_aplica_actarv();
+  if (aplica) {
+    $('#card_actarv').removeClass('oculto');
+  } else {
+    $('#card_actarv').addClass('oculto');
+  }
+  $('#actarv_celular').prop('required', aplica);
 }
 
 
@@ -2493,6 +2705,7 @@ function insp_cambiar_logo() {
   if (valempresa==1) {empresa_logo ="hertz";}
   if (valempresa==2) {empresa_logo ="dollar";}
   if (valempresa==3) {empresa_logo ="thrifty";}
+  if (valempresa==4) {empresa_logo ="carshop";}
   $('#id_empresa').val(valempresa);
   $('#ins_logo_empresa').attr("src", "img/"+empresa_logo+".jpg"); 
 
@@ -2602,12 +2815,12 @@ var validation = Array.prototype.filter.call(forms, function(form) {
     }
     if (adicional=='2'){ //Completado
 
-      // if (validado==true) {
-      //   if ($("#cliente_id").val()=='' || $("#cliente_id").val()=='0' || $("#cliente_id").val()==null) {
-      //   mytoast('warning','Debe seleccionar el cliente',3000) ;
-      //   validado=false;
-      //   }           
-      // }
+      if (validado==true) {
+        if ($("#cliente_id").val()=='' || $("#cliente_id").val()=='0' || $("#cliente_id").val()==null) {
+          mytoast('warning','Debe seleccionar el cliente',3000) ;
+          validado=false;
+        }           
+      }
                 
 
    
@@ -2643,6 +2856,20 @@ var validation = Array.prototype.filter.call(forms, function(form) {
        
        <?php }     
        ?>
+
+        if (validado==true && insp_aplica_actarv()) {
+          if ($("#actarv_celular").val()=='') {
+            mytoast('warning','Debe ingresar Celular',3000) ;
+            validado=false;
+          }
+        }
+
+        if (validado==true && insp_aplica_actarv()) {
+          if ($("#actarv_foto_licencia").val()=='' || $("#actarv_foto_licencia").val()==null) {
+            mytoast('warning','Debe adjuntar Foto Licencia',3000) ;
+            validado=false;
+          }
+        }
 
         if (validado==true) {
           // imagenes para pdf          
@@ -2840,6 +3067,8 @@ function insp_canvas_zoom(inout='IN',valor=2){
       $('#insp_btn_zoomout').removeClass('btn-danger');
   }
 }
+
+insp_toggle_actarv();
 
 
 </script>
