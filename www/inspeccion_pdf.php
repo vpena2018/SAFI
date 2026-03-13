@@ -173,6 +173,8 @@ class MYPDF extends TCPDF {
                 $image_file = 'img/inglosa.jpg';
                 if ($empresa==1) { $image_file = 'img/hertz.jpg';}
                 if ($empresa==2) { $image_file = 'img/dollar.jpg';}
+                if ($empresa==3) { $image_file = 'img/thrifty.jpg';}
+                if ($empresa==4) { $image_file = 'img/carshop.jpg';}
                  
                 if ($image_file<>"") {$this->Image($image_file, 8, 5, 26, '', 'JPEG', '', 'T', false, 300, '', false, false, 0, false, false, false);}
                 
