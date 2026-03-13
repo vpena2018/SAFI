@@ -103,6 +103,7 @@ if (!es_nulo($cid)) {
     ,producto.nombre AS producto_nombre
     ,producto.codigo_alterno as producto_alterno
     ,usuario.nombre as elusuario
+    ,producto.placa as producto_placa
     FROM inspeccion
     LEFT OUTER JOIN entidad ON (inspeccion.cliente_id=entidad.id)
     LEFT OUTER JOIN producto ON (inspeccion.id_producto =producto.id)
@@ -251,7 +252,7 @@ $pdf->AddPage();
     $pdf->SetFont('', '',8);
 
     $left_column = '<b>Datos del Cliente / Customer Information:</b> <br>'.$row['cliente_nombre'].'<br>'.$row['cliente_contacto'];
-    $right_column = '<b>Datos del Vehiculo / Vehicle Details:</b> <br>'.$row['producto_nombre'].'<br><b>No. </b>'.$row['producto_alterno'];
+    $right_column = '<b>Datos del Vehiculo / Vehicle Details:</b> <br>'.$row['producto_nombre'].'<br><b>No. </b>'.$row['producto_alterno'].'<b> Placa </b>'.$row['producto_placa'];
         
         $pdf->writeHTMLCell(100, '', '', $pdf->getY(), $left_column, 0, 0, 1, true, '', true);
         $pdf->writeHTMLCell(100, '', '', '', $right_column, 0, 1, 1, true, '', true);
