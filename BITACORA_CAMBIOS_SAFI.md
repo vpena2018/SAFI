@@ -66,6 +66,7 @@ Registro cronologico de cambios funcionales y tecnicos aplicados al sistema.
   - Para clientes sin prefijo `CCO`, se bloquea el ingreso de datos del Acta al completar.
   - Refuerzo adicional: en `Guardar Completado`, la validacion de Acta usa fallback por `nombre_cliente` cuando `cliente_id` no viene resuelto en el POST, evitando que se omita la validacion de Foto Licencia para prefijo `CCO`.
   - Refuerzo adicional: se habilito validacion obligatoria de cliente al `Guardar Completado` (frontend y backend).
+  - Refuerzo adicional: se blindo la validacion de `actarv_foto_licencia` en el punto de `gg_est=2` (completar), para cliente con prefijo `CCO`, con bloqueo inmediato en backend si falta la foto.
 
 ### Modulo Vehiculos/Ventas
 - Archivo: www/dashboard_vendedor_negociacion.php
