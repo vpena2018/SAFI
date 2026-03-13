@@ -17,16 +17,10 @@ SELECT
     vcd.id AS id_detalle
 
 FROM ventas_contratos vc
-
 LEFT JOIN ventas_contratos_detalle vcd 
     ON vcd.id_contrato = vc.id_contrato
-
 WHERE vc.id_venta = $cid
-
-
-GROUP BY vc.id_contrato
-
-ORDER BY vc.fecha_contrato DESC
+ORDER BY vc.fecha_contrato DESC;
 
 ");
 

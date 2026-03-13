@@ -461,7 +461,7 @@ function convertirDocxAPdf(string $docxPath): string
         $tmpDir = sys_get_temp_dir();
         appLog('TMP DIR: ' . $tmpDir);
 
-        $soffice = getSofficeCommandDev();
+        $soffice = getSofficeCommandProd();
         appLog('SOFFICE: ' . $soffice);
 
         $cmd = $soffice .
