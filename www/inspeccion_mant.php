@@ -285,6 +285,7 @@ if ($accion=="g") {
         $tipo_doc_req = isset($_REQUEST["tipo_doc"]) ? intval($_REQUEST["tipo_doc"]) : 0;
         $estado_guardar = isset($_REQUEST["gg_est"]) ? intval($_REQUEST["gg_est"]) : 0;
         $cliente_prefijo_cco_req = false;
+        $aplica_actarv_req = false;
         if (isset($_REQUEST["cliente_id"])) {
           $id_cliente_req = intval($_REQUEST["cliente_id"]);
           if ($id_cliente_req > 0) {
@@ -304,8 +305,10 @@ if ($accion=="g") {
           $cliente_prefijo_cco_req = safi_cliente_prefijo_actarv($_REQUEST["nombre_cliente"]);
         }
 
-        // Obligatorio solo al completar para clientes con prefijo CCO.
-        if ($estado_guardar==2 && $cliente_prefijo_cco_req) {
+        $aplica_actarv_req = ($tipo_insp_req==1 && $tipo_doc_req==2 && $cliente_prefijo_cco_req);
+
+        // Obligatorio solo al completar para Renta+Salida y clientes con prefijo CCO.
+        if ($estado_guardar==2 && $aplica_actarv_req) {
           if (!isset($_REQUEST["actarv_celular"]) || es_nulo(trim((string)$_REQUEST["actarv_celular"]))) {
             $verror = "Debe ingresar Celular en Datos de Acta de Recepcion del Vehiculo";
           } elseif (!isset($_REQUEST["actarv_foto_licencia"]) || es_nulo(trim((string)$_REQUEST["actarv_foto_licencia"]))) {
@@ -313,7 +316,7 @@ if ($accion=="g") {
           }
         }
 
-        if ($estado_guardar==2 && !$cliente_prefijo_cco_req) {
+        if ($estado_guardar==2 && !$aplica_actarv_req) {
           $campos_actarv_req = array(
             "actarv_asignado_depto",
             "actarv_jefe_depto",
@@ -496,7 +499,11 @@ if ($accion=="g") {
                 $cliente_prefijo_cco_completar = safi_cliente_prefijo_actarv($_REQUEST["nombre_cliente"]);
               }
 
-              if ($cliente_prefijo_cco_completar) {
+              $tipo_insp_completar = isset($_REQUEST["tipo_inspeccion"]) ? intval($_REQUEST["tipo_inspeccion"]) : 0;
+              $tipo_doc_completar = isset($_REQUEST["tipo_doc"]) ? intval($_REQUEST["tipo_doc"]) : 0;
+              $aplica_actarv_completar = ($tipo_insp_completar==1 && $tipo_doc_completar==2 && $cliente_prefijo_cco_completar);
+
+              if ($aplica_actarv_completar) {
                 $foto_actarv_completar = isset($_REQUEST["actarv_foto_licencia"]) ? trim((string)$_REQUEST["actarv_foto_licencia"]) : '';
                 if (es_nulo($foto_actarv_completar)) {
                   $stud_arr[0]["pmsg"] ="Debe adjuntar Foto Licencia en Datos de Acta de Recepcion del Vehiculo";
@@ -1115,7 +1122,7 @@ if (!es_nulo($cliente_id)) {
     $cliente_prefijo_cco = true;
   }
 }
-$mostrar_actarv = $cliente_prefijo_cco;
+$mostrar_actarv = ($cliente_prefijo_cco && intval($tipo_inspeccion)==1 && intval($tipo_doc)==2);
 
 
 ?>
@@ -2669,7 +2676,9 @@ function insp_cliente_es_prefijo_cco() {
 }
 
 function insp_aplica_actarv() {
-  return insp_cliente_es_prefijo_cco();
+  var tipoInspeccion = parseInt($('#tipo_inspeccion').val() || '0', 10);
+  var tipoDoc = parseInt($('#tipo_doc').val() || '0', 10);
+  return insp_cliente_es_prefijo_cco() && tipoInspeccion === 1 && tipoDoc === 2;
 }
 
 function insp_toggle_actarv() {
