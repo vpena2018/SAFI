@@ -680,12 +680,13 @@ if ($aplica_actarv_pdf) {
     $pdf->Cell($header_w, $row_bottom_h, 'ACTA DE RECEPCION DE VEHICULO', 0, 1, 'C');
 
     $pdf->SetY($header_y + $row_top_h + $row_bottom_h + 4);
-    $pdf->SetFont('helvetica', 'B', 18);
+    $pdf->SetFont('helvetica', 'B', 16);
     $pdf->Cell(0, 7, 'ACTA DE RECEPCION DE VEHICULO', 0, 1, 'C');
     $pdf->Ln(6);
 
-    $pdf->SetFont('helvetica', '', 10);
-    $pdf->MultiCell(0, 6, 'POR ESTE MEDIO DOY FE DE RECIBIR DE LA EMPRESA INVERSIONES GLOBALES S.A. EN CALIDAD DE ARRENDAMIENTO, EL VEHICULO CON SIGUIENTES CARACTERISTICAS:', 0, 'J', false, 1);
+    $pdf->SetFont('helvetica', '', 9);
+    $pdf->MultiCell(0, 6, 'POR ESTE MEDIO DOY FE DE RECIBIR DE LA EMPRESA INVERSIONES GLOBALES S.A.', 0, 'J', false, 1);
+    $pdf->MultiCell(0, 6, 'EN CALIDAD DE ARRENDAMIENTO, EL VEHICULO CON SIGUIENTES CARACTERISTICAS:', 0, 'J', false, 1);
     $pdf->Ln(6);  
   
     $pdf->SetFillColor(243, 243, 243);
@@ -754,18 +755,18 @@ if ($aplica_actarv_pdf) {
         $pdf->Cell(0, 10, 'No se adjunto foto de licencia.', 1, 1, 'L', false);
     }
 
-    $pdf->Ln(3);
+    $pdf->Ln(8);
     $pdf->SetFont('helvetica', 'B', 8);
     $pdf->SetX(12);
     $alto_firma = 11;
-    $ancho_label_firma = 58;
+    $ancho_label_firma = 47;
     $ancho_area_firma = 62;
     $pdf->Cell($ancho_label_firma, $alto_firma, 'Firma Cliente :', 0, 0, 'L', false);
     $x_area_firma = $pdf->GetX();
     $y_area_firma = $pdf->GetY();
 
-    $x_firma_img = $x_area_firma + 5;
-    $y_firma_img = $y_area_firma - 7;
+    $x_firma_img = $x_area_firma - 1;
+    $y_firma_img = $y_area_firma - 4;
     $ancho_firma_img = 28;
     $alto_firma_img = 16;
 
@@ -774,7 +775,7 @@ if ($aplica_actarv_pdf) {
         $pdf->Image('@'.$imgfirma_cliente_acta, $x_firma_img, $y_firma_img, $ancho_firma_img, $alto_firma_img, '', '', '', false, 300, '', false, false, 0, true, false, false);
     }
 
-    $x_raya_firma = $x_area_firma + 6;
+    $x_raya_firma = $x_area_firma - 1;
     $ancho_raya_firma = $ancho_area_firma - 10;
     $y_raya_firma = $y_area_firma + $alto_firma - 1;
     $pdf->Line($x_raya_firma, $y_raya_firma, $x_raya_firma + $ancho_raya_firma, $y_raya_firma);
