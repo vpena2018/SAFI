@@ -1,6 +1,10 @@
 # Bitacora de cambios
 
 ## 2026-03-14
+- Se agrego campo `id_adpc_categoria` (combobox select2 filtrado por `tipo_documento=1` de la tabla `categoria`) antes de `observaciones_adpc` en `inspeccion_mant.php`, sección ADPC.
+- El campo se muestra y es requerido cuando el usuario tiene permiso 163 y `id_usuario_auditado` es nulo (primera revisión ADPC).
+- Cuando el usuario tiene permiso 163 y ya existe `id_usuario_auditado`, el campo se muestra pero sin obligatoriedad.
+- Se guarda en el UPDATE general y también en el bloque de guardado "Revision ADPC".
 - Se retiro el boton "Imprimir Acta RV" de la pantalla de inspeccion (`inspeccion_mant.php`).
 - Se elimino la funcion JavaScript `insp_imprimir_actarv()` para evitar impresion separada.
 - Se actualizo `inspeccion_pdf.php` para agregar al final del PDF una pagina de "Acta de Recepcion de Vehiculo" generada con TCPDF.
