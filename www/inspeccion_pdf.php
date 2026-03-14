@@ -754,18 +754,24 @@ if ($aplica_actarv_pdf) {
         $pdf->Cell(0, 10, 'No se adjunto foto de licencia.', 1, 1, 'L', false);
     }
 
-    $pdf->Ln(2);
+    $pdf->Ln(3);
     $pdf->SetFont('helvetica', 'B', 9);
-    $pdf->Cell(0, 6, 'Firma del Cliente', 1, 1, 'L', true);
-    $y_firma_inicio = $pdf->GetY();
+    $pdf->SetX(12);
+    $alto_firma = 16;
+    $ancho_label_firma = 40;
+    $ancho_linea_firma = 130;
+    $pdf->Cell($ancho_label_firma, $alto_firma, 'Firma del Cliente:', 0, 0, 'L', false);
+    $x_linea_firma = $pdf->GetX();
+    $y_linea_firma = $pdf->GetY();
+    $ancho_raya_firma = $ancho_linea_firma / 2;
+    $x_raya_firma = $x_linea_firma + (($ancho_linea_firma - $ancho_raya_firma) / 2);
+    $pdf->Line($x_raya_firma, $y_linea_firma + $alto_firma - 1.5, $x_raya_firma + $ancho_raya_firma, $y_linea_firma + $alto_firma - 1.5);
+
     $imgfirma_cliente_acta = get_base64_png_from_request('pdffirma1');
     if ($imgfirma_cliente_acta !== '') {
-        $pdf->Image('@'.$imgfirma_cliente_acta, 12, $y_firma_inicio + 2, 95, 25, '', '', '', false, 300, '', false, false, 0, true, false, false);
-        $pdf->SetY($y_firma_inicio + 30);
-    } else {
-        $pdf->SetFont('helvetica', '', 9);
-        $pdf->Cell(0, 10, 'No se adjunto firma del cliente.', 1, 1, 'L', false);
+        $pdf->Image('@'.$imgfirma_cliente_acta, $x_linea_firma + 1, $y_linea_firma + 1, $ancho_linea_firma - 2, $alto_firma - 2, '', '', '', false, 300, '', false, false, 0, true, false, false);
     }
+    $pdf->Ln($alto_firma + 3);
 
 }
 
