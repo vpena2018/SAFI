@@ -5,6 +5,8 @@
 - El campo se muestra y es requerido cuando el usuario tiene permiso 163 y `id_usuario_auditado` es nulo (primera revisión ADPC).
 - Cuando el usuario tiene permiso 163 y ya existe `id_usuario_auditado`, el campo se muestra pero sin obligatoriedad.
 - Se guarda en el UPDATE general y también en el bloque de guardado "Revision ADPC".
+- Se agrego campo `id_adpc_categoria` al modal de "Revision ADPC" en `servicio_mant.php`, usando `select2` con filtro `tipo_documento=2` de la tabla `adpc_categorias`.
+- En `servicio_mant.php` la primera revision ADPC ahora exige `id_adpc_categoria` y `observaciones_adpc` tanto en validacion JavaScript como en validacion del servidor.
 - Se retiro el boton "Imprimir Acta RV" de la pantalla de inspeccion (`inspeccion_mant.php`).
 - Se elimino la funcion JavaScript `insp_imprimir_actarv()` para evitar impresion separada.
 - Se actualizo `inspeccion_pdf.php` para agregar al final del PDF una pagina de "Acta de Recepcion de Vehiculo" generada con TCPDF.
