@@ -654,11 +654,7 @@ if ($aplica_actarv_pdf) {
     $pdf->Rect($header_x + $col_logo + $col_center, $header_y, $col_right, $row_top_h);
     $pdf->Rect($header_x, $header_y + $row_top_h, $header_w, $row_bottom_h);
 
-    $logo_acta = 'img/inglosa.jpg';
-    if ($empresa == 1) { $logo_acta = 'img/hertz.jpg'; }
-    if ($empresa == 2) { $logo_acta = 'img/dollar.jpg'; }
-    if ($empresa == 3) { $logo_acta = 'img/thrifty.jpg'; }
-    if ($empresa == 4) { $logo_acta = 'img/carshop.jpg'; }
+    $logo_acta = 'img/inglosa.jpg';    
     if (file_exists($logo_acta)) {
         $pdf->Image($logo_acta, $header_x + 2, $header_y + 2, $col_logo - 4, $row_top_h - 4, '', '', '', false, 300, '', false, false, 0, false, false, false);
     }
@@ -682,38 +678,47 @@ if ($aplica_actarv_pdf) {
     $pdf->SetY($header_y + $row_top_h + $row_bottom_h + 4);
     $pdf->SetFont('helvetica', 'B', 18);
     $pdf->Cell(0, 7, 'ACTA DE RECEPCION DE VEHICULO', 0, 1, 'C');
-    $pdf->Ln(1);
+    $pdf->Ln(6);
 
+    $pdf->SetFont('helvetica', '', 10);
+    $pdf->MultiCell(0, 6, 'POR ESTE MEDIO DOY FE DE RECIBIR DE LA EMPRESA INVERSIONES GLOBALES S.A. EN CALIDAD DE ARRENDAMIENTO, EL VEHICULO CON SIGUIENTES CARACTERISTICAS:', 0, 'J', false, 1);
+    $pdf->Ln(6);
+
+    /*
     $pdf->SetFont('helvetica', '', 9);
     $fecha_acta = !es_nulo($row['fecha_entrada']) ? $row['fecha_entrada'] : $row['fecha'];
     $hora_acta = !es_nulo($row['hora_entrada']) ? $row['hora_entrada'] : $row['hora'];
     $pdf->Cell(100, 5, 'Fecha: '.formato_fecha_pdf_seguro($fecha_acta), 0, 0, 'L');
     $pdf->Cell(0, 5, 'Hora: '.formato_solohora_de_mysql($hora_acta), 0, 1, 'R');
-
+   */
+  
     $pdf->SetFillColor(243, 243, 243);
-    $pdf->SetFont('helvetica', 'B', 9);
-    $pdf->Cell(50, 6, 'Cliente', 1, 0, 'L', true);
-    $pdf->SetFont('helvetica', '', 9);
-    $pdf->Cell(140, 6, (string)$row['cliente_nombre'], 1, 1, 'L', false);
+    $pdf->SetFont('helvetica', 'B', 10);
+    $w_marca = 43;
+    $w_tipo = 43;
+    $w_color = 34;
+    $w_placa = 34;
+    $w_registro = 36;
 
-    $pdf->SetFont('helvetica', 'B', 9);
-    $pdf->Cell(50, 6, 'Contacto', 1, 0, 'L', true);
-    $pdf->SetFont('helvetica', '', 9);
-    $pdf->Cell(140, 6, (string)$row['cliente_contacto'], 1, 1, 'L', false);
+    $pdf->Cell($w_marca, 7, 'MARCA', 1, 0, 'C', true);
+    $pdf->Cell($w_tipo, 7, 'TIPO', 1, 0, 'C', true);
+    $pdf->Cell($w_color, 7, 'COLOR', 1, 0, 'C', true);
+    $pdf->Cell($w_placa, 7, 'PLACA', 1, 0, 'C', true);
+    $pdf->Cell($w_registro, 7, 'REGISTRO #', 1, 1, 'C', true);
 
-    $pdf->SetFont('helvetica', 'B', 9);
-    $pdf->Cell(50, 6, 'Vehiculo', 1, 0, 'L', true);
-    $pdf->SetFont('helvetica', '', 9);
-    $pdf->Cell(140, 6, (string)$row['producto_nombre'], 1, 1, 'L', false);
+    $marca_acta = isset($row['producto_marca']) ? trim((string)$row['producto_marca']) : '';
+    $tipo_acta = trim((string)$row['producto_nombre']);
+    $color_acta = isset($row['producto_color']) ? trim((string)$row['producto_color']) : '';
+    $placa_acta = trim((string)$row['producto_placa']);
+    $registro_acta = trim((string)$row['producto_alterno']);
 
-    $pdf->SetFont('helvetica', 'B', 9);
-    $pdf->Cell(50, 6, 'No. Economico', 1, 0, 'L', true);
-    $pdf->SetFont('helvetica', '', 9);
-    $pdf->Cell(60, 6, (string)$row['producto_alterno'], 1, 0, 'L', false);
-    $pdf->SetFont('helvetica', 'B', 9);
-    $pdf->Cell(30, 6, 'Placa', 1, 0, 'L', true);
-    $pdf->SetFont('helvetica', '', 9);
-    $pdf->Cell(50, 6, (string)$row['producto_placa'], 1, 1, 'L', false);
+    $pdf->SetFont('helvetica', '', 10);
+    $pdf->Cell($w_marca, 9, $marca_acta, 1, 0, 'C', false);
+    $pdf->Cell($w_tipo, 9, $tipo_acta, 1, 0, 'C', false);
+    $pdf->Cell($w_color, 9, $color_acta, 1, 0, 'C', false);
+    $pdf->Cell($w_placa, 9, $placa_acta, 1, 0, 'C', false);
+    $pdf->Cell($w_registro, 9, $registro_acta, 1, 1, 'C', false);
+    $pdf->Ln(2);
 
     $pdf->SetFont('helvetica', 'B', 9);
     $pdf->Cell(50, 6, 'Asignado Depto', 1, 0, 'L', true);
