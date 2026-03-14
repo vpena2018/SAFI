@@ -105,6 +105,10 @@ if (!es_nulo($cid)) {
     ,producto.codigo_alterno as producto_alterno
     ,usuario.nombre as elusuario
     ,producto.placa as producto_placa
+    ,producto.marca as producto_marca
+    ,producto.color as producto_color
+    ,producto.modelo as producto_modelo
+    ,producto.tipo_vehiculo as producto_tipo_vehiculo
     FROM inspeccion
     LEFT OUTER JOIN entidad ON (inspeccion.cliente_id=entidad.id)
     LEFT OUTER JOIN producto ON (inspeccion.id_producto =producto.id)
@@ -682,15 +686,7 @@ if ($aplica_actarv_pdf) {
 
     $pdf->SetFont('helvetica', '', 10);
     $pdf->MultiCell(0, 6, 'POR ESTE MEDIO DOY FE DE RECIBIR DE LA EMPRESA INVERSIONES GLOBALES S.A. EN CALIDAD DE ARRENDAMIENTO, EL VEHICULO CON SIGUIENTES CARACTERISTICAS:', 0, 'J', false, 1);
-    $pdf->Ln(6);
-
-    /*
-    $pdf->SetFont('helvetica', '', 9);
-    $fecha_acta = !es_nulo($row['fecha_entrada']) ? $row['fecha_entrada'] : $row['fecha'];
-    $hora_acta = !es_nulo($row['hora_entrada']) ? $row['hora_entrada'] : $row['hora'];
-    $pdf->Cell(100, 5, 'Fecha: '.formato_fecha_pdf_seguro($fecha_acta), 0, 0, 'L');
-    $pdf->Cell(0, 5, 'Hora: '.formato_solohora_de_mysql($hora_acta), 0, 1, 'R');
-   */
+    $pdf->Ln(6);  
   
     $pdf->SetFillColor(243, 243, 243);
     $pdf->SetFont('helvetica', 'B', 10);
@@ -704,20 +700,14 @@ if ($aplica_actarv_pdf) {
     $pdf->Cell($w_tipo, 7, 'TIPO', 1, 0, 'C', true);
     $pdf->Cell($w_color, 7, 'COLOR', 1, 0, 'C', true);
     $pdf->Cell($w_placa, 7, 'PLACA', 1, 0, 'C', true);
-    $pdf->Cell($w_registro, 7, 'REGISTRO #', 1, 1, 'C', true);
-
-    $marca_acta = isset($row['producto_marca']) ? trim((string)$row['producto_marca']) : '';
-    $tipo_acta = trim((string)$row['producto_nombre']);
-    $color_acta = isset($row['producto_color']) ? trim((string)$row['producto_color']) : '';
-    $placa_acta = trim((string)$row['producto_placa']);
-    $registro_acta = trim((string)$row['producto_alterno']);
+    $pdf->Cell($w_registro, 7, 'REGISTRO #', 1, 1, 'C', true);  
 
     $pdf->SetFont('helvetica', '', 10);
-    $pdf->Cell($w_marca, 9, $marca_acta, 1, 0, 'C', false);
-    $pdf->Cell($w_tipo, 9, $tipo_acta, 1, 0, 'C', false);
-    $pdf->Cell($w_color, 9, $color_acta, 1, 0, 'C', false);
-    $pdf->Cell($w_placa, 9, $placa_acta, 1, 0, 'C', false);
-    $pdf->Cell($w_registro, 9, $registro_acta, 1, 1, 'C', false);
+    $pdf->Cell($w_marca, 9, trim((string)$row['producto_marca']), 1, 0, 'C', false);
+    $pdf->Cell($w_tipo, 9, trim((string)$row['producto_tipo_vehiculo']), 1, 0, 'C', false);
+    $pdf->Cell($w_color, 9, trim((string)$row['producto_color']), 1, 0, 'C', false);
+    $pdf->Cell($w_placa, 9, trim((string)$row['producto_placa']), 1, 0, 'C', false);
+    $pdf->Cell($w_registro, 9, trim((string)$row['producto_alterno']), 1, 1, 'C', false);
     $pdf->Ln(2);
 
     $pdf->SetFont('helvetica', 'B', 9);
@@ -757,11 +747,24 @@ if ($aplica_actarv_pdf) {
     $pdf->Cell(0, 6, 'Foto de Licencia', 1, 1, 'L', true);
     $y_foto_inicio = $pdf->GetY();
     if ($foto_licencia_path !== '') {
-        $pdf->Image($foto_licencia_path, 12, $y_foto_inicio + 2, 70, 45, '', '', '', false, 300, '', false, false, 0, true, false, false);
-        $pdf->SetY($y_foto_inicio + 50);
+        $pdf->Image($foto_licencia_path, 12, $y_foto_inicio + 2, 95, 65, '', '', '', false, 300, '', false, false, 0, true, false, false);
+        $pdf->SetY($y_foto_inicio + 70);
     } else {
         $pdf->SetFont('helvetica', '', 9);
         $pdf->Cell(0, 10, 'No se adjunto foto de licencia.', 1, 1, 'L', false);
+    }
+
+    $pdf->Ln(2);
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->Cell(0, 6, 'Firma del Cliente', 1, 1, 'L', true);
+    $y_firma_inicio = $pdf->GetY();
+    $imgfirma_cliente_acta = get_base64_png_from_request('pdffirma1');
+    if ($imgfirma_cliente_acta !== '') {
+        $pdf->Image('@'.$imgfirma_cliente_acta, 12, $y_firma_inicio + 2, 95, 25, '', '', '', false, 300, '', false, false, 0, true, false, false);
+        $pdf->SetY($y_firma_inicio + 30);
+    } else {
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->Cell(0, 10, 'No se adjunto firma del cliente.', 1, 1, 'L', false);
     }
 
 }
