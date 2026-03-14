@@ -575,7 +575,7 @@ if ($accion=="g") {
 
          //historial
          sql_insert("INSERT INTO inspeccion_historial_estado (id_maestro,  id_usuario,  nombre, fecha, observaciones)
-         VALUES ( $cid,  ".$_SESSION['usuario_id'].", 'Guardar ".$lbl_estado."', NOW(), '')");
+         VALUES ( $cid,  ".$_SESSION['usuario_id'].", 'Guardar ".$lbl_estado."', NOW(), ".GetSQLValue($obs_adpc,"text").")");
 
     }
     
@@ -2818,7 +2818,20 @@ var validation = Array.prototype.filter.call(forms, function(form) {
 
     }
     if (adicional=='0'){
-
+      <?php if (tiene_permiso(163) && es_nulo($id_usuario_auditado)) { ?>
+      if (validado==true) {
+        if ($("#id_adpc_categoria").val()=='' || $("#id_adpc_categoria").val()=='0') {
+          mytoast('warning','Debe seleccionar la Categoría ADPC',3000);
+          validado=false;
+        }
+      }
+      if (validado==true) {
+        if ($("#observaciones_adpc").val().trim()=='') {
+          mytoast('warning','Debe ingresar las Observaciones ADPC',3000);
+          validado=false;
+        }
+      }
+      <?php } ?>
     }
     if (adicional=='2'){ //Completado
 
