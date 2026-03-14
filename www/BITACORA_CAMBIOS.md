@@ -19,3 +19,8 @@
 - Se adapto el estilo de firma al formato de referencia: texto bilingue, firma pequena y raya corta alineada.
 - Se incremento el tamano de la imagen de firma del cliente en el acta para mejorar visibilidad.
 - Se aumento nuevamente el tamano de la firma del cliente en el acta, manteniendo su alineacion con la raya de firma.
+- Se movio la firma del cliente mas abajo de la foto y se acerco al texto "Firma Cliente".
+- Se ajusto nuevamente la posicion para pegar mas la imagen de firma y la raya al texto "Firma Cliente".
+- Se aplico un microajuste final para dejar la firma y la raya aun mas pegadas al texto.
+- Se dividio el texto introductorio del acta en dos parrafos para mejorar lectura del formato.
+- Se elimino el espacio adicional entre ambos parrafos del texto introductorio del acta.
