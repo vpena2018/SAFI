@@ -760,14 +760,14 @@ if ($aplica_actarv_pdf) {
     $alto_firma = 11;
     $ancho_label_firma = 58;
     $ancho_area_firma = 62;
-    $pdf->Cell($ancho_label_firma, $alto_firma, 'Firma Cliente / Client Signature:', 0, 0, 'L', false);
+    $pdf->Cell($ancho_label_firma, $alto_firma, 'Firma Cliente :', 0, 0, 'L', false);
     $x_area_firma = $pdf->GetX();
     $y_area_firma = $pdf->GetY();
 
-    $x_firma_img = $x_area_firma + 6;
-    $y_firma_img = $y_area_firma - 5;
-    $ancho_firma_img = 22;
-    $alto_firma_img = 13;
+    $x_firma_img = $x_area_firma + 5;
+    $y_firma_img = $y_area_firma - 7;
+    $ancho_firma_img = 28;
+    $alto_firma_img = 16;
 
     $imgfirma_cliente_acta = get_base64_png_from_request('pdffirma1');
     if ($imgfirma_cliente_acta !== '') {
