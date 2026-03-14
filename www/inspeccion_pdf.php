@@ -755,27 +755,30 @@ if ($aplica_actarv_pdf) {
     }
 
     $pdf->Ln(3);
-    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->SetFont('helvetica', 'B', 8);
     $pdf->SetX(12);
-    $alto_firma = 16;
-    $ancho_label_firma = 40;
-    $ancho_linea_firma = 130;
-    $pdf->Cell($ancho_label_firma, $alto_firma, 'Firma del Cliente:', 0, 0, 'L', false);
-    $x_linea_firma = $pdf->GetX();
-    $y_linea_firma = $pdf->GetY();
+    $alto_firma = 11;
+    $ancho_label_firma = 58;
+    $ancho_area_firma = 62;
+    $pdf->Cell($ancho_label_firma, $alto_firma, 'Firma Cliente / Client Signature:', 0, 0, 'L', false);
+    $x_area_firma = $pdf->GetX();
+    $y_area_firma = $pdf->GetY();
 
-    $x_firma_img = $x_linea_firma + 1;
-    $y_firma_img = $y_linea_firma + 1;
-    $ancho_firma_img = $ancho_linea_firma - 2;
-    $alto_firma_img = $alto_firma - 2;
+    $x_firma_img = $x_area_firma + 6;
+    $y_firma_img = $y_area_firma - 5;
+    $ancho_firma_img = 22;
+    $alto_firma_img = 13;
 
     $imgfirma_cliente_acta = get_base64_png_from_request('pdffirma1');
     if ($imgfirma_cliente_acta !== '') {
         $pdf->Image('@'.$imgfirma_cliente_acta, $x_firma_img, $y_firma_img, $ancho_firma_img, $alto_firma_img, '', '', '', false, 300, '', false, false, 0, true, false, false);
     }
-    $y_raya_firma = $y_firma_img + $alto_firma_img + 0.5;
-    $pdf->Line($x_firma_img, $y_raya_firma, $x_firma_img + $ancho_firma_img, $y_raya_firma);
-    $pdf->Ln($alto_firma + 3);
+
+    $x_raya_firma = $x_area_firma + 6;
+    $ancho_raya_firma = $ancho_area_firma - 10;
+    $y_raya_firma = $y_area_firma + $alto_firma - 1;
+    $pdf->Line($x_raya_firma, $y_raya_firma, $x_raya_firma + $ancho_raya_firma, $y_raya_firma);
+    $pdf->Ln($alto_firma + 2);
 
 }
 
