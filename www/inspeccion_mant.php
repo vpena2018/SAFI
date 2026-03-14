@@ -423,6 +423,7 @@ if ($accion=="g") {
      if (isset($_REQUEST["tipo_inspeccion_especial"])) { $sqlcampos.= " , tipo_inspeccion_especial =".GetSQLValue($_REQUEST["tipo_inspeccion_especial"],"int"); }
 
      if (isset($_REQUEST["observaciones_adpc"])) { $sqlcampos.= " , observaciones_adpc =".GetSQLValue($_REQUEST["observaciones_adpc"],"text"); }        
+     if (isset($_REQUEST["id_adpc_categoria"])) { $sqlcampos.= " , id_adpc_categoria =".GetSQLValue($_REQUEST["id_adpc_categoria"],"int"); }        
       
      $actualizarkm=false;//ojo no quitar . por si esta modificando 
      $enviar_orden_email=false;
@@ -530,6 +531,7 @@ if ($accion=="g") {
             $sqlcampos.= " , id_usuario_auditado =".$_SESSION["usuario_id"]; 
             $obs_adpc = isset($_REQUEST["observaciones_adpc"]) ? $_REQUEST["observaciones_adpc"] : "";
             $sqlcampos.= " , observaciones_adpc =".GetSQLValue($obs_adpc,"text");  
+            if (isset($_REQUEST["id_adpc_categoria"])) { $sqlcampos.= " , id_adpc_categoria =".GetSQLValue($_REQUEST["id_adpc_categoria"],"int"); }
         }
       } 
      
@@ -877,6 +879,7 @@ if (isset($row["chasis"])) {$chasis= $row["chasis"]; } else {$chasis= "";}
 
 if (isset($row["fecha_auditado"])) {$fecha_auditado= $row["fecha_auditado"]; } else {$fecha_auditado= date('Y-m-d');}
 if (isset($row["id_usuario_auditado"])) {$id_usuario_auditado= $row["id_usuario_auditado"]; } else {$id_usuario_auditado= "0";}
+if (isset($row["id_adpc_categoria"])) {$id_adpc_categoria= $row["id_adpc_categoria"]; } else {$id_adpc_categoria= "";}
 if (isset($row["observaciones_adpc"])) {$observaciones_adpc= $row["observaciones_adpc"]; } else {$observaciones_adpc= "";}
 
 //********* */
@@ -1853,25 +1856,20 @@ if ($tipo_inspeccion=='2'){ // TALLER
         <input type="hidden" name="pdffirma1" id="guardar_pdffirma1">
         <input type="hidden" name="pdffirma2" id="guardar_pdffirma2">
 
-        <?php     
-         $oculto='hidden';
-         $obadpc_requerido="";
-         if (tiene_permiso(163) and es_nulo($id_usuario_auditado)) { 
-            $oculto='textarea';          
-            $obadpc_requerido=' required';
-            $disable_sec6=' ';
-        }else{ 
-            if (tiene_permiso(163) and !es_nulo($id_usuario_auditado)){
-               $oculto='textarea';               
-               $disable_sec6=' ';
-            }    
-        }
-        ?>        
+        <?php
+        $es_adpc   = tiene_permiso(163);
+        $req_adpc  = ($es_adpc && es_nulo($id_usuario_auditado)) ? ' required' : '';
+        if ($es_adpc) { $disable_sec6 = ' '; }
+        $opts_categoria = $es_adpc
+            ? valores_combobox_db('adpc_categorias', $id_adpc_categoria, 'nombre', ' where tipo_documento=1', '', '...')
+            : $id_adpc_categoria;
+        ?>
 
-        <div class="card-body">   
-          <div class="row"> 
-            <div class="col-md">     
-                 <?php echo campo("observaciones_adpc","Observaciones ADPC",$oculto,$observaciones_adpc,' ',' rows="5" '.$disable_sec6 .$obadpc_requerido);?>  
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md">
+                <?php echo campo("id_adpc_categoria", "Categoría ADPC",  $es_adpc ? 'select2'   : 'hidden', $opts_categoria,     ' ', $disable_sec6.$req_adpc); ?>
+                <?php echo campo("observaciones_adpc","Observaciones ADPC", $es_adpc ? 'textarea' : 'hidden', $observaciones_adpc, ' ', ' rows="5" '.$disable_sec6.$req_adpc); ?>
             </div>
           </div>
         </div>     
