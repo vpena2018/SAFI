@@ -763,14 +763,18 @@ if ($aplica_actarv_pdf) {
     $pdf->Cell($ancho_label_firma, $alto_firma, 'Firma del Cliente:', 0, 0, 'L', false);
     $x_linea_firma = $pdf->GetX();
     $y_linea_firma = $pdf->GetY();
-    $ancho_raya_firma = $ancho_linea_firma / 2;
-    $x_raya_firma = $x_linea_firma + (($ancho_linea_firma - $ancho_raya_firma) / 2);
-    $pdf->Line($x_raya_firma, $y_linea_firma + $alto_firma - 1.5, $x_raya_firma + $ancho_raya_firma, $y_linea_firma + $alto_firma - 1.5);
+
+    $x_firma_img = $x_linea_firma + 1;
+    $y_firma_img = $y_linea_firma + 1;
+    $ancho_firma_img = $ancho_linea_firma - 2;
+    $alto_firma_img = $alto_firma - 2;
 
     $imgfirma_cliente_acta = get_base64_png_from_request('pdffirma1');
     if ($imgfirma_cliente_acta !== '') {
-        $pdf->Image('@'.$imgfirma_cliente_acta, $x_linea_firma + 1, $y_linea_firma + 1, $ancho_linea_firma - 2, $alto_firma - 2, '', '', '', false, 300, '', false, false, 0, true, false, false);
+        $pdf->Image('@'.$imgfirma_cliente_acta, $x_firma_img, $y_firma_img, $ancho_firma_img, $alto_firma_img, '', '', '', false, 300, '', false, false, 0, true, false, false);
     }
+    $y_raya_firma = $y_firma_img + $alto_firma_img + 0.5;
+    $pdf->Line($x_firma_img, $y_raya_firma, $x_firma_img + $ancho_firma_img, $y_raya_firma);
     $pdf->Ln($alto_firma + 3);
 
 }
