@@ -2646,8 +2646,7 @@ function insp_toggle_actarv() {
     $('#card_actarv').removeClass('oculto');
   } else {
     $('#card_actarv').addClass('oculto');
-  }
-  $('#actarv_celular').prop('required', aplica);
+  }  
 }
 
 
@@ -2803,8 +2802,7 @@ var validation = Array.prototype.filter.call(forms, function(form) {
         }           
       }
                 
-
-   
+  
        if (validado==true) {
           if ($("#cliente_email").val()=='') {
           mytoast('warning','Debe ingresar el Correo del Cliente',3000) ;
