@@ -280,6 +280,22 @@ if ($accion=="g") {
         }
       }
 
+      if ($verror=="" && isset($_REQUEST["actarv_foto_licencia"])) {
+        $foto_licencia_recibida = basename(urldecode(trim((string)$_REQUEST["actarv_foto_licencia"])));
+        if ($foto_licencia_recibida !== "") {
+          $procesar_foto_licencia = true;
+          if ($nuevoreg==false) {
+            $foto_licencia_actual = trim((string)get_dato_sql("inspeccion","actarv_foto_licencia"," WHERE id=".intval($elcodigo)));
+            if ($foto_licencia_actual === $foto_licencia_recibida) {
+              $procesar_foto_licencia = false;
+            }
+          }
+          if ($procesar_foto_licencia) {
+            foto_reducir_tamano(app_dir . "uploa_d/" . $foto_licencia_recibida);
+          }
+        }
+      }
+
       if ($verror=="") {
         $tipo_insp_req = isset($_REQUEST["tipo_inspeccion"]) ? intval($_REQUEST["tipo_inspeccion"]) : 0;
         $tipo_doc_req = isset($_REQUEST["tipo_doc"]) ? intval($_REQUEST["tipo_doc"]) : 0;
