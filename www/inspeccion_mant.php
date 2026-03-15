@@ -545,9 +545,8 @@ if ($accion=="g") {
             $lbl_estado="Revision ADPC";
             $sqlcampos.= " , fecha_auditado =NOW()";            
             $sqlcampos.= " , id_usuario_auditado =".$_SESSION["usuario_id"]; 
-            $obs_adpc = isset($_REQUEST["observaciones_adpc"]) ? $_REQUEST["observaciones_adpc"] : "";
-            $sqlcampos.= " , observaciones_adpc =".GetSQLValue($obs_adpc,"text");  
-            if (isset($_REQUEST["id_adpc_categoria"])) { $sqlcampos.= " , id_adpc_categoria =".GetSQLValue($_REQUEST["id_adpc_categoria"],"int"); }
+            $sqlcampos.= " , observaciones_adpc =".GetSQLValue($_REQUEST["observaciones_adpc"],"text");  
+            $sqlcampos.= " , id_adpc_categoria =".GetSQLValue($_REQUEST["id_adpc_categoria"],"int"); 
         }
       } 
      
@@ -591,7 +590,7 @@ if ($accion=="g") {
 
          //historial
          sql_insert("INSERT INTO inspeccion_historial_estado (id_maestro,  id_usuario,  nombre, fecha, observaciones)
-         VALUES ( $cid,  ".$_SESSION['usuario_id'].", 'Guardar ".$lbl_estado."', NOW(), ".GetSQLValue($obs_adpc,"text").")");
+         VALUES ( $cid,  ".$_SESSION['usuario_id'].", 'Guardar ".$lbl_estado."', NOW(), ".GetSQLValue($_REQUEST["observaciones_adpc"],"text").")");
 
     }
     
