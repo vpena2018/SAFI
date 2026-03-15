@@ -453,77 +453,36 @@ if ($accion=="g") {
               }                          
             }            
             if ($nuevo_estado==2) {
-                   
-              //*esta validaciones se dejaron antes de crear HI */              
-              //Valida que no tenga traslado pendientes
-              /*
-              $Codigo_Alterno=get_dato_sql("producto","COUNT(*)"," WHERE left(codigo_alterno,7)='EA-0000' and id=".intval($_REQUEST['id_producto']));          
-              if (es_nulo($Codigo_Alterno)){
-                  $trasladosP=get_dato_sql("orden_traslado","COUNT(*)"," WHERE id_estado<3 AND id_producto=".intval($_REQUEST['id_producto']));
-                  if ($trasladosP>0) {
-                    $stud_arr[0]["pmsg"] =" Tiene orden de traslado sin completar del vehiculo"; 
+   
+                $cliente_prefijo_cco_completar = false;
+                if (isset($_REQUEST["cliente_id"])) {
+                  $id_cliente_completar = intval($_REQUEST["cliente_id"]);
+                  if ($id_cliente_completar > 0) {
+                    $codigo_cliente_completar = get_dato_sql("entidad","codigo_alterno"," WHERE id=".$id_cliente_completar);
+                    $cliente_prefijo_cco_completar = safi_cliente_prefijo_actarv($codigo_cliente_completar);
+                  }
+                }
+                if (!$cliente_prefijo_cco_completar && isset($_REQUEST["nombre_cliente"])) {
+                  $cliente_prefijo_cco_completar = safi_cliente_prefijo_actarv($_REQUEST["nombre_cliente"]);
+                }
+
+                $tipo_insp_completar = isset($_REQUEST["tipo_inspeccion"]) ? intval($_REQUEST["tipo_inspeccion"]) : 0;
+                $tipo_doc_completar = isset($_REQUEST["tipo_doc"]) ? intval($_REQUEST["tipo_doc"]) : 0;
+                $aplica_actarv_completar = ($tipo_insp_completar==1 && $tipo_doc_completar==2 && $cliente_prefijo_cco_completar);
+
+                if ($aplica_actarv_completar) {
+                  $foto_actarv_completar = isset($_REQUEST["actarv_foto_licencia"]) ? trim((string)$_REQUEST["actarv_foto_licencia"]) : '';
+                  if (es_nulo($foto_actarv_completar)) {
+                    $stud_arr[0]["pmsg"] ="Debe adjuntar Foto Licencia en Datos de Acta de Recepcion del Vehiculo";
                     salida_json($stud_arr);
-                    exit;            
-                  }
-              }       
-              if ($tipoinsp==1 and $tipodoc==2){  
-                 $EstadoReparacion=get_dato_sql("ventas","COUNT(*)"," WHERE id_estado=99 AND id_producto=".intval($_REQUEST['id_producto']));
-                  if (!es_nulo($EstadoReparacion)){
-                      $stud_arr[0]["pmsg"] =" El Vehiculo esta en proceso de reparacion"; 
-                      salida_json($stud_arr);
-                      exit;  
-                  }                
-                
-                  $ParoPorRepuesto=get_dato_sql("servicio","COUNT(*)"," WHERE id_estado=7 AND (estado_paro_por_repuesto='I' or estado_paro_por_repuesto=null)  AND id_producto=".intval($_REQUEST['id_producto']));                 
-                  $Oservicio=get_dato_sql("servicio","COUNT(*)"," WHERE id_estado not in (20,22,7) AND id_producto=".intval($_REQUEST['id_producto']));                 
-                  $Ocombustible=get_dato_sql("orden_combustible","COUNT(*)"," WHERE id_estado<3 AND id_producto=".intval($_REQUEST['id_producto']));                 
-                  if (!es_nulo($Oservicio) or !es_nulo($ParoPorRepuesto)){
-                      $stud_arr[0]["pmsg"] =" Tiene Orden de Servicio sin completar del vehiculo"; 
-                      salida_json($stud_arr);
-                      exit;            
-                  }
-
-                  if (!es_nulo($Ocombustible)){
-                      $stud_arr[0]["pmsg"] =" Tiene Orden de Combustible sin completar del vehiculo"; 
-                      salida_json($stud_arr);
-                      exit;  
+                    exit;
                   }
                 }
-              */
-
-              $cliente_prefijo_cco_completar = false;
-              if (isset($_REQUEST["cliente_id"])) {
-                $id_cliente_completar = intval($_REQUEST["cliente_id"]);
-                if ($id_cliente_completar > 0) {
-                  $codigo_cliente_completar = get_dato_sql("entidad","codigo_alterno"," WHERE id=".$id_cliente_completar);
-                  $cliente_prefijo_cco_completar = safi_cliente_prefijo_actarv($codigo_cliente_completar);
-                }
-              }
-              if (!$cliente_prefijo_cco_completar && isset($_REQUEST["nombre_cliente"])) {
-                $cliente_prefijo_cco_completar = safi_cliente_prefijo_actarv($_REQUEST["nombre_cliente"]);
-              }
-
-              $tipo_insp_completar = isset($_REQUEST["tipo_inspeccion"]) ? intval($_REQUEST["tipo_inspeccion"]) : 0;
-              $tipo_doc_completar = isset($_REQUEST["tipo_doc"]) ? intval($_REQUEST["tipo_doc"]) : 0;
-              $aplica_actarv_completar = ($tipo_insp_completar==1 && $tipo_doc_completar==2 && $cliente_prefijo_cco_completar);
-
-              if ($aplica_actarv_completar) {
-                $foto_actarv_completar = isset($_REQUEST["actarv_foto_licencia"]) ? trim((string)$_REQUEST["actarv_foto_licencia"]) : '';
-                if (es_nulo($foto_actarv_completar)) {
-                  $stud_arr[0]["pmsg"] ="Debe adjuntar Foto Licencia en Datos de Acta de Recepcion del Vehiculo";
-                  salida_json($stud_arr);
-                  exit;
-                }
-              }
 
               $lbl_estado="Completado";
-
               // enviar email a cliente 
               $enviar_orden_email=true;
 
-              // $sqlcampos.= " , fecha_entrada =NOW()"; 
-     
-              //  $sqlcampos.= " , hora_entrada =NOW()";                
             }
             $sqlcampos.= " , id_estado =".GetSQLValue($nuevo_estado,"int");
             $sqlcampos.= " , id_usuario_completado =".$_SESSION["usuario_id"];
