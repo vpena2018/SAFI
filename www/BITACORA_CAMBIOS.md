@@ -1,5 +1,12 @@
 # Bitacora de cambios
 
+## 2026-03-15
+- En `inspeccion_mant.php` se corrigio el error al cambiar cliente a no CCO (ej. CCN): al ocultar Acta de Recepcion, el campo `actarv_celular` ahora se deshabilita y se le retira temporalmente `pattern/title/required` para que no bloquee `Guardar Borrador` por validacion HTML.
+- En `inspeccion_mant.php` se ajusto la validacion de Acta de Recepcion para `gg_est=2` cuando no aplica (cliente no CCO o tipo distinto): ya no bloquea con error y ahora limpia esos campos para mantener consistencia de datos.
+- Se revierte en `inspeccion_mant.php` el ajuste que movia la validacion del Acta de Recepcion para ejecutarse solo al completar; la pantalla vuelve al comportamiento previo.
+- Se aplico en `inspeccion_mant.php` la misma reduccion de resolucion usada en `inspeccion_fotos.php` para la carga de `actarv_foto_licencia`.
+- La foto de licencia ahora se procesa con `foto_reducir_tamano(app_dir . "uploa_d/" . archivo)` al guardar, evitando reprocesar cuando el archivo no cambia.
+
 ## 2026-03-14
 - Se agrego campo `id_adpc_categoria` (combobox select2 filtrado por `tipo_documento=1` de la tabla `categoria`) antes de `observaciones_adpc` en `inspeccion_mant.php`, sección ADPC.
 - El campo se muestra y es requerido cuando el usuario tiene permiso 163 y `id_usuario_auditado` es nulo (primera revisión ADPC).
