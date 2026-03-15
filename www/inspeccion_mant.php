@@ -332,20 +332,7 @@ if ($accion=="g") {
           }
         }
 
-        if ($estado_guardar==2 && !$aplica_actarv_req) {
-          $campos_actarv_req = array(
-            "actarv_asignado_depto",
-            "actarv_jefe_depto",
-            "actarv_celular",
-            "actarv_foto_licencia"
-          );
-          foreach ($campos_actarv_req as $campo_actarv_req) {
-            if (isset($_REQUEST[$campo_actarv_req]) && !es_nulo(trim((string)$_REQUEST[$campo_actarv_req]))) {
-              $verror = "No se permite ingresar Datos de Acta de Recepcion para clientes sin prefijo CCO";
-              break;
-            }
-          }
-        }
+      
       }
 
       
@@ -590,7 +577,7 @@ if ($accion=="g") {
 
          //historial
          sql_insert("INSERT INTO inspeccion_historial_estado (id_maestro,  id_usuario,  nombre, fecha, observaciones)
-         VALUES ( $cid,  ".$_SESSION['usuario_id'].", 'Guardar ".$lbl_estado."', NOW(), ".GetSQLValue($_REQUEST["observaciones_adpc"],"text").")");
+         VALUES ( $cid,  ".$_SESSION['usuario_id'].", 'Guardar ".$lbl_estado."', NOW(), '')");
 
     }
     
