@@ -2997,8 +2997,6 @@ var validation = Array.prototype.filter.call(forms, function(form) {
       }
     });
   });
-    
-    
   }
     
 }
