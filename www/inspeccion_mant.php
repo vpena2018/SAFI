@@ -2587,6 +2587,77 @@ function insp_guardar_foto(arch,campo){
   $('#lk'+campo).html(arch);
 }
 
+if (typeof window.comprimirSiEsImagen !== 'function') {
+  window.comprimirSiEsImagen = function(file, opts) {
+    opts = opts || {};
+    var maxLado = opts.maxLado || 1600;
+    var calidad = opts.calidad || 0.82;
+    var tamanoMinimo = opts.tamanoMinimo || (400 * 1024);
+
+    if (!file || !file.type || file.type.indexOf('image/') !== 0) {
+      return Promise.resolve(file);
+    }
+
+    if (file.size < tamanoMinimo) {
+      return Promise.resolve(file);
+    }
+
+    return new Promise(function(resolve) {
+      var img = new Image();
+      var objectUrl = URL.createObjectURL(file);
+
+      img.onload = function() {
+        var w = img.naturalWidth || img.width;
+        var h = img.naturalHeight || img.height;
+        var ratio = 1;
+
+        if (w > h && w > maxLado) {
+          ratio = maxLado / w;
+        } else if (h >= w && h > maxLado) {
+          ratio = maxLado / h;
+        }
+
+        var newW = Math.max(1, Math.round(w * ratio));
+        var newH = Math.max(1, Math.round(h * ratio));
+
+        var canvas = document.createElement('canvas');
+        canvas.width = newW;
+        canvas.height = newH;
+        var ctx = canvas.getContext('2d', { alpha: false });
+        ctx.drawImage(img, 0, 0, newW, newH);
+
+        var mimeOut = (file.type === 'image/png') ? 'image/png' : 'image/jpeg';
+        canvas.toBlob(function(blob) {
+          URL.revokeObjectURL(objectUrl);
+          if (!blob || blob.size >= file.size) {
+            resolve(file);
+            return;
+          }
+
+          var nuevoNombre = file.name;
+          if (mimeOut === 'image/jpeg') {
+            nuevoNombre = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+          }
+
+          try {
+            resolve(new File([blob], nuevoNombre, { type: mimeOut, lastModified: Date.now() }));
+          } catch (e) {
+            blob.name = nuevoNombre;
+            resolve(blob);
+          }
+        }, mimeOut, calidad);
+      };
+
+      img.onerror = function() {
+        URL.revokeObjectURL(objectUrl);
+        resolve(file);
+      };
+
+      img.src = objectUrl;
+    });
+  };
+}
+
 function mostrar_foto(imagen){
   if (!imagen) {
     mytoast('warning','No hay archivo para mostrar',2500);
