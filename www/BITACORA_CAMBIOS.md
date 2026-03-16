@@ -1,6 +1,7 @@
 # Bitacora de cambios
 
 ## 2026-03-15
+- En `inspeccion_mant.php` se agrego `window.comprimirSiEsImagen` (mismo enfoque de `combustible.php`) para reducir resolucion/peso antes de subir imagenes, aplicando a `actarv_foto_licencia` durante la carga.
 - En `inspeccion_mant.php` se corrigio el error al cambiar cliente a no CCO (ej. CCN): al ocultar Acta de Recepcion, el campo `actarv_celular` ahora se deshabilita y se le retira temporalmente `pattern/title/required` para que no bloquee `Guardar Borrador` por validacion HTML.
 - En `inspeccion_mant.php` se ajusto la validacion de Acta de Recepcion para `gg_est=2` cuando no aplica (cliente no CCO o tipo distinto): ya no bloquea con error y ahora limpia esos campos para mantener consistencia de datos.
 - Se revierte en `inspeccion_mant.php` el ajuste que movia la validacion del Acta de Recepcion para ejecutarse solo al completar; la pantalla vuelve al comportamiento previo.
