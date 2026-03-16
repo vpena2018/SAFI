@@ -1598,25 +1598,25 @@ $mostrar_actarv = ($cliente_prefijo_cco && intval($tipo_inspeccion)==1 && intval
             </div>
             <div class="col-md">  
             <u>Trasera Izquierda</u>     
-              <p> <?php echo campo("llanta_trasera_izq","Marca",'text',$llanta_trasera_izq,' ',$disable_sec4 .' required minlength="5"');?>  </p>
+              <p> <?php echo campo("llanta_trasera_izq","Marca",'text',$llanta_trasera_izq,' ',$disable_sec4 .' required minlength="4"');?>  </p>
               <p> <?php echo campo("llanta_trasera_izq_num","Numeración",'text',$llanta_trasera_izq_num,' ',$disable_sec4 .' required');?>  </p>              
               <p> <?php echo campo("llanta_trasera_izq_cali","Calibración",$visible_sec5,$llanta_trasera_izq_cali,' ',$disable_sec4 .' required');?>  </p>
               <a href="#" class="btn btn-sm <?php echo $visible_sec4; ?>" onclick="insp_copiar_llantas(); return false;" ><i class="fa fa-copy"></i> Copiar Todos</a>
             </div>
             <div class="col-md bg-light">  
             <u>Llanta de Repuesto</u>    
-              <p> <?php echo campo("llanta_repuesto","Marca",'text',$llanta_repuesto,' ',$disable_sec4 .' required minlength="5"');?>  </p>
+              <p> <?php echo campo("llanta_repuesto","Marca",'text',$llanta_repuesto,' ',$disable_sec4 .' required minlength="4"');?>  </p>
               <p> <?php echo campo("llanta_repuesto_num","Numeración",'text',$llanta_repuesto_num,' ',$disable_sec4 .' required');?>  </p>              
             </div>
             <div class="col-md">  
             <u>Trasera Derecha</u>     
-              <p> <?php echo campo("llanta_trasera_der","Marca",'text',$llanta_trasera_der,' ',$disable_sec4 .' required minlength="5"');?>  </p>
+              <p> <?php echo campo("llanta_trasera_der","Marca",'text',$llanta_trasera_der,' ',$disable_sec4 .' required minlength="4"');?>  </p>
               <p> <?php echo campo("llanta_trasera_der_num","Numeración",'text',$llanta_trasera_der_num,' ',$disable_sec4 .' required');?>  </p>              
               <p> <?php echo campo("llanta_trasera_der_cali","Calibración",$visible_sec5,$llanta_trasera_der_cali,' ',$disable_sec4 .' required');?>  </p>
             </div>
             <div class="col-md">  
               <u>Delantera Derecha</u>      
-              <p> <?php echo campo("llanta_delantera_der","Marca",'text',$llanta_delantera_der,' ',$disable_sec4 .' required minlength="5"');?>  </p>
+              <p> <?php echo campo("llanta_delantera_der","Marca",'text',$llanta_delantera_der,' ',$disable_sec4 .' required minlength="4"');?>  </p>
               <p> <?php echo campo("llanta_delantera_der_num","Numeración",'text',$llanta_delantera_der_num,' ',$disable_sec4 .' required');?>  </p>
               <p> <?php echo campo("llanta_delantera_der_cali","Calibración",$visible_sec5,$llanta_delantera_der_cali,' ',$disable_sec4 .' required');?>  </p>
               <a href="#" class="btn btn-sm <?php echo $visible_sec4; ?>" onclick="$('#llanta_extra').show(); return false;" ><i class="fa fa-plus"></i> Llantas adicionales</a>
@@ -1628,13 +1628,13 @@ $mostrar_actarv = ($cliente_prefijo_cco && intval($tipo_inspeccion)==1 && intval
           <div  class="row">
             <div class="col-md">  
               <u>Extra 1</u>      
-              <p> <?php echo campo("llanta_extra1","Marca",'text',$llanta_extra1,' ',$disable_sec4 .' minlength="5"');?>  </p>
+              <p> <?php echo campo("llanta_extra1","Marca",'text',$llanta_extra1,' ',$disable_sec4 .' minlength="4"');?>  </p>
               <p> <?php echo campo("llanta_extra1_num","Numeración",'text',$llanta_extra1_num,' ',$disable_sec4 .' ');?>  </p>
             </div>
 
             <div class="col-md">  
               <u>Extra 2</u>      
-              <p> <?php echo campo("llanta_extra2","Marca",'text',$llanta_extra2,' ',$disable_sec4 .' minlength="5"');?>  </p>
+              <p> <?php echo campo("llanta_extra2","Marca",'text',$llanta_extra2,' ',$disable_sec4 .' minlength="4"');?>  </p>
               <p> <?php echo campo("llanta_extra2_num","Numeración",'text',$llanta_extra2_num,' ',$disable_sec4 .' ');?>  </p>
             </div>
 
