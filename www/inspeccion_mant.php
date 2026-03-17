@@ -208,58 +208,58 @@ if ($accion=="g") {
       }
 
       if ($verror=="") {
-        $campos_marca_llanta_opcionales = array(
-          "llanta_extra1" => "Extra 1",
-          "llanta_extra2" => "Extra 2"
-        );
+          $campos_marca_llanta_opcionales = array(
+            "llanta_extra1" => "Extra 1",
+            "llanta_extra2" => "Extra 2"
+          );
 
-        foreach ($campos_marca_llanta_opcionales as $campo_marca => $etiqueta_marca) {
-          $valor_marca = isset($_REQUEST[$campo_marca]) ? trim((string)$_REQUEST[$campo_marca]) : '';
-          if ($valor_marca === '') {
-            continue;
+          foreach ($campos_marca_llanta_opcionales as $campo_marca => $etiqueta_marca) {
+            $valor_marca = isset($_REQUEST[$campo_marca]) ? trim((string)$_REQUEST[$campo_marca]) : '';
+            if ($valor_marca === '') {
+              continue;
+            }
+            if (!safi_es_texto_simple($valor_marca)) {
+              $verror = "Marca de llanta invalida en " . $etiqueta_marca . ". Solo se permiten letras.";
+              break;
+            }
+            if (safi_longitud_texto($valor_marca) < 5) {
+              $verror = "Marca de llanta invalida en " . $etiqueta_marca . ". Debe tener minimo 5 caracteres.";
+              break;
+            }
           }
-          if (!safi_es_texto_simple($valor_marca)) {
-            $verror = "Marca de llanta invalida en " . $etiqueta_marca . ". Solo se permiten letras.";
-            break;
-          }
-          if (safi_longitud_texto($valor_marca) < 5) {
-            $verror = "Marca de llanta invalida en " . $etiqueta_marca . ". Debe tener minimo 5 caracteres.";
-            break;
-          }
-        }
       }
 
       if ($verror=="") {
-        $campos_num_llanta_requeridos = array(
-          "llanta_delantera_izq_num" => "Delantera Izquierda",
-          "llanta_trasera_izq_num" => "Trasera Izquierda",
-          "llanta_repuesto_num" => "Llanta de Repuesto",
-          "llanta_trasera_der_num" => "Trasera Derecha",
-          "llanta_delantera_der_num" => "Delantera Derecha"
-        );
+          $campos_num_llanta_requeridos = array(
+            "llanta_delantera_izq_num" => "Delantera Izquierda",
+            "llanta_trasera_izq_num" => "Trasera Izquierda",
+            "llanta_repuesto_num" => "Llanta de Repuesto",
+            "llanta_trasera_der_num" => "Trasera Derecha",
+            "llanta_delantera_der_num" => "Delantera Derecha"
+          );
 
-        foreach ($campos_num_llanta_requeridos as $campo_num => $etiqueta_num) {
-          $valor_num = isset($_REQUEST[$campo_num]) ? trim((string)$_REQUEST[$campo_num]) : '';
-          if ($valor_num === '' || !safi_es_numeracion_llanta_valida($valor_num)) {
-            $verror = "Numeracion de llanta invalida en " . $etiqueta_num . ". Debe tener formato 000/00R00.";
-            break;
+          foreach ($campos_num_llanta_requeridos as $campo_num => $etiqueta_num) {
+            $valor_num = isset($_REQUEST[$campo_num]) ? trim((string)$_REQUEST[$campo_num]) : '';
+            if ($valor_num === '' || !safi_es_numeracion_llanta_valida($valor_num)) {
+              $verror = "Numeracion de llanta invalida en " . $etiqueta_num . ". Debe tener formato 000/00R00.";
+              break;
+            }
           }
-        }
       }
 
       if ($verror=="") {
-        $campos_num_llanta_opcionales = array(
-          "llanta_extra1_num" => "Extra 1",
-          "llanta_extra2_num" => "Extra 2"
-        );
+          $campos_num_llanta_opcionales = array(
+            "llanta_extra1_num" => "Extra 1",
+            "llanta_extra2_num" => "Extra 2"
+          );
 
-        foreach ($campos_num_llanta_opcionales as $campo_num => $etiqueta_num) {
-          $valor_num = isset($_REQUEST[$campo_num]) ? trim((string)$_REQUEST[$campo_num]) : '';
-          if ($valor_num !== '' && !safi_es_numeracion_llanta_valida($valor_num)) {
-            $verror = "Numeracion de llanta invalida en " . $etiqueta_num . ". Debe tener formato 000/00R00.";
-            break;
+          foreach ($campos_num_llanta_opcionales as $campo_num => $etiqueta_num) {
+            $valor_num = isset($_REQUEST[$campo_num]) ? trim((string)$_REQUEST[$campo_num]) : '';
+            if ($valor_num !== '' && !safi_es_numeracion_llanta_valida($valor_num)) {
+              $verror = "Numeracion de llanta invalida en " . $etiqueta_num . ". Debe tener formato 000/00R00.";
+              break;
+            }
           }
-        }
       }
 
       if ($verror=="" && isset($_REQUEST["actarv_celular"])) {
@@ -281,19 +281,19 @@ if ($accion=="g") {
       }
 
       if ($verror=="") {
-        $tipo_insp_req = isset($_REQUEST["tipo_inspeccion"]) ? intval($_REQUEST["tipo_inspeccion"]) : 0;
-        $tipo_doc_req = isset($_REQUEST["tipo_doc"]) ? intval($_REQUEST["tipo_doc"]) : 0;
-        $estado_guardar = isset($_REQUEST["gg_est"]) ? intval($_REQUEST["gg_est"]) : 0;
-        $cliente_prefijo_cco_req = false;
-        $aplica_actarv_req = false;
-        if (isset($_REQUEST["cliente_id"])) {
-          $id_cliente_req = intval($_REQUEST["cliente_id"]);
-          if ($id_cliente_req > 0) {
-            $codigo_cliente_req = strtoupper(trim((string)get_dato_sql("entidad","codigo_alterno"," WHERE id=".$id_cliente_req)));
-            if (safi_cliente_prefijo_actarv($codigo_cliente_req)) {
-              $cliente_prefijo_cco_req = true;
+          $tipo_insp_req = isset($_REQUEST["tipo_inspeccion"]) ? intval($_REQUEST["tipo_inspeccion"]) : 0;
+          $tipo_doc_req = isset($_REQUEST["tipo_doc"]) ? intval($_REQUEST["tipo_doc"]) : 0;
+          $estado_guardar = isset($_REQUEST["gg_est"]) ? intval($_REQUEST["gg_est"]) : 0;
+          $cliente_prefijo_cco_req = false;
+          $aplica_actarv_req = false;
+          if (isset($_REQUEST["cliente_id"])) {
+            $id_cliente_req = intval($_REQUEST["cliente_id"]);
+            if ($id_cliente_req > 0) {
+              $codigo_cliente_req = strtoupper(trim((string)get_dato_sql("entidad","codigo_alterno"," WHERE id=".$id_cliente_req)));
+              if (safi_cliente_prefijo_actarv($codigo_cliente_req)) {
+                $cliente_prefijo_cco_req = true;
+              }
             }
-          }
         }
 
         if ($estado_guardar==2 && (!isset($_REQUEST["cliente_id"]) || intval($_REQUEST["cliente_id"])<=0)) {
@@ -2815,38 +2815,36 @@ var validation = Array.prototype.filter.call(forms, function(form) {
             mytoast('warning','Los valores de calibracion de las llantas son incorrectos ',3000) ;
             validado=false;  
         } 
-    }
-
-    if (validado==true) {
-      if (insp_validar_marcas_llanta()==false) {
-        validado=false;
-      }
-    }
-
-    if (validado==true) {
-      if (insp_validar_numeracion_llantas()==false) {
-        validado=false;
-      }
-    }
+    }    
 
     if (adicional=='1'){ //borrador
+       if (validado==true) {
+          if (insp_validar_marcas_llanta()==false) {
+             validado=false;
+          }
+        }
 
+        if (validado==true) {
+           if (insp_validar_numeracion_llantas()==false) {
+              validado=false;
+           }
+        }
     }
     if (adicional=='0'){
-      <?php if (tiene_permiso(163) && es_nulo($id_usuario_auditado)) { ?>
-      if (validado==true) {
-        if ($("#id_adpc_categoria").val()=='' || $("#id_adpc_categoria").val()=='0') {
-          mytoast('warning','Debe seleccionar la Categoría ADPC',3000);
-          validado=false;
-        }
-      }
-      if (validado==true) {
-        if ($("#observaciones_adpc").val().trim()=='') {
-          mytoast('warning','Debe ingresar las Observaciones ADPC',3000);
-          validado=false;
-        }
-      }
-      <?php } ?>
+        <?php if (tiene_permiso(163) && es_nulo($id_usuario_auditado)) { ?>
+          if (validado==true) {
+            if ($("#id_adpc_categoria").val()=='' || $("#id_adpc_categoria").val()=='0') {
+              mytoast('warning','Debe seleccionar la Categoría ADPC',3000);
+              validado=false;
+            }
+          }
+          if (validado==true) {
+            if ($("#observaciones_adpc").val().trim()=='') {
+              mytoast('warning','Debe ingresar las Observaciones ADPC',3000);
+              validado=false;
+            }
+          }
+        <?php } ?>
     }
     if (adicional=='2'){ //Completado
 
