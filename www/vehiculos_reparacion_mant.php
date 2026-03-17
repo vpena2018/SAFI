@@ -403,7 +403,7 @@ if ($accion =="d") {
     if (isset($row["precio_maximo"])) {$precio_maximo= $row["precio_maximo"]; } else {$precio_maximo= "";}
     if (isset($row["trasmision"])) {$trasmision= $row["trasmision"]; } else {$trasmision= "";}
     if (isset($row["id_vendedor"])) {$id_vendedor= $row["id_vendedor"]; } else {$id_vendedor= "";}
-    if (isset($row["id_estado_anterior_reproceso"])) {$id_estado_anterior_reproceso= $row["id_estado_anterior_reproceso"]; } else {$id_estado_anterior_reproceso= "";}
+    if (isset($row["id_estado_anterior_reproceso"])) {$id_estado_anterior_reproceso= $row["id_estado_anterior_reproceso"]; } else {$id_estado_anterior_reproceso= "0";}
     
     //$observaciones_reparacion= "";
     if ($id_estado=='' || $id_estado==99){
@@ -430,7 +430,7 @@ if ($accion =="d") {
     }
 
     echo campo("id",("Codigo"),'hidden',$id,' ','');
-    echo campo("id_estado_anterior_reproceso",("Estado"),'hidden',$id_estado_anterior_reproceso,' ','');
+    echo campo("id_estado_anterior_reproceso","Estado Anterior Reproceso",'hidden',$id_estado_anterior_reproceso,' ','');
 ?>
 
 
