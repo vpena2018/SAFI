@@ -178,6 +178,17 @@ function generarContratoVenta(
             $tipo_contrato=1;
         }
 
+         $resContrato = sql_select("
+            SELECT id_contrato, id_venta, estado
+            FROM ventas_contratos
+            WHERE estado = 'ACTIVO'
+            and id_venta = $id_venta
+        ");
+
+        if (!$resContrato || $resContrato->num_rows>=1) {
+            throw new Exception("ya existe un contrato activo para esta venta, favor anular el contrato actual para generar uno nuevo");
+        }
+
         sql_update("START TRANSACTION");
 
         /* ===============================
@@ -443,6 +454,71 @@ function generarContratoVenta(
                 'ok' => false,
                 'error' => $e->getMessage()
             ];
+    }
+}
+
+function anularContratoVenta(
+    int $id_venta,
+    string $usuarioSistema
+) {
+    try {
+
+        sql_update("START TRANSACTION");
+
+        // Validar contrato
+        $resContrato = sql_select("
+            SELECT id_contrato, id_venta, estado
+            FROM ventas_contratos
+            WHERE estado = 'ACTIVO'
+            and id_venta = $id_venta
+            FOR UPDATE
+        ");
+
+        if (!$resContrato || $resContrato->num_rows === 0) {
+            throw new Exception("no existe contrato para anular");
+        }
+
+        $contrato = $resContrato->fetch_assoc();
+
+/*         if ($contrato['estado'] !== 'ACTIVO') {
+            throw new Exception("Solo se pueden anular contratos activos");
+        } */
+
+        // Anular contrato principal
+        sql_update("
+            UPDATE ventas_contratos
+            SET estado = 'ANULADO', 
+                anulado_por = '$usuarioSistema',
+                fecha_anulacion = NOW()
+            WHERE id_contrato = {$contrato['id_contrato']}
+        ");
+
+        // Anular detalle del contrato
+        sql_update("
+            UPDATE ventas_contratos_detalle
+            SET estado = 'ANULADO',
+                accion = 'ANULACION',
+                anulado_por = '$usuarioSistema',
+                fecha_anulacion = NOW()
+            WHERE id_contrato = {$contrato['id_contrato']}
+              AND estado = 'ACTIVO'
+        ");
+
+        sql_update("COMMIT");
+
+        return [
+            'ok' => true,
+            'message' => 'Contrato anulado correctamente'
+        ];
+
+    } catch (Exception $e) {
+
+        sql_update("ROLLBACK");
+
+        return [
+            'ok' => false,
+            'error' => $e->getMessage()
+        ];
     }
 }
 
@@ -1031,6 +1107,18 @@ if ($nuevo=='N'){
    pagina_permiso(167);
 }
 
+if (isset($_GET['a']) && $_GET['a'] === 'anularcontrato') {
+        $id_venta = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
+        $id_usuario = intval($_SESSION['usuario_id']);
+
+        $resp = anularContratoVenta($id_venta, $id_usuario);
+
+        header('Content-Type: application/json');
+        echo json_encode($resp);
+        exit;
+
+
+}
 
 if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
 
@@ -1039,7 +1127,6 @@ if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
         $id_usuario=$_SESSION['usuario_id'];
 
 
-        
 
         $id_usuario = intval($_SESSION['usuario_id']);
 
@@ -2494,7 +2581,6 @@ if ($foto_original_tele !== '') {
                id="btnanularContrato"
                target="_blank"
                class="btn btn-danger w-100 mb-2"
-               style="background-color:#e5533d;color:#fff;border:1px solid #e5533d;">
                 <i class="fas fa-file-pdf"></i> Anular contrato
             </a>
         </div>
@@ -2800,6 +2886,61 @@ $('#btnActualizarContrato').on('click', function (e) {
                 }
             );
 
+});
+
+$('#btnanularContrato').on('click', function (e) {
+    e.preventDefault();
+
+    const id = $('#id').val();
+
+    if (!id) {
+        mytoast('error', 'No hay ID', 3000);
+        return;
+    }
+
+    popupconfirmar(
+        'Confirmación',
+        '¿Seguro desea anular el contrato activo? Esta acción no se puede deshacer.',
+        function () {
+
+            $.ajax({
+                url: 'ventas_mant_contrato.php',
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    a: 'anularcontrato', // 👈 acción nueva en tu backend
+                    id: id
+                },
+                success: function (resp) {
+                    if (resp.ok) {
+                        mytoast(
+                            'success',
+                            'Contrato anulado correctamente',
+                            3000
+                        );
+
+                        // opcional: refrescar o cambiar estado en pantalla
+                        // location.reload();
+
+                    } else {
+                        mytoast(
+                            'error',
+                            resp.error || 'Error al anular contrato',
+                            3000
+                        );
+                    }
+                },
+                error: function () {
+                    mytoast(
+                        'error',
+                        'Error de comunicación con el servidor',
+                        3000
+                    );
+                }
+            });
+
+        }
+    );
 });
 
 });
