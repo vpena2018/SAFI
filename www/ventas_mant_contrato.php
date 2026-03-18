@@ -1109,9 +1109,23 @@ if ($nuevo=='N'){
 
 if (isset($_GET['a']) && $_GET['a'] === 'anularcontrato') {
         $id_venta = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
+
         $id_usuario = intval($_SESSION['usuario_id']);
 
-        $resp = anularContratoVenta($id_venta, $id_usuario);
+                $resUser = sql_select("
+            SELECT
+                u.usuario
+            FROM usuario u
+            WHERE u.id = $id_usuario
+            LIMIT 1
+        ");
+
+        $user = $resUser->fetch_assoc();
+
+        $usuarioSistema = $user['usuario'];
+
+
+        $resp = anularContratoVenta($id_venta, $usuarioSistema);
 
         header('Content-Type: application/json');
         echo json_encode($resp);

@@ -14,6 +14,9 @@ SELECT
     vc.fecha_contrato,
     vc.estado,
     vc.creado_por,
+    vc.anulado_por,
+    vc.fecha_anulacion,
+
     vcd.id AS id_detalle
 
 FROM ventas_contratos vc
@@ -30,11 +33,12 @@ ORDER BY vc.fecha_contrato DESC;
 <thead class="thead-dark">
 <tr>
     <th>Contrato</th>
-    <th>Correlativo</th>
     <th>Tipo contrato</th>
     <th>Fecha</th>
     <th>Estado</th>
     <th>Creado Por</th>
+    <th>Anulado Por</th>
+    <th>Fecha Anulación</th>
     <th width="120">Acción</th>
 </tr>
 </thead>
@@ -54,15 +58,17 @@ if ($result && $result->num_rows > 0) {
 
             <td>'.$row["numero_contrato"].'</td>
 
-            <td>'.$row["correlativo"].'</td>
 
             <td>'.$tipo_contrato.'</td>
 
-            <td>'.formato_fecha_de_mysql($row["fecha_contrato"]).'</td>
+            <td>'.formato_fechahora_de_mysql($row["fecha_contrato"]).'</td>
 
             <td>'.$estado.'</td>
 
             <td>'.$row["creado_por"].'</td>
+            <td>'.$row["anulado_por"].'</td>
+
+            <td>'.formato_fechahora_de_mysql($row["fecha_anulacion"]).'</td>
 
             <td>
                 <a href="#"
