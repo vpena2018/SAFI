@@ -669,12 +669,8 @@ if ($aplica_actarv_pdf) {
 
     $pdf->SetFont('helvetica', '', 10);
     $pdf->SetXY($header_x + $col_logo + $col_center + 2, $header_y + 2);
-    $pdf->Cell($col_right - 4, 4, 'RE-VE-17', 0, 1, 'L');
-    $pdf->SetX($header_x + $col_logo + $col_center + 2);
-    $pdf->Cell($col_right - 4, 4, 'Ver. 02', 0, 1, 'L');
-    $pdf->SetX($header_x + $col_logo + $col_center + 2);
-    $pdf->Cell($col_right - 4, 4, 'Fecha: 21/07/2025', 0, 1, 'L');
-
+    $pdf->Cell($col_right - 4, 4, 'Fecha :'.formato_fecha_pdf_seguro($row['fecha']), 0, 1, 'L');
+    
     $pdf->SetFont('helvetica', 'B', 11);
     $pdf->SetXY($header_x, $header_y + $row_top_h);
     $pdf->Cell($header_w, $row_bottom_h, 'ACTA DE RECEPCION DE VEHICULO', 0, 1, 'C');
