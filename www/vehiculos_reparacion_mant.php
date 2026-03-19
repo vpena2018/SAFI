@@ -185,7 +185,12 @@ if ($accion=="g") {
         $estadocompletar="";
         if (isset($_REQUEST['est'])) { $estadocompletar = trim($_REQUEST["est"]); }
         if (!es_nulo($estadocompletar) && $estadocompletar=='cmp'){
-             $sqlcampos.= " , id_estado=".GetSQLValue($_REQUEST["id_estado_anterior_reproceso"],"int");  
+             if (isset($_REQUEST["id_estado_anterior_reproceso"])) {
+                $id_estado_anterior_reproceso = intval($_REQUEST["id_estado_anterior_reproceso"]); 
+             }else{
+                $id_estado_anterior_reproceso = 0; 
+             }
+             $sqlcampos.= " , id_estado=".$id_estado_anterior_reproceso;  
              $sqlcampos.= ", tipo_ventas_reparacion=2";
              $sqlcampos.= ", reproceso='' ";  
              $sqlcampos.= ", fecha_reparacion_completada=now() ";    		  	 
