@@ -178,6 +178,17 @@ function generarContratoVenta(
             $tipo_contrato=1;
         }
 
+         $resContrato = sql_select("
+            SELECT id_contrato, id_venta, estado
+            FROM ventas_contratos
+            WHERE estado = 'ACTIVO'
+            and id_venta = $id_venta
+        ");
+
+        if (!$resContrato || $resContrato->num_rows>=1) {
+            throw new Exception("ya existe un contrato activo para esta venta, favor anular el contrato actual para generar uno nuevo");
+        }
+
         sql_update("START TRANSACTION");
 
         /* ===============================
@@ -446,6 +457,71 @@ function generarContratoVenta(
     }
 }
 
+function anularContratoVenta(
+    int $id_venta,
+    string $usuarioSistema
+) {
+    try {
+
+        sql_update("START TRANSACTION");
+
+        // Validar contrato
+        $resContrato = sql_select("
+            SELECT id_contrato, id_venta, estado
+            FROM ventas_contratos
+            WHERE estado = 'ACTIVO'
+            and id_venta = $id_venta
+            FOR UPDATE
+        ");
+
+        if (!$resContrato || $resContrato->num_rows === 0) {
+            throw new Exception("no existe contrato para anular");
+        }
+
+        $contrato = $resContrato->fetch_assoc();
+
+/*         if ($contrato['estado'] !== 'ACTIVO') {
+            throw new Exception("Solo se pueden anular contratos activos");
+        } */
+
+        // Anular contrato principal
+        sql_update("
+            UPDATE ventas_contratos
+            SET estado = 'ANULADO', 
+                anulado_por = '$usuarioSistema',
+                fecha_anulacion = NOW()
+            WHERE id_contrato = {$contrato['id_contrato']}
+        ");
+
+        // Anular detalle del contrato
+        sql_update("
+            UPDATE ventas_contratos_detalle
+            SET estado = 'ANULADO',
+                accion = 'ANULACION',
+                anulado_por = '$usuarioSistema',
+                fecha_anulacion = NOW()
+            WHERE id_contrato = {$contrato['id_contrato']}
+              AND estado = 'ACTIVO'
+        ");
+
+        sql_update("COMMIT");
+
+        return [
+            'ok' => true,
+            'message' => 'Contrato anulado correctamente'
+        ];
+
+    } catch (Exception $e) {
+
+        sql_update("ROLLBACK");
+
+        return [
+            'ok' => false,
+            'error' => $e->getMessage()
+        ];
+    }
+}
+
 
 function convertirDocxAPdf(string $docxPath): string
 {
@@ -461,9 +537,9 @@ function convertirDocxAPdf(string $docxPath): string
         $tmpDir = sys_get_temp_dir();
         appLog('TMP DIR: ' . $tmpDir);
 
-        $soffice = getSofficeCommandProd();
+        //$soffice = getSofficeCommandProd();--descomentar para produccion
 
-        //$soffice = getSofficeCommandDev();
+        $soffice = getSofficeCommandDev();//comentar para produccion
 
 
 
@@ -1031,6 +1107,32 @@ if ($nuevo=='N'){
    pagina_permiso(167);
 }
 
+if (isset($_GET['a']) && $_GET['a'] === 'anularcontrato') {
+        $id_venta = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
+
+        $id_usuario = intval($_SESSION['usuario_id']);
+
+                $resUser = sql_select("
+            SELECT
+                u.usuario
+            FROM usuario u
+            WHERE u.id = $id_usuario
+            LIMIT 1
+        ");
+
+        $user = $resUser->fetch_assoc();
+
+        $usuarioSistema = $user['usuario'];
+
+
+        $resp = anularContratoVenta($id_venta, $usuarioSistema);
+
+        header('Content-Type: application/json');
+        echo json_encode($resp);
+        exit;
+
+
+}
 
 if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
 
@@ -1039,7 +1141,6 @@ if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
         $id_usuario=$_SESSION['usuario_id'];
 
 
-        
 
         $id_usuario = intval($_SESSION['usuario_id']);
 
@@ -2428,49 +2529,210 @@ if ($foto_original_tele !== '') {
 </div>					
 
  
-	<div class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top ">
-		<div class="row">
-		<div class="col-sm">            
-            <!--a href="#" onclick="procesar('ventas_mant_contrato.php?a=g','forma_ventas',''); return false;" class="btn btn-primary btn-block mb-2 xfrm" ><i class="fa fa-check"></i> Guardar</a-->                           
+	<div class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top">
+
+    <!-- 🔹 FILA 1 -->
+    <div class="row">
+
+        <div class="col-sm">
             <a href="javascript:void(0);" 
-            id="btnguardar"
-            class="btn btn-primary btn-block mb-2 xfrm" >
-            <i class="fa fa-check"></i> Guardar</a> 
-        </div>        
+               id="btnguardar"
+               class="btn btn-primary w-100 mb-2 xfrm">
+                <i class="fa fa-check"></i> Guardar
+            </a> 
+        </div>
+
         <?php if (tiene_permiso(168)){ ?>
-              <div class="col-sm"><a id="ventas_anularbtn"  href="#" onclick="ventas_anular(); return false;" class="btn btn-danger  btn-block mr-2 mb-2 xfrm"><i class="fa fa-trash-alt"></i> Borrar</a></div>		              
-          <?php } ?>  
+        <div class="col-sm">
+            <a id="ventas_anularbtn"
+               href="#"
+               onclick="ventas_anular(); return false;"
+               class="btn btn-danger w-100 mb-2 xfrm">
+                <i class="fa fa-trash-alt"></i> Borrar
+            </a>
+        </div>
+        <?php } ?>  
 
         <?php if (!es_nulo($id_inspeccion)){ ?>            
-            <a href="#" onclick="abrir_hoja(); return false;" class="btn btn-outline-secondary mr-2 mb-2 xfrm" ><i class="fa fa-file-medical-alt"></i> Abrir Inspección</a>
+        <div class="col-sm">
+            <a href="#"
+               onclick="abrir_hoja(); return false;"
+               class="btn btn-outline-secondary w-100 mb-2 xfrm">
+                <i class="fa fa-file-medical-alt"></i> Abrir Inspección
+            </a>
+        </div>
         <?php } ?> 
 
-<div style="margin-right:10px;">
-    <a href="javascript:void(0);"
-       id="btnContrato"
-       target="_blank"
-       class="btn btn-block mb-2"
-       style="
-           background-color:#e5533d;
-           color:#fff;
-           border:1px solid #e5533d;
-       ">
-        <i class="fas fa-file-pdf"></i> descargar contrato
-    </a>
+        <div class="col-sm">
+            <a href="javascript:void(0);"
+               id="btnContrato"
+               target="_blank"
+               class="btn w-100 mb-2"
+               style="background-color:#e5533d;color:#fff;border:1px solid #e5533d;">
+                <i class="fas fa-file-pdf"></i> Descargar contrato
+            </a>
+        </div>
+
+    </div>
+
+    <!-- 🔹 FILA 2 -->
+    <div class="row">
+
+        <?php if ($id_estado!=20){ ?>
+        <div class="col-sm">
+            <a href="javascript:void(0);"
+               id="btnActualizarContrato"
+               class="btn w-100 mb-2"
+               style="background-color:#f0ad4e;color:#fff;border:1px solid #f0ad4e;">
+                <i class="fas fa-file-pdf"></i> Generar contrato
+            </a>
+        </div>
+        <?php } ?> 
+
+        <?php if (tiene_permiso(189)){ ?>
+        <div class="col-sm">
+            <a href="javascript:void(0);"
+               id="btnanularContrato"
+               target="_blank"
+               class="btn btn-danger w-100 mb-2"
+                <i class="fas fa-file-pdf"></i> Anular contrato
+            </a>
+        </div>
+        <?php } ?> 
+
+        <div class="col-sm">
+            <a href="#"
+               onclick="$('#ModalWindow2').modal('hide'); return false;"
+               class="btn btn-light w-100 mb-2 xfrm">
+                <?php echo 'Cerrar'; ?>
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+	</fieldset>
+	</form>
+
+<?php  ?>    
+ 
+</div>
+
+</div>
+
 </div>
 
 
-        <?php if ($id_estado!=20){ ?>
-              <div>
-                <a href="javascript:void(0);"
-                id="btnActualizarContrato"
-                class="btn btn-block mb-1"
-                style="background-color:#f0ad4e;color:#fff;border:1px solid #f0ad4e;">
-                <i class="fas fa-file-pdf"></i> Generar contrato
-                </a>
-            </div>	              
-          <?php } ?> 
+</div>
 
+<!-- HISTORIAL -->
+<div class="tab-pane fade " id="nav_historial" role="tabpanel" ></div>
+
+
+<!-- fotos ventas -->
+<div class="tab-pane fade " id="nav_Fotos_venta" role="tabpanel" >
+    <div class="" id="insp_fotos_thumbs_ventas">
+    </div>
+    <div class="row">
+    <div class="col-md-10" id="archivofotoventas">
+    <?php
+
+        $total_filas=0;
+        $principal=false;
+        $principalEncontrada=false;
+ 
+        $sql="select id,nombre_archivo,fecha,principal from ventas_fotos where id_venta=".GetSQLValue($id,"int")." order by principal desc";
+        $result = sql_select($sql);
+
+        if ($result != false) {
+    $total_filas = $result->num_rows;
+    if ($total_filas > 0) {
+
+        echo '<div style="
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+            justify-items: center;
+            align-items: start;
+            justify-content: center;
+        ">';
+
+        while ($row = $result->fetch_assoc()) {
+            $es_principal = (bool)$row["principal"];
+            $fext = strtolower(substr($row["nombre_archivo"], -3));
+
+            if (in_array($fext, ['jpg', 'peg', 'png', 'gif'])) {
+
+                echo '<div style="text-align:center;">';
+
+                // Imagen
+                echo '<a href="#" class="foto_br' . $row["id"] . '" 
+                        onclick="mostrar_foto(\'' . $row["nombre_archivo"] . '\',\'uploa_d_ventas/\'); return false;"
+                        style="display:inline-block; transition: transform 0.2s ease-in-out;">
+                        <img class="img img-thumbnail mb-2" 
+                             src="uploa_d_ventas/thumbnail/' . $row["nombre_archivo"] . '" 
+                             data-cod="' . $row["id"] . '" 
+                             style="width:100%; max-width:160px; height:auto; border-radius:6px;">
+                      </a>';
+
+                // Controles
+                if (tiene_permiso(186)){
+                    echo '<div style="text-align:center; font-size:13px;">';
+                    echo '<a href="#" class="mr-2 foto_br' . $row["id"] . '" 
+                            onclick="borrar_fotodb(' . $row["id"] . ',\'' . $row["nombre_archivo"] . '\'); return false;"
+                            style="color:#dc3545; text-decoration:none;">
+                            <i class="fa fa-eraser"></i> Borrar
+                        </a>';
+                
+                    if ($es_principal) {
+                        echo '<i class="fa fa-star" title="Foto de portada" style="color:#f0c651;"> Portada</i>';
+                    } else {
+                       echo '<a href="#" onclick="marcar_portada(' . $row["id"] . ',\'' . $row["nombre_archivo"] . '\'); return false;"
+                                style="color:#6c757d; text-decoration:none;">
+                                <i class="far fa-star"></i> Portada
+                             </a>';
+                    
+                    }
+                    echo '</div>';
+                }
+                echo '</div>';
+        
+            }
+        }
+
+        echo '</div>';
+    }
+}
+
+
+
+
+
+    if (tiene_permiso(186)){
+        $a=$total_filas;
+        while ($a < 10) {            
+            echo '<div class="row"><div class="col-12">';
+            echo '<div class="ins_varias_foto_div">';
+            echo campo_upload_foto_ventas("ins_foto".$a,"Adjuntar Fotos",'upload','', '  ','',3,9,'NO',false,$principal );
+            echo "</div></div></div>";
+            echo "<hr>"; 
+            $a++;
+            
+
+        }
+    }   
+    ?>
+    </div>
+</div>
+</div>
+
+<!-- CONTRATO HISTORIAL -->
+<div class="tab-pane fade " id="nav_contratos" role="tabpanel" ></div>
+
+
+<!-- errores -->
+<div class="tab-pane fade mt-5 mb-5" id="nav_deshabilitado" role="tabpanel" ><div class="alert alert-warning" role="alert">Debe Guardar el documento para poder continuar con esta sección</div></div>
 
 
 
@@ -2640,6 +2902,61 @@ $('#btnActualizarContrato').on('click', function (e) {
 
 });
 
+$('#btnanularContrato').on('click', function (e) {
+    e.preventDefault();
+
+    const id = $('#id').val();
+
+    if (!id) {
+        mytoast('error', 'No hay ID', 3000);
+        return;
+    }
+
+    popupconfirmar(
+        'Confirmación',
+        '¿Seguro desea anular el contrato activo? Esta acción no se puede deshacer.',
+        function () {
+
+            $.ajax({
+                url: 'ventas_mant_contrato.php',
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    a: 'anularcontrato', // 👈 acción nueva en tu backend
+                    id: id
+                },
+                success: function (resp) {
+                    if (resp.ok) {
+                        mytoast(
+                            'success',
+                            'Contrato anulado correctamente',
+                            3000
+                        );
+
+                        // opcional: refrescar o cambiar estado en pantalla
+                        // location.reload();
+
+                    } else {
+                        mytoast(
+                            'error',
+                            resp.error || 'Error al anular contrato',
+                            3000
+                        );
+                    }
+                },
+                error: function () {
+                    mytoast(
+                        'error',
+                        'Error de comunicación con el servidor',
+                        3000
+                    );
+                }
+            });
+
+        }
+    );
+});
+
 });
 
 
@@ -2716,138 +3033,6 @@ function descargar_contrato(id_venta, id_contrato,persona_juridica,reimpresion)
 
 
 </script>
-
-
-
-         
-
-        <div class="col-sm"><a href="#" onclick="$('#ModalWindow2').modal('hide');  return false;" class="btn btn-light btn-block mb-2 xfrm" >  <?php echo 'Cerrar'; ?></a></div>
-		</div>
-	</div>
-
-	</fieldset>
-	</form>
-
-<?php  ?>    
- 
-</div>
-
-</div>
-
-</div>
-
-
-</div>
-
-<!-- HISTORIAL -->
-<div class="tab-pane fade " id="nav_historial" role="tabpanel" ></div>
-
-
-<!-- fotos ventas -->
-<div class="tab-pane fade " id="nav_Fotos_venta" role="tabpanel" >
-    <div class="" id="insp_fotos_thumbs_ventas">
-    </div>
-    <div class="row">
-    <div class="col-md-10" id="archivofotoventas">
-    <?php
-
-        $total_filas=0;
-        $principal=false;
-        $principalEncontrada=false;
- 
-        $sql="select id,nombre_archivo,fecha,principal from ventas_fotos where id_venta=".GetSQLValue($id,"int")." order by principal desc";
-        $result = sql_select($sql);
-
-        if ($result != false) {
-    $total_filas = $result->num_rows;
-    if ($total_filas > 0) {
-
-        echo '<div style="
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 12px;
-            justify-items: center;
-            align-items: start;
-            justify-content: center;
-        ">';
-
-        while ($row = $result->fetch_assoc()) {
-            $es_principal = (bool)$row["principal"];
-            $fext = strtolower(substr($row["nombre_archivo"], -3));
-
-            if (in_array($fext, ['jpg', 'peg', 'png', 'gif'])) {
-
-                echo '<div style="text-align:center;">';
-
-                // Imagen
-                echo '<a href="#" class="foto_br' . $row["id"] . '" 
-                        onclick="mostrar_foto(\'' . $row["nombre_archivo"] . '\',\'uploa_d_ventas/\'); return false;"
-                        style="display:inline-block; transition: transform 0.2s ease-in-out;">
-                        <img class="img img-thumbnail mb-2" 
-                             src="uploa_d_ventas/thumbnail/' . $row["nombre_archivo"] . '" 
-                             data-cod="' . $row["id"] . '" 
-                             style="width:100%; max-width:160px; height:auto; border-radius:6px;">
-                      </a>';
-
-                // Controles
-                if (tiene_permiso(186)){
-                    echo '<div style="text-align:center; font-size:13px;">';
-                    echo '<a href="#" class="mr-2 foto_br' . $row["id"] . '" 
-                            onclick="borrar_fotodb(' . $row["id"] . ',\'' . $row["nombre_archivo"] . '\'); return false;"
-                            style="color:#dc3545; text-decoration:none;">
-                            <i class="fa fa-eraser"></i> Borrar
-                        </a>';
-                
-                    if ($es_principal) {
-                        echo '<i class="fa fa-star" title="Foto de portada" style="color:#f0c651;"> Portada</i>';
-                    } else {
-                       echo '<a href="#" onclick="marcar_portada(' . $row["id"] . ',\'' . $row["nombre_archivo"] . '\'); return false;"
-                                style="color:#6c757d; text-decoration:none;">
-                                <i class="far fa-star"></i> Portada
-                             </a>';
-                    
-                    }
-                    echo '</div>';
-                }
-                echo '</div>';
-        
-            }
-        }
-
-        echo '</div>';
-    }
-}
-
-
-
-
-
-    if (tiene_permiso(186)){
-        $a=$total_filas;
-        while ($a < 10) {            
-            echo '<div class="row"><div class="col-12">';
-            echo '<div class="ins_varias_foto_div">';
-            echo campo_upload_foto_ventas("ins_foto".$a,"Adjuntar Fotos",'upload','', '  ','',3,9,'NO',false,$principal );
-            echo "</div></div></div>";
-            echo "<hr>"; 
-            $a++;
-            
-
-        }
-    }   
-    ?>
-    </div>
-</div>
-</div>
-
-<!-- CONTRATO HISTORIAL -->
-<div class="tab-pane fade " id="nav_contratos" role="tabpanel" ></div>
-
-
-<!-- errores -->
-<div class="tab-pane fade mt-5 mb-5" id="nav_deshabilitado" role="tabpanel" ><div class="alert alert-warning" role="alert">Debe Guardar el documento para poder continuar con esta sección</div></div>
-
-
 
 
 <script>
