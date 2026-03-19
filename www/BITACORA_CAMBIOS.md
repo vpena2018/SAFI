@@ -1,5 +1,8 @@
 # Bitacora de cambios
 
+## 2026-03-19
+- En `include/framework.php` se corrigio `get_dato_sql()`: agregado chequeo `$result != false` antes de acceder a `->num_rows`, evitando el Warning "Attempt to read property num_rows on bool" cuando la query MySQL falla.
+
 ## 2026-03-15
 - En `inspeccion_mant.php` se agrego `window.comprimirSiEsImagen` (mismo enfoque de `combustible.php`) para reducir resolucion/peso antes de subir imagenes, aplicando a `actarv_foto_licencia` durante la carga.
 - En `inspeccion_mant.php` se corrigio el error al cambiar cliente a no CCO (ej. CCN): al ocultar Acta de Recepcion, el campo `actarv_celular` ahora se deshabilita y se le retira temporalmente `pattern/title/required` para que no bloquee `Guardar Borrador` por validacion HTML.

@@ -597,10 +597,12 @@ function get_dato_sql($tabla,$campo,$where) {
    //echo $sql; exit;
     $result = sql_select($sql);
   
-      if ($result->num_rows > 0) {    
+      if ($result != false && $result->num_rows > 0) {    
         $row = $result -> fetch_assoc();    
           $salida=trim($row["salida"]);
-         
+    } elseif ($result === false) {
+        global $conn;
+        error_log("[get_dato_sql] SQL error: " . $conn->error . " | Query: " . $sql);
     }
   
      return $salida;    
