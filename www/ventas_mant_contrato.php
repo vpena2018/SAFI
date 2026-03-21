@@ -537,9 +537,9 @@ function convertirDocxAPdf(string $docxPath): string
         $tmpDir = sys_get_temp_dir();
         appLog('TMP DIR: ' . $tmpDir);
 
-        //$soffice = getSofficeCommandProd();--descomentar para produccion
+        $soffice = getSofficeCommandProd();--descomentar para produccion
 
-        $soffice = getSofficeCommandDev();//comentar para produccion
+        //$soffice = getSofficeCommandDev();//comentar para produccion
 
 
 
@@ -1533,6 +1533,15 @@ if (!es_nulo($cid) && in_array($id_estado, [11, 20], true)) {
     if (trim($prima_raw) === '') {
         $verror .= 'Ingrese la prima de venta del vehículo. ';
     }
+
+    //valida que el precio de venta no sea menor al precio minimo y que no sea mayor al precio maximo
+    if (!es_nulo($precio_venta) && !es_nulo($precio_minimo) && $precio_venta < $precio_minimo) {
+        $verror .= 'El precio de venta no puede ser menor al precio mínimo. ';
+    }
+    if (!es_nulo($precio_venta) && !es_nulo($precio_maximo) && $precio_venta > $precio_maximo) {
+        $verror .= 'El precio de venta no puede ser mayor al precio máximo. ';
+    }
+
 }
     
     
@@ -2461,7 +2470,7 @@ if ($foto_original_tele !== '') {
          <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',$disable_sec2); ?>                 
     </div>   
         <div class="col-md">            
-         <?php echo campo("prima_venta","Prima de Venta",'number',$prima_venta,' ',$disable_sec2); ?>                 
+         <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec2); ?>                 
     </div> 
 </div>
 
