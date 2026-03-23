@@ -2757,7 +2757,7 @@ $('#btnguardar').on('click', function (e) {
         async function () {
 
             const resultado = await procesarAsync(
-                'ventas_mant.php?a=g',
+                'ventas_mant_contrato.php?a=g',
                 'forma_ventas',
                 ''
             );
@@ -2817,7 +2817,7 @@ $('#btnContrato').on('click', function (e) {
 
                             // 👉 ahora sí descargar
                             window.location.href =
-                                'ventas_mant.php?a=print&id=' +
+                                'ventas_mant_contrato.php?a=print&id=' +
                                 encodeURIComponent(id) +
                                 '&persona_juridica=' +encodeURIComponent(persona_juridica)
                                 '&id_contrato=' + encodeURIComponent(0) +
@@ -2874,7 +2874,7 @@ $('#btnActualizarContrato').on('click', function (e) {
                 function () {
 
                     $.ajax({
-                        url: 'ventas_mant.php',
+                        url: 'ventas_mant_contrato.php',
                         type: 'GET',
                         dataType: 'json',
                         data: {
@@ -2983,7 +2983,7 @@ function descargar_contrato(id_venta, id_contrato,persona_juridica,reimpresion)
         function () {
 
             $.ajax({
-                url: 'ventas_mant.php',
+                url: 'ventas_mant_contrato.php',
                 type: 'GET',
                 dataType: 'json',
                 data: {
@@ -3009,7 +3009,7 @@ function descargar_contrato(id_venta, id_contrato,persona_juridica,reimpresion)
 
 
                         window.location.href =
-                            'ventas_mant.php?a=print' +
+                            'ventas_mant_.php?a=print' +
                             '&id=' + encodeURIComponent(id_venta) +
                             '&persona_juridica=' + encodeURIComponent(persona_juridica) +
                             '&id_contrato=' + encodeURIComponent(id_contrato) +
@@ -3133,7 +3133,7 @@ Swal.fire({
 	}).then((result) => {
 	  if (result.value) {
 	    
-            $.post( 'ventas_mant.php',datos, function(json) {
+            $.post( 'ventas_mant_contrato.php',datos, function(json) {
                 
                 if (json.length > 0) {
                     if (json[0].pcode == 0) {
@@ -3232,7 +3232,7 @@ Swal.fire({
 	}).then((result) => {
 	  if (result.value) {
 	    
-            $.post( 'ventas_mant.php',datos, function(json) {
+            $.post( 'ventas_mant_contrato.php',datos, function(json) {
                
                 if (json.length > 0) {
                     if (json[0].pcode == 0) {
@@ -3331,7 +3331,7 @@ function ventas_anular(){
 	  cancelButtonText:  'Cancelar'
 	}).then((result) => {
 	  if (result.value) {
-	     ventas_procesar('ventas_mant.php?a=del','forma_ventas','del');        
+	     ventas_procesar('ventas_mant_contrato.php?a=del','forma_ventas','del');        
 	  }
 	})
 
@@ -3349,7 +3349,7 @@ function ventas_dfoto(foto){
 	  cancelButtonText:  'Cancelar'
 	}).then((result) => {
 	  if (result.value) {
-	     ventas_procesar('ventas_mant.php?a=dfoto&foto='+encodeURI(foto),'forma_ventas','dfoto');        
+	     ventas_procesar('ventas_mant_contrato.php?a=dfoto&foto='+encodeURI(foto),'forma_ventas','dfoto');        
 	  }
 	})
 
