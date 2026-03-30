@@ -1,6 +1,9 @@
 <?php
 require_once ('include/framework.php');
 
+$estado_global_nuevo=99;       
+$estado_global_negociacion=11;
+
        $tipos_docu = [
             ['valor' => 'dni', 'texto' => 'DNI'],
             ['valor' => 'pasaporte', 'texto' => 'pasaporte'],
@@ -144,7 +147,7 @@ if (!tiene_permiso(168)) {
             if ($result!=false){
                 if ($result -> num_rows > 0) { 
                     $row = $result -> fetch_assoc(); 
-                    if ($row['id_estado']==99) {
+                    if ($row['id_estado']==$estado_global_nuevo) {
                         borrar_foto_directorio($cid,"","","vehiculos_reparacion");
                         borrar_foto_directorio($cid,"","","vehiculos_reparacion_televentas");
                         sql_delete("DELETE FROM ventas where tipo_ventas_reparacion=1 and id=$cid limit 1");                    
@@ -293,15 +296,96 @@ if ($verror == "") {
         if (isset($_REQUEST["fecha_promesa_taller"])) { $sqlcampos.= " , fecha_promesa_taller =".GetSQLValue($_REQUEST["fecha_promesa_taller"],"date"); }                            
         if (isset($_REQUEST["id_vendedor"])) { $sqlcampos.= " , id_vendedor =".GetSQLValue($_REQUEST["id_vendedor"],"int"); } 
 
+
+
+
+
+        //info de contrato
+        if($id_estado==11 || $id_estado==20){
+            $rep_profesion   = trim($_REQUEST['representante_legal_profesion'] ?? '');
+
+            $sqlcampos .= " , representante_legal_profesion = ". GetSQLValue($rep_profesion, "text");
+
+            if (isset($_REQUEST["cliente_id"])) { $sqlcampos.= " , cliente_id =".GetSQLValue($_REQUEST["cliente_id"],"int"); }  
+        }else{
+            $sqlcampos.= " , cliente_id =null, representante_legal_profesion = null,tipo_documento_ident_venta=null, nacionalidad_venta=null, ciudad_venta=null,departamento_venta=null";
+        }
+        
+        if (isset($_REQUEST["precio_venta"])) { $sqlcampos.= " , precio_venta =".GetSQLValue($_REQUEST["precio_venta"],"int"); } 
+        if (isset($_REQUEST["prima_venta"])) { $sqlcampos.= " , prima_venta =".GetSQLValue($_REQUEST["prima_venta"],"int"); }
+
+        if (isset($_REQUEST["tipo_documento_ident_venta"])) { $sqlcampos.= " , tipo_documento_ident_venta =".GetSQLValue($_REQUEST["tipo_documento_ident_venta"],"text"); } 
+        if (isset($_REQUEST["nacionalidad_venta"])) { $sqlcampos.= " , nacionalidad_venta =".GetSQLValue($_REQUEST["nacionalidad_venta"],"text"); } 
+
+
+
+        $estado_nuevo = intval($_REQUEST['id_estado']);
+        
+        if ($persona_juridica == 1 && ($id_estado==11 || $id_estado==20)) {
+
+            if (isset($_REQUEST["persona_juridica"])) { $sqlcampos.= " , persona_juridica =".GetSQLValue($_REQUEST["persona_juridica"],"int"); } 
+
+            $rep_legal = trim($_REQUEST['representante_legal_persona_juridica'] ?? '');
+            $rep_id    = trim($_REQUEST['representante_legal_identidad'] ?? '');
+            
+            $rep_direccion    = trim($_REQUEST['representante_legal_direccion'] ?? '');
+
+            $sqlcampos .= " , representante_legal_persona_juridica = "
+                        . GetSQLValue($rep_legal, "text");
+
+            $sqlcampos .= " , representante_legal_identidad = "
+                        . GetSQLValue($rep_id, "text");
+
+
+
+             $sqlcampos .= " , representante_legal_direccion = "
+            . GetSQLValue($rep_direccion, "text");
+
+
+
+        } else {
+
+            // Si NO es persona jurídica, limpiamos los campos
+            $sqlcampos .= " , persona_juridica =0";
+            $sqlcampos .= " , representante_legal_persona_juridica = NULL";
+            $sqlcampos .= " , representante_legal_identidad = NULL";
+            //$sqlcampos .= " , representante_legal_profesion = NULL";
+            $sqlcampos .= " , representante_legal_direccion = NULL";
+            
+        }
+
+
+
+
         $estadocompletar="";
         if (isset($_REQUEST['est'])) { $estadocompletar = trim($_REQUEST["est"]); }
+
+
+
+        //$estado_nuevo = intval($_REQUEST["id_estado_anterior_reproceso"]);
+
+        //$estado_nuevo = intval($_REQUEST['id_estado']);
+        //$estado_nuevo=99;
+
+        if($estado_nuevo==$estado_global_negociacion || $estado_nuevo==20){
+            $sqlcampos.= " , id_estado=".$estado_nuevo; 
+        }else if($estado_nuevo==0){
+            $sqlcampos.= " , id_estado=".$estado_nuevo;
+        }
+
         if (!es_nulo($estadocompletar) && $estadocompletar=='cmp'){
              if (isset($_REQUEST["id_estado_anterior_reproceso"])) {
                 $id_estado_anterior_reproceso = intval($_REQUEST["id_estado_anterior_reproceso"]); 
              }else{
                 $id_estado_anterior_reproceso = 0; 
              }
-             $sqlcampos.= " , id_estado=".$id_estado_anterior_reproceso;  
+             
+            if($estado_nuevo==$estado_global_negociacion || $estado_nuevo==20){
+                $sqlcampos.= " , id_estado=".$estado_nuevo; 
+            }else{
+                $sqlcampos.= " , id_estado=".$id_estado_anterior_reproceso; 
+            }
+             
              $sqlcampos.= ", tipo_ventas_reparacion=2";
              $sqlcampos.= ", reproceso='' ";  
              $sqlcampos.= ", fecha_reparacion_completada=now() ";    		  	 
@@ -320,12 +404,12 @@ if ($verror == "") {
             $id_tienda = isset($venta_actual['id_tienda']) ? intval($venta_actual['id_tienda']) : 0;
             if ($id_tienda!=intval($_REQUEST['id_tienda'])){   
                $id_tienda_name=get_dato_sql("tienda","nombre"," where id=".$_REQUEST['id_tienda']);
-               registrar_historial_ventas($cid, 99, 'Modificacion de Tienda', $id_tienda_name);
+               registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Tienda', $id_tienda_name);
             }
 
             $kilometraje = isset($venta_actual['kilometraje']) ? intval($venta_actual['kilometraje']) : 0;
             if ($kilometraje!=intval($_REQUEST['kilometraje'])){   
-                registrar_historial_ventas($cid, 99, 'Modificacion de Kilometraje', $_REQUEST['kilometraje']);
+                registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Kilometraje', $_REQUEST['kilometraje']);
             }
 
              $id_pintura = isset($venta_actual['id_estado_pintura']) ? intval($venta_actual['id_estado_pintura']) : 0;
@@ -348,28 +432,28 @@ if ($verror == "") {
 
              $observaciones = isset($venta_actual['observaciones_reparacion']) ? trim((string)$venta_actual['observaciones_reparacion']) : '';
              if ($observaciones!=trim($_REQUEST['observaciones_reparacion'])){   
-                registrar_historial_ventas($cid, 99, 'Modificacion de Observaciones', $_REQUEST['observaciones_reparacion']);
+                registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Observaciones', $_REQUEST['observaciones_reparacion']);
              }
 
              $fecha_promesa = isset($venta_actual['fecha_promesa']) ? trim((string)$venta_actual['fecha_promesa']) : '';
              if ($fecha_promesa!=trim($_REQUEST['fecha_promesa'])){   
-                registrar_historial_ventas($cid, 99, 'Modificacion de Fecha de Promesa', $_REQUEST['fecha_promesa']);
+                registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Fecha de Promesa', $_REQUEST['fecha_promesa']);
              }
 
              $fecha_promesa_taller = isset($venta_actual['fecha_promesa_taller']) ? trim((string)$venta_actual['fecha_promesa_taller']) : '';
              
              if ($fecha_promesa_taller!=trim($_REQUEST['fecha_promesa_taller'])){   
-                registrar_historial_ventas($cid, 99, 'Modificacion de Fecha de Promesa Taller', $_REQUEST['fecha_promesa_taller']);
+                registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Fecha de Promesa Taller', $_REQUEST['fecha_promesa_taller']);
              }
 
              $precio_minimo = isset($venta_actual['precio_minimo']) ? intval($venta_actual['precio_minimo']) : 0;
              if ($precio_minimo!=intval($_REQUEST['precio_minimo'])){   
-                 registrar_historial_ventas($cid, 99, 'Modificacion de Precio Minimo', $_REQUEST['precio_minimo']);
+                 registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Precio Minimo', $_REQUEST['precio_minimo']);
              }
 
              $precio_maximo = isset($venta_actual['precio_maximo']) ? intval($venta_actual['precio_maximo']) : 0;
              if ($precio_maximo!=intval($_REQUEST['precio_maximo'])){   
-                 registrar_historial_ventas($cid, 99, 'Modificacion de Precio Maximo', $_REQUEST['precio_maximo']);
+                 registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Precio Maximo', $_REQUEST['precio_maximo']);
              }         
              
             $sql="update ventas set ".$sqlcampos." where id=".$cid." limit 1";           
@@ -378,7 +462,7 @@ if ($verror == "") {
         } else {
             //Crear nuevo                       
             $sqlcampos.=" ,id_usuario=".$_SESSION['usuario_id'] ;      
-            $sqlcampos.=" ,id_estado=99";
+            $sqlcampos.=" ,id_estado=".$estado_global_nuevo;
             $sqlcampos.=" ,tipo_ventas_reparacion=1";
             $sqlcampos.=" ,numero=".GetSQLValue(get_dato_sql('ventas',"IFNULL((max(numero)+1),1)"," "),"int"); 
             
@@ -387,9 +471,9 @@ if ($verror == "") {
             $result = sql_insert($sql);
             $cid=$result; //last insert id 
 
-            registrar_historial_ventas($cid, 99, 'Nuevo registro de vehiculo', 'Nuevo');
+            registrar_historial_ventas($cid, $estado_global_nuevo, 'Nuevo registro de vehiculo', 'Nuevo');
 
-            registrar_historial_ventas($cid, 99, 'Nuevo registro de vehiculo', $_REQUEST['observaciones_reparacion']);
+            registrar_historial_ventas($cid, $estado_global_nuevo, 'Nuevo registro de vehiculo', $_REQUEST['observaciones_reparacion']);
 
             require_once ('correo_reparacion.php');
         }
@@ -539,7 +623,7 @@ if ($accion =="d") {
 
     
     //$observaciones_reparacion= "";
-    if ($id_estado=='' || $id_estado==99){
+    if ($id_estado=='' || $id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion){
        $disable_sec1=' ';  
        $disable_sec2=' ';  
 
@@ -552,11 +636,11 @@ if ($accion =="d") {
        $disable_sec2=' disabled="disabled" ';  
     }
 
-    if ( $id_estado_pintura==32 && $id_estado_interior==32 && $id_estado_mecanica==32 && $id_estado==99){
+    if ( $id_estado_pintura==32 && $id_estado_interior==32 && $id_estado_mecanica==32 && ($id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion)){
          $completar="cmp";
          $NombreBotton='Completar';
     }else{
-         if ($id_estado==99 || $id_estado==''){
+         if ($id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion || $id_estado==''){
             $completar="";
             $NombreBotton='Guardar';
          }
@@ -600,22 +684,25 @@ if ($accion =="d") {
 
 <div class="row">
     <div class="col-md-4">                
-         <?php if (es_nulo($id_estado) || $id_estado==99) {            
-             echo campo("id_tienda","Sucursal",'select2',valores_combobox_db("tienda",$id_tienda,"nombre"," ",'','...'),' ',' required '.$disable_sec1,''); 
-         }else{
-             echo campo("id_tienda","sucursal",'hidden',$id_tienda,'','','');
-             echo campo("id_tienda_label","Sucursal",'label',$latienda,'','','');
-         }  
-         ?> 
+        <?php 
+        if (es_nulo($id_estado) || $id_estado == $estado_global_nuevo || $id_estado == $estado_global_negociacion) {             
+            echo campo("id_tienda", "Sucursal", 'select2', valores_combobox_db("tienda", $id_tienda, "nombre", " ", '', '...'), ' ', ' required ' . $disable_sec1, ''); 
+        } else {
+            echo campo("id_tienda", "sucursal", 'hidden', $id_tienda, '', '', '');
+            echo campo("id_tienda_label", "Sucursal", 'label', $latienda, '', '', '');
+        }  
+        ?> 
     </div>    
+
     <div class="col-md-8">         
-         <?php if ($id_estado=='' || $id_estado==99) {            
-               echo campo("id_producto","Vehiculo",'select2ajax',$id_producto,'  class=" "',' onchange="comb_actualizar_veh();"  ','get.php?a=3&t=1',$producto_etiqueta); 
-         }else{
-               echo campo("id_producto","Vehiculo",'hidden',$id_producto,'','','');
-               echo campo("id_producto_label","Vehiculo",'label',$producto_etiqueta,'','','');
-          }      
-         ?>            
+        <?php 
+        if ($id_estado == '' || $id_estado == $estado_global_nuevo || $id_estado == $estado_global_negociacion) {             
+            echo campo("id_producto", "Vehiculo", 'select2ajax', $id_producto, '  class=" " ', ' onchange="comb_actualizar_veh();"  ', 'get.php?a=3&t=1', $producto_etiqueta); 
+        } else {
+            echo campo("id_producto", "Vehiculo", 'hidden', $id_producto, '', '', '');
+            echo campo("id_producto_label", "Vehiculo", 'label', $producto_etiqueta, '', '', '');
+        }      
+        ?>            
     </div> 
 </div>    
 
@@ -633,7 +720,7 @@ if ($accion =="d") {
     </div>
     
     <div class="col-md">
-         <?php if (es_nulo($id_estado) || $id_estado==99){ 
+         <?php if (es_nulo($id_estado) || $id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion){            
               echo campo("id_estado_pintura","Pintura",'select2',valores_combobox_db("ventas_estado",$id_estado_pintura,"nombre"," where ventas_reparacion=1 ",'','...'),' ',' required '.$disable_sec1);  
          }else{
               echo campo("id_estado_pintura","pintura",'hidden',$id_estado_pintura,'','','');
@@ -642,7 +729,7 @@ if ($accion =="d") {
          ?>         
     </div>
     <div class="col-md">
-         <?php if (es_nulo($id_estado) || $id_estado==99){ 
+         <?php if (es_nulo($id_estado) || $id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion){ 
               echo campo("id_estado_interior","Interior",'select2',valores_combobox_db("ventas_estado",$id_estado_interior,"nombre"," where ventas_reparacion=1 ",'','...'),' ',' required '.$disable_sec1);  
          }else{
               echo campo("id_estado_interior","interior",'hidden',$id_estado_interior,'','','');
@@ -651,7 +738,7 @@ if ($accion =="d") {
          ?>         
     </div>
     <div class="col-md">
-         <?php if (es_nulo($id_estado) || $id_estado==99){ 
+         <?php if (es_nulo($id_estado) || $id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion){ 
               echo campo("id_estado_mecanica","Mecanica",'select2',valores_combobox_db("ventas_estado",$id_estado_mecanica,"nombre"," where ventas_reparacion=1 ",'','...'),' ',' required '.$disable_sec1);  
          }else{
               echo campo("id_estado_mecanica","mecanica",'hidden',$id_estado_mecanica,'','','');
@@ -684,17 +771,7 @@ if ($accion =="d") {
 
         <?php
         $nombre_cliente='';
-        $cliente_id = '';
-        $cliente_nombre = '';
-        $representante_legal_profesion = '';
-        $nacionalidad_venta = '';
-        $persona_juridica = '';
-        $representante_legal_persona_juridica = '';
-        $representante_legal_identidad = '';
-        $representante_legal_direccion = '';
-        $tipo_documento_ident_venta = '';
-        $precio_venta = '';
-        $prima_venta = '';
+
 
 
         echo campo("nombre_cliente","",'hidden',$nombre_cliente,'','','');
@@ -855,7 +932,7 @@ if ($accion =="d") {
    <div class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top ">
     <div class="row">
         <div class="col-sm">     
-            <?php if ($id_estado==99 || $id_estado=='') {?>       
+            <?php if ($id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion || $id_estado=='') {?>       
                  <a href="#" onclick="return validarYProcesar('<?php echo $completar; ?>');" class="btn btn-primary btn-block mb-2 xfrm" >
                      <i class="fa fa-check"></i> <?php echo $NombreBotton; ?>
                  </a>                           
