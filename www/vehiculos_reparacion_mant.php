@@ -232,8 +232,14 @@ if ($accion=="g") {
             }
         }
 
-        $id_estado = intval($_REQUEST['id_estado']);
-$persona_juridica = intval($_REQUEST['persona_juridica']);
+$id_estado = intval($_REQUEST['id_estado'] ?? 0);
+$persona_juridica = intval($_REQUEST['persona_juridica'] ?? 0);
+
+$precio_venta_raw = $_REQUEST['precio_venta'] ?? '';
+$prima_venta_raw  = $_REQUEST['prima_venta'] ?? '';
+
+$precio_venta = intval($precio_venta_raw);
+$prima_venta  = intval($prima_venta_raw);
 
 if ($verror == "") {
 
@@ -245,6 +251,12 @@ if ($verror == "") {
 
         if ($client_id_val <= 0) {
             $verror = 'Seleccione un cliente.';
+        }
+        else if (trim($precio_venta_raw) === '') {
+            $verror = 'Ingrese el precio de venta del vehículo.';
+        }
+        else if (trim($prima_venta_raw) === '') {
+            $verror = 'Ingrese la prima de venta del vehículo.';
         }
         else if (empty(trim($_REQUEST['representante_legal_profesion'] ?? ''))) {
             $verror = 'La profesion u oficio del comprador es obligatoria.';
@@ -769,6 +781,15 @@ if ($accion =="d") {
 <div class="row">
     <div id="clientediv" style="display:none;" class="col-md-12">
 
+             <div class="row">
+            <div class="col-md">            
+                <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',$disable_sec2); ?>                 
+            </div>   
+            <div class="col-md">            
+                <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec2); ?>                 
+            </div> 
+        </div>
+
         <?php
         $nombre_cliente='';
 
@@ -797,7 +818,6 @@ if ($accion =="d") {
                 <?php echo campo("nacionalidad_venta","Nacionalidad",'select2',valores_combobox_array($nacionalidades, $nacionalidad_venta, ''));  ?>
             </div>
          </div>
-
 
 
           <div class="row">
@@ -845,14 +865,7 @@ if ($accion =="d") {
             </div>
 
         </div>
-        <div class="row">
-            <div class="col-md">            
-                <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',$disable_sec2); ?>                 
-            </div>   
-            <div class="col-md">            
-                <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec2); ?>                 
-            </div> 
-        </div>
+
 
 
 
