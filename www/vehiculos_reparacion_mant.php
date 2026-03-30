@@ -101,12 +101,22 @@ if ($accion=="v") {
     ,producto.nombre AS vehiculo
     ,producto.codigo_alterno AS codvehiculo
     ,tienda.nombre AS latienda
+    ,entidad.nombre AS cliente_nombre
+    ,ventas.persona_juridica
+    ,ventas.representante_legal_persona_juridica
+    ,ventas.representante_legal_identidad
+    ,ventas.representante_legal_profesion
+    ,ventas.representante_legal_direccion
+    ,ventas.tipo_documento_ident_venta
+    ,ventas.nacionalidad_venta
+
         FROM ventas
         LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)        
         LEFT OUTER JOIN producto ON (ventas.id_producto=producto.id)        
         LEFT OUTER JOIN ventas_estado estado1 ON (ventas.id_estado_pintura=estado1.id)
         LEFT OUTER JOIN ventas_estado estado2 ON (ventas.id_estado_interior=estado2.id)
         LEFT OUTER JOIN ventas_estado estado3 ON (ventas.id_estado_mecanica=estado3.id)
+        LEFT OUTER JOIN entidad ON (ventas.cliente_id=entidad.id)
     where ventas.id=$cid limit 1");
 
 	if ($result!=false){
@@ -510,6 +520,23 @@ if ($accion =="d") {
     if (isset($row["trasmision"])) {$trasmision= $row["trasmision"]; } else {$trasmision= "";}
     if (isset($row["id_vendedor"])) {$id_vendedor= $row["id_vendedor"]; } else {$id_vendedor= "";}
     if (isset($row["id_estado_anterior_reproceso"])) {$id_estado_anterior_reproceso= $row["id_estado_anterior_reproceso"]; } else {$id_estado_anterior_reproceso= "0";}
+
+    //contrato info
+    if (isset($row["cliente_id"])) {$cliente_id= $row["cliente_id"]; } else {$cliente_id= "";}
+    if (isset($row["cliente_nombre"])) {$cliente_nombre= $row["cliente_nombre"]; } else {$cliente_nombre= "";}
+
+    if (isset($row["precio_venta"])) {$precio_venta= $row["precio_venta"]; } else {$precio_venta= "";}
+    if (isset($row["prima_venta"])) {$prima_venta= $row["prima_venta"]; } else {$prima_venta= "";}
+    if (isset($row["persona_juridica"])) {$persona_juridica= $row["persona_juridica"]; } else {$persona_juridica= "";}
+    if (isset($row["representante_legal_persona_juridica"])) {$representante_legal_persona_juridica= $row["representante_legal_persona_juridica"]; } else {$representante_legal_persona_juridica= "";}
+    if (isset($row["representante_legal_identidad"])) {$representante_legal_identidad= $row["representante_legal_identidad"]; } else {$representante_legal_identidad= "";}
+    if (isset($row["representante_legal_profesion"])) {$representante_legal_profesion= $row["representante_legal_profesion"]; } else {$representante_legal_profesion= "";}
+    if (isset($row["representante_legal_direccion"])) {$representante_legal_direccion= $row["representante_legal_direccion"]; } else {$representante_legal_direccion= "";}
+    if (isset($row["tipo_documento_ident_venta"])) {$tipo_documento_ident_venta= $row["tipo_documento_ident_venta"]; } else {$tipo_documento_ident_venta= "";}
+    if (isset($row["nacionalidad_venta"])) {$nacionalidad_venta= $row["nacionalidad_venta"]; } else {$nacionalidad_venta= "";}
+
+
+
     
     //$observaciones_reparacion= "";
     if ($id_estado=='' || $id_estado==99){
@@ -657,7 +684,6 @@ if ($accion =="d") {
 
         <?php
         $nombre_cliente='';
-
         $cliente_id = '';
         $cliente_nombre = '';
         $representante_legal_profesion = '';
