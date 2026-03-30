@@ -534,9 +534,9 @@ function convertirDocxAPdf(string $docxPath): string
         $tmpDir = sys_get_temp_dir();
         appLog('TMP DIR: ' . $tmpDir);
 
-        $soffice = getSofficeCommandProd();//descomentar para produccion
+        //$soffice = getSofficeCommandProd();//descomentar para produccion
 
-        //$soffice = getSofficeCommandDev();//comentar para produccion
+        $soffice = getSofficeCommandDev();//comentar para produccion
 
 
 
@@ -1098,6 +1098,124 @@ function descargarVentaPDFReimpresion($id_contrato, $reimpresion, $juridico, $so
 
 pagina_permiso(178);
 
+
+//contratos
+
+if (isset($_GET['a']) && $_GET['a'] === 'anularcontrato') {
+        $id_venta = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
+
+        $id_usuario = intval($_SESSION['usuario_id']);
+
+                $resUser = sql_select("
+            SELECT
+                u.usuario
+            FROM usuario u
+            WHERE u.id = $id_usuario
+            LIMIT 1
+        ");
+
+        $user = $resUser->fetch_assoc();
+
+        $usuarioSistema = $user['usuario'];
+
+
+        $resp = anularContratoVenta($id_venta, $usuarioSistema);
+
+        header('Content-Type: application/json');
+        echo json_encode($resp);
+        exit;
+
+
+}
+
+if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
+
+        $id_venta = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
+        $persona_juridica = isset($_REQUEST['persona_juridica'])? (bool) $_REQUEST['persona_juridica']: false;
+        $id_usuario=$_SESSION['usuario_id'];
+
+
+
+        $id_usuario = intval($_SESSION['usuario_id']);
+
+        $resUser = sql_select("
+            SELECT
+                u.usuario,
+                u.nombre,
+                u.tienda_id,
+                t.rentworks_almacen AS tienda_nombre
+            FROM usuario u
+            LEFT JOIN tienda_agencia t ON u.tienda_id = t.tienda_id
+            WHERE u.id = $id_usuario
+            LIMIT 1
+        ");
+
+        $user = $resUser->fetch_assoc();
+
+        $partes = explode(' ', trim($user['nombre']), 2);
+
+        $nombreUsuario   = $partes[0];
+        $apellidoUsuario = $partes[1] ?? '';
+        //$ubicacion = strtoupper(trim($user['tienda_nombre']));
+        $usuarioSistema = $user['usuario'];
+
+        $resp = generarContratoVenta(
+            $id_venta,
+            $nombreUsuario,
+            $apellidoUsuario,
+            $usuarioSistema,
+            $persona_juridica
+        );
+
+        header('Content-Type: application/json');
+        echo json_encode($resp);
+        exit;
+}
+
+// VALIDAR (AJAX)
+    if ($_GET['a'] === 'print_check') {
+        $id = intval($_GET['id']);
+        //$id_contrato = intval($_GET['id_contrato']);
+        $id_contrato = intval($_GET['id_contrato'] ?? 0);
+
+        $persona_juridica = isset($_REQUEST['persona_juridica'])? (bool) $_REQUEST['persona_juridica']: false;
+
+         //$reimpresion = isset($_REQUEST['reimpresion'])? (bool) $_REQUEST['reimpresion']: false;
+
+         $reimpresion = isset($_REQUEST['reimpresion']) ? (int)$_REQUEST['reimpresion'] : 0;
+         $reimpresion=0;
+
+        if($reimpresion==1){
+            echo json_encode(descargarVentaPDFReimpresion($id_contrato,$reimpresion,$persona_juridica, true));
+        } else {
+            echo json_encode(descargarVentaPDF($id,$persona_juridica, true));
+        }
+
+
+        //echo json_encode(descargarVentaPDF($id,$persona_juridica, true));
+        exit;
+    }
+
+    // DESCARGAR (NAVEGADOR)
+    if ($_GET['a'] === 'print') {
+        $id = intval($_GET['id']);
+        //$id_contrato = intval($_GET['id_contrato']);
+        $id_contrato = intval($_GET['id_contrato'] ?? 0);
+        $persona_juridica = isset($_REQUEST['persona_juridica'])? (bool) $_REQUEST['persona_juridica']: false;
+
+        //$reimpresion = isset($_REQUEST['reimpresion'])? (bool) $_REQUEST['reimpresion']: false;
+
+        $reimpresion = isset($_REQUEST['reimpresion']) ? (int)$_REQUEST['reimpresion'] : 0;
+        $reimpresion=0;
+
+        if($reimpresion==1){
+            descargarVentaPDFReimpresion($id_contrato,$reimpresion,$persona_juridica); // descarga real
+        } else {
+            descargarVentaPDF($id,$persona_juridica); // descarga real
+        }
+        exit;
+    }
+
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="v";}
 $disable_sec1=' ';    
 $disable_sec2=' ';    
@@ -1269,7 +1387,7 @@ $prima_venta  = intval($prima_venta_raw);
 
 if ($verror == "") {
 
-    if ($id_estado == 11 || $id_estado == 20) {
+    if ($id_estado == $estado_global_negociacion || $id_estado == 20) {
 
         $client_id_val = isset($_REQUEST['cliente_id'])
             ? (int) $_REQUEST['cliente_id']
@@ -1339,18 +1457,18 @@ if ($verror == "") {
 
 
         //info de contrato
-        if($id_estado==11 || $id_estado==20){
+        if($id_estado==$estado_global_negociacion || $id_estado==20){
             $rep_profesion   = trim($_REQUEST['representante_legal_profesion'] ?? '');
-
             $sqlcampos .= " , representante_legal_profesion = ". GetSQLValue($rep_profesion, "text");
+        if (isset($_REQUEST["precio_venta"])) { $sqlcampos.= " , precio_venta =".GetSQLValue($_REQUEST["precio_venta"],"int"); } 
+        if (isset($_REQUEST["prima_venta"])) { $sqlcampos.= " , prima_venta =".GetSQLValue($_REQUEST["prima_venta"],"int"); }
 
             if (isset($_REQUEST["cliente_id"])) { $sqlcampos.= " , cliente_id =".GetSQLValue($_REQUEST["cliente_id"],"int"); }  
         }else{
-            $sqlcampos.= " , cliente_id =null, representante_legal_profesion = null,tipo_documento_ident_venta=null, nacionalidad_venta=null, ciudad_venta=null,departamento_venta=null";
+            $sqlcampos.= " , cliente_id =null, representante_legal_profesion = null,tipo_documento_ident_venta=null, nacionalidad_venta=null, ciudad_venta=null,departamento_venta=null, precio_venta=null, prima_venta=null";
         }
         
-        if (isset($_REQUEST["precio_venta"])) { $sqlcampos.= " , precio_venta =".GetSQLValue($_REQUEST["precio_venta"],"int"); } 
-        if (isset($_REQUEST["prima_venta"])) { $sqlcampos.= " , prima_venta =".GetSQLValue($_REQUEST["prima_venta"],"int"); }
+
 
         if (isset($_REQUEST["tipo_documento_ident_venta"])) { $sqlcampos.= " , tipo_documento_ident_venta =".GetSQLValue($_REQUEST["tipo_documento_ident_venta"],"text"); } 
         if (isset($_REQUEST["nacionalidad_venta"])) { $sqlcampos.= " , nacionalidad_venta =".GetSQLValue($_REQUEST["nacionalidad_venta"],"text"); } 
@@ -1405,11 +1523,12 @@ if ($verror == "") {
         //$estado_nuevo = intval($_REQUEST['id_estado']);
         //$estado_nuevo=99;
 
-        if($estado_nuevo==$estado_global_negociacion || $estado_nuevo==20){
-            $sqlcampos.= " , id_estado=".$estado_nuevo; 
-        }else if($estado_nuevo==0){
-            $sqlcampos.= " , id_estado=".$estado_nuevo;
-        }
+        if ($estado_nuevo == $estado_global_negociacion || $estado_nuevo == 20) {
+                $sqlcampos .= " , id_estado=" . $estado_nuevo; 
+            }
+            else if (es_nulo($estadocompletar) || $estadocompletar != 'cmp') {
+                $sqlcampos .= " , id_estado = NULL";
+            }
 
         if (!es_nulo($estadocompletar) && $estadocompletar=='cmp'){
              if (isset($_REQUEST["id_estado_anterior_reproceso"])) {
@@ -2064,9 +2183,8 @@ if ($accion =="d") {
 
 
 <script>
-$(function () {
-    
-    function toggleClientePorEstado() {
+
+        function toggleClientePorEstado() {
         let valor = $('#id_estado option:selected').text().toLowerCase();
         // o si prefieres por value:
         // let valor = $('#id_estado').val();
@@ -2077,6 +2195,9 @@ $(function () {
             $('#clientediv').slideUp();
         }
     }
+
+
+$(function () {
 
     $('#btnContrato').on('click', function (e) {
     e.preventDefault();
@@ -2096,7 +2217,7 @@ $(function () {
             function () {
 
                 $.ajax({
-                    url: 'ventas_mant.php',
+                    url: 'vehiculos_reparacion_mant.php',
                     type: 'GET',
                     dataType: 'json',
                     data: {
@@ -2121,7 +2242,7 @@ $(function () {
 
                             // 👉 ahora sí descargar
                             window.location.href =
-                                'ventas_mant_contrato.php?a=print&id=' +
+                                'vehiculos_reparacion_mant.php?a=print&id=' +
                                 encodeURIComponent(id) +
                                 '&persona_juridica=' +encodeURIComponent(persona_juridica)
                                 '&id_contrato=' + encodeURIComponent(0) +
@@ -2178,7 +2299,7 @@ $('#btnActualizarContrato').on('click', function (e) {
                 function () {
 
                     $.ajax({
-                        url: 'ventas_mant_contrato.php',
+                        url: 'vehiculos_reparacion_mant.php',
                         type: 'GET',
                         dataType: 'json',
                         data: {
@@ -2231,7 +2352,7 @@ $('#btnanularContrato').on('click', function (e) {
         function () {
 
             $.ajax({
-                url: 'ventas_mant.php',
+                url: 'vehiculos_reparacion_mant.php',
                 type: 'GET',
                 dataType: 'json',
                 data: {
