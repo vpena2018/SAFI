@@ -1,6 +1,72 @@
 <?php
 require_once ('include/framework.php');
 
+       $tipos_docu = [
+            ['valor' => 'dni', 'texto' => 'DNI'],
+            ['valor' => 'pasaporte', 'texto' => 'pasaporte'],
+            ['valor' => 'carnet_residente', 'texto' => 'carnet de residente'],
+        ];
+
+$nacionalidades = [
+
+    // ===== AMÉRICA =====
+    ['valor' => 'argentino', 'texto' => 'Argentino'],
+    ['valor' => 'boliviano', 'texto' => 'Boliviano'],
+    ['valor' => 'brasileño', 'texto' => 'Brasileño'],
+    ['valor' => 'canadiense', 'texto' => 'Canadiense'],
+    ['valor' => 'chileno', 'texto' => 'Chileno'],
+    ['valor' => 'colombiano', 'texto' => 'Colombiano'],
+    ['valor' => 'costarricense', 'texto' => 'Costarricense'],
+    ['valor' => 'cubano', 'texto' => 'Cubano'],
+    ['valor' => 'ecuatoriano', 'texto' => 'Ecuatoriano'],
+    ['valor' => 'salvadoreño', 'texto' => 'Salvadoreño'],
+    ['valor' => 'estadounidense', 'texto' => 'Estadounidense'],
+    ['valor' => 'guatemalteco', 'texto' => 'Guatemalteco'],
+    ['valor' => 'haitiano', 'texto' => 'Haitiano'],
+    ['valor' => 'hondureño', 'texto' => 'Hondureño'],
+    ['valor' => 'jamaicano', 'texto' => 'Jamaicano'],
+    ['valor' => 'mexicano', 'texto' => 'Mexicano'],
+    ['valor' => 'nicaragüense', 'texto' => 'Nicaragüense'],
+    ['valor' => 'panameño', 'texto' => 'Panameño'],
+    ['valor' => 'paraguayo', 'texto' => 'Paraguayo'],
+    ['valor' => 'peruano', 'texto' => 'Peruano'],
+    ['valor' => 'dominicano', 'texto' => 'Dominicano'],
+    ['valor' => 'uruguayo', 'texto' => 'Uruguayo'],
+    ['valor' => 'venezolano', 'texto' => 'Venezolano'],
+
+    // ===== EUROPA =====
+    ['valor' => 'alemán', 'texto' => 'Alemán'],
+    ['valor' => 'austriaco', 'texto' => 'Austriaco'],
+    ['valor' => 'belga', 'texto' => 'Belga'],
+    ['valor' => 'búlgaro', 'texto' => 'Búlgaro'],
+    ['valor' => 'croata', 'texto' => 'Croata'],
+    ['valor' => 'checo', 'texto' => 'Checo'],
+    ['valor' => 'danés', 'texto' => 'Danés'],
+    ['valor' => 'español', 'texto' => 'Español'],
+    ['valor' => 'finlandés', 'texto' => 'Finlandés'],
+    ['valor' => 'francés', 'texto' => 'Francés'],
+    ['valor' => 'griego', 'texto' => 'Griego'],
+    ['valor' => 'húngaro', 'texto' => 'Húngaro'],
+    ['valor' => 'irlandés', 'texto' => 'Irlandés'],
+    ['valor' => 'islandés', 'texto' => 'Islandés'],
+    ['valor' => 'italiano', 'texto' => 'Italiano'],
+    ['valor' => 'letón', 'texto' => 'Letón'],
+    ['valor' => 'lituano', 'texto' => 'Lituano'],
+    ['valor' => 'luxemburgués', 'texto' => 'Luxemburgués'],
+    ['valor' => 'neerlandés', 'texto' => 'Neerlandés'],
+    ['valor' => 'noruego', 'texto' => 'Noruego'],
+    ['valor' => 'polaco', 'texto' => 'Polaco'],
+    ['valor' => 'portugués', 'texto' => 'Portugués'],
+    ['valor' => 'rumano', 'texto' => 'Rumano'],
+    ['valor' => 'ruso', 'texto' => 'Ruso'],
+    ['valor' => 'serbio', 'texto' => 'Serbio'],
+    ['valor' => 'sueco', 'texto' => 'Sueco'],
+    ['valor' => 'suizo', 'texto' => 'Suizo'],
+    ['valor' => 'ucraniano', 'texto' => 'Ucraniano'],
+    ['valor' => 'británico', 'texto' => 'Británico'],
+];
+
+
 pagina_permiso(178);
 
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="v";}
@@ -546,6 +612,112 @@ if ($accion =="d") {
 </div>
 
 <div class="row">
+        <div class="col-md">
+         <?php echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where id=11 ",'','...'),' ',' required '.$disable_sec2)  ?> 
+    </div>
+</div>
+
+<div class="row">
+    <div id="clientediv" style="display:none;" class="col-md-12">
+
+        <?php
+        $nombre_cliente='';
+
+        $cliente_id = '';
+        $cliente_nombre = '';
+        $representante_legal_profesion = '';
+        $nacionalidad_venta = '';
+        $persona_juridica = '';
+        $representante_legal_persona_juridica = '';
+        $representante_legal_identidad = '';
+        $representante_legal_direccion = '';
+        $tipo_documento_ident_venta = '';
+
+
+        echo campo("nombre_cliente","",'hidden',$nombre_cliente,'','','');
+        echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1,'get.php?a=2&t=1',$cliente_nombre);
+        echo campo("representante_legal_profesion","Profesión u oficio de comprador",'text',$representante_legal_profesion,' ',$disable_sec2);
+
+        //echo valores_combobox_array($opciones, 'T02', 'Seleccione una opción');
+        if($nacionalidad_venta=='')
+        {
+            $nacionalidad_venta='hondureño';
+        }
+        
+        ?>
+
+
+
+        <div class="row">
+            <div class="col-md-6">
+                <?php echo campo("tipo_documento_ident_venta","Tipo Documento de identificacion del comprador",'select2',valores_combobox_array($tipos_docu, $tipo_documento_ident_venta, ''));  ?>
+            </div>
+
+            <div class="col-md-6">
+                <?php echo campo("nacionalidad_venta","Nacionalidad",'select2',valores_combobox_array($nacionalidades, $nacionalidad_venta, ''));  ?>
+            </div>
+         </div>
+
+
+
+          <div class="row">
+            <div class="col-md-12">
+                <?php echo campo("persona_juridica","persona juridica",'checkboxCustom',$persona_juridica,' ',$disable_sec2); ?>
+            </div>
+         </div>
+
+
+
+        <div class="row">
+            <div class="col-md-6">
+                <?php echo campo(
+                    "representante_legal_persona_juridica",
+                    "Nombre representante Legal",
+                    'text',
+                    $representante_legal_persona_juridica,
+                    ' ',
+                    $disable_sec2
+                ); ?>
+            </div>  
+
+            <div class="col-md-6">
+                <?php echo campo(
+                    "representante_legal_identidad",
+                    "Numero de identificacion de documento",
+                    'text',
+                    $representante_legal_identidad,
+                    ' ',
+                    $disable_sec2
+                ); ?>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <?php echo campo(
+                    "representante_legal_direccion",
+                    "Direccion de Representante Legal",
+                    'text',
+                    $representante_legal_direccion,
+                    ' ',
+                    $disable_sec2
+                ); ?>
+            </div>
+
+        </div>
+
+        <script>
+            $(document).ready(function () {
+                toggleClientePorEstado();
+            });
+        </script>
+
+    </div>
+</div>
+
+
+
+<div class="row">
      <div class="col-md">
          <?php echo campo("observaciones_reparacion","Observaciones",'textarea',$observaciones_reparacion,' ',' required '.$disable_sec1); ?>         
      </div>
@@ -653,7 +825,21 @@ if ($accion =="d") {
 
 
 
+
+
 <script>
+
+    function toggleClientePorEstado() {
+        let valor = $('#id_estado option:selected').text().toLowerCase();
+        // o si prefieres por value:
+        // let valor = $('#id_estado').val();
+
+        if (valor === 'en negociacion' || valor === 'vendido entregado') {
+            $('#clientediv').slideDown();
+        } else {
+            $('#clientediv').slideUp();
+        }
+    }
 
 function validarYProcesar(completar) {
     // Primero validar todo
