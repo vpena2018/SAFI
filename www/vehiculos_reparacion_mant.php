@@ -2064,7 +2064,8 @@ if ($accion =="d") {
 
 
 <script>
-
+$(function () {
+    
     function toggleClientePorEstado() {
         let valor = $('#id_estado option:selected').text().toLowerCase();
         // o si prefieres por value:
@@ -2076,6 +2077,203 @@ if ($accion =="d") {
             $('#clientediv').slideUp();
         }
     }
+
+    $('#btnContrato').on('click', function (e) {
+    e.preventDefault();
+
+    const id = $('#id').val();
+    if (!id) {
+        mytoast('error', 'No hay ID',3000);
+        return;
+    }
+
+    //const persona_juridica=$('#persona_juridica').val();
+    const persona_juridica = $('#persona_juridica').is(':checked') ? 1 : 0;
+
+            popupconfirmar(
+            'Confirmación',
+            '¿Deseas descargar el contrato?',
+            function () {
+
+                $.ajax({
+                    url: 'ventas_mant.php',
+                    type: 'GET',
+                    dataType: 'json',
+                    data: {
+                        a: 'print_check',
+                        id: id,
+                        persona_juridica: persona_juridica,
+                        id_contrato: 0,
+                        reimpresion: 0
+                    },
+                    success: function (resp) {
+                        if (resp.ok) {
+
+                            mytoast(
+                                'success',
+                                'Contrato listo: ' + resp.numero_contrato,
+                                3000
+                            );
+
+                            // 🔥 quitar aviso de salida
+                            window.onbeforeunload = null;
+                            $(window).off('beforeunload');
+
+                            // 👉 ahora sí descargar
+                            window.location.href =
+                                'ventas_mant_contrato.php?a=print&id=' +
+                                encodeURIComponent(id) +
+                                '&persona_juridica=' +encodeURIComponent(persona_juridica)
+                                '&id_contrato=' + encodeURIComponent(0) +
+                            '&reimpresion=' + encodeURIComponent(0);
+
+
+                        } else {
+                            mytoast(
+                                'error',
+                                resp.error || 'Error al generar contrato',
+                                3000
+                            );
+                        }
+                    },
+                    error: function () {
+                        mytoast(
+                            'error',
+                            'Error de comunicación con el servidor',
+                            3000
+                        );
+                    }
+                });
+
+            }
+        );
+
+});
+
+$('#btnActualizarContrato').on('click', function (e) {
+    e.preventDefault();
+
+    const id = $('#id').val();
+
+    const estado = $('#id_estado').val();
+
+    if(estado==20)
+    {
+       mytoast('error','No puede generar contrato en estado Vendido o entregado');
+       return;
+    }
+
+
+    //const persona_juridica=$('#persona_juridica').val();
+    const persona_juridica = $('#persona_juridica').is(':checked') ? 1 : 0;
+
+    if (!id) {
+        alert('No hay ID');
+        return;
+    }
+
+            popupconfirmar(
+                'Confirmación',
+                '¿Seguro desea generar el contrato? Los datos se sustituirán si previamente ya existía un contrato.',
+                function () {
+
+                    $.ajax({
+                        url: 'ventas_mant_contrato.php',
+                        type: 'GET',
+                        dataType: 'json',
+                        data: {
+                            a: 'actcontrato',
+                            id: id,
+                            persona_juridica:persona_juridica
+                        },
+                        success: function (resp) {
+                            if (resp.ok) {
+                                mytoast(
+                                    'success',
+                                    'Contrato generado: ' + resp.numero_contrato,
+                                    3000
+                                );
+                            } else {
+                                mytoast(
+                                    'error',
+                                    resp.error || 'Error inesperado',
+                                    3000
+                                );
+                            }
+                        },
+                        error: function () {
+                            mytoast(
+                                'error',
+                                'Error de comunicación con el servidor',
+                                3000
+                            );
+                        }
+                    });
+
+                }
+            );
+
+});
+
+$('#btnanularContrato').on('click', function (e) {
+    e.preventDefault();
+
+    const id = $('#id').val();
+
+    if (!id) {
+        mytoast('error', 'No hay ID', 3000);
+        return;
+    }
+
+    popupconfirmar(
+        'Confirmación',
+        '¿Seguro desea anular el contrato activo? Esta acción no se puede deshacer.',
+        function () {
+
+            $.ajax({
+                url: 'ventas_mant.php',
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    a: 'anularcontrato', // 👈 acción nueva en tu backend
+                    id: id
+                },
+                success: function (resp) {
+                    if (resp.ok) {
+                        mytoast(
+                            'success',
+                            'Contrato anulado correctamente',
+                            3000
+                        );
+
+                        // opcional: refrescar o cambiar estado en pantalla
+                        // location.reload();
+
+                    } else {
+                        mytoast(
+                            'error',
+                            resp.error || 'Error al anular contrato',
+                            3000
+                        );
+                    }
+                },
+                error: function () {
+                    mytoast(
+                        'error',
+                        'Error de comunicación con el servidor',
+                        3000
+                    );
+                }
+            });
+
+        }
+    );
+});
+
+});
+
+
+
 
 function validarYProcesar(completar) {
     // Primero validar todo
