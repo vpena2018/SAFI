@@ -219,6 +219,41 @@ if ($accion=="g") {
             }
         }
 
+        $id_estado = intval($_REQUEST['id_estado']);
+$persona_juridica = intval($_REQUEST['persona_juridica']);
+
+if ($verror == "") {
+
+    if ($id_estado == 11 || $id_estado == 20) {
+
+        $client_id_val = isset($_REQUEST['cliente_id'])
+            ? (int) $_REQUEST['cliente_id']
+            : 0;
+
+        if ($client_id_val <= 0) {
+            $verror = 'Seleccione un cliente.';
+        }
+        else if (empty(trim($_REQUEST['representante_legal_profesion'] ?? ''))) {
+            $verror = 'La profesion u oficio del comprador es obligatoria.';
+        }
+        else if ($persona_juridica == 1 && empty(trim($_REQUEST['representante_legal_persona_juridica'] ?? ''))) {
+            $verror = 'El Representante Legal es obligatorio.';
+        }
+        else if ($persona_juridica == 1 && empty(trim($_REQUEST['representante_legal_identidad'] ?? ''))) {
+            $verror = 'La Identidad del Representante Legal es obligatoria.';
+        }
+        else if ($persona_juridica == 1 && empty(trim($_REQUEST['representante_legal_direccion'] ?? ''))) {
+            $verror = 'La direccion del Representante Legal es obligatoria.';
+        }
+
+    }
+}
+
+        
+
+
+
+
     
     if ($verror=="") {
         //Campos
@@ -632,6 +667,8 @@ if ($accion =="d") {
         $representante_legal_identidad = '';
         $representante_legal_direccion = '';
         $tipo_documento_ident_venta = '';
+        $precio_venta = '';
+        $prima_venta = '';
 
 
         echo campo("nombre_cliente","",'hidden',$nombre_cliente,'','','');
@@ -705,6 +742,16 @@ if ($accion =="d") {
             </div>
 
         </div>
+        <div class="row">
+            <div class="col-md">            
+                <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',$disable_sec2); ?>                 
+            </div>   
+            <div class="col-md">            
+                <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec2); ?>                 
+            </div> 
+        </div>
+
+
 
         <script>
             $(document).ready(function () {
