@@ -1175,6 +1175,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
 // VALIDAR (AJAX)
     if ($_GET['a'] === 'print_check') {
         $id = intval($_GET['id']);
+
         //$id_contrato = intval($_GET['id_contrato']);
         $id_contrato = intval($_GET['id_contrato'] ?? 0);
 
@@ -1377,17 +1378,22 @@ if ($accion=="g") {
         }
 
 $id_estado = intval($_REQUEST['id_estado'] ?? 0);
+$foto_comprobante=isset($_REQUEST['foto'])? (bool) $_REQUEST['foto']: false;
 $persona_juridica = intval($_REQUEST['persona_juridica'] ?? 0);
-
 $precio_venta_raw = $_REQUEST['precio_venta'] ?? '';
 $prima_venta_raw  = $_REQUEST['prima_venta'] ?? '';
 
+$precio_minimo=intval($_REQUEST['precio_minimo']);     
+$precio_maximo=intval($_REQUEST['precio_maximo']);    
 $precio_venta = intval($precio_venta_raw);
+
 $prima_venta  = intval($prima_venta_raw);
 
 if ($verror == "") {
 
     if ($id_estado == $estado_global_negociacion || $id_estado == 20) {
+
+
 
         $client_id_val = isset($_REQUEST['cliente_id'])
             ? (int) $_REQUEST['cliente_id']
@@ -1402,6 +1408,18 @@ if ($verror == "") {
         else if (trim($prima_venta_raw) === '') {
             $verror = 'Ingrese la prima de venta del vehículo.';
         }
+        else if ($precio_minimo <= 0) {
+            $verror = 'Ingrese el precio mínimo.';
+        }
+        else if ($precio_maximo <= 0) {
+            $verror = 'Ingrese el precio máximo.';
+        }
+        else if ($precio_minimo > $precio_maximo) {
+            $verror = 'El precio mínimo no puede ser mayor que el máximo.';
+        }
+        else if ($precio_venta < $precio_minimo || $precio_venta > $precio_maximo) {
+            $verror = 'El precio de venta debe estar entre el mínimo y el máximo.';
+        }
         else if (empty(trim($_REQUEST['representante_legal_profesion'] ?? ''))) {
             $verror = 'La profesion u oficio del comprador es obligatoria.';
         }
@@ -1413,6 +1431,8 @@ if ($verror == "") {
         }
         else if ($persona_juridica == 1 && empty(trim($_REQUEST['representante_legal_direccion'] ?? ''))) {
             $verror = 'La direccion del Representante Legal es obligatoria.';
+        } else if(!$foto_comprobante){
+            $verror = 'Debe adjuntar comprobante cuando el estado es negociación.';
         }
 
     }
