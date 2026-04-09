@@ -100,9 +100,15 @@ if (!es_nulo($cid)) {
 	$sql = "SELECT inspeccion.* 
     ,entidad.nombre AS cliente_nombre
     ,entidad.email AS cliente_email_entidad
+    ,entidad.codigo_alterno AS cliente_codigo_alterno
     ,producto.nombre AS producto_nombre
     ,producto.codigo_alterno as producto_alterno
     ,usuario.nombre as elusuario
+    ,producto.placa as producto_placa
+    ,producto.marca as producto_marca
+    ,producto.color as producto_color
+    ,producto.modelo as producto_modelo
+    ,producto.tipo_vehiculo as producto_tipo_vehiculo
     FROM inspeccion
     LEFT OUTER JOIN entidad ON (inspeccion.cliente_id=entidad.id)
     LEFT OUTER JOIN producto ON (inspeccion.id_producto =producto.id)
@@ -172,6 +178,8 @@ class MYPDF extends TCPDF {
                 $image_file = 'img/inglosa.jpg';
                 if ($empresa==1) { $image_file = 'img/hertz.jpg';}
                 if ($empresa==2) { $image_file = 'img/dollar.jpg';}
+                if ($empresa==3) { $image_file = 'img/thrifty.jpg';}
+                if ($empresa==4) { $image_file = 'img/carshop.jpg';}
                  
                 if ($image_file<>"") {$this->Image($image_file, 8, 5, 26, '', 'JPEG', '', 'T', false, 300, '', false, false, 0, false, false, false);}
                 
@@ -251,7 +259,7 @@ $pdf->AddPage();
     $pdf->SetFont('', '',8);
 
     $left_column = '<b>Datos del Cliente / Customer Information:</b> <br>'.$row['cliente_nombre'].'<br>'.$row['cliente_contacto'];
-    $right_column = '<b>Datos del Vehiculo / Vehicle Details:</b> <br>'.$row['producto_nombre'].'<br><b>No. </b>'.$row['producto_alterno'];
+    $right_column = '<b>Datos del Vehiculo / Vehicle Details:</b> <br>'.$row['producto_nombre'].'<br><b>No. </b>'.$row['producto_alterno'].'<b> Placa </b>'.$row['producto_placa'];
         
         $pdf->writeHTMLCell(100, '', '', $pdf->getY(), $left_column, 0, 0, 1, true, '', true);
         $pdf->writeHTMLCell(100, '', '', '', $right_column, 0, 1, 1, true, '', true);
@@ -617,6 +625,159 @@ $detallespos=$pdf->getY();
 //      </td>
 //    </tr>
 //   </table>
+
+//************   PAGINA ACTA DE RECEPCION (AL FINAL) */
+$cliente_codigo_alterno_pdf = strtoupper(trim((string)$row['cliente_codigo_alterno']));
+$aplica_actarv_pdf = (
+    intval($row['tipo_inspeccion']) === 1
+    && intval($row['tipo_doc']) === 2
+    && (strpos($cliente_codigo_alterno_pdf, 'CCO') === 0)
+);
+
+if ($aplica_actarv_pdf) {
+    $pdf->setPrintHeader(false);
+    $pdf->setPrintFooter(false);
+    $pdf->SetMargins(10, 10, 10);
+    $pdf->SetAutoPageBreak(true, 10);
+    $pdf->AddPage();
+
+    $pdf->SetTextColor(0, 0, 0);
+
+    $header_x = 10;
+    $header_y = $pdf->GetY();
+    $header_w = 190;
+    $col_logo = 42;
+    $col_right = 42;
+    $col_center = $header_w - $col_logo - $col_right;
+    $row_top_h = 18;
+    $row_bottom_h = 8;
+
+    $pdf->SetLineWidth(0.2);
+    $pdf->Rect($header_x, $header_y, $col_logo, $row_top_h);
+    $pdf->Rect($header_x + $col_logo, $header_y, $col_center, $row_top_h);
+    $pdf->Rect($header_x + $col_logo + $col_center, $header_y, $col_right, $row_top_h);
+    $pdf->Rect($header_x, $header_y + $row_top_h, $header_w, $row_bottom_h);
+
+    $logo_acta = 'img/inglosa.jpg';    
+    if (file_exists($logo_acta)) {
+        $pdf->Image($logo_acta, $header_x + 2, $header_y + 2, $col_logo - 4, $row_top_h - 4, '', '', '', false, 300, '', false, false, 0, false, false, false);
+    }
+
+    $pdf->SetFont('helvetica', '', 12);
+    $pdf->SetXY($header_x + $col_logo, $header_y + 6);
+    $pdf->Cell($col_center, 6, 'INVERSIONES GLOBALES S.A.', 0, 0, 'C');
+
+    $pdf->SetFont('helvetica', '', 10);
+    $pdf->SetXY($header_x + $col_logo + $col_center + 2, $header_y + 2);
+    $pdf->Cell($col_right - 4, 4, 'Fecha :'.formato_fecha_pdf_seguro($row['fecha']), 0, 1, 'L');
+    
+    $pdf->SetFont('helvetica', 'B', 11);
+    $pdf->SetXY($header_x, $header_y + $row_top_h);
+    $pdf->Cell($header_w, $row_bottom_h, 'ACTA DE RECEPCION DE VEHICULO', 0, 1, 'C');
+
+    $pdf->SetY($header_y + $row_top_h + $row_bottom_h + 4);
+    $pdf->SetFont('helvetica', 'B', 16);
+    $pdf->Cell(0, 7, 'ACTA DE RECEPCION DE VEHICULO', 0, 1, 'C');
+    $pdf->Ln(6);
+
+    $pdf->SetFont('helvetica', '', 9);
+    $pdf->MultiCell(0, 6, 'POR ESTE MEDIO DOY FE DE RECIBIR DE LA EMPRESA INVERSIONES GLOBALES S.A.', 0, 'J', false, 1);
+    $pdf->MultiCell(0, 6, 'EN CALIDAD DE ARRENDAMIENTO, EL VEHICULO CON SIGUIENTES CARACTERISTICAS:', 0, 'J', false, 1);
+    $pdf->Ln(6);  
+  
+    $pdf->SetFillColor(243, 243, 243);
+    $pdf->SetFont('helvetica', 'B', 10);
+    $w_marca = 43;
+    $w_tipo = 43;
+    $w_color = 34;
+    $w_placa = 34;
+    $w_registro = 36;
+
+    $pdf->Cell($w_marca, 7, 'MARCA', 1, 0, 'C', true);
+    $pdf->Cell($w_tipo, 7, 'TIPO', 1, 0, 'C', true);
+    $pdf->Cell($w_color, 7, 'COLOR', 1, 0, 'C', true);
+    $pdf->Cell($w_placa, 7, 'PLACA', 1, 0, 'C', true);
+    $pdf->Cell($w_registro, 7, 'REGISTRO #', 1, 1, 'C', true);  
+
+    $pdf->SetFont('helvetica', '', 10);
+    $pdf->Cell($w_marca, 9, trim((string)$row['producto_marca']), 1, 0, 'C', false);
+    $pdf->Cell($w_tipo, 9, trim((string)$row['producto_tipo_vehiculo']), 1, 0, 'C', false);
+    $pdf->Cell($w_color, 9, trim((string)$row['producto_color']), 1, 0, 'C', false);
+    $pdf->Cell($w_placa, 9, trim((string)$row['producto_placa']), 1, 0, 'C', false);
+    $pdf->Cell($w_registro, 9, trim((string)$row['producto_alterno']), 1, 1, 'C', false);
+    $pdf->Ln(2);
+
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->Cell(50, 6, 'Asignado Depto', 1, 0, 'L', true);
+    $pdf->SetFont('helvetica', '', 9);
+    $pdf->Cell(140, 6, trim((string)$row['actarv_asignado_depto']), 1, 1, 'L', false);
+
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->Cell(50, 6, 'Jefe Depto', 1, 0, 'L', true);
+    $pdf->SetFont('helvetica', '', 9);
+    $pdf->Cell(140, 6, trim((string)$row['actarv_jefe_depto']), 1, 1, 'L', false);
+
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->Cell(50, 6, 'Celular', 1, 0, 'L', true);
+    $pdf->SetFont('helvetica', '', 9);
+    $pdf->Cell(140, 6, trim((string)$row['actarv_celular']), 1, 1, 'L', false);
+    $pdf->Ln(2);
+
+    $ruta_foto_licencia = trim((string)$row['actarv_foto_licencia']);
+    $foto_licencia_path = '';
+    if ($ruta_foto_licencia !== '') {
+        $candidatos_foto = array(
+            app_dir.'uploa_d/'.$ruta_foto_licencia,
+            app_dir.$ruta_foto_licencia,
+            'uploa_d/'.$ruta_foto_licencia,
+            $ruta_foto_licencia
+        );
+        foreach ($candidatos_foto as $candidato) {
+            if (file_exists($candidato)) {
+                $foto_licencia_path = $candidato;
+                break;
+            }
+        }
+    }
+
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->Cell(0, 6, 'Foto de Licencia', 1, 1, 'L', true);
+    $y_foto_inicio = $pdf->GetY();
+    if ($foto_licencia_path !== '') {
+        $pdf->Image($foto_licencia_path, 12, $y_foto_inicio + 2, 95, 65, '', '', '', false, 300, '', false, false, 0, true, false, false);
+        $pdf->SetY($y_foto_inicio + 70);
+    } else {
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->Cell(0, 10, 'No se adjunto foto de licencia.', 1, 1, 'L', false);
+    }
+
+    $pdf->Ln(8);
+    $pdf->SetFont('helvetica', 'B', 8);
+    $pdf->SetX(12);
+    $alto_firma = 11;
+    $ancho_label_firma = 47;
+    $ancho_area_firma = 62;
+    $pdf->Cell($ancho_label_firma, $alto_firma, 'Firma Cliente :', 0, 0, 'L', false);
+    $x_area_firma = $pdf->GetX();
+    $y_area_firma = $pdf->GetY();
+
+    $x_firma_img = $x_area_firma - 1;
+    $y_firma_img = $y_area_firma - 4;
+    $ancho_firma_img = 28;
+    $alto_firma_img = 16;
+
+    $imgfirma_cliente_acta = get_base64_png_from_request('pdffirma1');
+    if ($imgfirma_cliente_acta !== '') {
+        $pdf->Image('@'.$imgfirma_cliente_acta, $x_firma_img, $y_firma_img, $ancho_firma_img, $alto_firma_img, '', '', '', false, 300, '', false, false, 0, true, false, false);
+    }
+
+    $x_raya_firma = $x_area_firma - 1;
+    $ancho_raya_firma = $ancho_area_firma - 10;
+    $y_raya_firma = $y_area_firma + $alto_firma - 1;
+    $pdf->Line($x_raya_firma, $y_raya_firma, $x_raya_firma + $ancho_raya_firma, $y_raya_firma);
+    $pdf->Ln($alto_firma + 2);
+
+}
 
  
 

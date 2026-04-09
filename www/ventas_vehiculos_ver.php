@@ -270,7 +270,7 @@ if ($accion=="1") {
 
                     modalwindow2(
                 'Registro Venta de Vehiculo Pruebas Contrato',
-                'ventas_mant_contrato.php?a=v&r='+nuevo+'&cid='+codigo
+                'ventas_mant.php?a=v&r='+nuevo+'&cid='+codigo
                 );
  /*            modalwindow2(
                 'Registro Venta de Vehiculooo',

@@ -35,6 +35,15 @@ function safi_es_numeracion_llanta_valida($valor) {
   return preg_match('/^[0-9]{3}\/[0-9]{2}[A-Za-z][0-9]{2}$/', (string)$valor) === 1;
 }
 
+function safi_es_celular_valido($valor) {
+  return preg_match('/^[0-9\+\-\s\(\)]{7,35}$/', (string)$valor) === 1;
+}
+
+function safi_cliente_prefijo_actarv($codigoCliente) {
+  $codigo = strtoupper(trim((string)$codigoCliente));
+  return (strpos($codigo, 'CCO') === 0);
+}
+
 
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="";}
 $cid=0;
@@ -199,58 +208,115 @@ if ($accion=="g") {
       }
 
       if ($verror=="") {
-        $campos_marca_llanta_opcionales = array(
-          "llanta_extra1" => "Extra 1",
-          "llanta_extra2" => "Extra 2"
-        );
+          $campos_marca_llanta_opcionales = array(
+            "llanta_extra1" => "Extra 1",
+            "llanta_extra2" => "Extra 2"
+          );
 
-        foreach ($campos_marca_llanta_opcionales as $campo_marca => $etiqueta_marca) {
-          $valor_marca = isset($_REQUEST[$campo_marca]) ? trim((string)$_REQUEST[$campo_marca]) : '';
-          if ($valor_marca === '') {
-            continue;
+          foreach ($campos_marca_llanta_opcionales as $campo_marca => $etiqueta_marca) {
+            $valor_marca = isset($_REQUEST[$campo_marca]) ? trim((string)$_REQUEST[$campo_marca]) : '';
+            if ($valor_marca === '') {
+              continue;
+            }
+            if (!safi_es_texto_simple($valor_marca)) {
+              $verror = "Marca de llanta invalida en " . $etiqueta_marca . ". Solo se permiten letras.";
+              break;
+            }
+            if (safi_longitud_texto($valor_marca) < 5) {
+              $verror = "Marca de llanta invalida en " . $etiqueta_marca . ". Debe tener minimo 5 caracteres.";
+              break;
+            }
           }
-          if (!safi_es_texto_simple($valor_marca)) {
-            $verror = "Marca de llanta invalida en " . $etiqueta_marca . ". Solo se permiten letras.";
-            break;
+      }
+
+      if ($verror=="") {
+          $campos_num_llanta_requeridos = array(
+            "llanta_delantera_izq_num" => "Delantera Izquierda",
+            "llanta_trasera_izq_num" => "Trasera Izquierda",
+            "llanta_repuesto_num" => "Llanta de Repuesto",
+            "llanta_trasera_der_num" => "Trasera Derecha",
+            "llanta_delantera_der_num" => "Delantera Derecha"
+          );
+
+          foreach ($campos_num_llanta_requeridos as $campo_num => $etiqueta_num) {
+            $valor_num = isset($_REQUEST[$campo_num]) ? trim((string)$_REQUEST[$campo_num]) : '';
+            if ($valor_num === '' || !safi_es_numeracion_llanta_valida($valor_num)) {
+              $verror = "Numeracion de llanta invalida en " . $etiqueta_num . ". Debe tener formato 000/00R00.";
+              break;
+            }
           }
-          if (safi_longitud_texto($valor_marca) < 5) {
-            $verror = "Marca de llanta invalida en " . $etiqueta_marca . ". Debe tener minimo 5 caracteres.";
-            break;
+      }
+
+      if ($verror=="") {
+          $campos_num_llanta_opcionales = array(
+            "llanta_extra1_num" => "Extra 1",
+            "llanta_extra2_num" => "Extra 2"
+          );
+
+          foreach ($campos_num_llanta_opcionales as $campo_num => $etiqueta_num) {
+            $valor_num = isset($_REQUEST[$campo_num]) ? trim((string)$_REQUEST[$campo_num]) : '';
+            if ($valor_num !== '' && !safi_es_numeracion_llanta_valida($valor_num)) {
+              $verror = "Numeracion de llanta invalida en " . $etiqueta_num . ". Debe tener formato 000/00R00.";
+              break;
+            }
+          }
+      }
+
+      if ($verror=="" && isset($_REQUEST["actarv_celular"])) {
+        $valor_celular = trim((string)$_REQUEST["actarv_celular"]);
+        if ($valor_celular !== '' && !safi_es_celular_valido($valor_celular)) {
+          $verror = "Celular invalido en Acta de Recepcion. Solo se permiten numeros y los simbolos + - ( )";
+        }
+      }
+
+      if ($verror=="" && $nuevoreg==false && isset($_REQUEST["actarv_foto_licencia"])) {
+        $estado_actual_inspeccion = intval(get_dato_sql("inspeccion","id_estado"," WHERE id=".intval($elcodigo)));
+        if ($estado_actual_inspeccion>=2) {
+          $foto_actual_inspeccion = trim((string)get_dato_sql("inspeccion","actarv_foto_licencia"," WHERE id=".intval($elcodigo)));
+          $foto_recibida = trim((string)$_REQUEST["actarv_foto_licencia"]);
+          if ($foto_recibida !== $foto_actual_inspeccion) {
+            $verror = "No se permite subir o cambiar Foto Licencia cuando la Hoja de Inspeccion esta completada";
           }
         }
       }
 
       if ($verror=="") {
-        $campos_num_llanta_requeridos = array(
-          "llanta_delantera_izq_num" => "Delantera Izquierda",
-          "llanta_trasera_izq_num" => "Trasera Izquierda",
-          "llanta_repuesto_num" => "Llanta de Repuesto",
-          "llanta_trasera_der_num" => "Trasera Derecha",
-          "llanta_delantera_der_num" => "Delantera Derecha"
-        );
+          $tipo_insp_req = isset($_REQUEST["tipo_inspeccion"]) ? intval($_REQUEST["tipo_inspeccion"]) : 0;
+          $tipo_doc_req = isset($_REQUEST["tipo_doc"]) ? intval($_REQUEST["tipo_doc"]) : 0;
+          $estado_guardar = isset($_REQUEST["gg_est"]) ? intval($_REQUEST["gg_est"]) : 0;
+          $cliente_prefijo_cco_req = false;
+          $aplica_actarv_req = false;
+          if (isset($_REQUEST["cliente_id"])) {
+            $id_cliente_req = intval($_REQUEST["cliente_id"]);
+            if ($id_cliente_req > 0) {
+              $codigo_cliente_req = strtoupper(trim((string)get_dato_sql("entidad","codigo_alterno"," WHERE id=".$id_cliente_req)));
+              if (safi_cliente_prefijo_actarv($codigo_cliente_req)) {
+                $cliente_prefijo_cco_req = true;
+              }
+            }
+        }
 
-        foreach ($campos_num_llanta_requeridos as $campo_num => $etiqueta_num) {
-          $valor_num = isset($_REQUEST[$campo_num]) ? trim((string)$_REQUEST[$campo_num]) : '';
-          if ($valor_num === '' || !safi_es_numeracion_llanta_valida($valor_num)) {
-            $verror = "Numeracion de llanta invalida en " . $etiqueta_num . ". Debe tener formato 000/00R00.";
-            break;
+        if ($estado_guardar==2 && (!isset($_REQUEST["cliente_id"]) || intval($_REQUEST["cliente_id"])<=0)) {
+          $verror = "Debe seleccionar el cliente para completar la Hoja de Inspeccion";
+        }
+
+        // Respaldo: cuando cliente_id no venga resuelto en el POST, validar por el texto del cliente.
+        if (!$cliente_prefijo_cco_req && isset($_REQUEST["nombre_cliente"])) {
+          $cliente_prefijo_cco_req = safi_cliente_prefijo_actarv($_REQUEST["nombre_cliente"]);
+        }
+
+        $aplica_actarv_req = ($tipo_insp_req==1 && $tipo_doc_req==2 && $cliente_prefijo_cco_req);
+
+        // Obligatorio solo al completar para Renta+Salida y clientes con prefijo CCO.
+        if ($estado_guardar==2 && $aplica_actarv_req) {
+          if (!isset($_REQUEST["actarv_celular"]) || es_nulo(trim((string)$_REQUEST["actarv_celular"]))) {
+            $verror = "Debe ingresar Celular en Datos de Acta de Recepcion del Vehiculo";
+          } elseif (!isset($_REQUEST["actarv_foto_licencia"]) || es_nulo(trim((string)$_REQUEST["actarv_foto_licencia"]))) {
+            $verror = "Debe adjuntar Foto Licencia en Datos de Acta de Recepcion del Vehiculo";
           }
         }
-      }
 
-      if ($verror=="") {
-        $campos_num_llanta_opcionales = array(
-          "llanta_extra1_num" => "Extra 1",
-          "llanta_extra2_num" => "Extra 2"
-        );
-
-        foreach ($campos_num_llanta_opcionales as $campo_num => $etiqueta_num) {
-          $valor_num = isset($_REQUEST[$campo_num]) ? trim((string)$_REQUEST[$campo_num]) : '';
-          if ($valor_num !== '' && !safi_es_numeracion_llanta_valida($valor_num)) {
-            $verror = "Numeracion de llanta invalida en " . $etiqueta_num . ". Debe tener formato 000/00R00.";
-            break;
-          }
-        }
+      
       }
 
       
@@ -328,6 +394,10 @@ if ($accion=="g") {
       if (isset($_REQUEST["grua"])) { $sqlcampos.= " , grua =".GetSQLValue($_REQUEST["grua"],"int"); } 
       if (isset($_REQUEST["grua_orden"])) { $sqlcampos.= " , grua_orden =".GetSQLValue($_REQUEST["grua_orden"],"text"); } 
       if (isset($_REQUEST["grua_factura"])) { $sqlcampos.= " , grua_factura =".GetSQLValue($_REQUEST["grua_factura"],"text"); } 
+      if (isset($_REQUEST["actarv_asignado_depto"])) { $sqlcampos.= " , actarv_asignado_depto =".GetSQLValue($_REQUEST["actarv_asignado_depto"],"text"); }
+      if (isset($_REQUEST["actarv_jefe_depto"])) { $sqlcampos.= " , actarv_jefe_depto =".GetSQLValue($_REQUEST["actarv_jefe_depto"],"text"); }
+      if (isset($_REQUEST["actarv_celular"])) { $sqlcampos.= " , actarv_celular =".GetSQLValue($_REQUEST["actarv_celular"],"text"); }
+      if (isset($_REQUEST["actarv_foto_licencia"])) { $sqlcampos.= " , actarv_foto_licencia =".GetSQLValue($_REQUEST["actarv_foto_licencia"],"text"); }
       if (isset($_REQUEST["observaciones"])) { $sqlcampos.= " , observaciones =".GetSQLValue($_REQUEST["observaciones"],"text"); } 
      
       if (isset($_REQUEST["trabajo_realizar"])) { $sqlcampos.= " , trabajo_realizar =".GetSQLValue($_REQUEST["trabajo_realizar"],"text"); } 
@@ -340,6 +410,7 @@ if ($accion=="g") {
      if (isset($_REQUEST["tipo_inspeccion_especial"])) { $sqlcampos.= " , tipo_inspeccion_especial =".GetSQLValue($_REQUEST["tipo_inspeccion_especial"],"int"); }
 
      if (isset($_REQUEST["observaciones_adpc"])) { $sqlcampos.= " , observaciones_adpc =".GetSQLValue($_REQUEST["observaciones_adpc"],"text"); }        
+     if (isset($_REQUEST["id_adpc_categoria"])) { $sqlcampos.= " , id_adpc_categoria =".GetSQLValue($_REQUEST["id_adpc_categoria"],"int"); }        
       
      $actualizarkm=false;//ojo no quitar . por si esta modificando 
      $enviar_orden_email=false;
@@ -366,51 +437,36 @@ if ($accion=="g") {
               }                          
             }            
             if ($nuevo_estado==2) {
-                   
-              //*esta validaciones se dejaron antes de crear HI */              
-              //Valida que no tenga traslado pendientes
-              /*
-              $Codigo_Alterno=get_dato_sql("producto","COUNT(*)"," WHERE left(codigo_alterno,7)='EA-0000' and id=".intval($_REQUEST['id_producto']));          
-              if (es_nulo($Codigo_Alterno)){
-                  $trasladosP=get_dato_sql("orden_traslado","COUNT(*)"," WHERE id_estado<3 AND id_producto=".intval($_REQUEST['id_producto']));
-                  if ($trasladosP>0) {
-                    $stud_arr[0]["pmsg"] =" Tiene orden de traslado sin completar del vehiculo"; 
-                    salida_json($stud_arr);
-                    exit;            
-                  }
-              }       
-              if ($tipoinsp==1 and $tipodoc==2){  
-                 $EstadoReparacion=get_dato_sql("ventas","COUNT(*)"," WHERE id_estado=99 AND id_producto=".intval($_REQUEST['id_producto']));
-                  if (!es_nulo($EstadoReparacion)){
-                      $stud_arr[0]["pmsg"] =" El Vehiculo esta en proceso de reparacion"; 
-                      salida_json($stud_arr);
-                      exit;  
-                  }                
-                
-                  $ParoPorRepuesto=get_dato_sql("servicio","COUNT(*)"," WHERE id_estado=7 AND (estado_paro_por_repuesto='I' or estado_paro_por_repuesto=null)  AND id_producto=".intval($_REQUEST['id_producto']));                 
-                  $Oservicio=get_dato_sql("servicio","COUNT(*)"," WHERE id_estado not in (20,22,7) AND id_producto=".intval($_REQUEST['id_producto']));                 
-                  $Ocombustible=get_dato_sql("orden_combustible","COUNT(*)"," WHERE id_estado<3 AND id_producto=".intval($_REQUEST['id_producto']));                 
-                  if (!es_nulo($Oservicio) or !es_nulo($ParoPorRepuesto)){
-                      $stud_arr[0]["pmsg"] =" Tiene Orden de Servicio sin completar del vehiculo"; 
-                      salida_json($stud_arr);
-                      exit;            
-                  }
-
-                  if (!es_nulo($Ocombustible)){
-                      $stud_arr[0]["pmsg"] =" Tiene Orden de Combustible sin completar del vehiculo"; 
-                      salida_json($stud_arr);
-                      exit;  
+   
+                $cliente_prefijo_cco_completar = false;
+                if (isset($_REQUEST["cliente_id"])) {
+                  $id_cliente_completar = intval($_REQUEST["cliente_id"]);
+                  if ($id_cliente_completar > 0) {
+                    $codigo_cliente_completar = get_dato_sql("entidad","codigo_alterno"," WHERE id=".$id_cliente_completar);
+                    $cliente_prefijo_cco_completar = safi_cliente_prefijo_actarv($codigo_cliente_completar);
                   }
                 }
-              */
-              $lbl_estado="Completado";
+                if (!$cliente_prefijo_cco_completar && isset($_REQUEST["nombre_cliente"])) {
+                  $cliente_prefijo_cco_completar = safi_cliente_prefijo_actarv($_REQUEST["nombre_cliente"]);
+                }
 
+                $tipo_insp_completar = isset($_REQUEST["tipo_inspeccion"]) ? intval($_REQUEST["tipo_inspeccion"]) : 0;
+                $tipo_doc_completar = isset($_REQUEST["tipo_doc"]) ? intval($_REQUEST["tipo_doc"]) : 0;
+                $aplica_actarv_completar = ($tipo_insp_completar==1 && $tipo_doc_completar==2 && $cliente_prefijo_cco_completar);
+
+                if ($aplica_actarv_completar) {
+                  $foto_actarv_completar = isset($_REQUEST["actarv_foto_licencia"]) ? trim((string)$_REQUEST["actarv_foto_licencia"]) : '';
+                  if (es_nulo($foto_actarv_completar)) {
+                    $stud_arr[0]["pmsg"] ="Debe adjuntar Foto Licencia en Datos de Acta de Recepcion del Vehiculo";
+                    salida_json($stud_arr);
+                    exit;
+                  }
+                }
+
+              $lbl_estado="Completado";
               // enviar email a cliente 
               $enviar_orden_email=true;
 
-              // $sqlcampos.= " , fecha_entrada =NOW()"; 
-     
-              //  $sqlcampos.= " , hora_entrada =NOW()";                
             }
             $sqlcampos.= " , id_estado =".GetSQLValue($nuevo_estado,"int");
             $sqlcampos.= " , id_usuario_completado =".$_SESSION["usuario_id"];
@@ -419,8 +475,8 @@ if ($accion=="g") {
             $lbl_estado="Revision ADPC";
             $sqlcampos.= " , fecha_auditado =NOW()";            
             $sqlcampos.= " , id_usuario_auditado =".$_SESSION["usuario_id"]; 
-            $obs_adpc = isset($_REQUEST["observaciones_adpc"]) ? $_REQUEST["observaciones_adpc"] : "";
-            $sqlcampos.= " , observaciones_adpc =".GetSQLValue($obs_adpc,"text");  
+            $sqlcampos.= " , observaciones_adpc =".GetSQLValue($_REQUEST["observaciones_adpc"],"text");  
+            $sqlcampos.= " , id_adpc_categoria =".GetSQLValue($_REQUEST["id_adpc_categoria"],"int"); 
         }
       } 
      
@@ -749,6 +805,10 @@ if (isset($row["bateria_num"])) {$bateria_num= $row["bateria_num"]; } else {$bat
 if (isset($row["grua"])) {$grua= $row["grua"]; } else {$grua= "0";}
 if (isset($row["grua_orden"])) {$grua_orden= $row["grua_orden"]; } else {$grua_orden= "";}
 if (isset($row["grua_factura"])) {$grua_factura= $row["grua_factura"]; } else {$grua_factura= "";}
+if (isset($row["actarv_asignado_depto"])) {$actarv_asignado_depto= $row["actarv_asignado_depto"]; } else {$actarv_asignado_depto= "";}
+if (isset($row["actarv_jefe_depto"])) {$actarv_jefe_depto= $row["actarv_jefe_depto"]; } else {$actarv_jefe_depto= "";}
+if (isset($row["actarv_celular"])) {$actarv_celular= $row["actarv_celular"]; } else {$actarv_celular= "";}
+if (isset($row["actarv_foto_licencia"])) {$actarv_foto_licencia= $row["actarv_foto_licencia"]; } else {$actarv_foto_licencia= "";}
 if (isset($row["observaciones"])) {$observaciones= $row["observaciones"]; } else {$observaciones= "";}
 
 if (isset($row["trabajo_realizar"])) {$trabajo_realizar= $row["trabajo_realizar"]; } else {$trabajo_realizar= "";}
@@ -764,6 +824,7 @@ if (isset($row["chasis"])) {$chasis= $row["chasis"]; } else {$chasis= "";}
 
 if (isset($row["fecha_auditado"])) {$fecha_auditado= $row["fecha_auditado"]; } else {$fecha_auditado= date('Y-m-d');}
 if (isset($row["id_usuario_auditado"])) {$id_usuario_auditado= $row["id_usuario_auditado"]; } else {$id_usuario_auditado= "0";}
+if (isset($row["id_adpc_categoria"])) {$id_adpc_categoria= $row["id_adpc_categoria"]; } else {$id_adpc_categoria= "";}
 if (isset($row["observaciones_adpc"])) {$observaciones_adpc= $row["observaciones_adpc"]; } else {$observaciones_adpc= "";}
 
 //********* */
@@ -968,6 +1029,7 @@ $empresa_logo ="nd";
 if ($id_empresa==1) {$empresa_logo ="hertz";}
 if ($id_empresa==2) {$empresa_logo ="dollar";}
 if ($id_empresa==3) {$empresa_logo ="thrifty";}
+if ($id_empresa==4) {$empresa_logo ="carshop";}
 
 if ($tipo_inspeccion==1 and $tipo_doc==2){
    $visible_sec5='hidden'; 
@@ -1000,6 +1062,15 @@ if ($id_estado>=2 ) { //completado solo ver
        $visible_auditar=' oculto'; 
     }
  }
+
+$cliente_prefijo_cco = false;
+if (!es_nulo($cliente_id)) {
+  $codigo_cliente_actarv = strtoupper(trim((string)get_dato_sql("entidad","codigo_alterno"," WHERE id=".intval($cliente_id))));
+  if (safi_cliente_prefijo_actarv($codigo_cliente_actarv)) {
+    $cliente_prefijo_cco = true;
+  }
+}
+$mostrar_actarv = ($cliente_prefijo_cco && intval($tipo_inspeccion)==1 && intval($tipo_doc)==2);
 
 
 ?>
@@ -1527,25 +1598,25 @@ if ($id_estado>=2 ) { //completado solo ver
             </div>
             <div class="col-md">  
             <u>Trasera Izquierda</u>     
-              <p> <?php echo campo("llanta_trasera_izq","Marca",'text',$llanta_trasera_izq,' ',$disable_sec4 .' required minlength="5"');?>  </p>
+              <p> <?php echo campo("llanta_trasera_izq","Marca",'text',$llanta_trasera_izq,' ',$disable_sec4 .' required minlength="4"');?>  </p>
               <p> <?php echo campo("llanta_trasera_izq_num","Numeración",'text',$llanta_trasera_izq_num,' ',$disable_sec4 .' required');?>  </p>              
               <p> <?php echo campo("llanta_trasera_izq_cali","Calibración",$visible_sec5,$llanta_trasera_izq_cali,' ',$disable_sec4 .' required');?>  </p>
               <a href="#" class="btn btn-sm <?php echo $visible_sec4; ?>" onclick="insp_copiar_llantas(); return false;" ><i class="fa fa-copy"></i> Copiar Todos</a>
             </div>
             <div class="col-md bg-light">  
             <u>Llanta de Repuesto</u>    
-              <p> <?php echo campo("llanta_repuesto","Marca",'text',$llanta_repuesto,' ',$disable_sec4 .' required minlength="5"');?>  </p>
+              <p> <?php echo campo("llanta_repuesto","Marca",'text',$llanta_repuesto,' ',$disable_sec4 .' required minlength="4"');?>  </p>
               <p> <?php echo campo("llanta_repuesto_num","Numeración",'text',$llanta_repuesto_num,' ',$disable_sec4 .' required');?>  </p>              
             </div>
             <div class="col-md">  
             <u>Trasera Derecha</u>     
-              <p> <?php echo campo("llanta_trasera_der","Marca",'text',$llanta_trasera_der,' ',$disable_sec4 .' required minlength="5"');?>  </p>
+              <p> <?php echo campo("llanta_trasera_der","Marca",'text',$llanta_trasera_der,' ',$disable_sec4 .' required minlength="4"');?>  </p>
               <p> <?php echo campo("llanta_trasera_der_num","Numeración",'text',$llanta_trasera_der_num,' ',$disable_sec4 .' required');?>  </p>              
               <p> <?php echo campo("llanta_trasera_der_cali","Calibración",$visible_sec5,$llanta_trasera_der_cali,' ',$disable_sec4 .' required');?>  </p>
             </div>
             <div class="col-md">  
               <u>Delantera Derecha</u>      
-              <p> <?php echo campo("llanta_delantera_der","Marca",'text',$llanta_delantera_der,' ',$disable_sec4 .' required minlength="5"');?>  </p>
+              <p> <?php echo campo("llanta_delantera_der","Marca",'text',$llanta_delantera_der,' ',$disable_sec4 .' required minlength="4"');?>  </p>
               <p> <?php echo campo("llanta_delantera_der_num","Numeración",'text',$llanta_delantera_der_num,' ',$disable_sec4 .' required');?>  </p>
               <p> <?php echo campo("llanta_delantera_der_cali","Calibración",$visible_sec5,$llanta_delantera_der_cali,' ',$disable_sec4 .' required');?>  </p>
               <a href="#" class="btn btn-sm <?php echo $visible_sec4; ?>" onclick="$('#llanta_extra').show(); return false;" ><i class="fa fa-plus"></i> Llantas adicionales</a>
@@ -1557,13 +1628,13 @@ if ($id_estado>=2 ) { //completado solo ver
           <div  class="row">
             <div class="col-md">  
               <u>Extra 1</u>      
-              <p> <?php echo campo("llanta_extra1","Marca",'text',$llanta_extra1,' ',$disable_sec4 .' minlength="5"');?>  </p>
+              <p> <?php echo campo("llanta_extra1","Marca",'text',$llanta_extra1,' ',$disable_sec4 .' minlength="4"');?>  </p>
               <p> <?php echo campo("llanta_extra1_num","Numeración",'text',$llanta_extra1_num,' ',$disable_sec4 .' ');?>  </p>
             </div>
 
             <div class="col-md">  
               <u>Extra 2</u>      
-              <p> <?php echo campo("llanta_extra2","Marca",'text',$llanta_extra2,' ',$disable_sec4 .' minlength="5"');?>  </p>
+              <p> <?php echo campo("llanta_extra2","Marca",'text',$llanta_extra2,' ',$disable_sec4 .' minlength="4"');?>  </p>
               <p> <?php echo campo("llanta_extra2_num","Numeración",'text',$llanta_extra2_num,' ',$disable_sec4 .' ');?>  </p>
             </div>
 
@@ -1658,6 +1729,47 @@ if ($tipo_inspeccion=='2'){ // TALLER
 
         </div>
       </div>      
+
+      <div id="card_actarv" class="card mb-3 <?php echo $mostrar_actarv ? '' : 'oculto'; ?>">
+        <div class="card-header  bg-secondary text-white ">
+            Datos de Acta de Recepcion del Vehiculo
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md">
+              <?php echo campo("actarv_asignado_depto","Asignado Depto",'text',$actarv_asignado_depto,' ',' maxlength="200" '.$disable_sec7); ?>
+            </div>
+            <div class="col-md">
+              <?php echo campo("actarv_jefe_depto","Jefe Depto",'text',$actarv_jefe_depto,' ',' maxlength="200" '.$disable_sec7); ?>
+            </div>
+            <div class="col-md">
+              <?php echo campo("actarv_celular","Celular",'text',$actarv_celular,' ',' maxlength="35" pattern="[0-9\+\-\s\(\)]{7,35}" title="Use numeros y opcionalmente + - ( )" '.$disable_sec7); ?>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md">
+              <?php
+                if ($id_estado>=2) {
+                  if ($actarv_foto_licencia=='') {
+                    echo '<div class="alert alert-light border">No se permite subir Foto Licencia cuando la Hoja de Inspeccion esta completada.</div>';
+                  } else {
+                    echo campo_upload("actarv_foto_licencia","Foto Licencia",'upload',$actarv_foto_licencia, '  ','',4,8,'NO',false );
+                  }
+                } else {
+                  if ($actarv_foto_licencia=='') {
+                    echo '<div id="archivofoto_actarv">';
+                    echo campo_upload("actarv_foto_licencia","Foto Licencia",'upload','', '  ','',4,8,'NO',false );
+                    echo '</div>';
+                  } else {
+                    echo campo_upload("actarv_foto_licencia","Foto Licencia",'upload',$actarv_foto_licencia, '  ','',4,8,'SI',false );
+                  }
+                }
+              ?>
+            </div>
+          </div>
+        </div>
+      </div>
    
       <div class="card mb-3">
         <div class="card-header  bg-secondary text-white ">
@@ -1689,25 +1801,20 @@ if ($tipo_inspeccion=='2'){ // TALLER
         <input type="hidden" name="pdffirma1" id="guardar_pdffirma1">
         <input type="hidden" name="pdffirma2" id="guardar_pdffirma2">
 
-        <?php     
-         $oculto='hidden';
-         $obadpc_requerido="";
-         if (tiene_permiso(163) and es_nulo($id_usuario_auditado)) { 
-            $oculto='textarea';          
-            $obadpc_requerido=' required';
-            $disable_sec6=' ';
-        }else{ 
-            if (tiene_permiso(163) and !es_nulo($id_usuario_auditado)){
-               $oculto='textarea';               
-               $disable_sec6=' ';
-            }    
-        }
-        ?>        
+        <?php
+        $es_adpc   = tiene_permiso(163);
+        $req_adpc  = ($es_adpc && es_nulo($id_usuario_auditado)) ? ' required' : '';
+        if ($es_adpc) { $disable_sec6 = ' '; }
+        $opts_categoria = $es_adpc
+            ? valores_combobox_db('adpc_categorias', $id_adpc_categoria, 'nombre', ' where tipo_documento=1', '', '...')
+            : $id_adpc_categoria;
+        ?>
 
-        <div class="card-body">   
-          <div class="row"> 
-            <div class="col-md">     
-                 <?php echo campo("observaciones_adpc","Observaciones ADPC",$oculto,$observaciones_adpc,' ',' rows="5" '.$disable_sec6 .$obadpc_requerido);?>  
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md">
+                <?php echo campo("id_adpc_categoria", "Categoría ADPC",  $es_adpc ? 'select2'   : 'hidden', $opts_categoria,     ' ', $disable_sec6.$req_adpc); ?>
+                <?php echo campo("observaciones_adpc","Observaciones ADPC", $es_adpc ? 'textarea' : 'hidden', $observaciones_adpc, ' ', ' rows="5" '.$disable_sec6.$req_adpc); ?>
             </div>
           </div>
         </div>     
@@ -2464,10 +2571,137 @@ if (ccl!=null) {
 
 
 function insp_actualizar_email_cliente(){
+  var dataCliente = $('#cliente_id').select2('data');
+  if (dataCliente && dataCliente.length > 0) {
+    var email = dataCliente[0].email || '';
+    var texto = dataCliente[0].text || '';
+    $('#cliente_email').val(email);
+    $('#nombre_cliente').val(texto);
+  }
+  insp_toggle_actarv();
+}
 
-  var emailcliente=$('#cliente_id').select2('data')[0];
+function insp_guardar_foto(arch,campo){
+  $('#'+campo).val(arch);
+  $('#files_'+campo).text('Guardado');
+  $('#lk'+campo).html(arch);
+}
 
-  $('#cliente_email').val(emailcliente.email);
+if (typeof window.comprimirSiEsImagen !== 'function') {
+  window.comprimirSiEsImagen = function(file, opts) {
+    opts = opts || {};
+    var maxLado = opts.maxLado || 1600;
+    var calidad = opts.calidad || 0.82;
+    var tamanoMinimo = opts.tamanoMinimo || (400 * 1024);
+
+    if (!file || !file.type || file.type.indexOf('image/') !== 0) {
+      return Promise.resolve(file);
+    }
+
+    if (file.size < tamanoMinimo) {
+      return Promise.resolve(file);
+    }
+
+    return new Promise(function(resolve) {
+      var img = new Image();
+      var objectUrl = URL.createObjectURL(file);
+
+      img.onload = function() {
+        var w = img.naturalWidth || img.width;
+        var h = img.naturalHeight || img.height;
+        var ratio = 1;
+
+        if (w > h && w > maxLado) {
+          ratio = maxLado / w;
+        } else if (h >= w && h > maxLado) {
+          ratio = maxLado / h;
+        }
+
+        var newW = Math.max(1, Math.round(w * ratio));
+        var newH = Math.max(1, Math.round(h * ratio));
+
+        var canvas = document.createElement('canvas');
+        canvas.width = newW;
+        canvas.height = newH;
+        var ctx = canvas.getContext('2d', { alpha: false });
+        ctx.drawImage(img, 0, 0, newW, newH);
+
+        var mimeOut = (file.type === 'image/png') ? 'image/png' : 'image/jpeg';
+        canvas.toBlob(function(blob) {
+          URL.revokeObjectURL(objectUrl);
+          if (!blob || blob.size >= file.size) {
+            resolve(file);
+            return;
+          }
+
+          var nuevoNombre = file.name;
+          if (mimeOut === 'image/jpeg') {
+            nuevoNombre = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+          }
+
+          try {
+            resolve(new File([blob], nuevoNombre, { type: mimeOut, lastModified: Date.now() }));
+          } catch (e) {
+            blob.name = nuevoNombre;
+            resolve(blob);
+          }
+        }, mimeOut, calidad);
+      };
+
+      img.onerror = function() {
+        URL.revokeObjectURL(objectUrl);
+        resolve(file);
+      };
+
+      img.src = objectUrl;
+    });
+  };
+}
+
+function mostrar_foto(imagen){
+  if (!imagen) {
+    mytoast('warning','No hay archivo para mostrar',2500);
+    return;
+  }
+
+  var ruta = 'uploa_d/' + imagen;
+  var ext = (imagen.split('.').pop() || '').toLowerCase();
+  var esImagen = ['jpg','jpeg','png','gif','webp','bmp'].indexOf(ext) >= 0;
+
+  if (esImagen) {
+    Swal.fire({ imageUrl: ruta });
+    return;
+  }
+
+  window.open(ruta, '_blank');
+}
+
+function insp_cliente_es_prefijo_cco() {
+  var texto = '';
+  var dataCliente = $('#cliente_id').select2('data');
+  if (dataCliente && dataCliente.length > 0 && dataCliente[0].text) {
+    texto = dataCliente[0].text;
+  }
+  if (texto === '') {
+    texto = $('#nombre_cliente').val() || '';
+  }
+  texto = $.trim(texto).toUpperCase();
+  return texto.indexOf('CCO') === 0;
+}
+
+function insp_aplica_actarv() {
+  var tipoInspeccion = parseInt($('#tipo_inspeccion').val() || '0', 10);
+  var tipoDoc = parseInt($('#tipo_doc').val() || '0', 10);
+  return insp_cliente_es_prefijo_cco() && tipoInspeccion === 1 && tipoDoc === 2;
+}
+
+function insp_toggle_actarv() {
+  var aplica = insp_aplica_actarv();
+  if (aplica) {
+    $('#card_actarv').removeClass('oculto');
+  } else {
+    $('#card_actarv').addClass('oculto');
+  }  
 }
 
 
@@ -2493,6 +2727,7 @@ function insp_cambiar_logo() {
   if (valempresa==1) {empresa_logo ="hertz";}
   if (valempresa==2) {empresa_logo ="dollar";}
   if (valempresa==3) {empresa_logo ="thrifty";}
+  if (valempresa==4) {empresa_logo ="carshop";}
   $('#id_empresa').val(valempresa);
   $('#ins_logo_empresa').attr("src", "img/"+empresa_logo+".jpg"); 
 
@@ -2580,37 +2815,47 @@ var validation = Array.prototype.filter.call(forms, function(form) {
             mytoast('warning','Los valores de calibracion de las llantas son incorrectos ',3000) ;
             validado=false;  
         } 
-    }
-
-    if (validado==true) {
-      if (insp_validar_marcas_llanta()==false) {
-        validado=false;
-      }
-    }
-
-    if (validado==true) {
-      if (insp_validar_numeracion_llantas()==false) {
-        validado=false;
-      }
-    }
+    }    
 
     if (adicional=='1'){ //borrador
+       if (validado==true) {
+          if (insp_validar_marcas_llanta()==false) {
+             validado=false;
+          }
+        }
 
+        if (validado==true) {
+           if (insp_validar_numeracion_llantas()==false) {
+              validado=false;
+           }
+        }
     }
     if (adicional=='0'){
-
+        <?php if (tiene_permiso(163) && es_nulo($id_usuario_auditado)) { ?>
+          if (validado==true) {
+            if ($("#id_adpc_categoria").val()=='' || $("#id_adpc_categoria").val()=='0') {
+              mytoast('warning','Debe seleccionar la Categoría ADPC',3000);
+              validado=false;
+            }
+          }
+          if (validado==true) {
+            if ($("#observaciones_adpc").val().trim()=='') {
+              mytoast('warning','Debe ingresar las Observaciones ADPC',3000);
+              validado=false;
+            }
+          }
+        <?php } ?>
     }
     if (adicional=='2'){ //Completado
 
-      // if (validado==true) {
-      //   if ($("#cliente_id").val()=='' || $("#cliente_id").val()=='0' || $("#cliente_id").val()==null) {
-      //   mytoast('warning','Debe seleccionar el cliente',3000) ;
-      //   validado=false;
-      //   }           
-      // }
+      if (validado==true) {
+        if ($("#cliente_id").val()=='' || $("#cliente_id").val()=='0' || $("#cliente_id").val()==null) {
+          mytoast('warning','Debe seleccionar el cliente',3000) ;
+          validado=false;
+        }           
+      }
                 
-
-   
+  
        if (validado==true) {
           if ($("#cliente_email").val()=='') {
           mytoast('warning','Debe ingresar el Correo del Cliente',3000) ;
@@ -2643,6 +2888,20 @@ var validation = Array.prototype.filter.call(forms, function(form) {
        
        <?php }     
        ?>
+
+        if (validado==true && insp_aplica_actarv()) {
+          if ($("#actarv_celular").val()=='') {
+            mytoast('warning','Debe ingresar Celular',3000) ;
+            validado=false;
+          }
+        }
+
+        if (validado==true && insp_aplica_actarv()) {
+          if ($("#actarv_foto_licencia").val()=='' || $("#actarv_foto_licencia").val()==null) {
+            mytoast('warning','Debe adjuntar Foto Licencia',3000) ;
+            validado=false;
+          }
+        }
 
         if (validado==true) {
           // imagenes para pdf          
@@ -2734,8 +2993,6 @@ var validation = Array.prototype.filter.call(forms, function(form) {
       }
     });
   });
-    
-    
   }
     
 }
@@ -2840,6 +3097,8 @@ function insp_canvas_zoom(inout='IN',valor=2){
       $('#insp_btn_zoomout').removeClass('btn-danger');
   }
 }
+
+insp_toggle_actarv();
 
 
 </script>

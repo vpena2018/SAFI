@@ -178,6 +178,17 @@ function generarContratoVenta(
             $tipo_contrato=1;
         }
 
+         $resContrato = sql_select("
+            SELECT id_contrato, id_venta, estado
+            FROM ventas_contratos
+            WHERE estado = 'ACTIVO'
+            and id_venta = $id_venta
+        ");
+
+        if (!$resContrato || $resContrato->num_rows>=1) {
+            throw new Exception("ya existe un contrato activo para esta venta, favor anular el contrato actual para generar uno nuevo");
+        }
+
         sql_update("START TRANSACTION");
 
         /* ===============================
@@ -446,6 +457,71 @@ function generarContratoVenta(
     }
 }
 
+function anularContratoVenta(
+    int $id_venta,
+    string $usuarioSistema
+) {
+    try {
+
+        sql_update("START TRANSACTION");
+
+        // Validar contrato
+        $resContrato = sql_select("
+            SELECT id_contrato, id_venta, estado
+            FROM ventas_contratos
+            WHERE estado = 'ACTIVO'
+            and id_venta = $id_venta
+            FOR UPDATE
+        ");
+
+        if (!$resContrato || $resContrato->num_rows === 0) {
+            throw new Exception("no existe contrato para anular");
+        }
+
+        $contrato = $resContrato->fetch_assoc();
+
+/*         if ($contrato['estado'] !== 'ACTIVO') {
+            throw new Exception("Solo se pueden anular contratos activos");
+        } */
+
+        // Anular contrato principal
+        sql_update("
+            UPDATE ventas_contratos
+            SET estado = 'ANULADO', 
+                anulado_por = '$usuarioSistema',
+                fecha_anulacion = NOW()
+            WHERE id_contrato = {$contrato['id_contrato']}
+        ");
+
+        // Anular detalle del contrato
+        sql_update("
+            UPDATE ventas_contratos_detalle
+            SET estado = 'ANULADO',
+                accion = 'ANULACION',
+                anulado_por = '$usuarioSistema',
+                fecha_anulacion = NOW()
+            WHERE id_contrato = {$contrato['id_contrato']}
+              AND estado = 'ACTIVO'
+        ");
+
+        sql_update("COMMIT");
+
+        return [
+            'ok' => true,
+            'message' => 'Contrato anulado correctamente'
+        ];
+
+    } catch (Exception $e) {
+
+        sql_update("ROLLBACK");
+
+        return [
+            'ok' => false,
+            'error' => $e->getMessage()
+        ];
+    }
+}
+
 
 function convertirDocxAPdf(string $docxPath): string
 {
@@ -461,7 +537,13 @@ function convertirDocxAPdf(string $docxPath): string
         $tmpDir = sys_get_temp_dir();
         appLog('TMP DIR: ' . $tmpDir);
 
-        $soffice = getSofficeCommandDev();
+        $soffice = getSofficeCommandProd();//descomentar para produccion
+
+        //$soffice = getSofficeCommandDev();//comentar para produccion
+
+
+
+
         appLog('SOFFICE: ' . $soffice);
 
         $cmd = $soffice .
@@ -1025,6 +1107,32 @@ if ($nuevo=='N'){
    pagina_permiso(167);
 }
 
+if (isset($_GET['a']) && $_GET['a'] === 'anularcontrato') {
+        $id_venta = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
+
+        $id_usuario = intval($_SESSION['usuario_id']);
+
+                $resUser = sql_select("
+            SELECT
+                u.usuario
+            FROM usuario u
+            WHERE u.id = $id_usuario
+            LIMIT 1
+        ");
+
+        $user = $resUser->fetch_assoc();
+
+        $usuarioSistema = $user['usuario'];
+
+
+        $resp = anularContratoVenta($id_venta, $usuarioSistema);
+
+        header('Content-Type: application/json');
+        echo json_encode($resp);
+        exit;
+
+
+}
 
 if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
 
@@ -1033,7 +1141,6 @@ if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
         $id_usuario=$_SESSION['usuario_id'];
 
 
-        
 
         $id_usuario = intval($_SESSION['usuario_id']);
 
@@ -1426,6 +1533,15 @@ if (!es_nulo($cid) && in_array($id_estado, [11, 20], true)) {
     if (trim($prima_raw) === '') {
         $verror .= 'Ingrese la prima de venta del vehículo. ';
     }
+
+    //valida que el precio de venta no sea menor al precio minimo y que no sea mayor al precio maximo
+    if (!es_nulo($precio_venta) && !es_nulo($precio_minimo) && $precio_venta < $precio_minimo) {
+        $verror .= 'El precio de venta no puede ser menor al precio mínimo. ';
+    }
+    if (!es_nulo($precio_venta) && !es_nulo($precio_maximo) && $precio_venta > $precio_maximo) {
+        $verror .= 'El precio de venta no puede ser mayor al precio máximo. ';
+    }
+
 }
     
     
@@ -2354,7 +2470,7 @@ if ($foto_original_tele !== '') {
          <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',$disable_sec2); ?>                 
     </div>   
         <div class="col-md">            
-         <?php echo campo("prima_venta","Prima de Venta",'number',$prima_venta,' ',$disable_sec2); ?>                 
+         <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec2); ?>                 
     </div> 
 </div>
 
@@ -2397,21 +2513,24 @@ if ($foto_original_tele !== '') {
      $fext = strtolower($fext);
             if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {    
                 echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';                   
-                if(tiene_permiso(168))  { echo '  <a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="ventas_dfoto(1); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';}
+          
             } else {                
                 echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
+           
             }
+            if(tiene_permiso(168))  { echo '  <a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="ventas_dfoto(1); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';}
   }
    if ($foto_televentas<>'') {
      $fext = substr($foto_televentas, -3);
      $fext = strtolower($fext);
             if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {   
                 echo '  <a href="#" onclick="mostrar_foto(\''.$foto_televentas.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto_televentas.'" data-cod="'.$row["id"].'"></a> ';                                   
-                if(tiene_permiso(168))  { echo '  <a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="ventas_dfoto(2); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';}
+            
             } else {                
                 echo '  <a href="uploa_d/'.$foto_televentas.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto_televentas.'</a> ';
               
             }
+            if(tiene_permiso(168))  { echo '  <a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="ventas_dfoto(2); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';}
   }
   ?>
 </div>
@@ -2419,302 +2538,88 @@ if ($foto_original_tele !== '') {
 </div>					
 
  
-	<div class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top ">
-		<div class="row">
-		<div class="col-sm">            
-            <!--a href="#" onclick="procesar('ventas_mant_contrato.php?a=g','forma_ventas',''); return false;" class="btn btn-primary btn-block mb-2 xfrm" ><i class="fa fa-check"></i> Guardar</a-->                           
+	<div class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top">
+
+    <!-- 🔹 FILA 1 -->
+    <div class="row">
+
+        <div class="col-sm">
             <a href="javascript:void(0);" 
-            id="btnguardar"
-            class="btn btn-primary btn-block mb-2 xfrm" >
-            <i class="fa fa-check"></i> Guardar</a> 
-        </div>        
+               id="btnguardar"
+               class="btn btn-primary w-100 mb-2 xfrm">
+                <i class="fa fa-check"></i> Guardar
+            </a> 
+        </div>
+
         <?php if (tiene_permiso(168)){ ?>
-              <div class="col-sm"><a id="ventas_anularbtn"  href="#" onclick="ventas_anular(); return false;" class="btn btn-danger  btn-block mr-2 mb-2 xfrm"><i class="fa fa-trash-alt"></i> Borrar</a></div>		              
-          <?php } ?>  
+        <div class="col-sm">
+            <a id="ventas_anularbtn"
+               href="#"
+               onclick="ventas_anular(); return false;"
+               class="btn btn-danger w-100 mb-2 xfrm">
+                <i class="fa fa-trash-alt"></i> Borrar
+            </a>
+        </div>
+        <?php } ?>  
 
         <?php if (!es_nulo($id_inspeccion)){ ?>            
-            <a href="#" onclick="abrir_hoja(); return false;" class="btn btn-outline-secondary mr-2 mb-2 xfrm" ><i class="fa fa-file-medical-alt"></i> Abrir Inspección</a>
+        <div class="col-sm">
+            <a href="#"
+               onclick="abrir_hoja(); return false;"
+               class="btn btn-outline-secondary w-100 mb-2 xfrm">
+                <i class="fa fa-file-medical-alt"></i> Abrir Inspección
+            </a>
+        </div>
         <?php } ?> 
 
-<div style="margin-right:10px;">
-    <a href="javascript:void(0);"
-       id="btnContrato"
-       target="_blank"
-       class="btn btn-block mb-2"
-       style="
-           background-color:#e5533d;
-           color:#fff;
-           border:1px solid #e5533d;
-       ">
-        <i class="fas fa-file-pdf"></i> descargar contrato
-    </a>
-</div>
+        <div class="col-sm">
+            <a href="javascript:void(0);"
+               id="btnContrato"
+               target="_blank"
+               class="btn w-100 mb-2"
+               style="background-color:#e5533d;color:#fff;border:1px solid #e5533d;">
+                <i class="fas fa-file-pdf"></i> Descargar contrato
+            </a>
+        </div>
 
+    </div>
+
+    <!-- 🔹 FILA 2 -->
+    <div class="row">
 
         <?php if ($id_estado!=20){ ?>
-              <div>
-                <a href="javascript:void(0);"
-                id="btnActualizarContrato"
-                class="btn btn-block mb-1"
-                style="background-color:#f0ad4e;color:#fff;border:1px solid #f0ad4e;">
+        <div class="col-sm">
+            <a href="javascript:void(0);"
+               id="btnActualizarContrato"
+               class="btn w-100 mb-2"
+               style="background-color:#f0ad4e;color:#fff;border:1px solid #f0ad4e;">
                 <i class="fas fa-file-pdf"></i> Generar contrato
-                </a>
-            </div>	              
-          <?php } ?> 
+            </a>
+        </div>
+        <?php } ?> 
 
+        <?php if (tiene_permiso(189)){ ?>
+        <div class="col-sm">
+            <a href="javascript:void(0);"
+               id="btnanularContrato"
+               target="_blank"
+               class="btn btn-danger w-100 mb-2"
+                <i class="fas fa-file-pdf"></i> Anular contrato
+            </a>
+        </div>
+        <?php } ?> 
 
+        <div class="col-sm">
+            <a href="#"
+               onclick="$('#ModalWindow2').modal('hide'); return false;"
+               class="btn btn-light w-100 mb-2 xfrm">
+                <?php echo 'Cerrar'; ?>
+            </a>
+        </div>
 
+    </div>
 
-<script>
-$(function () {
-
-$('#btnguardar').on('click', function (e) {
-    e.preventDefault();
-
-    popupconfirmar(
-        'Confirmación',
-        '¿Seguro desea guardar?',
-        async function () {
-
-            const resultado = await procesarAsync(
-                'ventas_mant_contrato.php?a=g',
-                'forma_ventas',
-                ''
-            );
-
-            if (!resultado.ok) {
-                mytoast('error', resultado.msg, 3000);
-            } else {
-                mytoast('success', resultado.msg, 3000);
-                //$('#ModalWindow2').modal('hide');
-            }
-        }
-    );
-});
-
-
-
-$('#btnContrato').on('click', function (e) {
-    e.preventDefault();
-
-    const id = $('#id').val();
-    if (!id) {
-        mytoast('error', 'No hay ID',3000);
-        return;
-    }
-
-    //const persona_juridica=$('#persona_juridica').val();
-    const persona_juridica = $('#persona_juridica').is(':checked') ? 1 : 0;
-
-            popupconfirmar(
-            'Confirmación',
-            '¿Deseas descargar el contrato?',
-            function () {
-
-                $.ajax({
-                    url: 'ventas_mant_contrato.php',
-                    type: 'GET',
-                    dataType: 'json',
-                    data: {
-                        a: 'print_check',
-                        id: id,
-                        persona_juridica: persona_juridica,
-                        id_contrato: 0,
-                        reimpresion: 0
-                    },
-                    success: function (resp) {
-                        if (resp.ok) {
-
-                            mytoast(
-                                'success',
-                                'Contrato listo: ' + resp.numero_contrato,
-                                3000
-                            );
-
-                            // 🔥 quitar aviso de salida
-                            window.onbeforeunload = null;
-                            $(window).off('beforeunload');
-
-                            // 👉 ahora sí descargar
-                            window.location.href =
-                                'ventas_mant_contrato.php?a=print&id=' +
-                                encodeURIComponent(id) +
-                                '&persona_juridica=' +encodeURIComponent(persona_juridica)
-                                '&id_contrato=' + encodeURIComponent(0) +
-                            '&reimpresion=' + encodeURIComponent(0);
-
-
-                        } else {
-                            mytoast(
-                                'error',
-                                resp.error || 'Error al generar contrato',
-                                3000
-                            );
-                        }
-                    },
-                    error: function () {
-                        mytoast(
-                            'error',
-                            'Error de comunicación con el servidor',
-                            3000
-                        );
-                    }
-                });
-
-            }
-        );
-
-});
-
-$('#btnActualizarContrato').on('click', function (e) {
-    e.preventDefault();
-
-    const id = $('#id').val();
-
-    const estado = $('#id_estado').val();
-
-    if(estado==20)
-    {
-       mytoast('error','No puede generar contrato en estado Vendido o entregado');
-       return;
-    }
-
-
-    //const persona_juridica=$('#persona_juridica').val();
-    const persona_juridica = $('#persona_juridica').is(':checked') ? 1 : 0;
-
-    if (!id) {
-        alert('No hay ID');
-        return;
-    }
-
-            popupconfirmar(
-                'Confirmación',
-                '¿Seguro desea generar el contrato? Los datos se sustituirán si previamente ya existía un contrato.',
-                function () {
-
-                    $.ajax({
-                        url: 'ventas_mant_contrato.php',
-                        type: 'GET',
-                        dataType: 'json',
-                        data: {
-                            a: 'actcontrato',
-                            id: id,
-                            persona_juridica:persona_juridica
-                        },
-                        success: function (resp) {
-                            if (resp.ok) {
-                                mytoast(
-                                    'success',
-                                    'Contrato generado: ' + resp.numero_contrato,
-                                    3000
-                                );
-                            } else {
-                                mytoast(
-                                    'error',
-                                    resp.error || 'Error inesperado',
-                                    3000
-                                );
-                            }
-                        },
-                        error: function () {
-                            mytoast(
-                                'error',
-                                'Error de comunicación con el servidor',
-                                3000
-                            );
-                        }
-                    });
-
-                }
-            );
-
-});
-
-});
-
-
-function descargar_contrato(id_venta, id_contrato,persona_juridica,reimpresion)
-{
-
-    if (!id_venta) {
-        mytoast('error', 'No hay ID',3000);
-        return;
-    }
-
-    popupconfirmar(
-        'Confirmación',
-        '¿Deseas descargar el contrato?',
-        function () {
-
-            $.ajax({
-                url: 'ventas_mant_contrato.php',
-                type: 'GET',
-                dataType: 'json',
-                data: {
-                    a: 'print_check',
-                    id: id_venta,
-                    persona_juridica: persona_juridica,
-                    id_contrato: id_contrato,
-                    reimpresion: reimpresion ? 1 : 0
-                },
-                success: function (resp) {
-
-                    if (resp.ok) {
-
-                        mytoast(
-                            'success',
-                            'Contrato listo: ' + resp.numero_contrato,
-                            3000
-                        );
-
-                        window.onbeforeunload = null;
-                        $(window).off('beforeunload');
-
-
-
-                        window.location.href =
-                            'ventas_mant_contrato.php?a=print' +
-                            '&id=' + encodeURIComponent(id_venta) +
-                            '&persona_juridica=' + encodeURIComponent(persona_juridica) +
-                            '&id_contrato=' + encodeURIComponent(id_contrato) +
-                            '&reimpresion=' + encodeURIComponent(reimpresion ? 1 : 0);
-
-                    } else {
-
-                        mytoast(
-                            'error',
-                            resp.error || 'Error al generar contrato',
-                            3000
-                        );
-
-                    }
-                },
-                error: function () {
-
-                    mytoast(
-                        'error',
-                        'Error de comunicación con el servidor',
-                        3000
-                    );
-
-                }
-            });
-
-        }
-    );
-}
-
-
-</script>
-
-
-
-         
-
-        <div class="col-sm"><a href="#" onclick="$('#ModalWindow2').modal('hide');  return false;" class="btn btn-light btn-block mb-2 xfrm" >  <?php echo 'Cerrar'; ?></a></div>
-		</div>
-	</div>
+</div>
 
 	</fieldset>
 	</form>
@@ -2839,6 +2744,304 @@ function descargar_contrato(id_venta, id_contrato,persona_juridica,reimpresion)
 <div class="tab-pane fade mt-5 mb-5" id="nav_deshabilitado" role="tabpanel" ><div class="alert alert-warning" role="alert">Debe Guardar el documento para poder continuar con esta sección</div></div>
 
 
+
+<script>
+$(function () {
+
+$('#btnguardar').on('click', function (e) {
+    e.preventDefault();
+
+    popupconfirmar(
+        'Confirmación',
+        '¿Seguro desea guardar?',
+        async function () {
+
+            const resultado = await procesarAsync(
+                'ventas_mant_contrato.php?a=g',
+                'forma_ventas',
+                ''
+            );
+
+            if (!resultado.ok) {
+                mytoast('error', resultado.msg, 3000);
+            } else {
+                mytoast('success', resultado.msg, 3000);
+                //$('#ModalWindow2').modal('hide');
+            }
+        }
+    );
+});
+
+
+
+$('#btnContrato').on('click', function (e) {
+    e.preventDefault();
+
+    const id = $('#id').val();
+    if (!id) {
+        mytoast('error', 'No hay ID',3000);
+        return;
+    }
+
+    //const persona_juridica=$('#persona_juridica').val();
+    const persona_juridica = $('#persona_juridica').is(':checked') ? 1 : 0;
+
+            popupconfirmar(
+            'Confirmación',
+            '¿Deseas descargar el contrato?',
+            function () {
+
+                $.ajax({
+                    url: 'ventas_mant.php',
+                    type: 'GET',
+                    dataType: 'json',
+                    data: {
+                        a: 'print_check',
+                        id: id,
+                        persona_juridica: persona_juridica,
+                        id_contrato: 0,
+                        reimpresion: 0
+                    },
+                    success: function (resp) {
+                        if (resp.ok) {
+
+                            mytoast(
+                                'success',
+                                'Contrato listo: ' + resp.numero_contrato,
+                                3000
+                            );
+
+                            // 🔥 quitar aviso de salida
+                            window.onbeforeunload = null;
+                            $(window).off('beforeunload');
+
+                            // 👉 ahora sí descargar
+                            window.location.href =
+                                'ventas_mant_contrato.php?a=print&id=' +
+                                encodeURIComponent(id) +
+                                '&persona_juridica=' +encodeURIComponent(persona_juridica)
+                                '&id_contrato=' + encodeURIComponent(0) +
+                            '&reimpresion=' + encodeURIComponent(0);
+
+
+                        } else {
+                            mytoast(
+                                'error',
+                                resp.error || 'Error al generar contrato',
+                                3000
+                            );
+                        }
+                    },
+                    error: function () {
+                        mytoast(
+                            'error',
+                            'Error de comunicación con el servidor',
+                            3000
+                        );
+                    }
+                });
+
+            }
+        );
+
+});
+
+$('#btnActualizarContrato').on('click', function (e) {
+    e.preventDefault();
+
+    const id = $('#id').val();
+
+    const estado = $('#id_estado').val();
+
+    if(estado==20)
+    {
+       mytoast('error','No puede generar contrato en estado Vendido o entregado');
+       return;
+    }
+
+
+    //const persona_juridica=$('#persona_juridica').val();
+    const persona_juridica = $('#persona_juridica').is(':checked') ? 1 : 0;
+
+    if (!id) {
+        alert('No hay ID');
+        return;
+    }
+
+            popupconfirmar(
+                'Confirmación',
+                '¿Seguro desea generar el contrato? Los datos se sustituirán si previamente ya existía un contrato.',
+                function () {
+
+                    $.ajax({
+                        url: 'ventas_mant_contrato.php',
+                        type: 'GET',
+                        dataType: 'json',
+                        data: {
+                            a: 'actcontrato',
+                            id: id,
+                            persona_juridica:persona_juridica
+                        },
+                        success: function (resp) {
+                            if (resp.ok) {
+                                mytoast(
+                                    'success',
+                                    'Contrato generado: ' + resp.numero_contrato,
+                                    3000
+                                );
+                            } else {
+                                mytoast(
+                                    'error',
+                                    resp.error || 'Error inesperado',
+                                    3000
+                                );
+                            }
+                        },
+                        error: function () {
+                            mytoast(
+                                'error',
+                                'Error de comunicación con el servidor',
+                                3000
+                            );
+                        }
+                    });
+
+                }
+            );
+
+});
+
+$('#btnanularContrato').on('click', function (e) {
+    e.preventDefault();
+
+    const id = $('#id').val();
+
+    if (!id) {
+        mytoast('error', 'No hay ID', 3000);
+        return;
+    }
+
+    popupconfirmar(
+        'Confirmación',
+        '¿Seguro desea anular el contrato activo? Esta acción no se puede deshacer.',
+        function () {
+
+            $.ajax({
+                url: 'ventas_mant.php',
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    a: 'anularcontrato', // 👈 acción nueva en tu backend
+                    id: id
+                },
+                success: function (resp) {
+                    if (resp.ok) {
+                        mytoast(
+                            'success',
+                            'Contrato anulado correctamente',
+                            3000
+                        );
+
+                        // opcional: refrescar o cambiar estado en pantalla
+                        // location.reload();
+
+                    } else {
+                        mytoast(
+                            'error',
+                            resp.error || 'Error al anular contrato',
+                            3000
+                        );
+                    }
+                },
+                error: function () {
+                    mytoast(
+                        'error',
+                        'Error de comunicación con el servidor',
+                        3000
+                    );
+                }
+            });
+
+        }
+    );
+});
+
+});
+
+
+function descargar_contrato(id_venta, id_contrato,persona_juridica,reimpresion)
+{
+
+    if (!id_venta) {
+        mytoast('error', 'No hay ID',3000);
+        return;
+    }
+
+    popupconfirmar(
+        'Confirmación',
+        '¿Deseas descargar el contrato?',
+        function () {
+
+            $.ajax({
+                url: 'ventas_mant_contrato.php',
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    a: 'print_check',
+                    id: id_venta,
+                    persona_juridica: persona_juridica,
+                    id_contrato: id_contrato,
+                    reimpresion: reimpresion ? 1 : 0
+                },
+                success: function (resp) {
+
+                    if (resp.ok) {
+
+                        mytoast(
+                            'success',
+                            'Contrato listo: ' + resp.numero_contrato,
+                            3000
+                        );
+
+                        window.onbeforeunload = null;
+                        $(window).off('beforeunload');
+
+
+
+                        window.location.href =
+                            'ventas_mant_.php?a=print' +
+                            '&id=' + encodeURIComponent(id_venta) +
+                            '&persona_juridica=' + encodeURIComponent(persona_juridica) +
+                            '&id_contrato=' + encodeURIComponent(id_contrato) +
+                            '&reimpresion=' + encodeURIComponent(reimpresion ? 1 : 0);
+
+                    } else {
+
+                        mytoast(
+                            'error',
+                            resp.error || 'Error al generar contrato',
+                            3000
+                        );
+
+                    }
+                },
+                error: function () {
+
+                    mytoast(
+                        'error',
+                        'Error de comunicación con el servidor',
+                        3000
+                    );
+
+                }
+            });
+
+        }
+    );
+}
+
+
+</script>
 
 
 <script>
@@ -2978,7 +3181,7 @@ Swal.fire({
 	}).then((result) => {
 	  if (result.value) {
 	    
-            $.post( 'ventas_mant_contrato.php',datos, function(json) {
+            $.post( 'ventas_mant.php',datos, function(json) {
                 
                 if (json.length > 0) {
                     if (json[0].pcode == 0) {
@@ -3071,7 +3274,7 @@ Swal.fire({
     var datos= { a: "gfoto", arch: encodeURI(arch),cid:cid,isMain:isMain}; 
 
 
- 	 $.post( 'ventas_mant_contrato.php',datos, function(json) {
+ 	 $.post( 'ventas_mant.php',datos, function(json) {
 	 			
 		if (json.length > 0) {
 			if (json[0].pcode == 0) {

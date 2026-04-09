@@ -41,7 +41,7 @@ if ($accion == "g") {
     $insert_id = $result; // last insert id
 
     $archivo_nombre = basename(urldecode($_REQUEST["arch"]));
-    foto_reducir_tamano(app_dir . "uploa_d/" . $archivo_nombre);
+    //foto_reducir_tamano(app_dir . "uploa_d/" . $archivo_nombre);
 
     if ($result != false) {
         $stud_arr[0]["pcode"] = 1;

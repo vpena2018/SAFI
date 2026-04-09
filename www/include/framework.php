@@ -162,7 +162,7 @@ define("app_version", "2.0.0");  // Version de Applicacion
 define("app_combo_si_no", '<option value="0">NO</option><option value="1">'.'SI'.'</option>');
 define("app_combo_a_i", '<option value="A">Activo</option><option value="I">'.'Inactivo'.'</option>');
 
-define("app_id_empresa", '<option value="1">Hertz</option><option value="2">Dollar</option><option value="3">Thrifty</option>');
+define("app_id_empresa", '<option value="1">Hertz</option><option value="2">Dollar</option><option value="3">Thrifty</option><option value="4">Carshop</option>');
 define("app_tipo_inspeccion", '<option value="1">Renta</option><option value="2">Taller</option>');
 define("app_tipo_servicio", '<option value="1">Preventivo</option><option value="2">Correctivo</option>');
 
@@ -597,10 +597,12 @@ function get_dato_sql($tabla,$campo,$where) {
    //echo $sql; exit;
     $result = sql_select($sql);
   
-      if ($result->num_rows > 0) {    
+      if ($result != false && $result->num_rows > 0) {    
         $row = $result -> fetch_assoc();    
           $salida=trim($row["salida"]);
-         
+    } elseif ($result === false) {
+        global $conn;
+        error_log("[get_dato_sql] SQL error: " . $conn->error . " | Query: " . $sql);
     }
   
      return $salida;    

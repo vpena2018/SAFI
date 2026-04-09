@@ -186,7 +186,7 @@ if ($accion=="ec") {
 
       // Auditadob
       if ($nombre=='auditado'){    
-        $result = sql_select("SELECT observaciones_adpc
+        $result = sql_select("SELECT observaciones_adpc, id_adpc_categoria, id_usuario_auditado
         FROM servicio
         WHERE id=$sid limit 1");
           
@@ -194,7 +194,9 @@ if ($accion=="ec") {
             if ($result -> num_rows > 0) { 
                $row = $result -> fetch_assoc() ; 
                //$salida.= campo("observa","Observaciones",'textarea',$row['observaciones'],' ',' rows="8" ');
-               $salida.= campo("observaciones_adpc","Observaciones ADPC",'textarea',$row['observaciones_adpc'],' ',' rows="8" ');
+               $adpc_requerido = es_nulo($row['id_usuario_auditado']) ? ' required' : '';
+               $salida.= campo("id_adpc_categoria","Categoría ADPC",'select2',valores_combobox_db('adpc_categorias',$row['id_adpc_categoria'],'nombre',' where tipo_documento=2','','...'),' ',$adpc_requerido);
+               $salida.= campo("observaciones_adpc","Observaciones ADPC",'textarea',$row['observaciones_adpc'],' ',' rows="8" '.$adpc_requerido);
             }
         }         
       }
@@ -549,11 +551,22 @@ if ($elcodigo<>"") {
   //Campos
   $sqlcampos=""; 
   $sqladicional = array(); 
+  $servicio_auditado = get_dato_sql("servicio", "id_usuario_auditado", " WHERE id=".$elcodigo);
   
   //auditado  
   if (isset($_REQUEST["observaciones_adpc"])){
+     $obs_adpc = trim((string)$_REQUEST["observaciones_adpc"]);
+     $id_adpc_categoria = isset($_REQUEST["id_adpc_categoria"]) ? intval($_REQUEST["id_adpc_categoria"]) : 0;
+     if (es_nulo($servicio_auditado)) {
+        if ($id_adpc_categoria<=0 || $obs_adpc=="") {
+          $stud_arr[0]["pmsg"] ="Debe ingresar la Categoría ADPC y las Observaciones ADPC";
+          salida_json($stud_arr);
+          exit;
+        }
+     }
      $sqlcampos.= "  fecha_auditado = now()";
-     $sqlcampos.= ", observaciones_adpc =".GetSQLValue($_REQUEST["observaciones_adpc"],"text");  
+     $sqlcampos.= ", id_adpc_categoria =".GetSQLValue($id_adpc_categoria,"int");
+     $sqlcampos.= ", observaciones_adpc =".GetSQLValue($obs_adpc,"text");  
      $sqlcampos.= ", id_usuario_auditado =".$_SESSION['usuario_id'];  
 
      ///Historial 
@@ -1103,6 +1116,7 @@ if (isset($row["id_taller"])) {$id_taller= $row["id_taller"]; $taller_nombre=$ro
 
 if (isset($row["fecha_auditado"])) {$fecha_auditado= $row["fecha_auditado"]; } else {$fecha_auditado= "";}
 if (isset($row["id_usuario_auditado"])) {$id_usuario_auditado= $row["id_usuario_auditado"]; } else {$id_usuario_auditado= "";}
+if (isset($row["id_adpc_categoria"])) {$id_adpc_categoria= $row["id_adpc_categoria"]; } else {$id_adpc_categoria= "";}
 
 if (isset($row["reproceso"])) {$reproceso= $row["reproceso"]; } else {$reproceso= "";}
 if (isset($row["observaciones_reproceso"])) {$observaciones_reproceso= $row["observaciones_reproceso"]; } else {$observaciones_reproceso= "";}
@@ -1883,6 +1897,20 @@ function servicio_editarcampo(nombre,etiqueta,valor,adicional=''){
 
 
 function procesar_modificar_cmp(url,forma,adicional){
+  if ($("#observaciones_adpc").length>0) {
+    var idAdpcCategoria = $("#id_adpc_categoria").val();
+    var observacionesAdpc = $("#observaciones_adpc").val().trim();
+    <?php if (tiene_permiso(163) && es_nulo($id_usuario_auditado)) { ?>
+    if (idAdpcCategoria=='' || idAdpcCategoria=='0') {
+      mytoast('warning','Debe seleccionar la Categoría ADPC',3000);
+      return;
+    }
+    if (observacionesAdpc=='') {
+      mytoast('warning','Debe ingresar las Observaciones ADPC',3000);
+      return;
+    }
+    <?php } ?>
+  }
   $("#"+forma+" .xfrm").addClass("disabled");		
 	
 	cargando(true); 

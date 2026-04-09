@@ -301,6 +301,8 @@ if ($accion=="g") {
     if ($verror=="") {
         //Campos
         $sqlcampos="";
+        $foto = "";
+        $foto_televentas = "";
 
 
         $nuevoregistro=false;
@@ -344,6 +346,7 @@ if ($accion=="g") {
                 rename($ruta4, $nueva4);
             }        
         } 
+
         if (isset($_REQUEST["id_producto"])) { $sqlcampos.= "  id_producto =".GetSQLValue($_REQUEST["id_producto"],"int"); } 
         if (isset($_REQUEST["id_tienda"])) { $sqlcampos.= " , id_tienda =".GetSQLValue($_REQUEST["id_tienda"],"int"); }    
         if (isset($_REQUEST["id_estado"])) { $sqlcampos.= " , id_estado =".GetSQLValue($_REQUEST["id_estado"],"int"); }    
@@ -385,6 +388,7 @@ if ($accion=="g") {
                            $sqlcampos.= " , id_estado_mecanica = 30";
                             break;
                     }
+                    $sqlcampos.= " , id_estado_anterior_reproceso = ".GetSQLValue($_REQUEST['id_estado'], "int");
                     $sqlcampos.= " , tipo_ventas_reparacion = 1";
                     $sqlcampos.= " , id_estado = 99";
                     $sqlcampos.= " , reproceso = 'R'";
@@ -834,46 +838,23 @@ if ($accion=="g") {
   if ($foto<>'') {
      $fext = substr($foto, -3);
             if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {    
-                /*$ruta1 = 'uploa_d/' . $foto;           
-                if (file_exists($ruta1)) {
-                    $onclick = 'mostrar_foto(\'' . $foto . '\'); return false;';
-                    $src= 'uploa_d/thumbnail/'.$foto;
-                } else {
-                    $onclick = 'mostrar_foto2(\'' . $foto . '\'); return false;';
-                    $src= 'aws_bucket_s3/thumbnail/'.$foto;
-                }
-                echo '  <a href="#" onclick="'.$onclick.'" ><img class="img  img-thumbnail mb-3 mr-3" src="'.$src.'" data-cod="'.$row["id"].'"></a> ';
-               // if ($fecha<'2025-10-01'){                   
-                    //echo '  <a href="#" onclick="mostrar_foto2(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="aws_bucket_s3/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';
-               // }else{*/
                 echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';                   
-                
-                if(tiene_permiso(168))  { echo '  <a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="ventas_dfoto(1); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';}
+           
             } else {                
                 echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
             }
+            if(tiene_permiso(168))  { echo '  <a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="ventas_dfoto(1); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';}
   }
    if ($foto_televentas<>'') {
       $fext = substr($foto_televentas, -3);
-            if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {   
-                /*$ruta1 = 'uploa_d/' . $foto_televentas;           
-                if (file_exists($ruta1)) {
-                    $onclick = 'mostrar_foto(\'' . $foto_televentas . '\'); return false;';
-                    $src= 'uploa_d/thumbnail/'.$foto_televentas;
-                } else {
-                    $onclick = 'mostrar_foto2(\'' . $foto_televentas . '\'); return false;';
-                    $src= 'aws_bucket_s3/thumbnail/'.$foto_televentas;
-                }
-                echo '  <a href="#" onclick="'.$onclick.'" ><img class="img  img-thumbnail mb-3 mr-3" src="'.$src.'" data-cod="'.$row["id"].'"></a> ';
-                //if ($fecha<'2025-10-01'){                   
-                 //    echo '  <a href="#" onclick="mostrar_foto2(\''.$foto_televentas.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="aws_bucket_s3/thumbnail/'.$foto_televentas.'" data-cod="'.$row["id"].'"></a> ';
-                //}else{*/
+            if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {             
                 echo '  <a href="#" onclick="mostrar_foto(\''.$foto_televentas.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto_televentas.'" data-cod="'.$row["id"].'"></a> ';                                   
-                if(tiene_permiso(168))  { echo '  <a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="ventas_dfoto(2); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';}
+             
             } else {                
                 echo '  <a href="uploa_d/'.$foto_televentas.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto_televentas.'</a> ';
               
             }
+            if(tiene_permiso(168))  { echo '  <a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="ventas_dfoto(2); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';}
   }
   ?>
 </div>
