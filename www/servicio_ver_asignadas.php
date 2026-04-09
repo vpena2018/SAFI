@@ -24,7 +24,7 @@ if ($accion=="1") {
     if (isset($_REQUEST['numero'])) { $tmpval=sanear_int($_REQUEST['numero']); if (!es_nulo($tmpval)){$filtros.=" and servicio.numero = ".GetSQLValue($tmpval,'int') ;}   }
     if (isset($_REQUEST['tipo'])) { $tmpval=sanear_int($_REQUEST['tipo']); if (!es_nulo($tmpval)){$filtros.=" and servicio.id_tipo_mant = ".GetSQLValue($tmpval,'int') ;}   }
     
-    if (isset($_REQUEST['estado'])) { $tmpval=sanear_int($_REQUEST['estado']); if ($tmpval==2){$filtros.=" and servicio.id_estado >=20 " ;} else {$filtros.=" and servicio.id_estado <20 " ;}   }
+    if (isset($_REQUEST['estado'])) { $tmpval=sanear_int($_REQUEST['estado']); if ($tmpval==1){$filtros.=" and servicio.id_estado <20 " ;} elseif ($tmpval==2){$filtros.=" and servicio.id_estado=21 " ;} elseif ($tmpval==3){$filtros.=" and servicio.id_estado = 22 " ;} }
     
     if (isset($_REQUEST['tienda'])) { $tmpval=sanear_int($_REQUEST['tienda']); if (!es_nulo($tmpval)){$filtros.=" and servicio.id_tienda = ".GetSQLValue($tmpval,'int') ;}   }
     
@@ -113,7 +113,7 @@ if ($accion=="1") {
          </div>
          <div class="col-sm">
             <?php 
-           echo campo("estado","Estado",'select',valores_combobox_texto('<option value="1">Pendientes</option><option value="2">Realizadas</option>','1'),' ',' onkeypress="buscarfiltro(event,\'btn-filtro\');"');
+           echo campo("estado","Estado",'select',valores_combobox_texto('<option value="1">Pendientes</option><option value="2">Realizadas</option><option value="3">Completadas</option>','1'),' ',' onkeypress="buscarfiltro(event,\'btn-filtro\');"');
             ?>
             
          </div>
