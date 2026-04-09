@@ -1379,6 +1379,8 @@ if ($accion=="g") {
 
 $id_estado = intval($_REQUEST['id_estado'] ?? 0);
 $foto_comprobante=isset($_REQUEST['foto'])? (bool) $_REQUEST['foto']: false;
+$foto_actual = get_dato_sql("ventas", "foto", " where id=".$cid);
+
 $persona_juridica = intval($_REQUEST['persona_juridica'] ?? 0);
 $precio_venta_raw = $_REQUEST['precio_venta'] ?? '';
 $prima_venta_raw  = $_REQUEST['prima_venta'] ?? '';
@@ -1431,7 +1433,7 @@ if ($verror == "") {
         }
         else if ($persona_juridica == 1 && empty(trim($_REQUEST['representante_legal_direccion'] ?? ''))) {
             $verror = 'La direccion del Representante Legal es obligatoria.';
-        } else if(!$foto_comprobante){
+        }if (empty($foto_actual) && !$foto_comprobante) {
             $verror = 'Debe adjuntar comprobante cuando el estado es negociación.';
         }
 
@@ -1938,22 +1940,21 @@ if ($accion =="d") {
 </div>
 
 <div class="row">
-        <div class="col-md">
+    <div class="col-md">
          <?php echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where id=11 ",'','...'),' ',' required '.$disable_sec2)  ?> 
     </div>
-</div>
-
-<div class="row">
-    <div id="clientediv" style="display:none;" class="col-md-12">
-
-             <div class="row">
-            <div class="col-md">            
+                <div class="col-md">            
                 <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',$disable_sec2); ?>                 
             </div>   
             <div class="col-md">            
                 <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec2); ?>                 
             </div> 
-        </div>
+</div>
+
+<div class="row">
+    <div id="clientediv" style="display:none;" class="col-md-12">
+
+
 
         <?php
         $nombre_cliente='';
