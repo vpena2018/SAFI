@@ -537,9 +537,9 @@ function convertirDocxAPdf(string $docxPath): string
         $tmpDir = sys_get_temp_dir();
         appLog('TMP DIR: ' . $tmpDir);
 
-        $soffice = getSofficeCommandProd();//descomentar para produccion
+        //$soffice = getSofficeCommandProd();//descomentar para produccion
 
-        //$soffice = getSofficeCommandDev();//comentar para produccion
+        $soffice = getSofficeCommandDev();//comentar para produccion
 
 
 
@@ -2335,14 +2335,27 @@ if ($foto_original_tele !== '') {
 
 
 <div class="row">
+    <div class="col-md">
+         <?php echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where ventas_reparacion=2 ",'','...'),' ',' required '.$disable_sec2)  ?> 
+         <?php /*echo campo("id_estado_name","Estado",'label',$elestado,'','','');*/ ?>
+    </div>
+        <div class="col-md">            
+         <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',$disable_sec2); ?>                 
+    </div>   
+        <div class="col-md">            
+         <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec2); ?>                 
+    </div> 
     <div id="clientediv" style="display:none;" class="col-md-12">
 
         <?php
         $nombre_cliente='';
-
         echo campo("nombre_cliente","",'hidden',$nombre_cliente,'','','');
-        echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1,'get.php?a=2&t=1',$cliente_nombre);
-        echo campo("representante_legal_profesion","Profesión u oficio de comprador",'text',$representante_legal_profesion,' ',$disable_sec2);
+
+        
+        //echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1,'get.php?a=2&t=1',$cliente_nombre);
+
+
+        
 
         
 
@@ -2352,14 +2365,6 @@ if ($foto_original_tele !== '') {
         {
             $nacionalidad_venta='hondureño';
         }
-
-        
-
-        //$tipo_documento_ident_venta='$tipo_documento';
-        //echo campo("tipo_documento_ident_venta","Tipo Documento de identificacion del comprador",'select2',valores_combobox_array($tipos_docu, $tipo_documento_ident_venta, '')); 
-        //echo campo("nacionalidad_venta","Nacionalidad",'select2',valores_combobox_array($nacionalidades, $nacionalidad_venta, '')); 
-        //echo campo("departamento_venta","Departamento",'text',$departamento_venta,' ',$disable_sec2);
-        //echo campo("ciudad_venta","Ciudad",'text',$ciudad_venta,' ',$disable_sec2);
         
         ?>
 
@@ -2367,11 +2372,20 @@ if ($foto_original_tele !== '') {
 
         <div class="row">
             <div class="col-md-6">
-                <?php echo campo("tipo_documento_ident_venta","Tipo Documento de identificacion del comprador",'select2',valores_combobox_array($tipos_docu, $tipo_documento_ident_venta, ''));  ?>
+                <?php echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1,'get.php?a=2&t=1',$cliente_nombre);  ?>
+            </div>
+            <div class="col-md-4">
+                <?php echo campo("tipo_documento_ident_venta","Documento de identificacion",'select2',valores_combobox_array($tipos_docu, $tipo_documento_ident_venta, ''));  ?>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-2">
                 <?php echo campo("nacionalidad_venta","Nacionalidad",'select2',valores_combobox_array($nacionalidades, $nacionalidad_venta, ''));  ?>
+            </div>
+         </div>
+
+         <div class="row">
+            <div class="col-md-12">
+            <?php echo campo("representante_legal_profesion","Profesión u oficio de comprador",'text',$representante_legal_profesion,' ',$disable_sec2); ?>
             </div>
          </div>
 
@@ -2436,10 +2450,6 @@ if ($foto_original_tele !== '') {
 
 <div class="row">
     <div class="col-md">
-         <?php echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where ventas_reparacion=2 ",'','...'),' ',' required '.$disable_sec2)  ?> 
-         <?php /*echo campo("id_estado_name","Estado",'label',$elestado,'','','');*/ ?>
-    </div>
-    <div class="col-md">
          <?php if (tiene_permiso(167)){ 
               echo campo("id_impuesto","Impuesto",'select2',valores_combobox_db("ventas_impuestos",$id_impuesto,"nombre","  ",'','...'),' ',' required '.$disable_sec1);  
          }else{
@@ -2466,12 +2476,6 @@ if ($foto_original_tele !== '') {
     <div class="col-md">
          <?php echo campo("id_televentas","Tele Ventas",'select2',valores_combobox_db('usuario',$id_televentas,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2);  ?> 
     </div>
-    <div class="col-md">            
-         <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',$disable_sec2); ?>                 
-    </div>   
-        <div class="col-md">            
-         <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec2); ?>                 
-    </div> 
 </div>
 
 <div class="row">
@@ -2792,7 +2796,7 @@ $('#btnContrato').on('click', function (e) {
             function () {
 
                 $.ajax({
-                    url: 'ventas_mant.php',
+                    url: 'ventas_mant_contrato.php',
                     type: 'GET',
                     dataType: 'json',
                     data: {
@@ -3009,7 +3013,10 @@ function descargar_contrato(id_venta, id_contrato,persona_juridica,reimpresion)
 
 
                         window.location.href =
-                            'ventas_mant_.php?a=print' +
+                            //'ventas_mant_.php?a=print' +
+                            'ventas_mant_contrato.php?a=print' +
+
+                            
                             '&id=' + encodeURIComponent(id_venta) +
                             '&persona_juridica=' + encodeURIComponent(persona_juridica) +
                             '&id_contrato=' + encodeURIComponent(id_contrato) +
