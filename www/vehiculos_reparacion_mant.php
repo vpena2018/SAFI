@@ -1377,67 +1377,71 @@ if ($accion=="g") {
             }
         }
 
-$id_estado = intval($_REQUEST['id_estado'] ?? 0);
-$foto_comprobante=isset($_REQUEST['foto'])? (bool) $_REQUEST['foto']: false;
-$foto_actual = get_dato_sql("ventas", "foto", " where id=".$cid);
+    $id_estado = intval($_REQUEST['id_estado'] ?? 0);
+    $foto_comprobante=isset($_REQUEST['foto'])? (bool) $_REQUEST['foto']: false;
+    $foto_actual = get_dato_sql("ventas", "foto", " where id=".$cid);
 
-$persona_juridica = intval($_REQUEST['persona_juridica'] ?? 0);
-$precio_venta_raw = $_REQUEST['precio_venta'] ?? '';
-$prima_venta_raw  = $_REQUEST['prima_venta'] ?? '';
+    $persona_juridica = intval($_REQUEST['persona_juridica'] ?? 0);
+    $precio_venta_raw = $_REQUEST['precio_venta'] ?? '';
+    $prima_venta_raw  = $_REQUEST['prima_venta'] ?? '';
 
-$precio_minimo=intval($_REQUEST['precio_minimo']);     
-$precio_maximo=intval($_REQUEST['precio_maximo']);    
-$precio_venta = intval($precio_venta_raw);
+    $precio_minimo=intval($_REQUEST['precio_minimo']);     
+    $precio_maximo=intval($_REQUEST['precio_maximo']);    
+    $precio_venta = intval($precio_venta_raw);
 
-$prima_venta  = intval($prima_venta_raw);
+    $id_vendedor=intval($_REQUEST['id_vendedor']);
 
-if ($verror == "") {
+    $prima_venta  = intval($prima_venta_raw);
 
-    if ($id_estado == $estado_global_negociacion || $id_estado == 20) {
+    if ($verror == "") {
+
+        if ($id_estado == $estado_global_negociacion || $id_estado == 20) {
 
 
 
-        $client_id_val = isset($_REQUEST['cliente_id'])
-            ? (int) $_REQUEST['cliente_id']
-            : 0;
+            $client_id_val = isset($_REQUEST['cliente_id'])
+                ? (int) $_REQUEST['cliente_id']
+                : 0;
 
-        if ($client_id_val <= 0) {
-            $verror = 'Seleccione un cliente.';
-        }
-        else if (trim($precio_venta_raw) === '') {
-            $verror = 'Ingrese el precio de venta del vehículo.';
-        }
-        else if (trim($prima_venta_raw) === '') {
-            $verror = 'Ingrese la prima de venta del vehículo.';
-        }
-        else if ($precio_minimo <= 0) {
-            $verror = 'Ingrese el precio mínimo.';
-        }
-        else if ($precio_maximo <= 0) {
-            $verror = 'Ingrese el precio máximo.';
-        }
-        else if ($precio_minimo > $precio_maximo) {
-            $verror = 'El precio mínimo no puede ser mayor que el máximo.';
-        }
-        else if ($precio_venta < $precio_minimo || $precio_venta > $precio_maximo) {
-            $verror = 'El precio de venta debe estar entre el mínimo y el máximo.';
-        }
-        else if (empty(trim($_REQUEST['representante_legal_profesion'] ?? ''))) {
-            $verror = 'La profesion u oficio del comprador es obligatoria.';
-        }
-        else if ($persona_juridica == 1 && empty(trim($_REQUEST['representante_legal_persona_juridica'] ?? ''))) {
-            $verror = 'El Representante Legal es obligatorio.';
-        }
-        else if ($persona_juridica == 1 && empty(trim($_REQUEST['representante_legal_identidad'] ?? ''))) {
-            $verror = 'La Identidad del Representante Legal es obligatoria.';
-        }
-        else if ($persona_juridica == 1 && empty(trim($_REQUEST['representante_legal_direccion'] ?? ''))) {
-            $verror = 'La direccion del Representante Legal es obligatoria.';
-        }if (empty($foto_actual) && !$foto_comprobante) {
-            $verror = 'Debe adjuntar comprobante cuando el estado es negociación.';
-        }
+            if ($client_id_val <= 0) {
+                $verror = 'Seleccione un cliente.';
+            }
+            else if (trim($precio_venta_raw) === '') {
+                $verror = 'Ingrese el precio de venta del vehículo.';
+            }
+            else if (trim($prima_venta_raw) === '') {
+                $verror = 'Ingrese la prima de venta del vehículo.';
+            }
+            else if ($precio_minimo <= 0) {
+                $verror = 'Ingrese el precio mínimo.';
+            }
+            else if ($precio_maximo <= 0) {
+                $verror = 'Ingrese el precio máximo.';
+            }
+            else if ($precio_minimo > $precio_maximo) {
+                $verror = 'El precio mínimo no puede ser mayor que el máximo.';
+            }
+            else if ($precio_venta < $precio_minimo || $precio_venta > $precio_maximo) {
+                $verror = 'El precio de venta debe estar entre el mínimo y el máximo.';
+            }
+            else if (empty(trim($_REQUEST['representante_legal_profesion'] ?? ''))) {
+                $verror = 'La profesion u oficio del comprador es obligatoria.';
+            }else if($id_vendedor <= 0){
+                    $verror .= 'Seleccione un vendedor. ';
+            }
+            else if ($persona_juridica == 1 && empty(trim($_REQUEST['representante_legal_persona_juridica'] ?? ''))) {
+                $verror = 'El Representante Legal es obligatorio.';
+            }
+            else if ($persona_juridica == 1 && empty(trim($_REQUEST['representante_legal_identidad'] ?? ''))) {
+                $verror = 'La Identidad del Representante Legal es obligatoria.';
+            }
+            else if ($persona_juridica == 1 && empty(trim($_REQUEST['representante_legal_direccion'] ?? ''))) {
+                $verror = 'La direccion del Representante Legal es obligatoria.';
+            }if (empty($foto_actual) && !$foto_comprobante) {
+                $verror = 'Debe adjuntar comprobante cuando el estado es negociación.';
+            }
 
-    }
+        }
 }
 
         

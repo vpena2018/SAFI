@@ -1542,6 +1542,11 @@ if ($accion=="g") {
 
     $persona_juridica=intval($_REQUEST['persona_juridica']);
 
+    $id_vendedor=intval($_REQUEST['id_vendedor']);
+
+
+    //$id_vendedor=intval(get_dato_sql("ventas","id_vendedor"," where id=".$cid)); 
+
     //$hola=$genera_contrato;
 
     $genera_contrato=intval(get_dato_sql("ventas_estado","generar_contrato"," where id=".$id_estado));
@@ -1555,10 +1560,10 @@ if ($accion=="g") {
 
             if ($client_id_val <= 0) {
                 $verror .= 'Seleccione un cliente. ';
-            }
-
-            if (empty(trim($_REQUEST['representante_legal_profesion'] ?? ''))) {
+            }else if (empty(trim($_REQUEST['representante_legal_profesion'] ?? ''))) {
                 $verror .= 'La profesion u oficio del comprador es obligatoria. ';
+            }else if($id_vendedor <= 0){
+                $verror .= 'Seleccione un vendedor. ';
             }
 
 /*             if (empty(trim($_REQUEST['ciudad_venta'] ?? ''))) {
@@ -1572,16 +1577,13 @@ if ($accion=="g") {
             if ($persona_juridica == 1) {
 
                 if (empty(trim($_REQUEST['representante_legal_persona_juridica'] ?? ''))) {
+
                     $verror .= 'El Representante Legal es obligatorio. ';
-                }
-
-                if (empty(trim($_REQUEST['representante_legal_identidad'] ?? ''))) {
+                } else if (empty(trim($_REQUEST['representante_legal_identidad'] ?? ''))) {
+                    
                     $verror .= 'La Identidad del Representante Legal es obligatoria. ';
-                }
-
-
-
-                if (empty(trim($_REQUEST['representante_legal_direccion'] ?? ''))) {
+                } else if (empty(trim($_REQUEST['representante_legal_direccion'] ?? ''))) {
+                    
                     $verror .= 'La direccion del Representante Legal es obligatoria. ';
                 }
             }
