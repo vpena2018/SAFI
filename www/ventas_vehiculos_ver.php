@@ -5,7 +5,7 @@ pagina_permiso(166);
 $accion ="";
 $pruebasContrato = "N";
 
-if (tiene_permiso(188)){
+if (!tiene_permiso(188)){
     $pruebasContrato="S";
 }
 
