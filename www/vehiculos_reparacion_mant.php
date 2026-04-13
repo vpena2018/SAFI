@@ -1553,7 +1553,8 @@ if ($accion=="g") {
                 $sqlcampos .= " , id_estado=" . $estado_nuevo; 
             }
             else if (es_nulo($estadocompletar) || $estadocompletar != 'cmp') {
-                $sqlcampos .= " , id_estado = NULL";
+                /*$sqlcampos .= " , id_estado = NULL";*/
+                $sqlcampos.=" ,id_estado=".$estado_global_nuevo;
             }
 
         if (!es_nulo($estadocompletar) && $estadocompletar=='cmp'){
@@ -1645,7 +1646,7 @@ if ($accion=="g") {
         } else {
             //Crear nuevo                       
             $sqlcampos.=" ,id_usuario=".$_SESSION['usuario_id'] ;      
-            $sqlcampos.=" ,id_estado=".$estado_global_nuevo;
+            /*$sqlcampos.=" ,id_estado=".$estado_global_nuevo;*/
             $sqlcampos.=" ,tipo_ventas_reparacion=1";
             $sqlcampos.=" ,numero=".GetSQLValue(get_dato_sql('ventas',"IFNULL((max(numero)+1),1)"," "),"int"); 
             
