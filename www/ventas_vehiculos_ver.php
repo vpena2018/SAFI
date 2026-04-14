@@ -3,10 +3,10 @@ require_once ('include/framework.php');
 pagina_permiso(166);
 
 $accion ="";
-$pruebasContrato = "N";
+$pruebasContrato = "S";
 
 if (!tiene_permiso(188)){
-    $pruebasContrato="S";
+    $pruebasContrato="N";
 }
 
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } 
