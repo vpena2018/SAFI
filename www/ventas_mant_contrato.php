@@ -398,7 +398,20 @@ function generarContratoVenta(
         $precioVenta = (float)$venta['precio_venta'];
         $primaVenta  = (float)$venta['prima_venta'];
 
-        $contratoJson = json_encode([
+
+        try {
+    $contratoJson = json_encode([
+        // tu array completo
+    ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+
+    echo "OK";
+} catch (JsonException $e) {
+    echo $e->getMessage();
+}
+
+
+try{
+    $contratoJson = json_encode([
             'representante' => [
                 'nombre' => $tienda['representante_legal'],
                 'identidad' => $tienda['representante_identidad'],
@@ -432,7 +445,9 @@ function generarContratoVenta(
                 'tipo' => $venta['tipo'],
                 'chasis' => $venta['chasis'],
                 'motor' => $venta['motor'],
-                'color' => $venta['color'],
+                //'color' => $venta['color'],
+                'color' => preg_replace('/\s+/', ' ', trim($venta['color'])),
+
                 'anio' => $venta['anio'],
                 'cilindraje' => $venta['cilindraje'],
                 'combustible' => $venta['combustible']
@@ -443,10 +458,10 @@ function generarContratoVenta(
                 'anio' => date('Y')
             ],
             'datos_juridicos' => [
-                'representante_legal' => $venta['representante_legal_persona_juridica'],
-                'representante_legal_identidad' => $venta['representante_legal_identidad'],
-                'representante_legal_profesion' => $venta['representante_legal_profesion'],
-                'representante_legal_direccion' => $venta['representante_legal_direccion']
+                'representante_legal' => $venta['representante_legal_persona_juridica'] ?? '',
+                'representante_legal_identidad' => $venta['representante_legal_identidad'] ?? '',
+                'representante_legal_profesion' => $venta['representante_legal_profesion'] ?? '',
+                'representante_legal_direccion' => $venta['representante_legal_direccion'] ?? ''
             ],
             'meta' => [
                 'id_contrato' => $idContrato,
@@ -456,14 +471,35 @@ function generarContratoVenta(
                 'usuario' => $usuarioSistema,
                 'creado_en' => date('Y-m-d H:i:s')
             ]
-        ], JSON_UNESCAPED_UNICODE);
+        ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
 
-        sql_insert("
+} catch (JsonException $e) {
+    $error= "ERROR: " . $e->getMessage();
+    $temp=1;
+}
+
+        
+
+
+/*         sql_insert("
             INSERT INTO ventas_contratos_detalle
             (id_contrato, tipo_contrato, id_venta, accion, usuario, estado, datos_json)
             VALUES
             ($idContrato, $tipo_contrato, $id_venta, 'CREACION', '$usuarioSistema', 'ACTIVO', '$contratoJson')
-        ");
+        "); */
+
+            //$contratoJsonSafe = addslashes($contratoJson);
+            //$usuarioSistemaSafe = addslashes($usuarioSistema);
+
+            $contratoJsonSafe = str_replace("'", "''", $contratoJson);
+            $usuarioSistemaSafe = str_replace("'", "''", $usuarioSistema);
+
+            sql_insert("
+                INSERT INTO ventas_contratos_detalle
+                (id_contrato, tipo_contrato, id_venta, accion, usuario, estado, datos_json)
+                VALUES
+                ($idContrato, $tipo_contrato, $id_venta, 'CREACION', '$usuarioSistemaSafe', 'ACTIVO', '$contratoJsonSafe')
+            ");
 
         sql_update("COMMIT");
 
@@ -1205,6 +1241,12 @@ if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
         );
 
         header('Content-Type: application/json');
+
+        // 🔥 limpia absolutamente todo buffer
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+
         echo json_encode($resp);
         exit;
 }
