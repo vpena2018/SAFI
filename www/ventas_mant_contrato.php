@@ -478,9 +478,6 @@ try{
     $temp=1;
 }
 
-        
-
-
 /*         sql_insert("
             INSERT INTO ventas_contratos_detalle
             (id_contrato, tipo_contrato, id_venta, accion, usuario, estado, datos_json)
