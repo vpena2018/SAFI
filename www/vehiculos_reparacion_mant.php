@@ -248,6 +248,7 @@ function generarContratoVenta(
                 entidad.ciudad AS ciudad_venta,
 
                 producto.codigo_alterno AS cod_vehiculo,
+                producto.cilindrada,
                 producto.placa,
                 producto.marca,
                 producto.modelo,
@@ -292,7 +293,8 @@ function generarContratoVenta(
             'motor'        => 'Motor',
             'color'        => 'Color',
             'anio'         => 'Año',
-            'combustible'  => 'Combustible'
+            'combustible'  => 'Combustible',
+            'cilindrada'   => 'Cilindrada'
         ],  'Falta informacion del vehículo');
 
         /* ===============================
@@ -448,7 +450,7 @@ try{
                 'color' => preg_replace('/\s+/', ' ', trim($venta['color'])),
 
                 'anio' => $venta['anio'],
-                'cilindraje' => $venta['cilindraje'],
+                'cilindraje' => $venta['cilindrada'],
                 'combustible' => $venta['combustible']
             ],
             'fecha' => [
