@@ -1174,7 +1174,30 @@ if ($nuevo=='N'){
 }
 
 if (isset($_GET['a']) && $_GET['a'] === 'anularcontrato') {
-        $id_venta = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
+        $id= isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
+
+
+        $id_venta = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $numeroVenta = isset($_GET['numeroVenta']) ? intval($_GET['numeroVenta']) : 0;
+
+        if ($id_venta > 0) {
+            $id = $id_venta;
+
+        } elseif ($numeroVenta > 0) {
+
+            $res = sql_select("SELECT id FROM ventas WHERE numero = $numeroVenta LIMIT 1");
+
+            if ($res && $row = $res->fetch_assoc()) {
+                $id = intval($row['id']);
+            } else {
+                $id = 0; // no encontró
+            }
+
+        } else {
+            $id = 0; // no vino nada
+        }
+
+
 
         $id_usuario = intval($_SESSION['usuario_id']);
 
@@ -1191,7 +1214,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'anularcontrato') {
         $usuarioSistema = $user['usuario'];
 
 
-        $resp = anularContratoVenta($id_venta, $usuarioSistema);
+        $resp = anularContratoVenta($id, $usuarioSistema);
 
         header('Content-Type: application/json');
         echo json_encode($resp);
@@ -1202,7 +1225,31 @@ if (isset($_GET['a']) && $_GET['a'] === 'anularcontrato') {
 
 if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
 
-        $id_venta = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
+        //$id = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
+        $id=0;
+        $id_venta = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $numeroVenta = isset($_GET['numeroVenta']) ? intval($_GET['numeroVenta']) : 0;
+
+        if ($id_venta > 0) {
+            $id = $id_venta;
+
+        } elseif ($numeroVenta > 0) {
+
+            $res = sql_select("SELECT id FROM ventas WHERE numero = $numeroVenta LIMIT 1");
+
+            if ($res && $row = $res->fetch_assoc()) {
+                $id = intval($row['id']);
+            } else {
+                $id = 0; // no encontró
+            }
+
+        } else {
+            $id = 0; // no vino nada
+        }
+
+
+
+
         $persona_juridica = isset($_REQUEST['persona_juridica'])? (bool) $_REQUEST['persona_juridica']: false;
         $id_usuario=$_SESSION['usuario_id'];
 
@@ -1232,7 +1279,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
         $usuarioSistema = $user['usuario'];
 
         $resp = generarContratoVenta(
-            $id_venta,
+            $id,
             $nombreUsuario,
             $apellidoUsuario,
             $usuarioSistema,
@@ -1281,7 +1328,31 @@ if ($_GET['a'] === 'check_generar_contrato') {
 
 // VALIDAR (AJAX)
     if ($_GET['a'] === 'print_check') {
-        $id = intval($_GET['id']);
+        //$id = intval($_GET['id']);
+
+        $id =0;
+
+         $id_venta = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $numeroVenta = isset($_GET['numeroVenta']) ? intval($_GET['numeroVenta']) : 0;
+
+        if ($id_venta > 0) {
+            $id = $id_venta;
+
+        } elseif ($numeroVenta > 0) {
+
+            $res = sql_select("SELECT id FROM ventas WHERE numero = $numeroVenta LIMIT 1");
+
+            if ($res && $row = $res->fetch_assoc()) {
+                $id = intval($row['id']);
+            } else {
+                $id = 0; // no encontró
+            }
+
+        } else {
+            $id = 0; // no vino nada
+        }
+
+
         $id_contrato = intval($_GET['id_contrato']);
 
         $persona_juridica = isset($_REQUEST['persona_juridica'])? (bool) $_REQUEST['persona_juridica']: false;
@@ -2910,6 +2981,8 @@ $('#btnContrato').on('click', function (e) {
     e.preventDefault();
 
     const id = $('#id').val();
+    const numeroVenta = $('#numero').val();
+
     if (!id) {
         mytoast('error', 'No hay ID',3000);
         return;
@@ -2930,6 +3003,7 @@ $('#btnContrato').on('click', function (e) {
                     data: {
                         a: 'print_check',
                         id: id,
+                        numeroVenta: numeroVenta,
                         persona_juridica: persona_juridica,
                         id_contrato: 0,
                         reimpresion: 0
@@ -2982,6 +3056,7 @@ $('#btnActualizarContrato').on('click', function (e) {
     e.preventDefault();
 
     const id = $('#id').val();
+    const numeroVenta = $('#numero').val();
 
     const estado = $('#id_estado').val();
 
@@ -3012,6 +3087,7 @@ $('#btnActualizarContrato').on('click', function (e) {
                         data: {
                             a: 'actcontrato',
                             id: id,
+                            numeroVenta: numeroVenta,
                             persona_juridica:persona_juridica
                         },
                         success: function (resp) {
@@ -3047,6 +3123,7 @@ $('#btnanularContrato').on('click', function (e) {
     e.preventDefault();
 
     const id = $('#id').val();
+    const numeroVenta = $('#numero').val();
 
     if (!id) {
         mytoast('error', 'No hay ID', 3000);
@@ -3064,7 +3141,8 @@ $('#btnanularContrato').on('click', function (e) {
                 dataType: 'json',
                 data: {
                     a: 'anularcontrato', // 👈 acción nueva en tu backend
-                    id: id
+                    id: id,
+                    numeroVenta: numeroVenta
                 },
                 success: function (resp) {
                     if (resp.ok) {
