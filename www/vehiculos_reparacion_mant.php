@@ -1781,12 +1781,22 @@ if ($accion=="g") {
        }
     }
 
-            // NUEVAS VALIDACIONES DE FECHAS - Ing. Ricardo Lagos
+            // NUEVAS VALIDACIONES DE FECHAS - Ricardo Lagos
             $fecha_asignacion = $_REQUEST['fecha_asignacion'];
             $fecha_promesa_taller = $_REQUEST['fecha_promesa_taller'];
             $fecha_promesa = $_REQUEST['fecha_promesa'];
+            $fecha_creacion = $_REQUEST['fecha']; 
+               
+            // Validar que fecha_asignacion  NO sea menor que fecha creacion
+            if ($fecha_creacion>='2026-04-22'){
+                if (!es_nulo($fecha_asignacion) && !es_nulo($fecha_creacion)) {
+                    if (strtotime($fecha_asignacion) < strtotime($fecha_creacion)) {
+                        $verror .= 'La Fecha Asignacion no puede ser menor que la Fecha de Creacion.<br>';
+                    }
+                }
+            }
 
-            // Validar que fecha_promesa_taller NO sea menor que fecha_asignacion y fecha_promesa
+            // Validar que fecha_promesa_taller NO sea menor que fecha_asignacion y fecha_promesa            
             if (!es_nulo($fecha_promesa_taller) && !es_nulo($fecha_asignacion)) {
                 if (strtotime($fecha_promesa_taller) < strtotime($fecha_asignacion)) {
                     $verror .= 'La Fecha Promesa Taller no puede ser menor que la Fecha de Asignación.<br>';
@@ -1806,7 +1816,7 @@ if ($accion=="g") {
                 }
             }
 
-    // Ing. Ricardo Lagos NUEVA VALIDACIÓN: Si hay foto, no permitir cambiar id_vendedor, pero permitir si estaba vacío
+    // Ricardo Lagos NUEVA VALIDACIÓN: Si hay foto, no permitir cambiar id_vendedor, pero permitir si estaba vacío
         if (!es_nulo($cid)) {
             $foto_actual = get_dato_sql("ventas", "foto", " where id=".$cid);
             $id_vendedor = get_dato_sql("ventas", "id_vendedor", " where id=".$cid);
@@ -2213,7 +2223,7 @@ if ($accion =="d") {
     if (isset($row["id_estado_pintura"])) {$id_estado_pintura= $row["id_estado_pintura"]; } else {$id_estado_pintura= "";}
     if (isset($row["id_estado_interior"])) {$id_estado_interior= $row["id_estado_interior"]; } else {$id_estado_interior="";}
     if (isset($row["id_estado_mecanica"])) {$id_estado_mecanica= $row["id_estado_mecanica"]; } else {$id_estado_mecanica= "";}
-    if (isset($row["fecha"])) {$fecha=$row["fecha"]; } else {$fecha= "";}
+    if (isset($row["fecha"])) {$fecha=$row["fecha"]; } else {$fecha= date("Y-m-d");}
     if (isset($row["hora"])) {$hora= $row["hora"]; } else {$hora= "";}
     if (isset($row["numero"])) {$numero= $row["numero"]; } else {$numero= "";}
     if (isset($row["kilometraje"])) {$kilometraje= $row["kilometraje"]; } else {$kilometraje= "";}
@@ -2275,6 +2285,7 @@ if ($accion =="d") {
 
     echo campo("id",("Codigo"),'hidden',$id,' ','');
     echo campo("id_estado_anterior_reproceso","Estado Anterior Reproceso",'hidden',$id_estado_anterior_reproceso,' ','');
+    echo campo("fecha","Fecha",'hidden',$fecha,' ','');
 ?>
 
 
@@ -2297,7 +2308,7 @@ if ($accion =="d") {
     </div>
 
     <div class="col-md-4">
-        <?php echo campo("fecha_promesa_taller","Fecha Promesa Taller",'date',$fecha_promesa_taller,' ',' required '.$disable_sec1); ?>
+        <?php echo campo("fecha_promesa_taller","Fecha Promesa Taller de Pintura",'date',$fecha_promesa_taller,' ',' required '.$disable_sec1); ?>
     </div>
     
     <div class="col-md-4">
