@@ -2010,23 +2010,26 @@ if ($accion=="g") {
                 $sqlcampos.=" ,id_estado=".$estado_global_nuevo;
             }
 
-        if (!es_nulo($estadocompletar) && $estadocompletar=='cmp'){
+        if (!es_nulo($estadocompletar) && $estadocompletar=='cmp'){             
              if (isset($_REQUEST["id_estado_anterior_reproceso"])) {
                 $id_estado_anterior_reproceso = intval($_REQUEST["id_estado_anterior_reproceso"]); 
              }else{
                 $id_estado_anterior_reproceso = 0; 
              }
              
-            if($estado_nuevo==$estado_global_negociacion || $estado_nuevo==20){
+             
+            if($estado_nuevo==$estado_global_negociacion && $id_estado_anterior_reproceso==0){
                 $sqlcampos.= " , fecha_negociacion=now()"; 
                 $sqlcampos.= " , id_estado=".$estado_nuevo; 
-            }else{
+            }else if($id_estado_anterior_reproceso!=0){
                 $sqlcampos.= " , id_estado=".$id_estado_anterior_reproceso; 
+            }else if(es_nulo($estado_nuevo) || $estado_nuevo==0){
+                $sqlcampos.= " , id_estado=0";            
             }
              
-             $sqlcampos.= ", tipo_ventas_reparacion=2";
-             $sqlcampos.= ", reproceso='' ";  
-             $sqlcampos.= ", fecha_reparacion_completada=now() ";    		  	 
+            $sqlcampos.= ", tipo_ventas_reparacion=2";
+            $sqlcampos.= ", reproceso='' ";  
+            $sqlcampos.= ", fecha_reparacion_completada=now() ";    		  	 
         }
 
         if ($nuevoregistro==false) {    
