@@ -2018,6 +2018,7 @@ if ($accion=="g") {
              }
              
             if($estado_nuevo==$estado_global_negociacion || $estado_nuevo==20){
+                $sqlcampos.= " , fecha_negociacion=now()"; 
                 $sqlcampos.= " , id_estado=".$estado_nuevo; 
             }else{
                 $sqlcampos.= " , id_estado=".$id_estado_anterior_reproceso; 
