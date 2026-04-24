@@ -67,7 +67,7 @@ if ($accion=="1") {
         LEFT OUTER JOIN ventas_impuestos ON (ventas.id_impuesto=ventas_impuestos.id)
         LEFT OUTER JOIN usuario ON (ventas.id_usuario=usuario.id)
         
-    where 1=1
+    where 1=1 and ventas.tipo_ventas_reparacion=2
   
     $filtros
     order by ventas.fecha desc, ventas.id desc
