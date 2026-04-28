@@ -265,14 +265,14 @@ if ($accion=="1") {
         
         if (contrato=="S"){
             modalwindow2(
-                'Registro Venta de Vehiculo Pruebas Contrato',
+                'Registro Venta de Vehiculo Contrato',
                 'ventas_mant_contrato.php?a=v&r='+nuevo+'&cid='+codigo
                 );
 
         }else{
 
                     modalwindow2(
-                'Registro Venta de Vehiculo Pruebas Contrato',
+                'Registro Venta de Vehiculo',
                 'ventas_mant.php?a=v&r='+nuevo+'&cid='+codigo
                 );
  /*            modalwindow2(
