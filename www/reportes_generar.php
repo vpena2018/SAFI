@@ -386,7 +386,7 @@ switch ($reporte) {
         $sql2="SELECT usuario.id, usuario.nombre 
         FROM
         usuario
-        where usuario.activo=1 and usuario.grupo_id=2
+        where usuario.activo=1 and (usuario.grupo_id=2 or usuario.perfil_tecnico=2)
         $where2
         ORDER BY usuario.nombre
         ";

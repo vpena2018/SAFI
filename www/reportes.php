@@ -96,7 +96,7 @@ if ($accion=="v") {
                     <div class="col-sm">
                         <?php 
                          if (tiene_permiso(105)) {
-                            echo  campo('id_tecnico', 'Mecanico','select2',valores_combobox_db('usuario','','nombre',' where activo=1 and grupo_id=2 ','','Todos'),' ','  ','');           
+                            echo  campo('id_tecnico', 'Mecanico','select2',valores_combobox_db('usuario','','nombre',' where activo=1 and (grupo_id=2 or perfil_tecnico=2) ','','Todos'),' ','  ','');           
                         } else {
                             echo  campo('id_tecnico', '','hidden',$_SESSION['usuario_id'],' ','  ','');          
                         }   
@@ -121,7 +121,7 @@ if ($accion=="v") {
                     <div class="col-sm">
                         <?php 
                         if (tiene_permiso(105) or tiene_permiso(122)) {
-                            echo  campo('id_motorista', 'Motorista','select2',valores_combobox_db('usuario','','nombre',' where activo=1 and (grupo_id=3 or perfil_adicional=3)','','Todos'),' ','  ','');          
+                            echo  campo('id_motorista', 'Motorista','select2',valores_combobox_db('usuario','','nombre',' where activo=1 and (grupo_id=3 or perfil_motorista=3)','','Todos'),' ','  ','');          
                         } else {
                             echo  campo('id_motorista', '','hidden',$_SESSION['usuario_id'],' ','  ','');          
                         }                      

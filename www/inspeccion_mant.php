@@ -167,10 +167,10 @@ if ($accion=="g") {
      
       //Campos
       $sqlcampos="";
-      $sqlcampos_detalle="";
-
+      $sqlcampos_detalle="";      
       $lbl_estado="";
-
+      $enviar_orden_email=false;
+      
       // Validacion backend: kilometraje actual no puede ser menor al anterior
       if (isset($_REQUEST["kilometraje_entrada"])) {
         $km_entrada = intval($_REQUEST["kilometraje_entrada"]);
@@ -3061,7 +3061,7 @@ function inspeccion_modificar(valor){
     $("#btn_modificar_insp_guardar").show();
     // $(window).scrollTop(0);
   } else {
-    procesar_inspeccion('inspeccion_mant.php?a=g&gg_est=1&modenc=1','forma','1');
+    procesar_inspeccion('inspeccion_mant.php?a=g&gg_est=1&modenc=1','forma','3');
     $("#btn_modificar_insp").show();
     $("#btn_modificar_insp_guardar").hide();    
   }

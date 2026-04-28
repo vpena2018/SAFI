@@ -203,7 +203,8 @@ if ($accion=="sol") {
 	if (trim($_REQUEST['taller'])=="") {$verror="Seleccione el taller";  }
 	if (trim($_REQUEST['sucursal'])=="") {$verror="Seleccione la sucursal";  }
 	
-	if (trim($_REQUEST['num_inv'])=="" and trim($_REQUEST['placa'])=="" and trim($_REQUEST['chasis'])=="") {$verror="Ingrese el numero de inventario, Placa o Vin del Vehiculo";  }
+	$_placa_upper = trim(strtoupper($_REQUEST['placa']));
+	if (trim($_REQUEST['num_inv'])=="" and (trim($_REQUEST['placa'])=="" or $_placa_upper=="SIN PLACA") and trim($_REQUEST['chasis'])=="") {$verror="Ingrese el numero de inventario, Placa o Vin del Vehiculo";  }
 	 
 	if (trim($_REQUEST['num_inv'])<>""){
 		if (strlen(trim($_REQUEST['num_inv']))<4) {
@@ -224,7 +225,7 @@ if ($accion=="sol") {
 	
     
 	if (trim($_REQUEST['num_inv'])<>"") {
-		$filtro="codigo_alterno like'%".$conn->real_escape_string(trim($_REQUEST['num_inv']))."'";
+		$filtro="codigo_alterno LIKE '%".$conn->real_escape_string(trim($_REQUEST['num_inv']))."'";
 		$or=" OR ";
 	}
 
@@ -234,7 +235,7 @@ if ($accion=="sol") {
 	}
 
 	if (trim($_REQUEST['chasis'])<>"") {
-		$filtro=$filtro.$or."chasis like'%".$conn->real_escape_string(trim($_REQUEST['chasis']))."'";
+		$filtro=$filtro.$or."chasis LIKE '%".$conn->real_escape_string(trim($_REQUEST['chasis']))."%'";
 
 	}
 
