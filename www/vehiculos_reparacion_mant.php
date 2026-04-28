@@ -2407,10 +2407,10 @@ if ($accion =="d") {
          <?php echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where id=11 ",'','...'),' ',' required '.$disable_sec2)  ?> 
     </div>
                 <div class="col-md">            
-                <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',$disable_sec2); ?>                 
+                <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',' '); ?>                 
             </div>   
             <div class="col-md">            
-                <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec2); ?>                 
+                <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',''); ?>                 
             </div> 
 </div>
 
@@ -2453,7 +2453,7 @@ if ($accion =="d") {
 
          <div class="row">
             <div class="col-md-12">
-                <?php echo campo("representante_legal_profesion","Profesión u oficio de comprador",'text',$representante_legal_profesion,' ',$disable_sec2); ?>
+                <?php echo campo("representante_legal_profesion","Profesión u oficio de comprador",'text',$representante_legal_profesion,' ',''); ?>
             </div>
             
          </div>
@@ -2462,7 +2462,7 @@ if ($accion =="d") {
 
           <div class="row">
             <div class="col-md-12">
-                <?php echo campo("persona_juridica","persona juridica",'checkboxCustom',$persona_juridica,' ',$disable_sec2); ?>
+                <?php echo campo("persona_juridica","persona juridica",'checkboxCustom',$persona_juridica,' ',''); ?>
             </div>
          </div>
 
@@ -2476,7 +2476,7 @@ if ($accion =="d") {
                     'text',
                     $representante_legal_persona_juridica,
                     ' ',
-                    $disable_sec2
+                    ' '
                 ); ?>
             </div>  
 
@@ -2487,7 +2487,7 @@ if ($accion =="d") {
                     'text',
                     $representante_legal_identidad,
                     ' ',
-                    $disable_sec2
+                    ''
                 ); ?>
             </div>
         </div>
@@ -2500,7 +2500,7 @@ if ($accion =="d") {
                     'text',
                     $representante_legal_direccion,
                     ' ',
-                    $disable_sec2
+                    ' '
                 ); ?>
             </div>
 
