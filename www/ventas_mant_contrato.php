@@ -1958,7 +1958,7 @@ if ($foto_original_tele !== '') {
 
             if (isset($_REQUEST["cliente_id"])) { $sqlcampos.= " , cliente_id =".GetSQLValue($_REQUEST["cliente_id"],"int"); }  
         }else{
-            $sqlcampos.= " , cliente_id =null, representante_legal_profesion = null,tipo_documento_ident_venta=null, nacionalidad_venta=null, ciudad_venta=null,departamento_venta=null";
+            $sqlcampos.= " , cliente_id =null, representante_legal_profesion = null, ciudad_venta=null,departamento_venta=null";
         }
 
 
@@ -2952,6 +2952,7 @@ if ($foto_original_tele !== '') {
 $(function () {
 
 $('#btnguardar').on('click', function (e) {
+    debugger;
     e.preventDefault();
 
     popupconfirmar(
