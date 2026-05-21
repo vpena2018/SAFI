@@ -184,7 +184,7 @@ if ($accion=="1") {
 
          <div class="col-sm">
            <?php 
-           echo campo("motorista","Motorista",'select',valores_combobox_db('usuario','','nombre',' where activo=1 and (grupo_id=3 or perfil_adicional=3)','','Todos'),' ',' onkeypress="buscarfiltro(event,\'btn-filtro\');"');
+           echo campo("motorista","Motorista",'select2',valores_combobox_db('usuario','','nombre',' where activo=1 and (grupo_id=3 or perfil_adicional=3)','','Todos'),' ',' onkeypress="buscarfiltro(event,\'btn-filtro\');"');
             ?>
         </div>
          
