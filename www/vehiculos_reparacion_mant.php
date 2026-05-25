@@ -1775,18 +1775,18 @@ if ($accion=="g") {
     }  
      
     if ((tiene_permiso(169))){
-       $precio_minimo=intval($_REQUEST['precio_minimo']);
-       $precio_maximo=intval($_REQUEST['precio_maximo']);
+         $precio_minimo=intval($_REQUEST['precio_minimo'] ?? 0);
+         $precio_maximo=intval($_REQUEST['precio_maximo'] ?? 0);
        if ($precio_minimo>$precio_maximo or $precio_maximo<$precio_minimo){
              $verror.='El Precio Minimo no puede ser mayor al Precio Maximo o viceversa.<br>'; 
        }
     }
 
             // NUEVAS VALIDACIONES DE FECHAS - Ricardo Lagos
-            $fecha_asignacion = $_REQUEST['fecha_asignacion'];
-            $fecha_promesa_taller = $_REQUEST['fecha_promesa_taller'];
-            $fecha_promesa = $_REQUEST['fecha_promesa'];
-            $fecha_creacion = $_REQUEST['fecha']; 
+            $fecha_asignacion = $_REQUEST['fecha_asignacion'] ?? '';
+            $fecha_promesa_taller = $_REQUEST['fecha_promesa_taller'] ?? '';
+            $fecha_promesa = $_REQUEST['fecha_promesa'] ?? '';
+            $fecha_creacion = $_REQUEST['fecha'] ?? ''; 
                
             // Validar que fecha_asignacion  NO sea menor que fecha creacion
             if ($fecha_creacion>='2026-04-22'){
@@ -1823,7 +1823,7 @@ if ($accion=="g") {
             $id_vendedor = get_dato_sql("ventas", "id_vendedor", " where id=".$cid);
             
             // Si hay foto y se está intentando cambiar el vendedor (solo si ya tenía un vendedor asignado)
-            if (!es_nulo($foto_actual) && !es_nulo($id_vendedor) && $id_vendedor != intval($_REQUEST['id_vendedor'])) {
+            if (!es_nulo($foto_actual) && !es_nulo($id_vendedor) && $id_vendedor != intval($_REQUEST['id_vendedor'] ?? 0)) {
                 $verror .= 'No puede cambiar el vendedor cuando ya existe una foto/documento adjunto.<br>';
             }
         }
@@ -1836,8 +1836,8 @@ if ($accion=="g") {
     $precio_venta_raw = $_REQUEST['precio_venta'] ?? '';
     $prima_venta_raw  = $_REQUEST['prima_venta'] ?? '';
 
-    $precio_minimo=intval($_REQUEST['precio_minimo']);     
-    $precio_maximo=intval($_REQUEST['precio_maximo']);    
+    $precio_minimo=intval($_REQUEST['precio_minimo'] ?? 0);     
+    $precio_maximo=intval($_REQUEST['precio_maximo'] ?? 0);    
     $precio_venta = intval($precio_venta_raw);
 
     $id_vendedor=intval($_REQUEST['id_vendedor']);
@@ -1953,7 +1953,7 @@ if ($accion=="g") {
 
 
 
-        $estado_nuevo = intval($_REQUEST['id_estado']);
+        $estado_nuevo = intval($_REQUEST['id_estado'] ?? 0);
         
         if ($persona_juridica == 1 && ($id_estado==11 || $id_estado==20)) {
 
@@ -2079,14 +2079,14 @@ if ($accion=="g") {
              }
 
              $fecha_promesa = isset($venta_actual['fecha_promesa']) ? trim((string)$venta_actual['fecha_promesa']) : '';
-             if ($fecha_promesa!=trim($_REQUEST['fecha_promesa'])){   
-                registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Fecha de Promesa', $_REQUEST['fecha_promesa']);
+                 if (isset($_REQUEST['fecha_promesa']) && $fecha_promesa!=trim($_REQUEST['fecha_promesa'])){   
+                     registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Fecha de Promesa', $_REQUEST['fecha_promesa']);
              }
 
              $fecha_promesa_taller = isset($venta_actual['fecha_promesa_taller']) ? trim((string)$venta_actual['fecha_promesa_taller']) : '';
              
-             if ($fecha_promesa_taller!=trim($_REQUEST['fecha_promesa_taller'])){   
-                registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Fecha de Promesa Taller', $_REQUEST['fecha_promesa_taller']);
+                 if (isset($_REQUEST['fecha_promesa_taller']) && $fecha_promesa_taller!=trim($_REQUEST['fecha_promesa_taller'])){   
+                     registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Fecha de Promesa Taller', $_REQUEST['fecha_promesa_taller']);
              }
 
              $fecha_asignacion = isset($venta_actual['fecha_asignacion']) ? trim((string)$venta_actual['fecha_asignacion']) : '';
@@ -2095,12 +2095,12 @@ if ($accion=="g") {
              }
 
              $precio_minimo = isset($venta_actual['precio_minimo']) ? intval($venta_actual['precio_minimo']) : 0;
-             if ($precio_minimo!=intval($_REQUEST['precio_minimo'])){   
+             if (isset($_REQUEST['precio_minimo']) && $precio_minimo!=intval($_REQUEST['precio_minimo'])){   
                  registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Precio Minimo', $_REQUEST['precio_minimo']);
              }
 
              $precio_maximo = isset($venta_actual['precio_maximo']) ? intval($venta_actual['precio_maximo']) : 0;
-             if ($precio_maximo!=intval($_REQUEST['precio_maximo'])){   
+             if (isset($_REQUEST['precio_maximo']) && $precio_maximo!=intval($_REQUEST['precio_maximo'])){   
                  registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Precio Maximo', $_REQUEST['precio_maximo']);
              }
 
