@@ -2036,7 +2036,8 @@ if ($accion=="g") {
         if ($nuevoregistro==false) {    
             //si modifica se guarda el registo del cambio
             $venta_actual = array();
-            $result_actual = sql_select("SELECT id_tienda, kilometraje, id_estado_pintura, id_estado_interior, id_estado_mecanica, observaciones_reparacion, fecha_promesa, fecha_promesa_taller, precio_minimo, precio_maximo, precio_venta, prima_venta, fecha_asignacion, foto, foto_televentas
+            $result_actual = sql_select("SELECT id_tienda, kilometraje, id_estado_pintura, id_estado_interior, id_estado_mecanica, observaciones_reparacion, fecha_promesa, 
+                                        fecha_promesa_taller, precio_minimo, precio_maximo, precio_venta, prima_venta, fecha_asignacion, foto, foto_televenta, id_vendedor
                                          FROM ventas
                                          WHERE id=".$cid." LIMIT 1");
             if ($result_actual!=false && $result_actual->num_rows > 0) {
@@ -2121,6 +2122,12 @@ if ($accion=="g") {
              $foto_televentas_hist = isset($venta_actual['foto_televentas']) ? trim((string)$venta_actual['foto_televentas']) : '';
              if (isset($_REQUEST['foto_televentas']) && $foto_televentas_hist!=trim((string)$_REQUEST['foto_televentas'])) {
                  registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Foto Recibo de Pago', trim((string)$_REQUEST['foto_televentas']));
+             }
+
+             $id_vendedor = isset($venta_actual['id_vendedor']) ? trim((string)$venta_actual['id_vendedor']) : '';
+             if (isset($_REQUEST['id_vendedor']) && $id_vendedor!=trim((string)$_REQUEST['id_vendedor'])) {
+                $id_vendedor_name = get_dato_sql("usuario", "nombre", " where id=".intval($_REQUEST['id_vendedor']));
+                registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Vendedor', $id_vendedor_name);
              }
              
          
