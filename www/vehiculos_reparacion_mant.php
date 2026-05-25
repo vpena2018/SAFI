@@ -1770,6 +1770,7 @@ if ($accion=="g") {
     if (es_nulo($cid)){
         $id_producto=intval($_REQUEST['id_producto']);
         $vehiculo=get_dato_sql("ventas","count(*)"," where id_producto=".$id_producto);
+        $cilindraje=get_dato_sql("producto","cilindrada"," where id=".$id_producto);
         if (!es_nulo($vehiculo) && es_nulo($cid)){ $verror.='Vehiculo ya esta registrado'; }   
     }  
      
@@ -2132,7 +2133,7 @@ if ($accion=="g") {
             /*$sqlcampos.=" ,id_estado=".$estado_global_nuevo;*/
             $sqlcampos.=" ,tipo_ventas_reparacion=1";
             $sqlcampos.=" ,numero=".GetSQLValue(get_dato_sql('ventas',"IFNULL((max(numero)+1),1)"," "),"int"); 
-            
+            $sqlcampos.=" ,cilindraje=".GetSQLValue(intval($cilindraje),"int");
             $sql="insert into ventas set fecha=NOW(), hora=now(),".$sqlcampos." ";        
             
             $result = sql_insert($sql);
@@ -2286,17 +2287,11 @@ if ($accion =="d") {
     if (isset($row["tipo_documento_ident_venta"])) {$tipo_documento_ident_venta= $row["tipo_documento_ident_venta"]; } else {$tipo_documento_ident_venta= "";}
     if (isset($row["nacionalidad_venta"])) {$nacionalidad_venta= $row["nacionalidad_venta"]; } else {$nacionalidad_venta= "";}
 
-
-
     
     //$observaciones_reparacion= "";
-    if ($id_estado=='' || $id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion){
-       $disable_sec1=' ';  
-       $disable_sec2=' ';  
-       if (!tiene_permiso(190)){    
-          $disable_sec1=' disabled="disabled" ';  
-          $disable_sec2=' disabled="disabled" ';           
-       }      
+    if ($id_estado=='' || $id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion){                
+          $disable_sec1= !tiene_permiso(190) ? ' disabled="disabled" ' : '';  
+          $disable_sec2= !tiene_permiso(169) ? ' disabled="disabled" ' : '';         
     }else{
        $disable_sec1=' disabled="disabled" ';  
        $disable_sec2=' disabled="disabled" ';  
@@ -2383,7 +2378,7 @@ if ($accion =="d") {
     </div>
 
     <div class="col-md">
-         <?php echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2);  ?> 
+         <?php echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec1);  ?> 
     </div>
     
     <div class="col-md">
