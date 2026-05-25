@@ -2037,7 +2037,7 @@ if ($accion=="g") {
             //si modifica se guarda el registo del cambio
             $venta_actual = array();
             $result_actual = sql_select("SELECT id_tienda, kilometraje, id_estado_pintura, id_estado_interior, id_estado_mecanica, observaciones_reparacion, fecha_promesa, 
-                                        fecha_promesa_taller, precio_minimo, precio_maximo, precio_venta, prima_venta, fecha_asignacion, foto, foto_televenta, id_vendedor
+                                        fecha_promesa_taller, precio_minimo, precio_maximo, precio_venta, prima_venta, fecha_asignacion, foto, foto_televentas, id_vendedor
                                          FROM ventas
                                          WHERE id=".$cid." LIMIT 1");
             if ($result_actual!=false && $result_actual->num_rows > 0) {
