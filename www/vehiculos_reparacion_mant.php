@@ -2534,7 +2534,7 @@ if ($accion =="d") {
         <?php
         if ($foto=='') {
             echo '<div id="archivofoto">';
-            echo campo_upload("foto","Adjuntar Comprobante de Pago",'upload','', '  ','',4,8,'NO',false );
+            echo campo_upload("foto","Adjuntar Comprobante de Pago",'upload','', $disable_sec1,'',4,8,'NO',false );
             echo '</div>';
         }
         ?>
@@ -2560,7 +2560,7 @@ if ($accion =="d") {
         <?php
         if ($foto_televentas=='') {
             echo '<div id="archivofoto_televentas">';
-            echo campo_upload("foto_televentas","Adjuntar Recibo de Pago",'upload','', '  ','',4,8,'NO',false );
+            echo campo_upload("foto_televentas","Adjuntar Recibo de Pago",'upload','', $disable_sec1,'',4,8,'NO',false );
             echo '</div>';
         }
         ?>
