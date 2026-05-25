@@ -2035,7 +2035,7 @@ if ($accion=="g") {
         if ($nuevoregistro==false) {    
             //si modifica se guarda el registo del cambio
             $venta_actual = array();
-            $result_actual = sql_select("SELECT id_tienda, kilometraje, id_estado_pintura, id_estado_interior, id_estado_mecanica, observaciones_reparacion, fecha_promesa, fecha_promesa_taller, precio_minimo, precio_maximo
+            $result_actual = sql_select("SELECT id_tienda, kilometraje, id_estado_pintura, id_estado_interior, id_estado_mecanica, observaciones_reparacion, fecha_promesa, fecha_promesa_taller, precio_minimo, precio_maximo, precio_venta, prima_venta, fecha_asignacion, foto, foto_televentas
                                          FROM ventas
                                          WHERE id=".$cid." LIMIT 1");
             if ($result_actual!=false && $result_actual->num_rows > 0) {
@@ -2087,6 +2087,11 @@ if ($accion=="g") {
                 registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Fecha de Promesa Taller', $_REQUEST['fecha_promesa_taller']);
              }
 
+             $fecha_asignacion = isset($venta_actual['fecha_asignacion']) ? trim((string)$venta_actual['fecha_asignacion']) : '';
+             if (isset($_REQUEST['fecha_asignacion']) && $fecha_asignacion!=trim($_REQUEST['fecha_asignacion'])){
+                 registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Fecha de Asignacion', $_REQUEST['fecha_asignacion']);
+             }
+
              $precio_minimo = isset($venta_actual['precio_minimo']) ? intval($venta_actual['precio_minimo']) : 0;
              if ($precio_minimo!=intval($_REQUEST['precio_minimo'])){   
                  registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Precio Minimo', $_REQUEST['precio_minimo']);
@@ -2095,8 +2100,29 @@ if ($accion=="g") {
              $precio_maximo = isset($venta_actual['precio_maximo']) ? intval($venta_actual['precio_maximo']) : 0;
              if ($precio_maximo!=intval($_REQUEST['precio_maximo'])){   
                  registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Precio Maximo', $_REQUEST['precio_maximo']);
-             }         
+             }
+
+             $precio_venta = isset($venta_actual['precio_venta']) ? intval($venta_actual['precio_venta']) : 0;
+             if (isset($_REQUEST['precio_venta']) && $precio_venta!=intval($_REQUEST['precio_venta'])){
+                 registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Precio de Venta', $_REQUEST['precio_venta']);
+             }
+
+             $prima_venta = isset($venta_actual['prima_venta']) ? intval($venta_actual['prima_venta']) : 0;
+             if (isset($_REQUEST['prima_venta']) && $prima_venta!=intval($_REQUEST['prima_venta'])){
+                 registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Prima de Venta', $_REQUEST['prima_venta']);
+             }
+
+             $foto_hist = isset($venta_actual['foto']) ? trim((string)$venta_actual['foto']) : '';
+             if (isset($_REQUEST['foto']) && $foto_hist!=trim((string)$_REQUEST['foto'])) {
+                 registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Foto Comprobante de Pago', trim((string)$_REQUEST['foto']));
+             }
+
+             $foto_televentas_hist = isset($venta_actual['foto_televentas']) ? trim((string)$venta_actual['foto_televentas']) : '';
+             if (isset($_REQUEST['foto_televentas']) && $foto_televentas_hist!=trim((string)$_REQUEST['foto_televentas'])) {
+                 registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Foto Recibo de Pago', trim((string)$_REQUEST['foto_televentas']));
+             }
              
+         
             $sql="update ventas set ".$sqlcampos." where id=".$cid." limit 1";           
 
             $result = sql_update($sql);
@@ -2267,9 +2293,7 @@ if ($accion =="d") {
     if ($id_estado=='' || $id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion){
        $disable_sec1=' ';  
        $disable_sec2=' ';  
-
-
-       if (!tiene_permiso(169)){    
+       if (!tiene_permiso(190)){    
           $disable_sec1=' disabled="disabled" ';  
           $disable_sec2=' disabled="disabled" ';           
        }      
@@ -2408,10 +2432,10 @@ if ($accion =="d") {
          <?php echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where id=11 ",'','...'),' ',' required '.$disable_sec2)  ?> 
     </div>
                 <div class="col-md">            
-                <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',' '); ?>                 
+                <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ', $disable_sec1); ?>                 
             </div>   
             <div class="col-md">            
-                <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',''); ?>                 
+                <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec1); ?>                 
             </div> 
 </div>
 
