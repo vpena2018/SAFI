@@ -2270,7 +2270,6 @@ if ($accion =="d") {
 
 
        if (!tiene_permiso(169)){    
-     
           $disable_sec1=' disabled="disabled" ';  
           $disable_sec2=' disabled="disabled" ';           
        }      

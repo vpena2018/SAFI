@@ -1680,6 +1680,7 @@ function campo_upload_varias($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solic
 function campo_upload($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solicitud="",$columna1=3,$columna2=9,$mostrar_upload="NO",$preview=false) 
 {
     $salida="";
+    $upload_deshabilitado = stripos((string)$adicional, 'disabled') !== false;
    
    
      {  //upload
@@ -1721,14 +1722,14 @@ function campo_upload($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solicitud=""
         $salida.= '<div class="row"> 
                
                <div id="colbtn_'.$nombre.'" class="col-sm-4">
-               <span class="btn btn-secondary fileinput-button">
+               <span class="btn btn-secondary fileinput-button'.($upload_deshabilitado ? ' disabled' : '').'">
                <i class="fa fa-cloud-upload-alt"></i>
                <span>Subir Foto</span>
-               <input id="fileupload_'.$nombre.'" type="file" name="files[]">
+               <input id="fileupload_'.$nombre.'" type="file" name="files[]" '.$adicional.'>
                </span>
                </div>
                
-               <input id="'.$nombre.'" name="'.$nombre.'" value="'.$valor.'"  type="hidden"  />
+               <input id="'.$nombre.'" name="'.$nombre.'" value="'.$valor.'"  type="hidden" />
                
                <div class=" col-sm-4">
                    <div id="progress_'.$nombre.'" class="progress">
@@ -1817,8 +1818,13 @@ function campo_upload($nombre,$etiqueta,$tipo,$valor,$adicional,$id_solicitud=""
                                        progress + '%'
                                    );
                                }
-                           }).prop('disabled', !$.support.fileInput)
-                               .parent().addClass($.support.fileInput ? undefined : 'disabled');
+                           });
+
+                           var bloquearUpload = ".($upload_deshabilitado ? 'true' : 'false').";
+                           bloquearUpload = bloquearUpload || !$.support.fileInput;
+
+                           $('#fileupload_$nombre').prop('disabled', bloquearUpload);
+                           $('#fileupload_$nombre').parent().toggleClass('disabled', bloquearUpload);
                                
                        });
                        
