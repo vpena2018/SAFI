@@ -2269,8 +2269,10 @@ if ($accion =="d") {
        $disable_sec2=' ';  
 
 
-       if (!tiene_permiso(169)){         
-          $disable_sec2=' readonly="readonly" ';              
+       if (!tiene_permiso(169)){    
+     
+          $disable_sec1=' disabled="disabled" ';  
+          $disable_sec2=' disabled="disabled" ';           
        }      
     }else{
        $disable_sec1=' disabled="disabled" ';  
