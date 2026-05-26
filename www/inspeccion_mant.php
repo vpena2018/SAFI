@@ -361,6 +361,13 @@ if ($accion=="g") {
       if (isset($_REQUEST["tipo_inspeccion"])){
           $tipoinsp=intval($_REQUEST["tipo_inspeccion"]);          
       }
+      
+      //Cliente de ventas de vehiculo Carshop
+      $clienteCvu="";
+      if (isset($_REQUEST["cliente_id"])){
+          $clienteCvu=substr(get_dato_sql("entidad","codigo_alterno"," WHERE id=".GetSQLValue($_REQUEST["cliente_id"],"int")),0,4); 
+      }
+
       if (isset($_REQUEST["tipo_doc"])) { $sqlcampos.= " , tipo_doc =".GetSQLValue($_REQUEST["tipo_doc"],"int"); }    
       // if (isset($_REQUEST["fecha_hora_inicio"])) { $sqlcampos.= " , fecha_hora_inicio =".GetSQLValue($_REQUEST["fecha_hora_inicio"],"text"); } 
       // if (isset($_REQUEST["fecha_hora_final"])) { $sqlcampos.= " , fecha_hora_final =".GetSQLValue($_REQUEST["fecha_hora_final"],"text"); } 
@@ -463,6 +470,17 @@ if ($accion=="g") {
                   }
                 }
 
+                //Valido si estado del vehiculo en modulo de ventas es Vendido Entregado
+                $id_producto_completar = isset($_REQUEST["id_producto"]) ? intval($_REQUEST["id_producto"]) : 0;
+                if ($id_producto_completar > 0 && $clienteCvu=="CVU-") {
+                    $estado_vehiculo_ventas = get_dato_sql("ventas","id_estado"," WHERE id=".$id_producto_completar);
+                    if ($estado_vehiculo_ventas < 20) { // 3 = Vendido Entregado
+                        $stud_arr[0]["pmsg"] ="No se puede completar la Hoja de Inspeccion porque estado el vehículo tiene que ser Vendido Entregado en el módulo de Ventas";
+                        salida_json($stud_arr);
+                        exit;
+                    }
+                }
+
               $lbl_estado="Completado";
               // enviar email a cliente 
               $enviar_orden_email=true;
@@ -536,13 +554,13 @@ if ($accion=="g") {
             // $result_detalle = sql_insert($sql);
             
             }
-        //actualizar Km
-        $km_entrada_upd = isset($_REQUEST["kilometraje_entrada"]) ? $_REQUEST["kilometraje_entrada"] : 0;
-        $id_producto_upd = isset($_REQUEST["id_producto"]) ? $_REQUEST["id_producto"] : 0;
-        if($actualizarkm==true and !es_nulo($id_producto_upd)) {
-          sql_update("UPDATE producto SET km=".GetSQLValue($km_entrada_upd,"int")."  WHERE id=".GetSQLValue($id_producto_upd,"int"));
-        }
-                  
+          //actualizar Km
+          $km_entrada_upd = isset($_REQUEST["kilometraje_entrada"]) ? $_REQUEST["kilometraje_entrada"] : 0;
+          $id_producto_upd = isset($_REQUEST["id_producto"]) ? $_REQUEST["id_producto"] : 0;
+          if($actualizarkm==true and !es_nulo($id_producto_upd)) {
+            sql_update("UPDATE producto SET km=".GetSQLValue($km_entrada_upd,"int")."  WHERE id=".GetSQLValue($id_producto_upd,"int"));
+          }
+                    
           $stud_arr[0]["pcode"] = 1;
           $stud_arr[0]["pmsg"] ="Guardado";
           $stud_arr[0]["pcid"] = $cid;
@@ -570,12 +588,12 @@ if ($accion=="g") {
                            VALUES (".intval($cid).", ".intval($numeroArchivo).", 0, NOW())");
       
               ///Valido el vehiculo con el cliente de Ventas de carro usado CVU
-              if (isset($_REQUEST['cliente_id'])){                
-                  $clienteCvu=substr(get_dato_sql("entidad","codigo_alterno"," WHERE id=".GetSQLValue($_REQUEST["cliente_id"],"int")),0,4);    
-                  if ($clienteCvu=="CVU-" and !es_nulo($id_producto_upd)) {
+              //if (isset($_REQUEST['cliente_id'])){                
+              //    $clienteCvu=substr(get_dato_sql("entidad","codigo_alterno"," WHERE id=".GetSQLValue($_REQUEST["cliente_id"],"int")),0,4);    
+                if ($clienteCvu=="CVU-" and !es_nulo($id_producto_upd)) {
                     sql_update("UPDATE ventas SET id_inspeccion=".$cid."  WHERE id_producto=".GetSQLValue($id_producto_upd,"int"));     
-                  }
-              }                
+                }
+              //}                
           }
 
       }
