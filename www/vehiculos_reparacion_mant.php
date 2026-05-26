@@ -2645,7 +2645,7 @@ if ($accion =="d") {
         <!-- 🔹 FILA 2 -->
     <div class="row">
 
-        <?php if ($id_estado!=20){ ?>
+        <?php if ($id_estado!=20 && tiene_permiso(190)){ ?>
         <div class="col-sm">
             <a href="javascript:void(0);"
                id="btnActualizarContrato"
