@@ -98,7 +98,7 @@ while ($item = $pendientes->fetch_assoc()) {
         // Obtener datos del correo
         $correo_result = sql_select("
             SELECT inspeccion.id, inspeccion.numero,
-                   inspeccion.cliente_email,
+                   inspeccion.cliente_email,inspeccion.renta_contrato,inspeccion.tipo_doc
                    entidad.nombre AS cliente_nombre,
                    entidad.email
             FROM inspeccion
@@ -138,7 +138,8 @@ while ($item = $pendientes->fetch_assoc()) {
         $_REQUEST['pdffirma2'] = leer_png_como_dataurl($tmpDir . 'Inspeccion_' . $correo_row["numero"] . '_pdffirma2.png');
 
         // Generar el PDF
-        $guardar_archivo = app_dir . 'reportes/' . 'Inspeccion_' . $correo_row["numero"] . '.pdf';
+        $tipo_doc = $correo_row['tipo_doc']==1 ? 'Entrada' : 'Salida';
+        $guardar_archivo = app_dir . 'reportes/' . 'Inspeccion_' . $correo_row["numero"] .'_'. trim($correo_row["renta_contrato"]) .'_'. $tipo_doc . '.pdf';
         include(__DIR__ . '/inspeccion_pdf.php'); // genera el PDF en $guardar_archivo
 
         // Armar el correo
