@@ -1770,22 +1770,23 @@ if ($accion=="g") {
     if (es_nulo($cid)){
         $id_producto=intval($_REQUEST['id_producto']);
         $vehiculo=get_dato_sql("ventas","count(*)"," where id_producto=".$id_producto);
+        $cilindraje=get_dato_sql("producto","cilindrada"," where id=".$id_producto);
         if (!es_nulo($vehiculo) && es_nulo($cid)){ $verror.='Vehiculo ya esta registrado'; }   
     }  
      
     if ((tiene_permiso(169))){
-       $precio_minimo=intval($_REQUEST['precio_minimo']);
-       $precio_maximo=intval($_REQUEST['precio_maximo']);
+         $precio_minimo=intval($_REQUEST['precio_minimo'] ?? 0);
+         $precio_maximo=intval($_REQUEST['precio_maximo'] ?? 0);
        if ($precio_minimo>$precio_maximo or $precio_maximo<$precio_minimo){
              $verror.='El Precio Minimo no puede ser mayor al Precio Maximo o viceversa.<br>'; 
        }
     }
 
             // NUEVAS VALIDACIONES DE FECHAS - Ricardo Lagos
-            $fecha_asignacion = $_REQUEST['fecha_asignacion'];
-            $fecha_promesa_taller = $_REQUEST['fecha_promesa_taller'];
-            $fecha_promesa = $_REQUEST['fecha_promesa'];
-            $fecha_creacion = $_REQUEST['fecha']; 
+            $fecha_asignacion = $_REQUEST['fecha_asignacion'] ?? '';
+            $fecha_promesa_taller = $_REQUEST['fecha_promesa_taller'] ?? '';
+            $fecha_promesa = $_REQUEST['fecha_promesa'] ?? '';
+            $fecha_creacion = $_REQUEST['fecha'] ?? ''; 
                
             // Validar que fecha_asignacion  NO sea menor que fecha creacion
             if ($fecha_creacion>='2026-04-22'){
@@ -1822,7 +1823,7 @@ if ($accion=="g") {
             $id_vendedor = get_dato_sql("ventas", "id_vendedor", " where id=".$cid);
             
             // Si hay foto y se está intentando cambiar el vendedor (solo si ya tenía un vendedor asignado)
-            if (!es_nulo($foto_actual) && !es_nulo($id_vendedor) && $id_vendedor != intval($_REQUEST['id_vendedor'])) {
+            if (!es_nulo($foto_actual) && !es_nulo($id_vendedor) && $id_vendedor != intval($_REQUEST['id_vendedor'] ?? 0)) {
                 $verror .= 'No puede cambiar el vendedor cuando ya existe una foto/documento adjunto.<br>';
             }
         }
@@ -1835,8 +1836,8 @@ if ($accion=="g") {
     $precio_venta_raw = $_REQUEST['precio_venta'] ?? '';
     $prima_venta_raw  = $_REQUEST['prima_venta'] ?? '';
 
-    $precio_minimo=intval($_REQUEST['precio_minimo']);     
-    $precio_maximo=intval($_REQUEST['precio_maximo']);    
+    $precio_minimo=intval($_REQUEST['precio_minimo'] ?? 0);     
+    $precio_maximo=intval($_REQUEST['precio_maximo'] ?? 0);    
     $precio_venta = intval($precio_venta_raw);
 
     $id_vendedor=intval($_REQUEST['id_vendedor']);
@@ -1952,7 +1953,7 @@ if ($accion=="g") {
 
 
 
-        $estado_nuevo = intval($_REQUEST['id_estado']);
+        $estado_nuevo = intval($_REQUEST['id_estado'] ?? 0);
         
         if ($persona_juridica == 1 && ($id_estado==11 || $id_estado==20)) {
 
@@ -2035,7 +2036,8 @@ if ($accion=="g") {
         if ($nuevoregistro==false) {    
             //si modifica se guarda el registo del cambio
             $venta_actual = array();
-            $result_actual = sql_select("SELECT id_tienda, kilometraje, id_estado_pintura, id_estado_interior, id_estado_mecanica, observaciones_reparacion, fecha_promesa, fecha_promesa_taller, precio_minimo, precio_maximo
+            $result_actual = sql_select("SELECT id_tienda, kilometraje, id_estado_pintura, id_estado_interior, id_estado_mecanica, observaciones_reparacion, fecha_promesa, 
+                                        fecha_promesa_taller, precio_minimo, precio_maximo, precio_venta, prima_venta, fecha_asignacion, foto, foto_televentas, id_vendedor
                                          FROM ventas
                                          WHERE id=".$cid." LIMIT 1");
             if ($result_actual!=false && $result_actual->num_rows > 0) {
@@ -2077,26 +2079,58 @@ if ($accion=="g") {
              }
 
              $fecha_promesa = isset($venta_actual['fecha_promesa']) ? trim((string)$venta_actual['fecha_promesa']) : '';
-             if ($fecha_promesa!=trim($_REQUEST['fecha_promesa'])){   
-                registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Fecha de Promesa', $_REQUEST['fecha_promesa']);
+                 if (isset($_REQUEST['fecha_promesa']) && $fecha_promesa!=trim($_REQUEST['fecha_promesa'])){   
+                     registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Fecha de Promesa', $_REQUEST['fecha_promesa']);
              }
 
              $fecha_promesa_taller = isset($venta_actual['fecha_promesa_taller']) ? trim((string)$venta_actual['fecha_promesa_taller']) : '';
              
-             if ($fecha_promesa_taller!=trim($_REQUEST['fecha_promesa_taller'])){   
-                registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Fecha de Promesa Taller', $_REQUEST['fecha_promesa_taller']);
+                 if (isset($_REQUEST['fecha_promesa_taller']) && $fecha_promesa_taller!=trim($_REQUEST['fecha_promesa_taller'])){   
+                     registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Fecha de Promesa Taller', $_REQUEST['fecha_promesa_taller']);
+             }
+
+             $fecha_asignacion = isset($venta_actual['fecha_asignacion']) ? trim((string)$venta_actual['fecha_asignacion']) : '';
+             if (isset($_REQUEST['fecha_asignacion']) && $fecha_asignacion!=trim($_REQUEST['fecha_asignacion'])){
+                 registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Fecha de Asignacion', $_REQUEST['fecha_asignacion']);
              }
 
              $precio_minimo = isset($venta_actual['precio_minimo']) ? intval($venta_actual['precio_minimo']) : 0;
-             if ($precio_minimo!=intval($_REQUEST['precio_minimo'])){   
+             if (isset($_REQUEST['precio_minimo']) && $precio_minimo!=intval($_REQUEST['precio_minimo'])){   
                  registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Precio Minimo', $_REQUEST['precio_minimo']);
              }
 
              $precio_maximo = isset($venta_actual['precio_maximo']) ? intval($venta_actual['precio_maximo']) : 0;
-             if ($precio_maximo!=intval($_REQUEST['precio_maximo'])){   
+             if (isset($_REQUEST['precio_maximo']) && $precio_maximo!=intval($_REQUEST['precio_maximo'])){   
                  registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Precio Maximo', $_REQUEST['precio_maximo']);
-             }         
+             }
+
+             $precio_venta = isset($venta_actual['precio_venta']) ? intval($venta_actual['precio_venta']) : 0;
+             if (isset($_REQUEST['precio_venta']) && $precio_venta!=intval($_REQUEST['precio_venta'])){
+                 registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Precio de Venta', $_REQUEST['precio_venta']);
+             }
+
+             $prima_venta = isset($venta_actual['prima_venta']) ? intval($venta_actual['prima_venta']) : 0;
+             if (isset($_REQUEST['prima_venta']) && $prima_venta!=intval($_REQUEST['prima_venta'])){
+                 registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Prima de Venta', $_REQUEST['prima_venta']);
+             }
+
+             $foto_hist = isset($venta_actual['foto']) ? trim((string)$venta_actual['foto']) : '';
+             if (isset($_REQUEST['foto']) && $foto_hist!=trim((string)$_REQUEST['foto'])) {
+                 registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Foto Comprobante de Pago', trim((string)$_REQUEST['foto']));
+             }
+
+             $foto_televentas_hist = isset($venta_actual['foto_televentas']) ? trim((string)$venta_actual['foto_televentas']) : '';
+             if (isset($_REQUEST['foto_televentas']) && $foto_televentas_hist!=trim((string)$_REQUEST['foto_televentas'])) {
+                 registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Foto Recibo de Pago', trim((string)$_REQUEST['foto_televentas']));
+             }
+
+             $id_vendedor = isset($venta_actual['id_vendedor']) ? trim((string)$venta_actual['id_vendedor']) : '';
+             if (isset($_REQUEST['id_vendedor']) && $id_vendedor!=trim((string)$_REQUEST['id_vendedor'])) {
+                $id_vendedor_name = get_dato_sql("usuario", "nombre", " where id=".intval($_REQUEST['id_vendedor']));
+                registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Vendedor', $id_vendedor_name);
+             }
              
+         
             $sql="update ventas set ".$sqlcampos." where id=".$cid." limit 1";           
 
             $result = sql_update($sql);
@@ -2106,7 +2140,7 @@ if ($accion=="g") {
             /*$sqlcampos.=" ,id_estado=".$estado_global_nuevo;*/
             $sqlcampos.=" ,tipo_ventas_reparacion=1";
             $sqlcampos.=" ,numero=".GetSQLValue(get_dato_sql('ventas',"IFNULL((max(numero)+1),1)"," "),"int"); 
-            
+            $sqlcampos.=" ,cilindraje=".GetSQLValue(intval($cilindraje),"int");
             $sql="insert into ventas set fecha=NOW(), hora=now(),".$sqlcampos." ";        
             
             $result = sql_insert($sql);
@@ -2260,18 +2294,11 @@ if ($accion =="d") {
     if (isset($row["tipo_documento_ident_venta"])) {$tipo_documento_ident_venta= $row["tipo_documento_ident_venta"]; } else {$tipo_documento_ident_venta= "";}
     if (isset($row["nacionalidad_venta"])) {$nacionalidad_venta= $row["nacionalidad_venta"]; } else {$nacionalidad_venta= "";}
 
-
-
     
     //$observaciones_reparacion= "";
-    if ($id_estado=='' || $id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion){
-       $disable_sec1=' ';  
-       $disable_sec2=' ';  
-
-
-       if (!tiene_permiso(169)){         
-          $disable_sec2=' readonly="readonly" ';              
-       }      
+    if ($id_estado=='' || $id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion){                
+          $disable_sec1= !tiene_permiso(190) ? ' disabled="disabled" ' : '';  
+          $disable_sec2= !tiene_permiso(169) ? ' disabled="disabled" ' : '';         
     }else{
        $disable_sec1=' disabled="disabled" ';  
        $disable_sec2=' disabled="disabled" ';  
@@ -2358,7 +2385,7 @@ if ($accion =="d") {
     </div>
 
     <div class="col-md">
-         <?php echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2);  ?> 
+         <?php echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec1);  ?> 
     </div>
     
     <div class="col-md">
@@ -2407,10 +2434,10 @@ if ($accion =="d") {
          <?php echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where id=11 ",'','...'),' ',' required '.$disable_sec2)  ?> 
     </div>
                 <div class="col-md">            
-                <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',$disable_sec2); ?>                 
+                <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ', $disable_sec1); ?>                 
             </div>   
             <div class="col-md">            
-                <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec2); ?>                 
+                <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec1); ?>                 
             </div> 
 </div>
 
@@ -2453,7 +2480,7 @@ if ($accion =="d") {
 
          <div class="row">
             <div class="col-md-12">
-                <?php echo campo("representante_legal_profesion","Profesión u oficio de comprador",'text',$representante_legal_profesion,' ',$disable_sec2); ?>
+                <?php echo campo("representante_legal_profesion","Profesión u oficio de comprador",'text',$representante_legal_profesion,' ',''); ?>
             </div>
             
          </div>
@@ -2462,7 +2489,7 @@ if ($accion =="d") {
 
           <div class="row">
             <div class="col-md-12">
-                <?php echo campo("persona_juridica","persona juridica",'checkboxCustom',$persona_juridica,' ',$disable_sec2); ?>
+                <?php echo campo("persona_juridica","persona juridica",'checkboxCustom',$persona_juridica,' ',''); ?>
             </div>
          </div>
 
@@ -2476,7 +2503,7 @@ if ($accion =="d") {
                     'text',
                     $representante_legal_persona_juridica,
                     ' ',
-                    $disable_sec2
+                    ' '
                 ); ?>
             </div>  
 
@@ -2487,7 +2514,7 @@ if ($accion =="d") {
                     'text',
                     $representante_legal_identidad,
                     ' ',
-                    $disable_sec2
+                    ''
                 ); ?>
             </div>
         </div>
@@ -2500,7 +2527,7 @@ if ($accion =="d") {
                     'text',
                     $representante_legal_direccion,
                     ' ',
-                    $disable_sec2
+                    ' '
                 ); ?>
             </div>
 
@@ -2534,7 +2561,7 @@ if ($accion =="d") {
         <?php
         if ($foto=='') {
             echo '<div id="archivofoto">';
-            echo campo_upload("foto","Adjuntar Comprobante de Pago",'upload','', '  ','',4,8,'NO',false );
+            echo campo_upload("foto","Adjuntar Comprobante de Pago",'upload','', $disable_sec1,'',4,8,'NO',false );
             echo '</div>';
         }
         ?>
@@ -2560,7 +2587,7 @@ if ($accion =="d") {
         <?php
         if ($foto_televentas=='') {
             echo '<div id="archivofoto_televentas">';
-            echo campo_upload("foto_televentas","Adjuntar Recibo de Pago",'upload','', '  ','',4,8,'NO',false );
+            echo campo_upload("foto_televentas","Adjuntar Recibo de Pago",'upload','', $disable_sec1,'',4,8,'NO',false );
             echo '</div>';
         }
         ?>
@@ -2618,7 +2645,7 @@ if ($accion =="d") {
         <!-- 🔹 FILA 2 -->
     <div class="row">
 
-        <?php if ($id_estado!=20){ ?>
+        <?php if ($id_estado!=20 && tiene_permiso(190)){ ?>
         <div class="col-sm">
             <a href="javascript:void(0);"
                id="btnActualizarContrato"

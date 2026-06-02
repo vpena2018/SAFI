@@ -207,11 +207,11 @@ if ($accion=="ec") {
     }
 
       //TECNICOS
-      if ($nombre=='id_tecnico1' or $nombre=='id_tecnico2' or $nombre=='id_tecnico3' or $nombre=='id_tecnico4') {
+      if ($nombre=='id_tecnico1' or $nombre=='id_tecnico2' or $nombre=='id_tecnico3' or $nombre=='id_tecnico4' or $nombre=='id_tecnico5') {
         
         pagina_permiso(69);//asignar mecanico
 
-         $result = sql_select("SELECT id_tecnico1,id_tecnico2,id_tecnico3,id_tecnico4
+         $result = sql_select("SELECT id_tecnico1,id_tecnico2,id_tecnico3,id_tecnico4,id_tecnico5
          FROM servicio
          WHERE id=$sid limit 1");
             
@@ -222,6 +222,7 @@ if ($accion=="ec") {
                  $salida.= campo('id_tecnico2', $etiqueta,'select2',valores_combobox_db('usuario',$row["id_tecnico2"],'nombre',' where activo=1 and grupo_id=2 or perfil_tecnico=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',' required ',''); 
                  $salida.= campo('id_tecnico3', $etiqueta,'select2',valores_combobox_db('usuario',$row["id_tecnico3"],'nombre',' where activo=1 and grupo_id=2 or perfil_tecnico=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',' required ',''); 
                  $salida.= campo('id_tecnico4', $etiqueta,'select2',valores_combobox_db('usuario',$row["id_tecnico4"],'nombre',' where activo=1 and grupo_id=2 or perfil_tecnico=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',' required ','');                      
+                 $salida.= campo('id_tecnico5', $etiqueta,'select2',valores_combobox_db('usuario',$row["id_tecnico5"],'nombre',' where activo=1 and grupo_id=2 or perfil_tecnico=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',' required ','');                      
               }
           }         
       } 
@@ -591,12 +592,13 @@ if ($elcodigo<>"") {
   }
 
   // TECNICOS
-  if (isset($_REQUEST["id_tecnico1"]) and isset($_REQUEST["id_tecnico2"]) and isset($_REQUEST["id_tecnico3"]) and isset($_REQUEST["id_tecnico4"]) )
+  if (isset($_REQUEST["id_tecnico1"]) and isset($_REQUEST["id_tecnico2"]) and isset($_REQUEST["id_tecnico3"]) and isset($_REQUEST["id_tecnico4"]) and isset($_REQUEST["id_tecnico5"]) )
   {
      $sqlcampos.= " id_tecnico1 =".GetSQLValue($_REQUEST["id_tecnico1"],"int");  
      $sqlcampos.= " , id_tecnico2 =".GetSQLValue($_REQUEST["id_tecnico2"],"int");  
      $sqlcampos.= " , id_tecnico3 =".GetSQLValue($_REQUEST["id_tecnico3"],"int");  
      $sqlcampos.= " , id_tecnico4 =".GetSQLValue($_REQUEST["id_tecnico4"],"int");  
+     $sqlcampos.= " , id_tecnico5 =".GetSQLValue($_REQUEST["id_tecnico5"],"int");  
      $fecha_asigna="";
      $estado=0;
       
@@ -973,6 +975,7 @@ if ($accion=="g") {
       if (isset($_REQUEST["id_tecnico2"])) { $sqlcampos.= " , id_tecnico2 =".GetSQLValue($_REQUEST["id_tecnico2"],"int"); } 
       if (isset($_REQUEST["id_tecnico3"])) { $sqlcampos.= " , id_tecnico3 =".GetSQLValue($_REQUEST["id_tecnico3"],"int"); } 
       if (isset($_REQUEST["id_tecnico4"])) { $sqlcampos.= " , id_tecnico4 =".GetSQLValue($_REQUEST["id_tecnico4"],"int"); } 
+      if (isset($_REQUEST["id_tecnico5"])) { $sqlcampos.= " , id_tecnico5 =".GetSQLValue($_REQUEST["id_tecnico5"],"int"); }
 
       if (isset($_REQUEST["fecha_hora_ingreso"])) { $sqlcampos.= " , fecha_hora_ingreso =".GetSQLValue($_REQUEST["fecha_hora_ingreso"],"text"); } 
       if (isset($_REQUEST["fecha_hora_asigna"])) { $sqlcampos.= " , fecha_hora_asigna =".GetSQLValue($_REQUEST["fecha_hora_asigna"],"text"); } 
@@ -1047,6 +1050,7 @@ if ($accion=="v" or !es_nulo($codigo_insp)) {
   ,tec2.nombre AS eltecnico2
   ,tec3.nombre AS eltecnico3
   ,tec4.nombre AS eltecnico4
+  ,tec5.nombre AS eltecnico5
   ,taller.nombre AS taller_nombre
   ,taller.codigo_alterno AS taller_codigo
   ,case 
@@ -1065,6 +1069,7 @@ if ($accion=="v" or !es_nulo($codigo_insp)) {
   LEFT OUTER JOIN usuario tec2 ON (servicio.id_tecnico2=tec2.id)
   LEFT OUTER JOIN usuario tec3 ON (servicio.id_tecnico3=tec3.id)
   LEFT OUTER JOIN usuario tec4 ON (servicio.id_tecnico4=tec4.id)
+  left outer join usuario tec5 ON (servicio.id_tecnico5=tec5.id)
   LEFT OUTER JOIN entidad taller ON (servicio.id_taller=taller.id)
                    
   where servicio.id=$cid limit 1");
@@ -1091,10 +1096,12 @@ if (isset($row["hora"])) {$hora= $row["hora"]; } else {$hora= "";}
 if (isset($row["tipo_servicio"])) {$tipo_servicio= $row["tipo_servicio"]; } else {$tipo_servicio= "";}
 if (isset($row["numero"])) {$numero= $row["numero"]; } else {$numero= "";}
 if (isset($row["numero_alterno"])) {$numero_alterno= $row["numero_alterno"]; } else {$numero_alterno= "";}
+
 if (isset($row["id_tecnico1"])) {$id_tecnico1= $row["id_tecnico1"]; $eltecnico1=$row["eltecnico1"]; } else {$id_tecnico1= ""; $eltecnico1="";}
 if (isset($row["id_tecnico2"])) {$id_tecnico2= $row["id_tecnico2"]; $eltecnico2=$row["eltecnico2"];} else {$id_tecnico2= "";$eltecnico2="";}
 if (isset($row["id_tecnico3"])) {$id_tecnico3= $row["id_tecnico3"]; $eltecnico3=$row["eltecnico3"];} else {$id_tecnico3= "";$eltecnico3="";}
 if (isset($row["id_tecnico4"])) {$id_tecnico4= $row["id_tecnico4"]; $eltecnico4=$row["eltecnico4"];} else {$id_tecnico4= "";$eltecnico4="";}
+if (isset($row["id_tecnico5"])) {$id_tecnico5= $row["id_tecnico5"]; $eltecnico5=$row["eltecnico5"];} else {$id_tecnico5= "";$eltecnico5="";}
 
 if (isset($row["fecha_hora_ingreso"])) {$fecha_hora_ingreso= formato_fechahora_de_mysql($row["fecha_hora_ingreso"]) ; } else {$fecha_hora_ingreso= $now_fechahoraT;}
 if (isset($row["fecha_hora_asigna"])) {$fecha_hora_asigna= formato_fechahora_de_mysql($row["fecha_hora_asigna"]); } else {$fecha_hora_asigna= "";}
@@ -1322,9 +1329,14 @@ if (!es_nulo($id_estado)){
         echo campo("eltecnico4","Mecanico Asignado",'labelb',$eltecnico4,'',' ',"servicio_editarcampo('id_tecnico4','Mecanico Asignado','$id_tecnico4');"); 
         ?>
     </div>
-   
+    <div class="col-md-4"> 
+        <?php 
+        //echo campo("id_tecnico5","Tecnico Auxiliar",'select2',valores_combobox_db('usuario',$id_tecnico3,'nombre',' where activo=1 and grupo_id=2 and tienda_id='.$_SESSION['tienda_id'],'','...'),' ',$disable_sec1); 
+        echo campo("eltecnico5","Mecanico Asignado",'labelb',$eltecnico5,'',' ',"servicio_editarcampo('id_tecnico5','Mecanico Asignado','$id_tecnico5');"); 
+        ?> 
     </div>
-
+    
+  </div>
 <?php 
   }
 ?>
