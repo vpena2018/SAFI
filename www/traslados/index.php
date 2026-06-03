@@ -5,87 +5,99 @@ header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
 require_once ('../include/config.php' );
+//require_once ('framework.php');
 	
 	$conn = new mysqli(db_ip, db_user, db_pw, db_name);// Conectar a base datos
 	if (!mysqli_connect_errno()) {	  
 			$conn->set_charset("utf8");
 	} else { echo 'Server Error [101]">'; exit; }
 
-// FUNCIONES
-//#######################################################
-function salida_json($stud_arr){
-    
-            header('Cache-Control: no-cache, must-revalidate');
-            header('Expires: Sat, 15 Jan 2000 07:00:00 GMT');
-            header('Content-type: application/json');
-            echo json_encode($stud_arr);    
-            exit;   
-}
 
-function GetSQLValue($theValue, $theType)
- {
- 	global $conn;
-
- 	$theValue =$conn->real_escape_string($theValue);
-
-  switch ($theType) {
-    case "text":
-      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
-      break; 
-    case "like":
-      $theValue = ($theValue != "") ? "'%" . $theValue . "%'" : "NULL";
-      break;    
-       
-    case "int":
-      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
-      break;
-    case "int_cero":
-      $theValue = ($theValue != "") ? intval($theValue) : "0";
-      break;
-    case "double":
-      $theValue = ($theValue != "") ? "'" . doubleval($theValue) . "'" : "0";
-      break;
-    case "date":
-      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL"; //formato_fecha_a_mysql($theValue)
-      break;
-    case "datetime":
-    $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL"; 
-    break;
-  }
-  return $theValue;
-}
+	//funciones de BD//
+	function sql_select($sql,$param="",$sql2="") {
+	global $conn;
+	$salida=false;
+ // echo $sql;//exit;
+	$salida = $conn->query($sql) ;
 
 
-function es_nulo($campo) {
-	$salida=true;
-	if ($campo=="" or is_null($campo) or $campo=="0") {$salida=true;} else {$salida=false ;	}
+	return $salida;
+
+} 
+
+function sql_insert($sql) {
+	global $conn;
+	$salida=false;
+//echo $sql;exit;
+	if ($conn->query($sql)) { $salida= $conn->insert_id; }
+	
 	return $salida;
 }
 
-function get_dato_sql($tabla,$campo,$where) {
-	global $conn;
-    $salida="";
+if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="";}
 
-      $sql="select $campo as salida from $tabla $where";
+$accion = $_REQUEST['a'] ?? '';
+$codigo = trim($_REQUEST['codigo'] ?? '');
 
-	$result = $conn -> query($sql);
-  
-      if ($result->num_rows > 0) {    
-        $row = $result -> fetch_assoc();    
-          $salida=trim($row["salida"]);
-         
+
+// Leer Datos    ############################  
+if ($accion=="L") {
+
+		$result = sql_select("SELECT orden_traslado.* 
+		,producto.codigo_alterno,producto.nombre,producto.placa
+		,orden_traslado_estado.nombre AS elestado
+		,l1.nombre AS motorista1
+		,l2.usuario AS solicitante1
+		,l3.nombre AS usuariocompleta
+		,p1.nombre AS elproveedor
+		,t1.nombre AS tiendasalida
+		,t2.nombre AS tiendadestino
+		,t3.nombre as id_tipo_traslado_lbl
+		,t4.nombre as id_tipo_traslado_lbl2
+		FROM orden_traslado
+		LEFT OUTER JOIN producto ON (orden_traslado.id_producto=producto.id)
+		LEFT OUTER JOIN orden_traslado_estado ON (orden_traslado.id_estado=orden_traslado_estado.id)
+		LEFT OUTER JOIN usuario l1 ON (orden_traslado.id_motorista=l1.id)
+		LEFT OUTER JOIN usuario l2 ON (orden_traslado.id_solicitante=l2.id)
+		LEFT OUTER JOIN usuario l3 ON (orden_traslado.id_usuario_autoriza=l3.id)
+		LEFT OUTER JOIN entidad p1 ON (orden_traslado.id_proveedor=p1.id)
+		LEFT OUTER JOIN tienda_agencia t1 ON (orden_traslado.id_tienda_salida=t1.id)
+		LEFT OUTER JOIN tienda_agencia t2 ON (orden_traslado.id_tienda_destino=t2.id)
+		LEFT OUTER JOIN orden_traslado_tipo t3 ON (orden_traslado.id_tipo_traslado=t3.id)
+		LEFT OUTER JOIN orden_traslado_tipo t4 ON (orden_traslado.id_tipo_traslado2=t4.id)
+		WHERE producto.codigo_alterno LIKE '%$codigo'
+		AND id_estado=3
+		limit 1");
+
+    if ($result && $result->num_rows > 0) {
+
+        $row = $result->fetch_assoc();
+
+        echo json_encode([
+            'ok' => true,
+            'data' => $row
+        ]);
+
+    } else {
+
+        echo json_encode([
+            'ok' => false,
+            'error' => 'No se encontró ningún vehículo'
+        ]);
     }
-  
-     return $salida;    
-    
-    
-  }
+
+    exit;
+
+	
+
+} // fin leer datos
 
 
 
 
 
-//#######################################################
+
+
 
 $txt_mensaje="";
 ?>
@@ -180,7 +192,7 @@ $txt_mensaje="";
                                 id="btnBuscar"
                                 class="btn btn-primary w-100"
                                 style="margin-bottom:8px;"
-                                onclick="buscar_vehiculo(); return false;">
+                                >
 
                             BUSCAR
 
@@ -192,8 +204,7 @@ $txt_mensaje="";
 
 
                 <div id="resultadoBusqueda"
-                     class="mt-4"
-                     style="">
+                     class="mt-4" style="display: none;">
 
                     <div class="row mb-3">
 
@@ -261,7 +272,136 @@ $txt_mensaje="";
 <script src="js/index.js"></script>
 <script src="js/sweetalert2/sweetalert2.min.js"></script>
 <script type="text/javascript">
-		
+
+	function buscar_vehiculo(){
+		document.getElementById("resultadoBusqueda").style.display = "block";
+
+	}
+
+	function popupconfirmar(titulo, mensaje, onSi) {
+
+    if (document.getElementById('popupSimple')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'popupSimple';
+    overlay.style = `
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,.45);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        z-index:9999;
+    `;
+
+    overlay.innerHTML = `
+        <div style="
+            background:#fff;
+            border-radius:12px;
+            padding:20px;
+            width:340px;
+            box-shadow:0 6px 18px rgba(0,0,0,.3);
+            font-family:Arial, sans-serif;
+        ">
+            <div style="
+                font-weight:bold;
+                font-size:16px;
+                margin-bottom:10px;
+            ">
+                ${titulo}
+            </div>
+
+            <div style="
+                font-size:14px;
+                margin-bottom:18px;
+                color:#333;
+            ">
+                ${mensaje}
+            </div>
+
+            <div style="text-align:right;">
+
+                <button id="btnSiSimple" style="
+                    background:#0d6efd;
+                    color:#fff;
+                    border:none;
+                    border-radius:6px;
+                    padding:7px 16px;
+                    cursor:pointer;
+                    font-weight:bold;
+                ">Sí</button>
+
+				<button id="btnNoSimple" style="
+                    background:#6c757d;
+                    color:#fff;
+                    border:none;
+                    border-radius:6px;
+                    padding:7px 14px;
+                    cursor:pointer;
+                    margin-right:8px;
+                ">No</button>
+
+
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('btnNoSimple').onclick = () => overlay.remove();
+
+    document.getElementById('btnSiSimple').onclick = () => {
+        overlay.remove();
+        if (typeof onSi === 'function') onSi();
+    };
+}
+
+	$('#btnBuscar').on('click', function (e) {
+    e.preventDefault();
+
+    var codigo = $('#num_inv').val().trim();
+
+    if (codigo === '') {
+        mytoast('error', 'Ingrese un código', 3000);
+        return;
+    }
+
+    $.ajax({
+        url: 'index.php',
+        type: 'GET',
+        dataType: 'json',
+        data: {
+            a: 'L',
+            codigo: codigo
+        },
+        success: function (resp) {
+
+            if (resp.ok) {
+
+                console.log(resp.data);
+
+                // Ejemplo:
+                // $('#lblNumero').html(resp.data.id);
+                // $('#placa').val(resp.data.placa);
+
+            } else {
+                mytoast(
+                    'error',
+                    resp.error || 'No se encontró información',
+                    3000
+                );
+            }
+        },
+        error: function () {
+            mytoast(
+                'error',
+                'Error de comunicación con el servidor',
+                3000
+            );
+        }
+    });
+});
+
 	$(document).ready(function() {
 
 		$.ajaxSetup({
