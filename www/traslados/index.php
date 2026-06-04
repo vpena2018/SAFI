@@ -512,13 +512,20 @@ $txt_mensaje="";
 								$salida = 'Hertz Tegucigalpa';
 								echo campo("salida_lbl", "Salida", "labelb", $salida, '', ' ');
 							?>
+
+							<?php
+                                $solicitado_por = 'etabora';
+                                echo campo("solicitado_por_lbl", "Solicitado por", "labelb", $solicitado_por, '', ' ');
+                            ?>
 						</div>
 
 						<div class="col-md-6">
 							<?php
-								$destino = 'Tienda Norte';
-								echo campo("destino_lbl", "Destino", "labelb", $destino, '', ' ');
+								$proveedor = 'TALLER OPT';
+								echo campo("proveedor_lbl", "Proveedor", "labelb", $proveedor, '', ' ');
 							?>
+
+
 						</div>
 
 					</div>
