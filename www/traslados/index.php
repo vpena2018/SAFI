@@ -72,7 +72,7 @@ function campo_combustible($nombre,$valor,$adicional=""){
 				$salida.= ' <a href="#" onclick="'.$valor2.' return false;" class="label-icon"><i class="fa fa-edit"></i></a>';
 			}
 
-			$salida.= '<br><span class="label-texto" style="color:#000;">'.$valor.'</span>';
+            $salida.= '<br><span id="'.$nombre.'_valor" class="label-texto" style="color:#000;">'.$valor.'</span>';
 			$salida_end='</div>';
 			break;
 
@@ -298,6 +298,8 @@ if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="";}
 $accion = $_REQUEST['a'] ?? '';
 $codigo = trim($_REQUEST['codigo'] ?? '');
 
+//variables
+$numero_traslado="";
 
 // Leer Datos    ############################  
 if ($accion=="L") {
@@ -313,6 +315,7 @@ if ($accion=="L") {
 		,t2.nombre AS tiendadestino
 		,t3.nombre as id_tipo_traslado_lbl
 		,t4.nombre as id_tipo_traslado_lbl2
+		,t0.nombre AS tiendanombre
 		FROM orden_traslado
 		LEFT OUTER JOIN producto ON (orden_traslado.id_producto=producto.id)
 		LEFT OUTER JOIN orden_traslado_estado ON (orden_traslado.id_estado=orden_traslado_estado.id)
@@ -322,6 +325,7 @@ if ($accion=="L") {
 		LEFT OUTER JOIN entidad p1 ON (orden_traslado.id_proveedor=p1.id)
 		LEFT OUTER JOIN tienda_agencia t1 ON (orden_traslado.id_tienda_salida=t1.id)
 		LEFT OUTER JOIN tienda_agencia t2 ON (orden_traslado.id_tienda_destino=t2.id)
+		LEFT OUTER JOIN tienda t0 ON (t1.tienda_id=t0.id)
 		LEFT OUTER JOIN orden_traslado_tipo t3 ON (orden_traslado.id_tipo_traslado=t3.id)
 		LEFT OUTER JOIN orden_traslado_tipo t4 ON (orden_traslado.id_tipo_traslado2=t4.id)
 		WHERE producto.codigo_alterno LIKE '%$codigo'
@@ -331,6 +335,12 @@ if ($accion=="L") {
     if ($result && $result->num_rows > 0) {
 
         $row = $result->fetch_assoc();
+
+		if (isset($row["numero"])) {$numero_traslado= $row["numero"];} else {$numero_traslado= "";}
+
+
+
+
 
         echo json_encode([
             'ok' => true,
@@ -350,11 +360,6 @@ if ($accion=="L") {
 	
 
 } // fin leer datos
-
-
-
-
-
 
 
 
@@ -465,28 +470,28 @@ $txt_mensaje="";
                     <div class="row mb-3">
 
                         <div class="col-md-3">
-							<?php $numero_traslado='58421' ; echo campo("numero_trasladolbl","Numero",'labelb',$numero_traslado,'',' ');?>
+							<?php echo campo("numero_trasladolbl","Numero",'labelb','',' ');?>
                         </div>
 						
 
 						<div class="col-md-3">
 							<?php
-								$fecha = '03/06/2026';
-								echo campo("fecha_lbl", "Fecha", "labelb", $fecha, '', ' ');
+                                //$fecha = date('d/m/Y');
+								echo campo("fecha_lbl", "Fecha", "labelb", '', ' ');
 							?>
 						</div>
 
 						<div class="col-md-3">
 							<?php
 								$tienda = 'Tienda Central';
-								echo campo("tienda_lbl", "Tienda", "labelb", $tienda, '', ' ');
+								echo campo("tienda_lbl", "Tienda", "labelb", '', '', ' ');
 							?>
 						</div>
 
 						<div class="col-md-3">
 							<?php
 								$estado = 'Pendiente';
-								echo campo("estado_lbl", "Estado", "labelb", $estado, '', ' ');
+								echo campo("estado_lbl", "Estado", "labelb", '', '', ' ');
 							?>
 						</div>
 
@@ -497,8 +502,7 @@ $txt_mensaje="";
 
 						<div class="col-12">
 							<?php
-								$vehiculo = 'EA-03946 MITSUBISHI MONTERO SPORT 4X4 2024 CAMIONETA COLOR BLANCO DIAMANTE DIESEL HDW3633';
-								echo campo("vehiculo_lbl", "Vehiculo", "labelb", $vehiculo, '', ' ');
+								echo campo("vehiculo_lbl", "Vehiculo", "labelb", '', ' ');
 							?>
 						</div>
 
@@ -510,19 +514,19 @@ $txt_mensaje="";
 						<div class="col-md-6">
 							<?php
 								$salida = 'Hertz Tegucigalpa';
-								echo campo("salida_lbl", "Salida", "labelb", $salida, '', ' ');
+								echo campo("salida_lbl", "Salida", "labelb", '', '', ' ');
 							?>
 
 							<?php
                                 $solicitado_por = 'etabora';
-                                echo campo("solicitado_por_lbl", "Solicitado por", "labelb", $solicitado_por, '', ' ');
+                                echo campo("solicitado_por_lbl", "Solicitado por", "labelb", '', '', ' ');
                             ?>
 						</div>
 
 						<div class="col-md-6">
 							<?php
 								$proveedor = 'TALLER OPT';
-								echo campo("proveedor_lbl", "Proveedor", "labelb", $proveedor, '', ' ');
+								echo campo("proveedor_lbl", "Proveedor", "labelb", '', '', ' ');
 							?>
 
 
@@ -576,6 +580,29 @@ $txt_mensaje="";
 		document.getElementById("resultadoBusqueda").style.display = "block";
 
 	}
+
+    function formatearFechaDdMmYyyy(fechaRaw) {
+        if (!fechaRaw) {
+            return '';
+        }
+
+        const valor = String(fechaRaw).trim();
+
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(valor)) {
+            return valor;
+        }
+
+        const soloFecha = valor.split(' ')[0];
+        const partes = soloFecha.split('-');
+
+        if (partes.length === 3) {
+            return String(partes[2]).padStart(2, '0') + '/' +
+                String(partes[1]).padStart(2, '0') + '/' +
+                partes[0];
+        }
+
+        return '';
+    }
 
 	function popupconfirmar(titulo, mensaje, onSi) {
 
@@ -679,9 +706,15 @@ $txt_mensaje="";
 
                 console.log(resp.data);
 
-                // Ejemplo:
-                // $('#lblNumero').html(resp.data.id);
-                // $('#placa').val(resp.data.placa);
+                    $('#numero_trasladolbl_valor').html(resp.data.numero || '');
+                    $('#fecha_lbl_valor').html(formatearFechaDdMmYyyy(resp.data.fecha));
+                    $('#tienda_lbl_valor').html(resp.data.tiendanombre || '');
+                    $('#estado_lbl_valor').html(resp.data.elestado || '');
+                    $('#vehiculo_lbl_valor').html(resp.data.nombre || '');
+                    $('#salida_lbl_valor').html(resp.data.tiendasalida || '');
+                    $('#solicitado_por_lbl_valor').html(resp.data.solicitante1 || '');
+                    $('#proveedor_lbl_valor').html(resp.data.elproveedor || '');
+
 
             } else {
                 mytoast(
@@ -708,6 +741,8 @@ $txt_mensaje="";
 		});
 
 	});
+
+
 
 </script>
 
