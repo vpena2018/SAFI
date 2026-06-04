@@ -298,6 +298,48 @@ if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="";}
 $accion = $_REQUEST['a'] ?? '';
 $codigo = trim($_REQUEST['codigo'] ?? '');
 
+if ($accion=="P") {
+
+    $numero_traslado_req = trim($_REQUEST['numero_traslado'] ?? '');
+    $dispositivo_req = trim($_REQUEST['dispositivo'] ?? '');
+    $ip_cliente = $_SERVER['REMOTE_ADDR'] ?? '';
+    $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+
+    if ($numero_traslado_req === '') {
+        echo json_encode([
+            'ok' => false,
+            'error' => 'No hay número de traslado para procesar'
+        ]);
+        exit;
+    }
+
+    $numero_traslado_sql = $conn->real_escape_string($numero_traslado_req);
+    $dispositivo_sql = $conn->real_escape_string($dispositivo_req);
+    $ip_cliente_sql = $conn->real_escape_string($ip_cliente);
+    $user_agent_sql = $conn->real_escape_string($user_agent);
+
+    $sql = "INSERT INTO traslado_bitacora
+            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent)
+            VALUES
+            ('{$numero_traslado_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}')";
+
+    $insert_id = sql_insert($sql);
+
+    if ($insert_id) {
+        echo json_encode([
+            'ok' => true,
+            'id' => $insert_id
+        ]);
+    } else {
+        echo json_encode([
+            'ok' => false,
+            'error' => 'No se pudo guardar el registro'
+        ]);
+    }
+
+    exit;
+}
+
 //variables
 $numero_traslado="";
 
@@ -329,6 +371,13 @@ if ($accion=="L") {
 		LEFT OUTER JOIN orden_traslado_tipo t3 ON (orden_traslado.id_tipo_traslado=t3.id)
 		LEFT OUTER JOIN orden_traslado_tipo t4 ON (orden_traslado.id_tipo_traslado2=t4.id)
 		WHERE producto.codigo_alterno LIKE '%$codigo'
+		      AND NOT EXISTS (
+				    SELECT 1
+				    FROM traslado_bitacora b
+				    INNER JOIN orden_traslado ot2
+				        ON ot2.numero = b.numero_traslado
+				    WHERE ot2.id_producto = orden_traslado.id_producto
+				)
 		AND id_estado=3
 		limit 1");
 
@@ -409,8 +458,8 @@ $txt_mensaje="";
 
         </div>
 
-        <div class="text-center mb-4 form-1-titulo">
-            TRASLADOS VEHICULOS
+        <div class="text-center mb-1 form-1-titulo" style="font-size:2rem; font-weight:700; letter-spacing:1px;">
+            TRASLADO VEHICULOS
         </div>
 
         <div id="mensaje-cuerpo"
@@ -420,7 +469,7 @@ $txt_mensaje="";
         <div id="form-cuerpo"
              class="form-1-body">
 
-            <p class="subtitulo">
+            <p class="subtitulo" style="margin-top:0; margin-bottom:6px;">
                 Busqueda
             </p>
 
@@ -442,6 +491,7 @@ $txt_mensaje="";
                                id="num_inv"
                                name="num_inv"
                                class="form-control"
+                               minlength="4"
                                autocomplete="off"
                                required>
 
@@ -452,7 +502,7 @@ $txt_mensaje="";
                         <button type="button"
                                 id="btnBuscar"
                                 class="btn btn-primary w-100"
-                                style="margin-bottom:8px;"
+                                style="margin-bottom:0px;"
                                 >
 
                             BUSCAR
@@ -505,6 +555,11 @@ $txt_mensaje="";
 								echo campo("vehiculo_lbl", "Vehiculo", "labelb", '', ' ');
 							?>
 						</div>
+						<div class="col-12">
+							<?php
+								echo campo("placa_lbl", "Placa", "labelb", '', ' ');
+							?>
+						</div>
 
 					</div>
 
@@ -534,27 +589,38 @@ $txt_mensaje="";
 
 					</div>
 
-					<div class="row mb-2"> 
+                    <div class="row mb-2"> 
 								
 								<div class="col-md-4">   
 									<span class="outside-label">Combustible Salida</span>
-									<?php 	$combustible_salida = '3/8';	
+									<?php 		
 											$disable_combsalida = 'disabled';				
-										echo campo_combustible('combustible_salida',$combustible_salida,$disable_combsalida);       
+										echo campo_combustible('combustible_salida','',$disable_combsalida);       
 									?>              
 								</div>
 								
 
 								<div class="col-md-4 <?php echo $mostrar_entrada; ?>">  
 								<span class="outside-label">Combustible Entrada</span>
-									<?php 	$combustible_entrada = '3/8';	
+									<?php 		
 											$disable_combentrada = 'disabled';				
-										echo campo_combustible('combustible_entrada',$combustible_entrada,$disable_combentrada);
+										echo campo_combustible('combustible_entrada','',$disable_combentrada);
 									?>              
 								</div>
 
 								
 					</div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <button type="button"
+                                    id="btnProcesar"
+                                    class="btn btn-success btn-lg w-100 py-3"
+                                    style="font-weight:700; letter-spacing:.5px;">
+                                PROCESAR
+                            </button>
+                        </div>
+                    </div>
 
 					
 
@@ -602,6 +668,36 @@ $txt_mensaje="";
         }
 
         return '';
+    }
+
+    function setCombustibleValor(nombreCampo, valor) {
+        const selector = 'input[name="' + nombreCampo + '"]';
+        const $grupo = $(selector);
+
+        $grupo.prop('checked', false);
+        $grupo.closest('label').removeClass('active');
+
+        if (!valor) {
+            return;
+        }
+
+        const $opcion = $(selector + '[value="' + valor + '"]');
+        $opcion.prop('checked', true);
+        $opcion.closest('label').addClass('active');
+    }
+
+    function limpiarCamposResultado() {
+        $('#numero_trasladolbl_valor').html('');
+        $('#fecha_lbl_valor').html('');
+        $('#tienda_lbl_valor').html('');
+        $('#estado_lbl_valor').html('');
+        $('#vehiculo_lbl_valor').html('');
+        $('#placa_lbl_valor').html('');
+        $('#salida_lbl_valor').html('');
+        $('#solicitado_por_lbl_valor').html('');
+        $('#proveedor_lbl_valor').html('');
+        setCombustibleValor('combustible_salida', '');
+        setCombustibleValor('combustible_entrada', '');
     }
 
 	function popupconfirmar(titulo, mensaje, onSi) {
@@ -692,6 +788,11 @@ $txt_mensaje="";
         return;
     }
 
+/*     if (codigo.length < 4) {
+        mytoast('error', 'Ingrese mínimo 4 caracteres', 3000);
+        return;
+    } */
+
     $.ajax({
         url: 'index.php',
         type: 'GET',
@@ -710,13 +811,19 @@ $txt_mensaje="";
                     $('#fecha_lbl_valor').html(formatearFechaDdMmYyyy(resp.data.fecha));
                     $('#tienda_lbl_valor').html(resp.data.tiendanombre || '');
                     $('#estado_lbl_valor').html(resp.data.elestado || '');
-                    $('#vehiculo_lbl_valor').html(resp.data.nombre || '');
+                    $('#vehiculo_lbl_valor').html(resp.data.codigo_alterno+' '+resp.data.nombre || '');
+					$('#placa_lbl_valor').html(resp.data.placa || '');
+
+					
                     $('#salida_lbl_valor').html(resp.data.tiendasalida || '');
                     $('#solicitado_por_lbl_valor').html(resp.data.solicitante1 || '');
                     $('#proveedor_lbl_valor').html(resp.data.elproveedor || '');
+                        setCombustibleValor('combustible_salida', resp.data.combustible_salida || '');
+                        setCombustibleValor('combustible_entrada', resp.data.combustible_entrada || '');
 
 
             } else {
+                limpiarCamposResultado();
                 mytoast(
                     'error',
                     resp.error || 'No se encontró información',
@@ -733,6 +840,46 @@ $txt_mensaje="";
         }
     });
 });
+
+    $('#btnProcesar').on('click', function (e) {
+        e.preventDefault();
+
+        var numeroTraslado = ($('#numero_trasladolbl_valor').text() || '').trim();
+
+        if (numeroTraslado === '') {
+            mytoast('error', 'Favor buscar el vehiculo', 3000);
+            return;
+        }
+
+        var $btn = $(this);
+        $btn.prop('disabled', true);
+
+        $.ajax({
+            url: 'index.php',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                a: 'P',
+                numero_traslado: numeroTraslado,
+                dispositivo: navigator.platform || ''
+            },
+            success: function (resp) {
+                if (resp.ok) {
+                    mytoast('success', 'Procesado correctamente', 3000);
+                    limpiarCamposResultado();
+                    $('#num_inv').val('').focus();
+                } else {
+                    mytoast('error', resp.error || 'Error al procesar', 3000);
+                }
+            },
+            error: function () {
+                mytoast('error', 'Error de comunicación con el servidor', 3000);
+            },
+            complete: function () {
+                $btn.prop('disabled', false);
+            }
+        });
+    });
 
 	$(document).ready(function() {
 
