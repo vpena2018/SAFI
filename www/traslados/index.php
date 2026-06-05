@@ -463,29 +463,27 @@ $txt_mensaje="";
 
   <form class="form-1" id="formsol" name="formsol">
 
-<div id="form-1div" class="card">
+<div id="form-1div" class="card mx-auto" style="max-width: 900px;">
 
     <div class="card-body form-1-card-body">
 
-        <div class="text-center mb-4 form-1-titulo"
-             style="background-color: #ffffff;">
+<div class="text-center mb-2 form-1-titulo"
+     style="background-color: #ffffff;">
 
-            <img src="img/logo.png"
-                 alt=""
-                 class="mb-3 mt-2"
-                 width="200">
+    <img src="img/logo.png"
+         alt=""
+         class="mb-1 mt-1"
+         width="150">
 
-            <hr>
+    <hr class="my-1">
 
-        </div>
+</div>
 
         <div class="text-center mb-1 form-1-titulo" style="font-size:2rem; font-weight:700; letter-spacing:1px;">
             TRASLADO VEHICULOS
         </div>
 
-        <div id="mensaje-cuerpo"
-             class="form-1-body">
-        </div>
+
 
         <div id="form-cuerpo"
              class="form-1-body">
@@ -495,7 +493,7 @@ $txt_mensaje="";
             </p>
 
 
-            <div class="card p-3">
+            <div class="card p-3 mb-0">
 
                 <div class="row align-items-end">
 
@@ -538,7 +536,7 @@ $txt_mensaje="";
                 <div id="resultadoBusqueda"
                      class="mt-4" style="display:block;">
 
-                    <div class="row mb-3">
+                    <div class="row mb-0">
 
                         <div class="col-auto">
 							<?php echo campo("numero_trasladolbl","Numero",'labelb','',' ');?>
@@ -569,7 +567,7 @@ $txt_mensaje="";
                     </div>
 
 
-					<div class="row mb-3">
+					<div class="row mb-0">
 
 						<div class="col-12">
 							<?php
@@ -579,7 +577,7 @@ $txt_mensaje="";
 					</div>
 
 
-					<div class="row mb-4">
+					<div class="row mb-0">
 						<div class="col-auto">
 							<?php
 								echo campo("placa_lbl", "Placa", "labelb", '', ' ');
@@ -633,7 +631,7 @@ $txt_mensaje="";
                         <div class="col-12">
                             <label class="outside-label" for="firmaPad">Firma</label>
                             <canvas id="firmaPad"
-                                    style="width:100%; height:110px; border:2px solid #c8ced4; border-radius:8px; background:#fff; touch-action:none;"></canvas>
+                                    style="width:100%; height:140px; border:2px solid #c8ced4; border-radius:8px; background:#fff; touch-action:none;"></canvas>
                             <div class="text-right mt-2">
                                 <button type="button" id="btnLimpiarFirma" class="btn btn-outline-secondary btn-sm">Limpiar firma</button>
                             </div>
