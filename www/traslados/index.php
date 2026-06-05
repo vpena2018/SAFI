@@ -302,6 +302,7 @@ if ($accion=="P") {
 
     $numero_traslado_req = trim($_REQUEST['numero_traslado'] ?? '');
     $dispositivo_req = trim($_REQUEST['dispositivo'] ?? '');
+    $firma_req = $_REQUEST['firma'] ?? '';
     $ip_cliente = $_SERVER['REMOTE_ADDR'] ?? '';
     $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
 
@@ -313,15 +314,34 @@ if ($accion=="P") {
         exit;
     }
 
+    if ($firma_req === '') {
+        echo json_encode([
+            'ok' => false,
+            'error' => 'Debe capturar la firma'
+        ]);
+        exit;
+    }
+
+    $firma_limpia = preg_replace('#^data:image/\w+;base64,#i', '', trim($firma_req));
+
+    if ($firma_limpia === '' || !preg_match('/^[A-Za-z0-9+\/=\r\n]+$/', $firma_limpia)) {
+        echo json_encode([
+            'ok' => false,
+            'error' => 'La firma no es valida'
+        ]);
+        exit;
+    }
+
     $numero_traslado_sql = $conn->real_escape_string($numero_traslado_req);
     $dispositivo_sql = $conn->real_escape_string($dispositivo_req);
     $ip_cliente_sql = $conn->real_escape_string($ip_cliente);
     $user_agent_sql = $conn->real_escape_string($user_agent);
+    $firma_sql = $conn->real_escape_string($firma_limpia);
 
     $sql = "INSERT INTO traslado_bitacora
-            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent)
+            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma)
             VALUES
-            ('{$numero_traslado_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}')";
+            ('{$numero_traslado_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}', '{$firma_sql}')";
 
     $insert_id = sql_insert($sql);
 
@@ -520,26 +540,26 @@ $txt_mensaje="";
 
                     <div class="row mb-3">
 
-                        <div class="col-md-3">
+                        <div class="col-auto">
 							<?php echo campo("numero_trasladolbl","Numero",'labelb','',' ');?>
                         </div>
 						
 
-						<div class="col-md-3">
+						<div class="col-auto">
 							<?php
                                 //$fecha = date('d/m/Y');
 								echo campo("fecha_lbl", "Fecha", "labelb", '', ' ');
 							?>
 						</div>
 
-						<div class="col-md-3">
+						<div class="col-auto">
 							<?php
 								$tienda = 'Tienda Central';
 								echo campo("tienda_lbl", "Tienda", "labelb", '', '', ' ');
 							?>
 						</div>
 
-						<div class="col-md-3">
+						<div class="col-auto">
 							<?php
 								$estado = 'Pendiente';
 								echo campo("estado_lbl", "Estado", "labelb", '', '', ' ');
@@ -556,39 +576,36 @@ $txt_mensaje="";
 								echo campo("vehiculo_lbl", "Vehiculo", "labelb", '', ' ');
 							?>
 						</div>
-						<div class="col-12">
+					</div>
+
+
+					<div class="row mb-4">
+						<div class="col-auto">
 							<?php
 								echo campo("placa_lbl", "Placa", "labelb", '', ' ');
 							?>
 						</div>
 
-					</div>
-
-
-					<div class="row">
-
-						<div class="col-md-6">
+						<div class="col-auto">
 							<?php
-								$salida = 'Hertz Tegucigalpa';
-								echo campo("salida_lbl", "Salida", "labelb", '', '', ' ');
+								echo campo("salida_lbl", "Salida", "labelb", '', ' ');
 							?>
-
-							<?php
-                                $solicitado_por = 'etabora';
-                                echo campo("solicitado_por_lbl", "Solicitado por", "labelb", '', '', ' ');
-                            ?>
 						</div>
 
-						<div class="col-md-6">
+						<div class="col-auto">
 							<?php
-								$proveedor = 'TALLER OPT';
-								echo campo("proveedor_lbl", "Proveedor", "labelb", '', '', ' ');
+								echo campo("solicitado_por_lbl", "Solicitado por", "labelb", '', ' ');
 							?>
+						</div>
 
-
+						<div class="col-auto">
+							<?php
+								echo campo("proveedor_lbl", "Proveedor", "labelb", '', ' ');
+							?>
 						</div>
 
 					</div>
+
 
                     <div class="row mb-2"> 
 								
@@ -611,6 +628,17 @@ $txt_mensaje="";
 
 								
 					</div>
+
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <label class="outside-label" for="firmaPad">Firma</label>
+                            <canvas id="firmaPad"
+                                    style="width:100%; height:110px; border:2px solid #c8ced4; border-radius:8px; background:#fff; touch-action:none;"></canvas>
+                            <div class="text-right mt-2">
+                                <button type="button" id="btnLimpiarFirma" class="btn btn-outline-secondary btn-sm">Limpiar firma</button>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="row mt-4">
                         <div class="col-12">
@@ -643,10 +671,109 @@ $txt_mensaje="";
 <script src="js/sweetalert2/sweetalert2.min.js"></script>
 <script type="text/javascript">
 
+    let firmaCanvas = null;
+    let firmaCtx = null;
+    let firmaDibujando = false;
+    let firmaTieneTrazo = false;
+
 	function buscar_vehiculo(){
 		document.getElementById("resultadoBusqueda").style.display = "block";
 
 	}
+
+    function ajustarCanvasFirma() {
+        if (!firmaCanvas || !firmaCtx) {
+            return;
+        }
+
+        const ratio = window.devicePixelRatio || 1;
+        const rect = firmaCanvas.getBoundingClientRect();
+        firmaCanvas.width = Math.max(1, Math.floor(rect.width * ratio));
+        firmaCanvas.height = Math.max(1, Math.floor(rect.height * ratio));
+        firmaCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        firmaCtx.lineWidth = 2;
+        firmaCtx.lineCap = 'round';
+        firmaCtx.strokeStyle = '#111';
+    }
+
+    function obtenerPosicionFirma(evt) {
+        const rect = firmaCanvas.getBoundingClientRect();
+        if (evt.touches && evt.touches.length > 0) {
+            return {
+                x: evt.touches[0].clientX - rect.left,
+                y: evt.touches[0].clientY - rect.top
+            };
+        }
+
+        return {
+            x: evt.clientX - rect.left,
+            y: evt.clientY - rect.top
+        };
+    }
+
+    function iniciarFirma(evt) {
+        evt.preventDefault();
+        firmaDibujando = true;
+        const pos = obtenerPosicionFirma(evt);
+        firmaCtx.beginPath();
+        firmaCtx.moveTo(pos.x, pos.y);
+    }
+
+    function moverFirma(evt) {
+        if (!firmaDibujando) {
+            return;
+        }
+        evt.preventDefault();
+        const pos = obtenerPosicionFirma(evt);
+        firmaCtx.lineTo(pos.x, pos.y);
+        firmaCtx.stroke();
+        firmaTieneTrazo = true;
+    }
+
+    function terminarFirma(evt) {
+        if (!firmaDibujando) {
+            return;
+        }
+        evt.preventDefault();
+        firmaDibujando = false;
+        firmaCtx.closePath();
+    }
+
+    function limpiarFirma() {
+        if (!firmaCanvas || !firmaCtx) {
+            return;
+        }
+        firmaCtx.clearRect(0, 0, firmaCanvas.width, firmaCanvas.height);
+        firmaTieneTrazo = false;
+    }
+
+    function obtenerFirmaBase64() {
+        if (!firmaCanvas || !firmaTieneTrazo) {
+            return '';
+        }
+        return firmaCanvas.toDataURL('image/png');
+    }
+
+    function inicializarFirmaPad() {
+        firmaCanvas = document.getElementById('firmaPad');
+        if (!firmaCanvas) {
+            return;
+        }
+
+        firmaCtx = firmaCanvas.getContext('2d');
+        ajustarCanvasFirma();
+        window.addEventListener('resize', ajustarCanvasFirma);
+
+        firmaCanvas.addEventListener('mousedown', iniciarFirma);
+        firmaCanvas.addEventListener('mousemove', moverFirma);
+        firmaCanvas.addEventListener('mouseup', terminarFirma);
+        firmaCanvas.addEventListener('mouseleave', terminarFirma);
+
+        firmaCanvas.addEventListener('touchstart', iniciarFirma, { passive: false });
+        firmaCanvas.addEventListener('touchmove', moverFirma, { passive: false });
+        firmaCanvas.addEventListener('touchend', terminarFirma, { passive: false });
+        firmaCanvas.addEventListener('touchcancel', terminarFirma, { passive: false });
+    }
 
     function formatearFechaDdMmYyyy(fechaRaw) {
         if (!fechaRaw) {
@@ -699,6 +826,7 @@ $txt_mensaje="";
         $('#proveedor_lbl_valor').html('');
         setCombustibleValor('combustible_salida', '');
         setCombustibleValor('combustible_entrada', '');
+        limpiarFirma();
     }
 
 	function popupconfirmar(titulo, mensaje, onSi) {
@@ -852,6 +980,12 @@ $txt_mensaje="";
             return;
         }
 
+        var firmaBase64 = obtenerFirmaBase64();
+        if (firmaBase64 === '') {
+            mytoast('error', 'Debe capturar la firma', 3000);
+            return;
+        }
+
         var $btn = $(this);
         $btn.prop('disabled', true);
 
@@ -862,7 +996,8 @@ $txt_mensaje="";
             data: {
                 a: 'P',
                 numero_traslado: numeroTraslado,
-                dispositivo: navigator.platform || ''
+                dispositivo: navigator.platform || '',
+                firma: firmaBase64
             },
             success: function (resp) {
                 if (resp.ok) {
@@ -887,6 +1022,12 @@ $txt_mensaje="";
 		$.ajaxSetup({
 			cache: false
 		});
+
+        inicializarFirmaPad();
+
+        $('#btnLimpiarFirma').on('click', function () {
+            limpiarFirma();
+        });
 
 	});
 
