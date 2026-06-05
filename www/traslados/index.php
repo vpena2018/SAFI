@@ -379,6 +379,7 @@ if ($accion=="L") {
 				    WHERE ot2.id_producto = orden_traslado.id_producto
 				)
 		AND id_estado=3
+		ORDER BY FECHA DESC
 		limit 1");
 
     if ($result && $result->num_rows > 0) {
