@@ -910,6 +910,8 @@ $txt_mensaje="";
 	$('#btnBuscar').on('click', function (e) {
     e.preventDefault();
 
+	limpiarFirma();
+
     var codigo = $('#num_inv').val().trim();
 
     if (codigo === '') {
