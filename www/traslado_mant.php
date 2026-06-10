@@ -116,11 +116,12 @@ if ($accion=="g") {
 		}
 
 		if (isset($_REQUEST['cp'])) {//completar	
-			$verror.=validar("Razón del Traslado",$_REQUEST['id_tipo_traslado2'], "int", true);										
-			$verror.=validar("Kilometraje",$_REQUEST['kilometraje_entrada'], "int", true);
+			$verror.=validar("Razón del Traslado",$_REQUEST['id_tipo_traslado2'], "int", true);	
+			$kilometraje_entrada = $_REQUEST['kilometraje_entrada'] ?? '';									
+			$verror.=validar("Kilometraje",$kilometraje_entrada, "int", true);
 			if (!isset($_REQUEST['combustible_entrada'])){$verror.='Debe ingresar el Combustible<br>';}			
 	        $ks = intval($_REQUEST['ks']);
-			$ke = intval($_REQUEST['kilometraje_entrada']);
+			$ke = intval($kilometraje_entrada);
 			if ($verror==""){
                if ($ke<$ks){
 				   $verror.="El kilometraje de entrada no puede menor";
@@ -201,7 +202,8 @@ if ($accion=="g") {
 
 		if (isset($_REQUEST['aut'])) {
 			$mov_asignar="Autorizar ";
-			$sqlcampos.=", id_usuario_autoriza =".$_SESSION["usuario_id"];
+			//$sqlcampos.=", id_usuario_autoriza =".$_SESSION["usuario_id"];
+			$sqlcampos.=", id_estado = 4";
 			$sqlcampos.=", autorizado = NOW()";
 		} 	
 
@@ -307,6 +309,9 @@ if ($accion=="g") {
 	}
 
 } else {
+	//$verror = strip_tags($verror);
+
+
 	$stud_arr[0]["pcode"] = 0;
     $stud_arr[0]["pmsg"] =$verror;
     $stud_arr[0]["pcid"] = 0;
@@ -507,7 +512,11 @@ if (!tiene_permiso(142)) {$disable_combsalida=' disabled="disabled"';} else {$di
  //se desabilito porque los motorista ya no tienen permiso de completa
 //if (!tiene_permiso(144)) {$disable_combentrada=' disabled="disabled"';} else {$disable_combentrada="";}
 if ($id_estado>1) {$disable_combsalida=' disabled="disabled"';}
-if ($id_estado>2) {$disable_combentrada=' disabled="disabled"';}
+
+//old
+//if ($id_estado>2) {$disable_combentrada=' disabled="disabled"';}
+
+if ($id_estado==2) {$disable_combentrada=' disabled="disabled"';}
 
 if ($id_estado>1) {$mostrar_entrada=" ";} else {$mostrar_entrada=" oculto";}
 
@@ -567,7 +576,10 @@ $modificar_salida=$nuevoreg;
 			        
             <div class="col-md-6">       
                 <?php 
-				if ($nuevoreg==false && $id_estado==2) {
+
+				$tras_autorizado=4;
+
+				if ($nuevoreg==false && $id_estado==$tras_autorizado) {
 					echo campo("id_tipo_traslado2","Razón del Traslado",'select',valores_combobox_db('orden_traslado_tipo','','nombre',' ','','...'),' ','  required ','','');
 				} else {
 					echo campo("id_tipo_traslado_lbl2","Razón del Traslado",'labelb',$id_tipo_traslado_lbl2,'',' '); 
@@ -707,7 +719,7 @@ $modificar_salida=$nuevoreg;
                 <?php 
 			 
 				
-					if ($id_estado==2) {
+					if ($id_estado==$tras_autorizado) {
 						echo campo("observaciones2","Comentarios",'textarea',$observaciones2,' ',' rows="2"  ');
 					} else {
 						echo campo("observaciones2","Comentarios",'labelb',$observaciones2,'',' '); 
@@ -737,7 +749,7 @@ $modificar_salida=$nuevoreg;
 
 				<div class="col-md-6 <?php echo $mostrar_entrada; ?>">  
 					<?php 
-						if ($id_estado==2) {
+						if ($id_estado==$tras_autorizado)  {
 							echo campo("kilometraje_entrada","Kilometraje Entrada",'number',$kilometraje_entrada,' ',$disable_combentrada  .' ');
 						} else {
 							echo campo("kilometraje_entrada","Kilometraje Entrada",'labelb',$kilometraje_entrada,'',' '); 
@@ -847,23 +859,75 @@ $modificar_salida=$nuevoreg;
 	</div>
 	<div id="botones_accion_traslado" class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top ">
 		<div class="row">
-        <?php if (tiene_permiso(140)) {
-            if (($id_estado<3)) {
-            ?>
-		    <div class="col-sm"><a href="#" onclick="procesar_traslado('traslado_mant.php?a=g','forma_wd',''); return false;" class="btn btn-secondary btn-block mb-2 xfrm" ><i class="fa fa-check"></i> <?php echo 'Guardar'; ?></a></div>
-			
-           <?php 
-		    if (($id_estado==1)) {
-				if (!es_nulo($cid)) {
-				?>
-				<?php if (tiene_permiso(142)) { ?><div class="col-sm"><a href="#" onclick="procesar_traslado('traslado_mant.php?a=g&at=1','forma_wd',''); return false;" class="btn btn-warning btn-block mb-2 xfrm" ><i class="fa fa-check"></i> <?php echo 'Atender'; ?></a></div><?php } ?>
-				<?php if (tiene_permiso(145)) { ?><div class="col-sm"><a href="#" onclick="borrar_traslado(); return false;" class="btn btn-danger btn-block mb-2 xfrm" ><i class="fa fa-check"></i> <?php echo 'Borrar'; ?></a></div> <?php } ?>
-			<?php } }
-			if (($id_estado==2)) { ?>			   
-				<?php if (tiene_permiso(144)) { ?><div class="col-sm"><a href="#" onclick="procesar_traslado('traslado_mant.php?a=g&cp=1','forma_wd',''); return false;" class="btn btn-success btn-block mb-2 xfrm" ><i class="fa fa-check"></i> <?php echo 'Completar'; ?></a></div><?php } ?>
-			<?php }
-				}
-    	} ?>	
+<?php if (tiene_permiso(140)) {
+    if ($id_estado < 5) {
+?>
+        <div class="col-sm">
+            <a href="#"
+               onclick="procesar_traslado('traslado_mant.php?a=g','forma_wd',''); return false;"
+               class="btn btn-secondary btn-block mb-2 xfrm">
+                <i class="fa fa-check"></i> <?php echo 'Guardar'; ?>
+            </a>
+        </div>
+
+        <?php
+        if ($id_estado == 1) {//Atender
+            if (!es_nulo($cid)) {
+        ?>
+                <?php if (tiene_permiso(142)) { ?>
+                    <div class="col-sm">
+                        <a href="#"
+                           onclick="procesar_traslado('traslado_mant.php?a=g&at=1','forma_wd',''); return false;"
+                           class="btn btn-warning btn-block mb-2 xfrm">
+                            <i class="fa fa-check"></i> <?php echo 'Atender'; ?>
+                        </a>
+                    </div>
+                <?php } ?>
+
+                <?php if (tiene_permiso(145)) { ?>
+                    <div class="col-sm">
+                        <a href="#"
+                           onclick="borrar_traslado(); return false;"
+                           class="btn btn-danger btn-block mb-2 xfrm">
+                            <i class="fa fa-check"></i> <?php echo 'Borrar'; ?>
+                        </a>
+                    </div>
+                <?php } ?>
+
+        <?php
+            }
+        }
+
+        if ($id_estado == 4) {//Completar
+        ?>
+            <?php if (tiene_permiso(144)) { ?>
+                <div class="col-sm">
+                    <a href="#"
+                       onclick="procesar_traslado('traslado_mant.php?a=g&cp=1','forma_wd',''); return false;"
+                       class="btn btn-success btn-block mb-2 xfrm">
+                        <i class="fa fa-check"></i> <?php echo 'Completar'; ?>
+                    </a>
+                </div>
+            <?php } ?>
+        <?php
+        }
+
+        if ($id_estado == 2) {//Autorizar
+        ?>
+            <?php if (tiene_permiso(144)) { ?>
+                <div class="col-sm">
+                    <a href="#"
+                       onclick="procesar_autorizacion('traslado_mant.php?a=g&aut=1','forma_wd',''); return false;"
+                       class="btn btn-success btn-block mb-2 xfrm">
+                        <i class="fa fa-check"></i> <?php echo 'Autorizar'; ?>
+                    </a>
+                </div>
+            <?php } ?>
+        <?php
+        }
+
+    }
+} ?>	
 
         <?php if (es_nulo($id_usuario_auditado) and $id_estado==3 and tiene_permiso(163)) { ?>
 			  <div class="col-sm"><a href="#" onclick="procesar_traslado('traslado_mant.php?a=adpc&adpc=1','forma_wd',''); return false;" class="btn btn-success btn-block mb-2 xfrm" ><i class="fa fa-check"></i> <?php echo 'Revision ADPC'; ?></a></div>
@@ -914,6 +978,63 @@ Swal.fire({
 }
 
 function procesar_traslado(url,forma,adicional){
+	{
+		debugger;
+	$("#"+forma+" .xfrm").addClass("disabled");		
+	cargando(true); 
+			
+	var datos=$("#"+forma).serialize();
+
+	 $.post( url,datos, function(json) {
+	 			
+		if (json.length > 0) {
+			if (json[0].pcode == 0) {
+				cargando(false);
+				mytoast('error',json[0].pmsg,3000) ;   
+			}
+			if (json[0].pcode == 1) {
+				cargando(false);
+				mytoast('success',json[0].pmsg,3000) ;
+
+					// $("#"+forma+' #id').val(json[0].pcid);
+			
+				if (forma=='forma_wd') {
+                    
+					procesar_tabla_datatable('tablaver','tabla_traslado','traslado_ver.php?a=1','Traslado de Vehiculos');
+                    $('#ModalWindow').modal('hide');
+                }
+			
+			}
+		} else {cargando(false);  mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar");}
+		  
+	})
+	  .done(function() {
+	   
+	  })
+	  .fail(function(xhr, status, error) {
+
+	   alert(xhr.responseText);
+
+/* 	   alert(
+        "STATUS: " + status +
+        "\nERROR: " + error +
+        "\nHTTP: " + xhr.status
+    ); */
+
+	   		cargando(false); mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar");
+	  })
+	  .always(function() {
+	   
+		$("#"+forma+" .xfrm").removeClass("disabled");	
+	  });
+		
+		
+	}
+		
+}
+
+
+function procesar_autorizacion(url,forma,adicional){
 	{
 	$("#"+forma+" .xfrm").addClass("disabled");		
 	cargando(true); 
