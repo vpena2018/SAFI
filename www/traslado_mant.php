@@ -847,23 +847,75 @@ $modificar_salida=$nuevoreg;
 	</div>
 	<div id="botones_accion_traslado" class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top ">
 		<div class="row">
-        <?php if (tiene_permiso(140)) {
-            if (($id_estado<3)) {
-            ?>
-		    <div class="col-sm"><a href="#" onclick="procesar_traslado('traslado_mant.php?a=g','forma_wd',''); return false;" class="btn btn-secondary btn-block mb-2 xfrm" ><i class="fa fa-check"></i> <?php echo 'Guardar'; ?></a></div>
-			
-           <?php 
-		    if (($id_estado==1)) {
-				if (!es_nulo($cid)) {
-				?>
-				<?php if (tiene_permiso(142)) { ?><div class="col-sm"><a href="#" onclick="procesar_traslado('traslado_mant.php?a=g&at=1','forma_wd',''); return false;" class="btn btn-warning btn-block mb-2 xfrm" ><i class="fa fa-check"></i> <?php echo 'Atender'; ?></a></div><?php } ?>
-				<?php if (tiene_permiso(145)) { ?><div class="col-sm"><a href="#" onclick="borrar_traslado(); return false;" class="btn btn-danger btn-block mb-2 xfrm" ><i class="fa fa-check"></i> <?php echo 'Borrar'; ?></a></div> <?php } ?>
-			<?php } }
-			if (($id_estado==2)) { ?>			   
-				<?php if (tiene_permiso(144)) { ?><div class="col-sm"><a href="#" onclick="procesar_traslado('traslado_mant.php?a=g&cp=1','forma_wd',''); return false;" class="btn btn-success btn-block mb-2 xfrm" ><i class="fa fa-check"></i> <?php echo 'Completar'; ?></a></div><?php } ?>
-			<?php }
-				}
-    	} ?>	
+<?php if (tiene_permiso(140)) {
+    if ($id_estado < 5) {
+?>
+        <div class="col-sm">
+            <a href="#"
+               onclick="procesar_traslado('traslado_mant.php?a=g','forma_wd',''); return false;"
+               class="btn btn-secondary btn-block mb-2 xfrm">
+                <i class="fa fa-check"></i> <?php echo 'Guardar'; ?>
+            </a>
+        </div>
+
+        <?php
+        if ($id_estado == 1) {//Atender
+            if (!es_nulo($cid)) {
+        ?>
+                <?php if (tiene_permiso(142)) { ?>
+                    <div class="col-sm">
+                        <a href="#"
+                           onclick="procesar_traslado('traslado_mant.php?a=g&at=1','forma_wd',''); return false;"
+                           class="btn btn-warning btn-block mb-2 xfrm">
+                            <i class="fa fa-check"></i> <?php echo 'Atender'; ?>
+                        </a>
+                    </div>
+                <?php } ?>
+
+                <?php if (tiene_permiso(145)) { ?>
+                    <div class="col-sm">
+                        <a href="#"
+                           onclick="borrar_traslado(); return false;"
+                           class="btn btn-danger btn-block mb-2 xfrm">
+                            <i class="fa fa-check"></i> <?php echo 'Borrar'; ?>
+                        </a>
+                    </div>
+                <?php } ?>
+
+        <?php
+            }
+        }
+
+        if ($id_estado == 4) {//Completar
+        ?>
+            <?php if (tiene_permiso(144)) { ?>
+                <div class="col-sm">
+                    <a href="#"
+                       onclick="procesar_traslado('traslado_mant.php?a=g&cp=1','forma_wd',''); return false;"
+                       class="btn btn-success btn-block mb-2 xfrm">
+                        <i class="fa fa-check"></i> <?php echo 'Completar'; ?>
+                    </a>
+                </div>
+            <?php } ?>
+        <?php
+        }
+
+        if ($id_estado == 2) {//Autorizar
+        ?>
+            <?php if (tiene_permiso(144)) { ?>
+                <div class="col-sm">
+                    <a href="#"
+                       onclick="procesar_autorizacion('traslado_mant.php?a=g&at=1','forma_wd',''); return false;"
+                       class="btn btn-success btn-block mb-2 xfrm">
+                        <i class="fa fa-check"></i> <?php echo 'Autorizar'; ?>
+                    </a>
+                </div>
+            <?php } ?>
+        <?php
+        }
+
+    }
+} ?>	
 
         <?php if (es_nulo($id_usuario_auditado) and $id_estado==3 and tiene_permiso(163)) { ?>
 			  <div class="col-sm"><a href="#" onclick="procesar_traslado('traslado_mant.php?a=adpc&adpc=1','forma_wd',''); return false;" class="btn btn-success btn-block mb-2 xfrm" ><i class="fa fa-check"></i> <?php echo 'Revision ADPC'; ?></a></div>
@@ -914,6 +966,53 @@ Swal.fire({
 }
 
 function procesar_traslado(url,forma,adicional){
+	{
+	$("#"+forma+" .xfrm").addClass("disabled");		
+	cargando(true); 
+			
+	var datos=$("#"+forma).serialize();
+
+	 $.post( url,datos, function(json) {
+	 			
+		if (json.length > 0) {
+			if (json[0].pcode == 0) {
+				cargando(false);
+				mytoast('error',json[0].pmsg,3000) ;   
+			}
+			if (json[0].pcode == 1) {
+				cargando(false);
+				mytoast('success',json[0].pmsg,3000) ;
+
+					// $("#"+forma+' #id').val(json[0].pcid);
+			
+				if (forma=='forma_wd') {
+                    
+					procesar_tabla_datatable('tablaver','tabla_traslado','traslado_ver.php?a=1','Traslado de Vehiculos');
+                    $('#ModalWindow').modal('hide');
+                }
+			
+			}
+		} else {cargando(false);  mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar");}
+		  
+	})
+	  .done(function() {
+	   
+	  })
+	  .fail(function(xhr, status, error) {
+	   		cargando(false); mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar");
+	  })
+	  .always(function() {
+	   
+		$("#"+forma+" .xfrm").removeClass("disabled");	
+	  });
+		
+		
+	}
+		
+}
+
+
+function procesar_autorizacion(url,forma,adicional){
 	{
 	$("#"+forma+" .xfrm").addClass("disabled");		
 	cargando(true); 
