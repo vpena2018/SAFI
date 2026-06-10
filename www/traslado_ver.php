@@ -30,7 +30,8 @@ if ($accion=="1") {
     
         
         if (($tmpval==0)){
-            $filtros.=" AND (orden_traslado.id_estado=1 or orden_traslado.id_estado=2)";
+            //atender, autorizar
+            $filtros.=" AND (orden_traslado.id_estado=1 or orden_traslado.id_estado=2 or orden_traslado.id_estado=4)";
          } else {
             $filtros.=" AND orden_traslado.id_estado=$tmpval"; 
          }
@@ -120,6 +121,11 @@ if ($accion=="1") {
                     }else{
                         $acclavar="Completar" ;
                     }
+                    $acclavar_btn="btn-success";
+                }
+
+                if ($row["id_estado"]==4 ) {
+                    $acclavar="Completar" ;
                     $acclavar_btn="btn-success";
                 }
 
