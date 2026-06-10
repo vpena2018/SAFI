@@ -398,7 +398,7 @@ if ($accion=="L") {
 				        ON ot2.numero = b.numero_traslado
 				    WHERE ot2.id_producto = orden_traslado.id_producto
 				)
-		AND id_estado=3
+		AND id_estado=4
 		ORDER BY FECHA DESC
 		limit 1");
 
@@ -563,6 +563,16 @@ $txt_mensaje="";
 								echo campo("estado_lbl", "Estado", "labelb", '', '', ' ');
 							?>
 						</div>
+                        <div class="col-auto">
+							<?php
+								echo campo("solicitado_por_lbl", "Solicitado por", "labelb", '', ' ');
+							?>
+						</div>
+                        <div class="col-auto">
+							<?php
+								echo campo("atendido_por_lbl", "Atendido por", "labelb", '', ' ');
+							?>
+						</div>
 
                     </div>
 
@@ -592,22 +602,23 @@ $txt_mensaje="";
 
 						<div class="col-auto">
 							<?php
-								echo campo("solicitado_por_lbl", "Solicitado por", "labelb", '', ' ');
+								echo campo("proveedor_lbl", "Proveedor/Destino", "labelb", '', ' ');
 							?>
 						</div>
 
-						<div class="col-auto">
+                        <div class="col-auto">
 							<?php
-								echo campo("proveedor_lbl", "Proveedor", "labelb", '', ' ');
+								echo campo("kilometraje_salida_lbl", "Kilometraje salida", "labelb", '', ' ');
 							?>
 						</div>
+                        
 
 					</div>
 
 
                     <div class="row mb-2"> 
 								
-								<div class="col-md-4">   
+								<div class="col-md-12">   
 									<span class="outside-label">Combustible Salida</span>
 									<?php 		
 											$disable_combsalida = 'disabled';				
@@ -615,14 +626,14 @@ $txt_mensaje="";
 									?>              
 								</div>
 								
-
-								<div class="col-md-4 <?php echo $mostrar_entrada; ?>">  
+<!-- 
+								<div class="col-md-4 <?php //echo $mostrar_entrada; ?>">  
 								<span class="outside-label">Combustible Entrada</span>
 									<?php 		
-											$disable_combentrada = 'disabled';				
-										echo campo_combustible('combustible_entrada','',$disable_combentrada);
+											//$disable_combentrada = 'disabled';				
+										//echo campo_combustible('combustible_entrada','',$disable_combentrada);
 									?>              
-								</div>
+								</div> -->
 
 								
 					</div>
@@ -821,9 +832,11 @@ $txt_mensaje="";
         $('#placa_lbl_valor').html('');
         $('#salida_lbl_valor').html('');
         $('#solicitado_por_lbl_valor').html('');
+        $('#atendido_por_lbl_valor').html('');
+        $('#kilometraje_salida_lbl_valor').html('');
         $('#proveedor_lbl_valor').html('');
         setCombustibleValor('combustible_salida', '');
-        setCombustibleValor('combustible_entrada', '');
+        //setCombustibleValor('combustible_entrada', '');
         limpiarFirma();
     }
 
@@ -939,16 +952,42 @@ $txt_mensaje="";
                     $('#numero_trasladolbl_valor').html(resp.data.numero || '');
                     $('#fecha_lbl_valor').html(formatearFechaDdMmYyyy(resp.data.fecha));
                     $('#tienda_lbl_valor').html(resp.data.tiendanombre || '');
-                    $('#estado_lbl_valor').html(resp.data.elestado || '');
+                    
+                    $('#estado_lbl_valor').html(
+                        (resp.data.elestado || '').toLowerCase() === 'autorizar'
+                            ? 'Autorizado'
+                            : (resp.data.elestado || '')
+                    );
+
                     $('#vehiculo_lbl_valor').html(resp.data.codigo_alterno+' '+resp.data.nombre || '');
 					$('#placa_lbl_valor').html(resp.data.placa || '');
 
 					
                     $('#salida_lbl_valor').html(resp.data.tiendasalida || '');
                     $('#solicitado_por_lbl_valor').html(resp.data.solicitante1 || '');
-                    $('#proveedor_lbl_valor').html(resp.data.elproveedor || '');
+                    $('#atendido_por_lbl_valor').html(resp.data.motorista1 || '');
+
+                    $('#kilometraje_salida_lbl_valor').html(
+                        `${Number(resp.data.kilometraje_salida || 0).toLocaleString('es-HN')} km`
+                    );
+
+                    let destino=resp.data.tipo_destino;
+
+
+                    if(destino==1){
+                        $('#proveedor_lbl_valor').html(resp.data.tiendadestino || '');
+                    }
+                        else if(destino==2){
+                             $('#proveedor_lbl_valor').html(resp.data.elproveedor || '');
+                            }
+
+
+                    //$('#proveedor_lbl_valor').html(resp.data.elproveedor || '');
+                    $('#proveedor_lbl_valor').siblings('.label-label').text(resp.data.tipo_destino == 1 ? 'Destino a' : 'Proveedor');
+
+
                         setCombustibleValor('combustible_salida', resp.data.combustible_salida || '');
-                        setCombustibleValor('combustible_entrada', resp.data.combustible_entrada || '');
+                        //setCombustibleValor('combustible_entrada', resp.data.combustible_entrada || '');
 
 
             } else {
