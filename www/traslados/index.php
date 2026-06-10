@@ -398,7 +398,7 @@ if ($accion=="L") {
 				        ON ot2.numero = b.numero_traslado
 				    WHERE ot2.id_producto = orden_traslado.id_producto
 				)
-		AND id_estado=3
+		AND id_estado=4
 		ORDER BY FECHA DESC
 		limit 1");
 
@@ -598,9 +598,10 @@ $txt_mensaje="";
 
 						<div class="col-auto">
 							<?php
-								echo campo("proveedor_lbl", "Proveedor", "labelb", '', ' ');
+								echo campo("proveedor_lbl", "Proveedor/Destino", "labelb", '', ' ');
 							?>
 						</div>
+                        
 
 					</div>
 
@@ -946,7 +947,24 @@ $txt_mensaje="";
 					
                     $('#salida_lbl_valor').html(resp.data.tiendasalida || '');
                     $('#solicitado_por_lbl_valor').html(resp.data.solicitante1 || '');
-                    $('#proveedor_lbl_valor').html(resp.data.elproveedor || '');
+
+
+                    let destino=resp.data.tipo_destino;
+
+                    debugger;
+
+                    if(destino==1){
+                        $('#proveedor_lbl_valor').html(resp.data.tiendadestino || '');
+                    }
+                        else if(destino==2){
+                             $('#proveedor_lbl_valor').html(resp.data.elproveedor || '');
+                            }
+
+
+                    //$('#proveedor_lbl_valor').html(resp.data.elproveedor || '');
+                    $('#proveedor_lbl_valor').siblings('.label-label').text(resp.data.tipo_destino == 1 ? 'Destino a' : 'Proveedor');
+
+
                         setCombustibleValor('combustible_salida', resp.data.combustible_salida || '');
                         setCombustibleValor('combustible_entrada', resp.data.combustible_entrada || '');
 
