@@ -29,7 +29,7 @@ if ($accion == "1") {
     WHERE (
         (ventas.tipo_ventas_reparacion = 2 AND ventas.id_estado IN (5, 11))
         OR
-        (ventas.tipo_ventas_reparacion = 1 AND (ventas.id_estado = 0 OR ventas.id_estado IS NULL OR ventas.id_estado = 11))
+        (ventas.tipo_ventas_reparacion = 1 AND (ventas.id_estado = 0 OR ventas.id_estado IS NULL OR ventas.id_estado = 11 or ventas.id_estado = 99))
     )
       $filtro_tienda
     GROUP BY ventas.tipo_ventas_reparacion");
