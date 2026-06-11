@@ -1475,14 +1475,20 @@ if (!tiene_permiso(168)) {
 if ($accion=="dfoto") {
    $cid=0;
    if (isset($_REQUEST['id'])) { $cid = intval($_REQUEST["id"]); }   
-   if (isset($_REQUEST['foto'])){ $dfoto = intval($_REQUEST['foto']);} 
+   if (isset($_GET['foto'])){ $dfoto = intval($_GET['foto']);} 
+   $id_estado_hist = intval(get_dato_sql("ventas", "id_estado", " where id=$cid"));
    if ($dfoto==1){
       sql_update("UPDATE ventas set foto=null where id=$cid limit 1");   
+      sql_insert("INSERT INTO ventas_historial_estado (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
+      VALUES ($cid, ".$_SESSION['usuario_id'].", $id_estado_hist, 'Eliminacion foto comprobante de pago', NOW(), 'Comprobante de pago eliminado')");
    }else{
       sql_update("UPDATE ventas set foto_televentas=null where id=$cid limit 1");
+      sql_insert("INSERT INTO ventas_historial_estado (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
+      VALUES ($cid, ".$_SESSION['usuario_id'].", $id_estado_hist, 'Eliminacion foto recibo de pago', NOW(), 'Recibo de pago eliminado')");
    }
    $stud_arr[0]["pcode"] = 1;
-   $stud_arr[0]["pmsg"] ="Foto eliminada";     
+   $stud_arr[0]["pmsg"] ="Foto eliminada";
+   $stud_arr[0]["pcid"] = $cid;
    salida_json($stud_arr);  
    exit;  
 }
@@ -1643,7 +1649,7 @@ if ($accion=="g") {
     if (es_nulo($cid)){
         $id_producto=intval($_REQUEST['id_producto']);
         $vehiculo=get_dato_sql("ventas","count(*)"," where id_producto=".$id_producto);
-        if (!es_nulo($vehiculo) && es_nulo($cid)){ $verror.='Vehiculo ya esta registrado'; }   
+        if (!es_nulo($vehiculo)){ $verror.='Vehiculo ya esta registrado'; }   
     }  
     
     $carShopPerfil=get_dato_sql("usuario","grupo_id"," WHERE id=".$_SESSION["usuario_id"]);
@@ -2196,6 +2202,18 @@ if ($foto_original_tele !== '') {
              if ($observaciones!=trim($_REQUEST['observaciones'])){   
                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Modificacion de Observaciones', NOW(),'".$_REQUEST['observaciones']."')"); 
+             }
+
+             $foto_actual_bd = (string)get_dato_sql("ventas", "foto", " where id=$cid");
+             if (!empty($_REQUEST["foto"]) && $foto !== $foto_actual_bd) {
+                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
+                 VALUES ($cid, ".$_SESSION['usuario_id'].", ".$_REQUEST['id_estado'].", 'Subida foto comprobante de pago', NOW(), '".$foto."')");
+             }
+
+             $foto_tele_actual_bd = (string)get_dato_sql("ventas", "foto_televentas", " where id=$cid");
+             if (!empty($_REQUEST["foto_televentas"]) && $foto_televentas !== $foto_tele_actual_bd) {
+                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
+                 VALUES ($cid, ".$_SESSION['usuario_id'].", ".$_REQUEST['id_estado'].", 'Subida foto recibo de pago', NOW(), '".$foto_televentas."')");
              }
             
              
@@ -2787,6 +2805,9 @@ if ($foto_original_tele !== '') {
 
 </div>
 
+<input type="hidden" id="foto_comprobante_in" name="foto" value="<?php echo htmlspecialchars($foto ?? ''); ?>">
+<input type="hidden" id="foto_televentas_comprobante_in" name="foto_televentas" value="<?php echo htmlspecialchars($foto_televentas ?? ''); ?>">
+
 	</fieldset>
 	</form>
 
@@ -3329,7 +3350,10 @@ function insp_guardar_foto(arch,campo){
            $('#'+campo).val(arch);                
            $('#files_'+campo).text('Guardado');
            $('#lk'+campo).html(arch);
-           thumb_agregar(arch);    
+           thumb_agregar(arch);
+           // Actualizar hidden inputs dentro del formulario para que se guarden al hacer submit
+           if (campo === 'foto') { $('#foto_comprobante_in').val(arch); }
+           if (campo === 'foto_televentas') { $('#foto_televentas_comprobante_in').val(arch); }
 }
 
 
