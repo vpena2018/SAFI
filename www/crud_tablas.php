@@ -212,7 +212,7 @@ switch ($numtabla) {
             case 16: 
                 pagina_permiso(161);
                 $tabla="guardias"; 
-                $tabla_etiqueta="Guarias";
+                $tabla_etiqueta="Guardias";
                 $columnas = array('id','tienda_id','nombre','activo','fecha_creacion');
                 $columnas_etiquetas = array('ID','Tienda','Nombre','Estado','Fecha Creacion' );
                 $columnas_tipo = array('int','int','text','int','datetime');
@@ -222,6 +222,27 @@ switch ($numtabla) {
                 $columnas_combo2 = array('tienda');
                 $columnas_combo3 = array('nombre');
                 break;
+            
+            case 17:
+                pagina_permiso(161);
+                $tabla="financieras"; 
+                $tabla_etiqueta="Financieras";
+                $columnas = array('id','nombre');
+                $columnas_etiquetas = array('Id','Nombre' );
+                $columnas_tipo = array('int','text' );
+                $columnas_mask = array('','' ); 
+                break;
+
+            case 18:
+                pagina_permiso(161);
+                $tabla="financieras_estados"; 
+                $tabla_etiqueta="Financieras - Estados";
+                $columnas = array('id','nombre');
+                $columnas_etiquetas = array('Id','Nombre' );
+                $columnas_tipo = array('int','text' );
+                $columnas_mask = array('','' ); 
+                break;
+
      
 // case 12: 
 // $tabla="destination_groupxdestination"; 
