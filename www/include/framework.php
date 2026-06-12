@@ -178,7 +178,7 @@ define("app_tipo_doc", '<option value="1">Entrada</option><option value="2">Sali
 define("app_estado_mapeo", '<option value="1">Disponible</option><option value="2">Ocupado</option><option value="3">Fuera de Servicio</option>');
 //get_estado_mapeo
 define("app_reproceso_ventas", '<option value="1">Pintura</option><option value="2">Interior</option><option value="3">Mecanica</option>');
-
+define("app_tipo_vvehiculo", '<option value="1">Contado</option><option value="2">Credito</option>');
 
 //define("app_combustible", '<option value=""></option><option value="E">E</option><option value="1/16">1/16</option><option value="1/8">1/8</option><option value="3/16">3/16</option><option value="1/4">1/4</option><option value="5/16">5/16</option><option value="3/8">3/8</option><option value="7/16">7/16</option><option value="1/2">1/2</option><option value="9/16">9/16</option><option value="5/8">5/8</option><option value="11/16">11/16</option><option value="3/4">3/4</option><option value="13/16">13/16</option><option value="7/8">7/8</option><option value="15/16">15/16</option><option value="F">F</option>');
 

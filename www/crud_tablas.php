@@ -223,8 +223,7 @@ switch ($numtabla) {
                 $columnas_combo3 = array('nombre');
                 break;
             
-            case 17:
-                pagina_permiso(161);
+            case 17:            
                 $tabla="financieras"; 
                 $tabla_etiqueta="Financieras";
                 $columnas = array('id','nombre');
@@ -233,8 +232,7 @@ switch ($numtabla) {
                 $columnas_mask = array('','' ); 
                 break;
 
-            case 18:
-                pagina_permiso(161);
+            case 18:               
                 $tabla="financieras_estados"; 
                 $tabla_etiqueta="Financieras - Estados";
                 $columnas = array('id','nombre');
