@@ -139,6 +139,7 @@ while ($item = $pendientes->fetch_assoc()) {
 
         // Generar el PDF
         $contrato = trim($correo_row["renta_contrato"])=="" ? "" : trim($correo_row["renta_contrato"]);
+        $guardar_archivo_pag1 = ""; // ruta del PDF con solo la primera página (para adjuntar al correo)    
         if ($contrato != "") {
             $tipo_doc = $correo_row['tipo_doc']==1 ? 'Entrada' : 'Salida';
             $contrato = strtoupper(str_replace(" ", "", $contrato));
