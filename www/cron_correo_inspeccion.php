@@ -142,11 +142,9 @@ while ($item = $pendientes->fetch_assoc()) {
         if ($contrato != "") {
             $tipo_doc = $correo_row['tipo_doc']==1 ? 'Entrada' : 'Salida';
             $contrato = strtoupper(str_replace(" ", "", $contrato));
-            $guardar_archivo = app_dir . 'reportes/' . 'Inspeccion_' . $correo_row["numero"] .'_'. $contrato .'_'. $tipo_doc . '.pdf';
-        }else{
-            $guardar_archivo = app_dir . 'reportes/' . 'Inspeccion_' . $correo_row["numero"] . '.pdf';
-        }
-        //$guardar_archivo = app_dir . 'reportes/' . 'Inspeccion_' . $correo_row["numero"] .'_'. $contrato .'_'. $tipo_doc . '.pdf';
+            $guardar_archivo_pag1 = app_dir . 'inspeccion/' . 'Inspeccion_' . $correo_row["numero"] .'_'. $contrato .'_'. $tipo_doc . '.pdf';
+        }        
+        $guardar_archivo = app_dir . 'reportes/' . 'Inspeccion_' . $correo_row["numero"] . '.pdf';
         include(__DIR__ . '/inspeccion_pdf.php'); // genera el PDF en $guardar_archivo
 
         // Armar el correo

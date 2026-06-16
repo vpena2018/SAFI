@@ -793,6 +793,14 @@ ob_end_clean();
 if (isset($guardar_archivo)) {
     //$pdf->Output(app_dir.'reportes/'.'inspeccion_'. $numero .'.pdf', 'F');    
     $pdf->Output($guardar_archivo, 'F');
+
+    // Eliminar todas las páginas excepto la primera
+    $total = $pdf->getNumPages();
+    for ($p = $total; $p > 1; $p--) {
+        $pdf->deletePage($p);
+    }
+    $pdf->Output($guardar_archivo_pag1, 'F');
+
 } else { 
     $pdf->Output('Inspeccion_'.$numero.'.pdf', 'I'); //D = descargar
 }
