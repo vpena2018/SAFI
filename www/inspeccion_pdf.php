@@ -527,6 +527,11 @@ $detallespos=$pdf->getY();
     $PerfilVendedor="";
     $PerfilVendedor=get_dato_sql("usuario","grupo_id"," WHERE id=".$_SESSION["usuario_id"]);
     
+    // Guarda primera página del PDF antes de agregar las fotos, para evitar problemas de memoria al agregar muchas fotos.
+    if (isset($guardar_archivo_pag1) && $guardar_archivo_pag1 !== '') {
+        $pdf->Output($guardar_archivo_pag1, 'F');
+    }
+
     if ($PerfilVendedor<>7){
     //************   PAGINA de FOTOS */
     $result_fotos = sql_select("SELECT inspeccion_foto.id,inspeccion_foto.id_inspeccion,inspeccion_foto.archivo,inspeccion_foto.fecha
@@ -793,15 +798,6 @@ ob_end_clean();
 if (isset($guardar_archivo)) {
     //$pdf->Output(app_dir.'reportes/'.'inspeccion_'. $numero .'.pdf', 'F');    
     $pdf->Output($guardar_archivo, 'F');
-
-    // Eliminar todas las páginas excepto la primera
-    if (isset($guardar_archivo_pag1) && $guardar_archivo_pag1 !== '') {
-        $total = $pdf->getNumPages();
-        for ($p = $total; $p > 1; $p--) {
-            $pdf->deletePage($p);
-        }
-        $pdf->Output($guardar_archivo_pag1, 'F');
-    }
 } else { 
     $pdf->Output('Inspeccion_'.$numero.'.pdf', 'I'); //D = descargar
 }
