@@ -25,6 +25,56 @@ require_once ('../include/config.php' );
     return $salida;
 }
 
+function traslado_historial_guardar($id_maestro, $id_estado, $nombre, $observaciones = "") {
+
+	$id_maestro = intval($id_maestro);
+	if ($id_maestro <= 0) { return; }
+
+	$id_estado_sql = "NULL";
+	if (!is_null($id_estado) && $id_estado !== "") {
+		$id_estado_sql = intval($id_estado);
+	}
+
+	// Obtener el id del usuario ttablet
+	$id_usuario = 0;
+
+	$result = sql_select("
+		SELECT id
+		FROM usuario
+		WHERE usuario = 'ttablet'
+		LIMIT 1
+	");
+
+	if ($result && $result->num_rows > 0) {
+
+		$row = $result->fetch_assoc();
+
+		if (isset($row["id"])) {
+			$id_usuario = intval($row["id"]);
+		}
+	}
+
+	// Si no encontró el usuario, no guardar historial
+	if ($id_usuario <= 0) {
+		return;
+	}
+
+
+
+        $sqlhist = "INSERT INTO orden_traslado_historial_estado
+        (id_maestro, id_estado, id_usuario, nombre, fecha, observaciones)
+        VALUES (
+            $id_maestro,
+            $id_estado_sql,
+            $id_usuario,
+            '$nombre',
+            NOW(),
+            '$observaciones'
+        )";
+
+	sql_insert($sqlhist);
+}
+
 function campo_combustible($nombre,$valor,$adicional=""){
     $salida='';
     $lineas  = array('E','1/16','1/8','3/16','1/4','5/16','3/8','7/16','1/2','9/16','5/8','11/16','3/4','13/16','7/8','15/16','F');
@@ -346,6 +396,30 @@ if ($accion=="P") {
     $insert_id = sql_insert($sql);
 
     if ($insert_id) {
+
+        $result = sql_select("
+                                SELECT ID
+                                FROM orden_traslado
+                                WHERE numero = '".addslashes($numero_traslado_req)."'
+                                LIMIT 1
+                            ");
+
+    if ($result && $result->num_rows > 0) {
+
+        $row = $result->fetch_assoc();
+
+        $id_maestro = intval($row["ID"]);
+
+        traslado_historial_guardar(
+            $id_maestro,
+            4,
+            'Traslado procesado seguridad',
+            'Se registro firma y traslado en puerta con seguridad'
+        );
+    }
+
+
+
         echo json_encode([
             'ok' => true,
             'id' => $insert_id
@@ -407,9 +481,6 @@ if ($accion=="L") {
         $row = $result->fetch_assoc();
 
 		if (isset($row["numero"])) {$numero_traslado= $row["numero"];} else {$numero_traslado= "";}
-
-
-
 
 
         echo json_encode([
