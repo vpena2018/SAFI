@@ -523,110 +523,7 @@ $detallespos=$pdf->getY();
     if ($row['cliente_contacto']<>'') {$firmanombrecliente=$row['cliente_contacto'];}
     $pdf->Cell(130, 4, $firmanombrecliente, '', 0, 'L', true );
     
- 
-    $PerfilVendedor="";
-    $PerfilVendedor=get_dato_sql("usuario","grupo_id"," WHERE id=".$_SESSION["usuario_id"]);    
-    
-    if ($PerfilVendedor<>7){
-    //************   PAGINA de FOTOS */
-    $result_fotos = sql_select("SELECT inspeccion_foto.id,inspeccion_foto.id_inspeccion,inspeccion_foto.archivo,inspeccion_foto.fecha
-    FROM inspeccion_foto
-    WHERE inspeccion_foto.id_inspeccion=$cid  
-    order by inspeccion_foto.fecha,inspeccion_foto.id");
-    if ($result_fotos!=false){
-        if ($result_fotos -> num_rows > 0) { 
-            $pdf->AddPage();     
-            $ancho_img=66; //66;
-            $colx=1;
-            $total_columnas=1;
-            $pos_x=8;   //8;
-            $pn_ln=0;
-            $nn=1;
-            
-            $x = 4;
-            $y = 15;
-            $w = 50;
-            $h = 50;
-            while ($row_fotos = $result_fotos -> fetch_assoc()) {
-                $fecha=$row_fotos["fecha"];
-                $fext = substr($row_fotos["archivo"], -3);
-                if ($fext=='jpg' or $fext=='peg' or $fext=='png' ) {                
-                    //$image_file= 'uploa_d/thumbnail/'.$row_fotos["archivo"];  
-                    $image_file= 'uploa_d/'.$row_fotos["archivo"]; 
-                    $pdf->Image($image_file, $x,$y, $w, $h, '', '', '', false, 300, '', false, false, 0, false, false, false);
-                    // $pdf->Image($image_file,'', '', 0, 0, '', '', '', false, 300, '', false, false, 0, false, false, false);
-                    //$pdf->Image($image_file,'', '', 0, 0, '', '', '', false, 90, '', false, false, 0, false, false, false);
-                    
-                    /*$pdf->writeHTMLCell($ancho_img, '', $pos_x,'', '<img src="uploa_d/'.$row_fotos["archivo"].'">', 0,$pn_ln, 0, true, 'C', true); 
-                    $pos_x+=$ancho_img;
-                    */
-                    $x+=52; 
-                    $colx++;  
-                    $total_columnas++;                                       
-                    //$pn_ln=0;
-                    if ($colx==5) {
-                       // $pn_ln=2;
-                       $x=4;
-                       $y+=52; 
-                       $colx=1; 
-                    }                                       
-                    if ($total_columnas>20) {
-                        $pdf->AddPage();
-                        $x=4;
-                        $y=15;
-                        $total_columnas=1;
-                        //$pos_x=8;
-                        $colx=1; 
-                       // $pdf->Ln(7); 
-                    }                  
-                                                           
-                    /*                 
-                    if ($pdf->getY()>(230)) {
-                        //$pdf->AddPage();
-                        $x = 1;
-                        $y += 72;
-                                    
-                        $pos_x=8;
-                        $colx=1; 
-                        $pn_ln=0;
-                        
-                    }   */                 
-                    $nn++;                         
-                }     
-                /*   
-                $x+=72;
-                if ($x>216){
-                    $x=1; 
-                    $y+=72;  
-                } 
-                if ($y>=618){                       
-                   $x=1; 
-                   $y=15;                      
-                } 
-                */           
-            }
-        }
-    }
-}
-
-//     <table>
-//     <tr>
-//      <td>
-//        <img src="x.png">
-//      </td>
-//      <td>
-//        <img src="x.png">
-//      </td>
-//      <td>
-//        <img src="x.png">
-//      </td>
-//      <td>
-//        <img src="x.png">
-//      </td>
-//    </tr>
-//   </table>
-
-//************   PAGINA ACTA DE RECEPCION (AL FINAL) */
+ //************   PAGINA ACTA DE RECEPCION (AL FINAL) */
 $cliente_codigo_alterno_pdf = strtoupper(trim((string)$row['cliente_codigo_alterno']));
 $aplica_actarv_pdf = (
     intval($row['tipo_inspeccion']) === 1
@@ -790,9 +687,9 @@ if ($aplica_actarv_pdf) {
 
 ob_end_clean();
 
-if (isset($guardar_archivo)) {
+if (isset($guardar_archivo_pag1)) {
     //$pdf->Output(app_dir.'reportes/'.'inspeccion_'. $numero .'.pdf', 'F');    
-    $pdf->Output($guardar_archivo, 'F');
+    $pdf->Output($guardar_archivo_pag1, 'F');
 } else { 
     $pdf->Output('Inspeccion_'.$numero.'.pdf', 'I'); //D = descargar
 }
