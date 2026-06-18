@@ -594,6 +594,16 @@ if ($accion=="g") {
                     sql_update("UPDATE ventas SET id_inspeccion=".$cid."  WHERE id_producto=".GetSQLValue($id_producto_upd,"int"));     
                 }
               //}                
+              // Generar PDF con solo la primera página y acta de recepción 
+              $contrato = isset($_REQUEST["renta_contrato"]) ? trim($_REQUEST["renta_contrato"]) : "";
+              $guardar_archivo = ""; // ruta del PDF con solo la primera página (para adjuntar al correo)            
+              if ($contrato != "") {
+                  $tipo_doc = $tipodoc==1 ? 'Entrada' : 'Salida';
+                  $contrato = strtoupper(str_replace(" ", "", $contrato));
+                  $guardar_archivo = app_dir . 'inspeccion/' . 'Inspeccion_' . intval($numeroArchivo) .'_'. $contrato .'_'. $tipo_doc . '.pdf';                  
+                  include(__DIR__ . '/inspeccion_pdf1.php'); // genera el PDF en $guardar_archivo_pag1 con solo la primera página y acta recepcio
+              } 
+              
           }
 
       }

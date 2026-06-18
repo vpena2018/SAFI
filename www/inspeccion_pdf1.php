@@ -687,9 +687,9 @@ if ($aplica_actarv_pdf) {
 
 ob_end_clean();
 
-if (isset($guardar_archivo_pag1)) {
+if (isset($guardar_archivo)) {
     //$pdf->Output(app_dir.'reportes/'.'inspeccion_'. $numero .'.pdf', 'F');    
-    $pdf->Output($guardar_archivo_pag1, 'F');
+    $pdf->Output($guardar_archivo, 'F');
 } else { 
     $pdf->Output('Inspeccion_'.$numero.'.pdf', 'I'); //D = descargar
 }
