@@ -601,7 +601,8 @@ if ($accion=="g") {
                   $tipo_doc = $tipodoc==1 ? 'Entrada' : 'Salida';
                   $contrato = strtoupper(str_replace(" ", "", $contrato));
                   $guardar_archivo = app_dir . 'inspeccion/' . 'Inspeccion_' . intval($numeroArchivo) .'_'. $contrato .'_'. $tipo_doc . '.pdf';                  
-                  include(__DIR__ . '/inspeccion_pdf1.php'); // genera el PDF en $guardar_archivo_pag1 con solo la primera página y acta recepcio
+                  require_once ('inspeccion_pdf1.php'); // genera el PDF completo en $guardar_archivo
+                  //include(__DIR__ . '/inspeccion_pdf1.php'); // genera el PDF en $guardar_archivo_pag1 con solo la primera página y acta recepcio
               } 
               
           }
