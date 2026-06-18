@@ -62,6 +62,28 @@ function limpiar_tmp_inspeccion($idInspeccion) {
     @rmdir($tmpDir);
 }
 
+/*
+// Rastrear el ítem en proceso para poder marcarlo si el script es interrumpido
+$cola_id_en_proceso = null;
+
+register_shutdown_function(function() {
+    global $cola_id_en_proceso, $log_file;
+    $error = error_get_last();
+    // Si hubo un error fatal o el tiempo límite se agotó y hay un ítem sin terminar
+    if ($cola_id_en_proceso !== null) {
+        $motivo = ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR]))
+            ? 'Error fatal: ' . $error['message']
+            : 'Script interrumpido (timeout o error fatal)';
+        $linea = '[' . date('Y-m-d H:i:s') . '] ERROR (shutdown) en cola_id=' . $cola_id_en_proceso . ': ' . $motivo . PHP_EOL;
+        file_put_contents($log_file, $linea, FILE_APPEND);
+        // Marcar como error en BD (estado=2) para no reintentar indefinidamente
+        sql_update("UPDATE cola_correo_inspeccion 
+                    SET estado = 2, mensaje_error = '" . addslashes($motivo) . "' 
+                    WHERE id = " . intval($cola_id_en_proceso));
+    }
+});
+*/
+
 escribir_log('---- Inicio cron ----');
 
 // Buscar hasta 5 correos pendientes (para no sobrecargar el servidor)
@@ -89,6 +111,9 @@ while ($item = $pendientes->fetch_assoc()) {
     $elcodigo     = $item['id_inspeccion']; // nombre de variable que usa inspeccion_pdf.php
 
     escribir_log("Procesando cola_id=$cola_id | id_inspeccion=$elcodigo");
+
+    // Marcar como "en proceso" para que el shutdown lo capture si el script es interrumpido
+    $cola_id_en_proceso = $cola_id;
 
     // Marcar como "en proceso" para evitar que otro cron lo tome al mismo tiempo
     sql_update("UPDATE cola_correo_inspeccion SET intentos = intentos + 1 WHERE id = $cola_id");
@@ -139,18 +164,23 @@ while ($item = $pendientes->fetch_assoc()) {
         $_REQUEST['pdffirma2'] = leer_png_como_dataurl($tmpDir . 'Inspeccion_' . $correo_row["numero"] . '_pdffirma2.png');
 
         // Generar el PDF
+        /*
         $contrato = trim($correo_row["renta_contrato"])=="" ? "" : trim($correo_row["renta_contrato"]);
         $guardar_archivo_pag1 = ""; // ruta del PDF con solo la primera página (para adjuntar al correo)    
         if ($contrato != "") {
             $tipo_doc = $correo_row['tipo_doc']==1 ? 'Entrada' : 'Salida';
             $contrato = strtoupper(str_replace(" ", "", $contrato));
             $guardar_archivo_pag1 = app_dir . 'inspeccion/' . 'Inspeccion_' . $correo_row["numero"] .'_'. $contrato .'_'. $tipo_doc . '.pdf';
-            include(__DIR__ . '/inspeccion_pdf1.php'); // genera el PDF en $guardar_archivo_pag1 con solo la primera página y acta recepcion
-        }        
+            escribir_log("Generando PDF (pag1) para inspección #" . $correo_row['numero']);
+           /* include(__DIR__ . '/inspeccion_pdf1.php'); */ // genera el PDF en $guardar_archivo_pag1 con solo la primera página y acta recepcio
+        }   
+        */     
         $guardar_archivo = app_dir . 'reportes/' . 'Inspeccion_' . $correo_row["numero"] . '.pdf';
+        escribir_log("Generando PDF para inspección #" . $correo_row['numero']);
         include(__DIR__ . '/inspeccion_pdf.php'); // genera el PDF en $guardar_archivo
 
         // Armar el correo
+        escribir_log("Enviando correo para inspección #" . $correo_row['numero'] . " → $email_enviar");
         $subject = 'HOJA DE INSPECCION # ' . $correo_row['numero'];
 
         $cuerpo_html = 'Estimado Cliente, <br><br>
@@ -171,6 +201,7 @@ while ($item = $pendientes->fetch_assoc()) {
 
         limpiar_tmp_inspeccion($elcodigo);
 
+        $cola_id_en_proceso = null; // procesado correctamente, el shutdown no debe actuar
         escribir_log("OK: Correo enviado para inspección #" . $correo_row['numero'] . " → $email_enviar");
 
     } catch (Throwable $e) {
@@ -182,6 +213,7 @@ while ($item = $pendientes->fetch_assoc()) {
                     SET estado = 2, mensaje_error = '" . addslashes($error_msg) . "' 
                     WHERE id = $cola_id");
 
+        $cola_id_en_proceso = null; // manejado, el shutdown no debe actuar
         escribir_log("ERROR en cola_id=$cola_id: $error_msg");
     }
 
