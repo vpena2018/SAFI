@@ -140,7 +140,7 @@ while ($item = $pendientes->fetch_assoc()) {
 
         // Generar el PDF
         
-        /*
+        
         $contrato = trim($correo_row["renta_contrato"])=="" ? "" : trim($correo_row["renta_contrato"]);
         $guardar_archivo_pag1 = ""; // ruta del PDF con solo la primera página (para adjuntar al correo)            
         if ($contrato != "") {
@@ -149,7 +149,7 @@ while ($item = $pendientes->fetch_assoc()) {
             $guardar_archivo_pag1 = app_dir . 'inspeccion/' . 'Inspeccion_' . $correo_row["numero"] .'_'. $contrato .'_'. $tipo_doc . '.pdf';
             escribir_log("Generando PDF (pag1) para inspección #" . $correo_row['numero']);
             include(__DIR__ . '/inspeccion_pdf1.php'); // genera el PDF en $guardar_archivo_pag1 con solo la primera página y acta recepcio
-        } */
+        } 
              
         $guardar_archivo = app_dir . 'reportes/' . 'Inspeccion_' . $correo_row["numero"] . '.pdf';
         include(__DIR__ . '/inspeccion_pdf.php'); // genera el PDF en $guardar_archivo
