@@ -25,7 +25,7 @@ set_time_limit(300);
 define('SAFI_CRON_CONTEXT', true);
 require_once(__DIR__ . '/include/framework_cron.php');
 
-$log_file = __DIR__ . '/logs/cron_correo_inspeccion.log';
+$log_file = __DIR__ . '/logs/cron_correo_inspeccion_' . date('Y-m-d') . '.log';
 
 // Crear carpeta de logs si no existe
 if (!is_dir(__DIR__ . '/logs')) {
@@ -114,8 +114,9 @@ while ($item = $pendientes->fetch_assoc()) {
         $correo_row = $correo_result->fetch_assoc();
 
         // Determinar el email destino
-        $email_enviar = trim($correo_row['email']);
+        $email_enviar = trim($correo_row['cliente_email']);
         $email_enviar_adicional = array();
+
 
         if (!es_nulo(trim($correo_row['cliente_email']))) {
             if ($email_enviar <> $correo_row['cliente_email']) {
@@ -125,7 +126,7 @@ while ($item = $pendientes->fetch_assoc()) {
                     array_push($email_enviar_adicional, trim($correo_row['cliente_email']));
                 }
             }
-        }
+        }        
 
         if (es_nulo($email_enviar)) {
             throw new Exception("La inspección id=$elcodigo no tiene email configurado. Se omite.");
