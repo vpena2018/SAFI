@@ -1281,7 +1281,7 @@ $mostrar_actarv = ($cliente_prefijo_cco && intval($tipo_inspeccion)==1 && intval
   ?>
           <div class="row"> 
             <div class="col-md-4"> 
-                <?php echo campo("renta_contrato","Contrato No.",'text',$renta_contrato,' ',$disable_sec1 .' ');  ?>
+                <?php echo campo("renta_contrato","Contrato No.",'text',$renta_contrato,' ',$disable_sec1 .' onblur="insp_buscar_contrato_hertz();" ');  ?>
             </div>
             <div class="col-md-4"> 
               <?php //echo campo("renta_factura","Factura No.",'text',$renta_factura,' ',$disable_sec1 .' ');
@@ -2598,6 +2598,39 @@ if (ccl!=null) {
 }
 
 
+
+function insp_buscar_contrato_hertz() {
+    var nro = $.trim($('#renta_contrato').val());
+    if (nro === '') return;
+
+    cargando(true);
+    $.ajax({
+        url: 'https://hertzhn.com/REST_API/Rentworks/Contracts/Search/?whrc=ZWJmOThhYTczOTc0NWI2YmM5MDEwYTczYmJlOWVmZjk&RANumber=' + encodeURIComponent(nro),
+        type: 'GET',
+        dataType: 'json',
+        timeout: 15000
+    })
+    .done(function(resp) {
+        cargando(false);
+        if (!resp || resp.error || !resp.data || resp.data.length === 0) {
+            mytoast('warning', 'Contrato no encontrado en Hertz', 3000);
+            return;
+        }
+        var cli = resp.data[0].Cliente || {};
+        var tel = cli.Telephone        || {};
+        var doc = cli.Document         || {};
+
+        $('#cliente_email').val(cli.Email     || '');
+        $('#cliente_contacto_identidad').val(doc.number || '');
+        $('#cliente_contacto_telefono').val(tel['1']    || '');
+
+        mytoast('success', 'Datos del contrato cargados', 3000);
+    })
+    .fail(function() {
+        cargando(false);
+        mytoast('error', 'Error al consultar Hertz', 3000);
+    });
+}
 
 function insp_actualizar_email_cliente(){
   var dataCliente = $('#cliente_id').select2('data');
