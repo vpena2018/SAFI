@@ -102,6 +102,13 @@ if ($accion=="g") {
 			$sqlcampos.=", id_estado = 2";
 		}
 
+		if (isset($_REQUEST['aut'])) {
+			$mov_asignar="Autorizar ";
+			//$sqlcampos.=", id_usuario_autoriza =".$_SESSION["usuario_id"];
+			$sqlcampos.=", id_estado = 4";
+			$sqlcampos.=", autorizado = NOW()";
+		} 
+
 		if (isset($_REQUEST['cp'])) {
 			$mov_asignar="Completar ";
 			$sqlcampos.=", domicilio_final = NOW()";
@@ -348,10 +355,30 @@ echo campo("mov","mov",'hidden',$mov,'','');
             
             <div class="col-md-6">       
                 <?php 
+				$disable_combsalida='';
+				if ($id_estado==2) {$disable_combsalida=' disabled="disabled"';}else{$disable_combsalida='';}
 				if (!tiene_permiso(126)) {
+					
 					echo  campo('id_motorista_lbl', 'Atendido por','labelb',$motorista1,' ','  ','');           
 				} else {
-					echo  campo('id_motorista', 'Atendido por','select2',valores_combobox_db('usuario',$id_motorista,'nombre',' where activo=1 and grupo_id=3 or perfil_adicional=3','',$motorista1),' ','  ','');           
+					//echo  campo('id_motorista', 'Atendido por','select2',valores_combobox_db('usuario',$id_motorista,'nombre',' where activo=1 and grupo_id=3 or perfil_adicional=3','',$motorista1),' ','  ','');      
+					echo campo(
+    'id_motorista',
+    'Atendido por',
+    'select2',
+    valores_combobox_db(
+        'usuario',
+        $id_motorista,
+        'nombre',
+        ' where (activo=1 and grupo_id=3) or perfil_adicional=3',
+        '',
+        $motorista1
+    ),
+    ' ',
+    $disable_combsalida,
+    ''
+);
+					
 				}
 				
 				?>              
@@ -388,7 +415,7 @@ echo campo("mov","mov",'hidden',$mov,'','');
                 <?php 
 				if ($id_estado>1) {
 				
-					if ($id_estado==2) {
+					if ($id_estado==4) {
 						echo campo("observaciones2","Comentarios de Entrega",'textarea',$observaciones2,' ',' rows="2"  ');
 					} else {
 						echo campo("observaciones2","Comentarios de Entrega",'labelb',$observaciones2,'',' '); 
@@ -423,31 +450,108 @@ echo campo("mov","mov",'hidden',$mov,'','');
 
 	?>
 	</div>
-	<div class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top ">
-		<div class="row">
-        <?php if (tiene_permiso(123)) {
-            if (($id_estado<3)) {
-            ?>
-		    <div class="col-sm"><a href="#" onclick="procesar_domicilio('domicilio_mant.php?a=g','forma_wd',''); return false;" class="btn btn-secondary btn-block mb-2 xfrm" ><i class="fa fa-check"></i> <?php echo 'Guardar'; ?></a></div>
-			
-        <?php 
-		 if (($id_estado==1)) {
-			if (!es_nulo($cid)) {
-            ?>
-		    <?php if (tiene_permiso(125)) { ?><div class="col-sm"><a href="#" onclick="procesar_domicilio('domicilio_mant.php?a=g&at=1','forma_wd',''); return false;" class="btn btn-warning btn-block mb-2 xfrm" ><i class="fa fa-check"></i> <?php echo 'Atender'; ?></a></div><?php } ?>
-			<?php if (tiene_permiso(128)) { ?><div class="col-sm"><a href="#" onclick="borrar_domicilio(); return false;" class="btn btn-danger btn-block mb-2 xfrm" ><i class="fa fa-check"></i> <?php echo 'Borrar'; ?></a></div> <?php } ?>
-        <?php } }
-		 if (($id_estado==2)) {
-            ?>
-		    <?php if (tiene_permiso(127)) { ?><div class="col-sm"><a href="#" onclick="procesar_domicilio('domicilio_mant.php?a=g&cp=1','forma_wd',''); return false;" class="btn btn-success btn-block mb-2 xfrm" ><i class="fa fa-check"></i> <?php echo 'Completar'; ?></a></div><?php } ?>
-			
-        <?php }
-             }
-			 } ?>	
-			 <div class="col-sm"><a href="domicilio_imprimir.php?pdfcod=<?php echo $id; ?>" target="_blank"  class="btn btn-secondary mr-2 mb-2"><i class="fa fa-print"></i> Imprimir</a></div>	
-        <div class="col-sm"><a href="#" onclick="$('#ModalWindow').modal('hide');  return false;" class="btn btn-light btn-block mb-2 xfrm" >  <?php echo 'Cerrar'; ?></a></div>
-		</div>
-	</div>
+<div class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top">
+    <div class="row">
+
+        <?php
+        if (tiene_permiso(123)) {
+
+            if ($id_estado < 5) {
+        ?>
+                <div class="col-sm">
+                    <a href="#"
+                       onclick="procesar_domicilio('domicilio_mant.php?a=g','forma_wd',''); return false;"
+                       class="btn btn-secondary btn-block mb-2 xfrm">
+                        <i class="fa fa-check"></i> Guardar
+                    </a>
+                </div>
+
+        <?php
+                if ($id_estado == 1) {
+
+                    if (!es_nulo($cid)) {
+
+                        if (tiene_permiso(125)) {
+        ?>
+                            <div class="col-sm">
+                                <a href="#"
+                                   onclick="procesar_domicilio('domicilio_mant.php?a=g&at=1','forma_wd',''); return false;"
+                                   class="btn btn-warning btn-block mb-2 xfrm">
+                                    <i class="fa fa-check"></i> Atender
+                                </a>
+                            </div>
+        <?php
+                        }
+
+                        if (tiene_permiso(128)) {
+        ?>
+                            <div class="col-sm">
+                                <a href="#"
+                                   onclick="borrar_domicilio(); return false;"
+                                   class="btn btn-danger btn-block mb-2 xfrm">
+                                    <i class="fa fa-check"></i> Borrar
+                                </a>
+                            </div>
+        <?php
+                        }
+                    }
+                }
+
+		if ($id_estado == 2) {
+
+                    if (tiene_permiso(127)) {
+        ?>
+                        <div class="col-sm">
+                            <a href="#"
+                               onclick="procesar_domicilio_autorizacion('domicilio_mant.php?a=g&aut=1','forma_wd',''); return false;"
+                               class="btn btn-success btn-block mb-2 xfrm">
+                                <i class="fa fa-check"></i> Autorizar
+                            </a>
+                        </div>
+        <?php
+                    }
+                }
+
+                if ($id_estado == 4) {
+
+                    if (tiene_permiso(127)) {
+        ?>
+                        <div class="col-sm">
+                            <a href="#"
+                               onclick="procesar_domicilio('domicilio_mant.php?a=g&cp=1','forma_wd',''); return false;"
+                               class="btn btn-success btn-block mb-2 xfrm">
+                                <i class="fa fa-check"></i> Completar
+                            </a>
+                        </div>
+        <?php
+                    }
+                }
+
+
+
+
+            }
+        }
+        ?>
+
+        <div class="col-sm">
+            <a href="domicilio_imprimir.php?pdfcod=<?php echo $id; ?>"
+               target="_blank"
+               class="btn btn-secondary mr-2 mb-2">
+                <i class="fa fa-print"></i> Imprimir
+            </a>
+        </div>
+
+        <div class="col-sm">
+            <a href="#"
+               onclick="$('#ModalWindow').modal('hide'); return false;"
+               class="btn btn-light btn-block mb-2 xfrm">
+                Cerrar
+            </a>
+        </div>
+
+    </div>
+</div>
 
 	</fieldset>
 	</form>
@@ -485,6 +589,53 @@ Swal.fire({
 	  }
 	});
 	
+}
+
+function procesar_domicilio_autorizacion(url,forma,adicional){
+	 {
+
+	$("#"+forma+" .xfrm").addClass("disabled");		
+	cargando(true); 
+			
+	var datos=$("#"+forma).serialize();
+
+	 $.post( url,datos, function(json) {
+	 			
+		if (json.length > 0) {
+			if (json[0].pcode == 0) {
+				cargando(false);
+				mytoast('error',json[0].pmsg,3000) ;   
+			}
+			if (json[0].pcode == 1) {
+				cargando(false);
+				mytoast('success',json[0].pmsg,3000) ;
+
+					// $("#"+forma+' #id').val(json[0].pcid);
+			
+				if (forma=='forma_wd') {
+                    
+					procesar_tabla_datatable('tablaver','tabla_domicilio','domicilio_ver.php?a=1','Entregas a Domicilio');
+                    $('#ModalWindow').modal('hide');
+                }
+			
+			}
+		} else {cargando(false);  mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar");}
+		  
+	})
+	  .done(function() {
+	   
+	  })
+	  .fail(function(xhr, status, error) {
+	   		cargando(false); mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar");
+	  })
+	  .always(function() {
+	   
+		$("#"+forma+" .xfrm").removeClass("disabled");	
+	  });
+		
+		
+	}
+		
 }
 
 function procesar_domicilio(url,forma,adicional){
