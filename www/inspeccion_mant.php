@@ -2613,7 +2613,7 @@ function insp_buscar_contrato_hertz() {
     .done(function(resp) {
         cargando(false);
         if (!resp || resp.error || !resp.data || resp.data.length === 0) {
-            mytoast('warning', 'Contrato no encontrado en Hertz', 3000);
+            mytoast('warning', 'Contrato no encontrado', 3000);
             return;
         }
         var cli = resp.data[0].Cliente || {};
@@ -2628,7 +2628,7 @@ function insp_buscar_contrato_hertz() {
     })
     .fail(function() {
         cargando(false);
-        mytoast('error', 'Error al consultar Hertz', 3000);
+        mytoast('error', 'Error al consultar', 3000);
     });
 }
 
