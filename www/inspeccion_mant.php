@@ -1281,7 +1281,7 @@ $mostrar_actarv = ($cliente_prefijo_cco && intval($tipo_inspeccion)==1 && intval
   ?>
           <div class="row"> 
             <div class="col-md-4"> 
-                <?php echo campo("renta_contrato","Contrato No.",'text',$renta_contrato,' ',$disable_sec1 .' onblur="insp_buscar_contrato_hertz();" ');  ?>
+                <?php echo campo("renta_contrato","Contrato No.",'text',$renta_contrato,' ',$disable_sec1 .' onchange="insp_buscar_contrato_hertz();" ');  ?>
             </div>
             <div class="col-md-4"> 
               <?php //echo campo("renta_factura","Factura No.",'text',$renta_factura,' ',$disable_sec1 .' ');
@@ -2602,6 +2602,7 @@ if (ccl!=null) {
 function insp_buscar_contrato_hertz() {
     var nro = $.trim($('#renta_contrato').val());
     if (nro === '') return;
+    if ($('#tipo_doc').val() !== '2') return;
 
     cargando(true);
     $.ajax({
