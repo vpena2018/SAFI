@@ -2621,7 +2621,9 @@ function insp_buscar_contrato_hertz() {
         var tel = cli.Telephone        || {};
         var doc = cli.Document         || {};
 
-        $('#cliente_email').val(cli.Email     || '');
+        if ($('#cliente_id').val() == '2262') {
+            $('#cliente_email').val(cli.Email || '');
+        }
         $('#cliente_contacto_identidad').val(doc.number || '');
         $('#cliente_contacto_telefono').val(tel['1']    || '');
 
