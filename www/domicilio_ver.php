@@ -29,7 +29,7 @@ if ($accion=="1") {
      
         
         if (($tmpval==0)){
-            $filtros.=" AND (orden_domicilio.id_estado=1 or orden_domicilio.id_estado=2)";
+            $filtros.=" AND (orden_domicilio.id_estado=1 or orden_domicilio.id_estado=2 or orden_domicilio.id_estado=4 or orden_domicilio.id_estado=3)";
          } else {
             $filtros.=" AND orden_domicilio.id_estado=$tmpval"; 
          }
@@ -104,6 +104,11 @@ if ($accion=="1") {
                 }
 
                 if ($row["id_estado"]==2 ) {
+                    $acclavar="Autorizar" ;
+                    $acclavar_btn="btn-success";
+                }
+
+                if ($row["id_estado"]==4 ) {
                     $acclavar="Completar" ;
                     $acclavar_btn="btn-success";
                 }
