@@ -2892,6 +2892,7 @@ var validation = Array.prototype.filter.call(forms, function(form) {
               validado=false;
            }
         }
+
     }
     if (adicional=='0'){
         <?php if (tiene_permiso(163) && es_nulo($id_usuario_auditado)) { ?>
@@ -2937,6 +2938,13 @@ var validation = Array.prototype.filter.call(forms, function(form) {
        if (validado==true) {
           if ($("#renta_contrato").val()=='') {
           mytoast('warning','Debe ingresar el numero del contrato',3000) ;
+          validado=false;
+          }  
+        }
+
+        if (validado==true) {
+          if (!/^[a-zA-Z]{3}[0-9]{6}$/.test($.trim($("#renta_contrato").val()))) {
+          mytoast('warning','El contrato debe tener exactamente 3 letras y 6 números',3000) ;
           validado=false;
           }  
         }
