@@ -1281,7 +1281,7 @@ $mostrar_actarv = ($cliente_prefijo_cco && intval($tipo_inspeccion)==1 && intval
   ?>
           <div class="row"> 
             <div class="col-md-4"> 
-                <?php echo campo("renta_contrato","Contrato No.",'text',$renta_contrato,' ',$disable_sec1 .' onchange="insp_buscar_contrato_hertz();" maxlength="10" ');  ?>
+                <?php echo campo("renta_contrato","Contrato No.",'text',$renta_contrato,' ',$disable_sec1 .' onchange="insp_buscar_contrato_hertz();" ');  ?>
             </div>
             <div class="col-md-4"> 
               <?php //echo campo("renta_factura","Factura No.",'text',$renta_factura,' ',$disable_sec1 .' ');
@@ -2952,13 +2952,7 @@ var validation = Array.prototype.filter.call(forms, function(form) {
           }  
         }
 
-        if (validado==true) {
-          if (!/^[a-zA-Z]{3}[0-9]{6}$/.test($.trim($("#renta_contrato").val()))) {
-          mytoast('warning','El contrato debe tener exactamente 3 letras y 6 números',3000) ;
-          validado=false;
-          }  
-        }
-
+     
         if (validado==true) {
           if ($("#id_empresa").val()=='0') {
           mytoast('warning','Debe seleccionar la empresa de renta',3000) ;
