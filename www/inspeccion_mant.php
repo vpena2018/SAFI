@@ -1281,7 +1281,7 @@ $mostrar_actarv = ($cliente_prefijo_cco && intval($tipo_inspeccion)==1 && intval
   ?>
           <div class="row"> 
             <div class="col-md-4"> 
-                <?php echo campo("renta_contrato","Contrato No.",'text',$renta_contrato,' ',$disable_sec1 .' onchange="insp_buscar_contrato_hertz();" ');  ?>
+                <?php echo campo("renta_contrato","Contrato No.",'text',$renta_contrato,' ',$disable_sec1 .' onchange="insp_buscar_contrato_hertz();" maxlength="10" ');  ?>
             </div>
             <div class="col-md-4"> 
               <?php //echo campo("renta_factura","Factura No.",'text',$renta_factura,' ',$disable_sec1 .' ');
@@ -2859,6 +2859,14 @@ var validation = Array.prototype.filter.call(forms, function(form) {
           mytoast('warning','Debe seleccionar el producto',3000) ;
           validado=false;
       }           
+    }
+
+    if (validado==true) {
+      var contrato = $("#renta_contrato").val();
+      if (contrato !== undefined && contrato.length > 10) {
+        mytoast('warning','El Número de Contrato no puede tener más de 10 caracteres',3000);
+        validado=false;
+      }
     }
 
    if (validado==true) {
