@@ -158,6 +158,22 @@ function validar_campos_obligatorios($data, $campos, $titulo = 'Faltan campos ob
 }
 
 
+function registrar_historial_ventas($cid, $id_estado, $nombre, $observaciones = '') {
+    $cid      = intval($cid);
+    $id_estado = intval($id_estado);
+    $uid      = intval($_SESSION['usuario_id']);
+    $sql = "INSERT INTO ventas_historial_estado (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
+            VALUES (
+                $cid,
+                $uid,
+                $id_estado,
+                " . GetSQLValue($nombre, "text") . ",
+                NOW(),
+                " . GetSQLValue($observaciones, "text") . "
+            )";
+    return sql_insert($sql);
+}
+
 /**
  * @return bool|array
  */
@@ -1479,12 +1495,10 @@ if ($accion=="dfoto") {
    $id_estado_hist = intval(get_dato_sql("ventas", "id_estado", " where id=$cid"));
    if ($dfoto==1){
       sql_update("UPDATE ventas set foto=null where id=$cid limit 1");   
-      sql_insert("INSERT INTO ventas_historial_estado (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
-      VALUES ($cid, ".$_SESSION['usuario_id'].", $id_estado_hist, 'Eliminacion foto comprobante de pago', NOW(), 'Comprobante de pago eliminado')");
+      registrar_historial_ventas($cid, $id_estado_hist, 'Eliminacion foto comprobante de pago', 'Comprobante de pago eliminado');
    }else{
       sql_update("UPDATE ventas set foto_televentas=null where id=$cid limit 1");
-      sql_insert("INSERT INTO ventas_historial_estado (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
-      VALUES ($cid, ".$_SESSION['usuario_id'].", $id_estado_hist, 'Eliminacion foto recibo de pago', NOW(), 'Recibo de pago eliminado')");
+      registrar_historial_ventas($cid, $id_estado_hist, 'Eliminacion foto recibo de pago', 'Recibo de pago eliminado');
    }
    $stud_arr[0]["pcode"] = 1;
    $stud_arr[0]["pmsg"] ="Foto eliminada";
@@ -1992,80 +2006,70 @@ if ($foto_original_tele !== '') {
                     $sqlcampos.= " , tipo_ventas_reparacion = 1";
                     $sqlcampos.= " , id_estado = 99";
                     $sqlcampos.= " , reproceso = 'R'";
-                    sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                    VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Vehiculo a Reproceso', NOW(), '$nombreReproceso')");
+                    registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Vehiculo a Reproceso', $nombreReproceso);
                 }
             }
             if (intval($_REQUEST['id_estado'])==20){                
                // $sqlcampos.=" , fecha_vendido=now()";  
              }            
-            //si modifica se guarda el registo del cambio
-            $id_tienda=intval(get_dato_sql("ventas","id_tienda"," where id=".$cid));
-            if ($id_tienda!=intval($_REQUEST['id_tienda'])){   
-               $id_tienda_name=get_dato_sql("tienda","nombre"," where id=".$_REQUEST['id_tienda']);
-               sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-               VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Modificacion de Tienda', NOW(), '$id_tienda_name')");
+            //si modifica se guarda el registro del cambio
+            // Un solo SELECT para leer todos los valores actuales
+            $venta_actual = [];
+            $result_actual = sql_select("SELECT id_tienda, kilometraje, precio_minimo, precio_maximo,
+                                         precio_venta, prima_venta, cliente_id, id_estado,
+                                         id_impuesto, id_factura, id_vendedor, id_televentas,
+                                         observaciones, foto, foto_televentas
+                                         FROM ventas WHERE id = $cid LIMIT 1");
+            if ($result_actual && $result_actual->num_rows > 0) {
+                $venta_actual = $result_actual->fetch_assoc();
             }
-            $kilometraje=intval(get_dato_sql("ventas","kilometraje"," where id=".$cid));
-            if ($kilometraje!=intval($_REQUEST['kilometraje'])){   
-                sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Modificacion de Kilometraje', NOW(), ".$_REQUEST['kilometraje'].")");
+
+            $id_tienda = isset($venta_actual['id_tienda']) ? intval($venta_actual['id_tienda']) : 0;
+            if ($id_tienda != intval($_REQUEST['id_tienda'])) {
+                $id_tienda_name = get_dato_sql("tienda", "nombre", " where id=" . intval($_REQUEST['id_tienda']));
+                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Tienda', $id_tienda_name);
             }
 
-             $precio_minimo=intval(get_dato_sql("ventas","precio_minimo"," where id=".$cid));
-             if ($precio_minimo!=intval($_REQUEST['precio_minimo'])){   
-                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Modificacion de Precio Minimo', NOW(), ".$_REQUEST['precio_minimo'].")");
-             }
+            $kilometraje = isset($venta_actual['kilometraje']) ? intval($venta_actual['kilometraje']) : 0;
+            if ($kilometraje != intval($_REQUEST['kilometraje'])) {
+                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Kilometraje', $_REQUEST['kilometraje']);
+            }
 
-             $precio_maximo=intval(get_dato_sql("ventas","precio_maximo"," where id=".$cid));
-             if ($precio_maximo!=intval($_REQUEST['precio_maximo'])){   
-                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Modificacion de Precio Maximo', NOW(), ".$_REQUEST['precio_maximo'].")");
-             }
+            $precio_minimo = isset($venta_actual['precio_minimo']) ? intval($venta_actual['precio_minimo']) : 0;
+            if ($precio_minimo != intval($_REQUEST['precio_minimo'])) {
+                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Precio Minimo', $_REQUEST['precio_minimo']);
+            }
 
-             $precio_venta=intval(get_dato_sql("ventas","precio_venta"," where id=".$cid));
-             if ($precio_venta!=intval($_REQUEST['precio_venta'])){   
-                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Modificacion de Precio de Venta', NOW(), ".$_REQUEST['precio_venta'].")");
-             }
+            $precio_maximo = isset($venta_actual['precio_maximo']) ? intval($venta_actual['precio_maximo']) : 0;
+            if ($precio_maximo != intval($_REQUEST['precio_maximo'])) {
+                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Precio Maximo', $_REQUEST['precio_maximo']);
+            }
 
-             $prima_venta=intval(get_dato_sql("ventas","prima_venta"," where id=".$cid));
-             if ($prima_venta!=intval($_REQUEST['prima_venta'])){   
-                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Modificacion de Prima de Venta', NOW(), ".$_REQUEST['prima_venta'].")");
-             }
+            $precio_venta = isset($venta_actual['precio_venta']) ? intval($venta_actual['precio_venta']) : 0;
+            if (isset($_REQUEST['precio_venta']) && $precio_venta != intval($_REQUEST['precio_venta'])) {
+                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Precio de Venta', $_REQUEST['precio_venta']);
+            }
 
+            $prima_venta = isset($venta_actual['prima_venta']) ? intval($venta_actual['prima_venta']) : 0;
+            if (isset($_REQUEST['prima_venta']) && $prima_venta != intval($_REQUEST['prima_venta'])) {
+                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Prima de Venta', $_REQUEST['prima_venta']);
+            }
 
-
-             
-
-
-             $cliente_viejo = get_dato_sql(
-                "ventas",
-                "cliente_id",
-                " WHERE id = ".$cid
-            );
-
-             $estado_viejo = get_dato_sql(
-                "ventas",
-                "id_estado",
-                " WHERE id = ".$cid
-            );
-
-            // Normalizar viejo
-            $cliente_viejo = ($cliente_viejo == 0 || $cliente_viejo === null)
+          
+            // Normalizar cliente viejo
+            $cliente_viejo_raw = $venta_actual['cliente_id'] ?? null;
+            $cliente_viejo = ($cliente_viejo_raw == 0 || $cliente_viejo_raw === null)
                 ? null
-                : intval($cliente_viejo);
+                : intval($cliente_viejo_raw);
 
-            // Normalizar nuevo (lo que viene del form)
+            // Normalizar cliente nuevo (lo que viene del form)
             $cliente_nuevo = (
                 !isset($_REQUEST['cliente_id']) ||
                 $_REQUEST['cliente_id'] === '' ||
                 $_REQUEST['cliente_id'] === '0'
             ) ? null : intval($_REQUEST['cliente_id']);
 
-            // 👉 SOLO aquí se detecta el cambio
+            // SOLO aquí se detecta el cambio
             if ($cliente_viejo !== $cliente_nuevo) {
 
                 $nombre_viejo = $cliente_viejo
@@ -2076,30 +2080,15 @@ if ($foto_original_tele !== '') {
                     ? get_dato_sql("entidad", "nombre", " WHERE id = ".$cliente_nuevo)
                     : 'Vacío';
 
-                $observacion = "'Cliente: {$nombre_viejo} → {$nombre_nuevo}'";
-
-                if($nombre_viejo!=$nombre_nuevo)
-                {
-                    sql_insert("
-                        INSERT INTO ventas_historial_estado
-                        (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
-                        VALUES (
-                            $cid,
-                            ".$_SESSION['usuario_id'].",
-                            ".$_REQUEST['id_estado'].",
-                            'Modificación de cliente',
-                            NOW(),
-                            $observacion
-                        )
-                    ");
+                if ($nombre_viejo != $nombre_nuevo) {
+                    registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificación de cliente', "Cliente: {$nombre_viejo} → {$nombre_nuevo}");
                 }
             }
 
-             $id_estado=intval(get_dato_sql("ventas","id_estado"," where id=".$cid));   
+             $id_estado = intval($venta_actual['id_estado'] ?? 0);
 
-             //$genera_contrato=intval(get_dato_sql("ventas_estado","generar_contrato"," where id=".$id_estado)); 
-             
-             
+             //$genera_contrato=intval(get_dato_sql("ventas_estado","generar_contrato"," where id=".$id_estado));
+
              $id_estado_vendido=intval(get_dato_sql("ventas_estado","envio_correo"," where id=".$id_estado));             
              $id_estado_modifico=false;
              
@@ -2135,23 +2124,11 @@ if ($foto_original_tele !== '') {
                  $fotoRegistro1=get_dato_sql("ventas_estado","foto"," where foto=1 and id=".$id_estado);
                  $id_estado_name=get_dato_sql("ventas_estado","nombre"," where id=".$_REQUEST['id_estado']);
 
-                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",$id_estado,'Modificacion de Estado', NOW(),'$id_estado_name')");
+                 registrar_historial_ventas($cid, $id_estado, 'Modificacion de Estado', $id_estado_name);
 
                  if($id_estado_name!='en negociacion')
                  {
-                                    sql_insert("
-                    INSERT INTO ventas_historial_estado
-                    (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
-                    VALUES (
-                        $cid,
-                        ".$_SESSION['usuario_id'].",
-                        ".$_REQUEST['id_estado'].",
-                        'Modificación de cliente',
-                        NOW(),
-                        'Cliente eliminado al quitar estado de en negociacion'
-                    )
-                ");
+                     registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificación de cliente', 'Cliente eliminado al quitar estado de en negociacion');
                  }
                  
              }
@@ -2170,50 +2147,43 @@ if ($foto_original_tele !== '') {
                     }
              }
 
-             $id_impuesto=intval(get_dato_sql("ventas","id_impuesto"," where id=".$cid));
-             if ($id_impuesto!=intval($_REQUEST['id_impuesto'])){   
-                 $id_impuesto_name=get_dato_sql("ventas_impuestos","nombre"," where id=".$_REQUEST['id_impuesto']);
-                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Modificacion de Impuestos', NOW(),'$id_impuesto_name')");
+             $id_impuesto = isset($venta_actual['id_impuesto']) ? intval($venta_actual['id_impuesto']) : 0;
+             if ($id_impuesto != intval($_REQUEST['id_impuesto'])) {
+                 $id_impuesto_name = get_dato_sql("ventas_impuestos", "nombre", " where id=" . intval($_REQUEST['id_impuesto']));
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Impuestos', $id_impuesto_name);
              }
 
-             $id_factura=intval(get_dato_sql("ventas","id_factura"," where id=".$cid));
-             if ($id_factura!=intval($_REQUEST['id_factura'])){   
-                 $id_factura_name=get_dato_sql("ventas_factura","nombre"," where id=".$_REQUEST['id_factura']);
-                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Modificacion de Factura', NOW(),'$id_factura_name')");
-             }            
-
-             $id_vendedor=intval(get_dato_sql("ventas","id_vendedor"," where id=".$cid));
-             if ($id_vendedor!=intval($_REQUEST['id_vendedor'])){   
-                $id_vendedor_name=get_dato_sql("usuario","nombre"," where id=".$_REQUEST['id_vendedor']);
-                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Modificacion de Vendedor', NOW(), '$id_vendedor_name')");
+             $id_factura = isset($venta_actual['id_factura']) ? intval($venta_actual['id_factura']) : 0;
+             if ($id_factura != intval($_REQUEST['id_factura'])) {
+                 $id_factura_name = get_dato_sql("ventas_factura", "nombre", " where id=" . intval($_REQUEST['id_factura']));
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Factura', $id_factura_name);
              }
 
-             $id_televentas=intval(get_dato_sql("ventas","id_televentas"," where id=".$cid));
-             if ($id_televentas!=intval($_REQUEST['id_televentas'])){   
-                 $id_televentas_name=get_dato_sql("usuario","nombre"," where id=".$_REQUEST['id_televentas']);
-                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                 VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Modificacion de Televentas', NOW(),'$id_televentas_name')");
+             $id_vendedor = isset($venta_actual['id_vendedor']) ? intval($venta_actual['id_vendedor']) : 0;
+             if ($id_vendedor != intval($_REQUEST['id_vendedor'])) {
+                 $id_vendedor_name = get_dato_sql("usuario", "nombre", " where id=" . intval($_REQUEST['id_vendedor']));
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Vendedor', $id_vendedor_name);
              }
 
-             $observaciones=trim(get_dato_sql("ventas","observaciones"," where id=".$cid));
-             if ($observaciones!=trim($_REQUEST['observaciones'])){   
-                sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-                VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Modificacion de Observaciones', NOW(),'".$_REQUEST['observaciones']."')"); 
+             $id_televentas = isset($venta_actual['id_televentas']) ? intval($venta_actual['id_televentas']) : 0;
+             if ($id_televentas != intval($_REQUEST['id_televentas'])) {
+                 $id_televentas_name = get_dato_sql("usuario", "nombre", " where id=" . intval($_REQUEST['id_televentas']));
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Televentas', $id_televentas_name);
              }
 
-             $foto_actual_bd = (string)get_dato_sql("ventas", "foto", " where id=$cid");
+             $observaciones_bd = trim((string)($venta_actual['observaciones'] ?? ''));
+             if ($observaciones_bd != trim($_REQUEST['observaciones'])) {
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Observaciones', $_REQUEST['observaciones']);
+             }
+
+             $foto_actual_bd = (string)($venta_actual['foto'] ?? '');
              if (!empty($_REQUEST["foto"]) && $foto !== $foto_actual_bd) {
-                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
-                 VALUES ($cid, ".$_SESSION['usuario_id'].", ".$_REQUEST['id_estado'].", 'Subida foto comprobante de pago', NOW(), '".$foto."')");
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Subida foto comprobante de pago', $foto);
              }
 
-             $foto_tele_actual_bd = (string)get_dato_sql("ventas", "foto_televentas", " where id=$cid");
+             $foto_tele_actual_bd = (string)($venta_actual['foto_televentas'] ?? '');
              if (!empty($_REQUEST["foto_televentas"]) && $foto_televentas !== $foto_tele_actual_bd) {
-                 sql_insert("INSERT INTO ventas_historial_estado (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
-                 VALUES ($cid, ".$_SESSION['usuario_id'].", ".$_REQUEST['id_estado'].", 'Subida foto recibo de pago', NOW(), '".$foto_televentas."')");
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Subida foto recibo de pago', $foto_televentas);
              }
             
              
@@ -2232,8 +2202,7 @@ if ($foto_original_tele !== '') {
             $result = sql_insert($sql);
             $cid=$result; //last insert id 
 
-            sql_insert("INSERT INTO ventas_historial_estado (id_maestro,  id_usuario,  id_estado, nombre, fecha, observaciones)
-            VALUES ( $cid,  ".$_SESSION['usuario_id'].",".$_REQUEST['id_estado'].",'Nuevo registro de vehiculo', NOW(),'Nuevo')");
+            registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Nuevo registro de vehiculo', 'Nuevo');
             
             // RL. 20251121 - Para nuevo registro en estado 5, verificar fotos
             $id_estado = intval($_REQUEST['id_estado']);
