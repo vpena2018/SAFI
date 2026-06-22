@@ -2621,7 +2621,9 @@ function insp_buscar_contrato_hertz() {
         var tel = cli.Telephone        || {};
         var doc = cli.Document         || {};
 
-        $('#cliente_email').val(cli.Email     || '');
+        if ($('#cliente_id').val() == '2262') {
+            $('#cliente_email').val(cli.Email || '');
+        }
         $('#cliente_contacto_identidad').val(doc.number || '');
         $('#cliente_contacto_telefono').val(tel['1']    || '');
 
@@ -2859,6 +2861,14 @@ var validation = Array.prototype.filter.call(forms, function(form) {
       }           
     }
 
+    if (validado==true) {
+      var contrato = $("#renta_contrato").val();
+      if (contrato !== undefined && contrato.length > 10) {
+        mytoast('warning','El Número de Contrato no puede tener más de 10 caracteres',3000);
+        validado=false;
+      }
+    }
+
    if (validado==true) {
       var combus=$("input[name='combustible_entrada']:checked").val();
       if (combus=='' || combus === undefined) {
@@ -2892,6 +2902,7 @@ var validation = Array.prototype.filter.call(forms, function(form) {
               validado=false;
            }
         }
+
     }
     if (adicional=='0'){
         <?php if (tiene_permiso(163) && es_nulo($id_usuario_auditado)) { ?>
@@ -2941,6 +2952,7 @@ var validation = Array.prototype.filter.call(forms, function(form) {
           }  
         }
 
+     
         if (validado==true) {
           if ($("#id_empresa").val()=='0') {
           mytoast('warning','Debe seleccionar la empresa de renta',3000) ;
