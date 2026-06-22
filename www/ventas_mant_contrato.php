@@ -3433,7 +3433,7 @@ Swal.fire({
 	}).then((result) => {
 	  if (result.value) {
 	    
-            $.post( 'ventas_mant.php',datos, function(json) {
+            $.post( 'ventas_mant_contrato.php',datos, function(json) {
                 
                 if (json.length > 0) {
                     if (json[0].pcode == 0) {
