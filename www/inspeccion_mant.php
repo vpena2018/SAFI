@@ -2614,7 +2614,20 @@ function insp_buscar_contrato_hertz() {
     .done(function(resp) {
         cargando(false);
         if (!resp || resp.error || !resp.data || resp.data.length === 0) {
-            mytoast('warning', 'Contrato no encontrado', 3000);
+            Swal.fire({
+                title: 'Contrato no encontrado',
+                text: '¿Desea continuar sin cargar los datos del contrato?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, continuar',
+                cancelButtonText: 'No'
+            }).then(function(result) {
+                if (!result.value) {
+                    $('#renta_contrato').focus();
+                }
+            });
             return;
         }
         var cli = resp.data[0].Cliente || {};
