@@ -32,7 +32,7 @@ if ($accion=="1") {
     if (isset($_REQUEST['nombre'])) { $tmpval=sanear_string(trim($_REQUEST['nombre'])); if (!es_nulo($tmpval)){ $filtros.=" and (producto.nombre like ".GetSQLValue($tmpval,'like')." or producto.codigo_alterno like ".GetSQLValue($tmpval,'like').")";} }
     if (isset($_REQUEST['vin'])) { $tmpval=sanear_string(trim($_REQUEST['vin'])); if (!es_nulo($tmpval)){ $filtros.=" and producto.chasis like ".GetSQLValue($tmpval,'like');} }
     
-     $tmpval=sanear_int($_SESSION['usuario_id']); if (!es_nulo($tmpval)){$filtros.=" AND (servicio.id_usuario=$tmpval  OR servicio.id_tecnico1=$tmpval OR servicio.id_tecnico2=$tmpval OR servicio.id_tecnico3=$tmpval OR servicio.id_tecnico4=$tmpval )" ;}   
+     $tmpval=sanear_int($_SESSION['usuario_id']); if (!es_nulo($tmpval)){$filtros.=" AND (servicio.id_usuario=$tmpval  OR servicio.id_tecnico1=$tmpval OR servicio.id_tecnico2=$tmpval OR servicio.id_tecnico3=$tmpval OR servicio.id_tecnico4=$tmpval OR servicio.id_tecnico5=$tmpval )" ;}   
    
     
     if ($pagina>=1) { $offset=$pagina*app_reg_por_pag;   }
