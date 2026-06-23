@@ -355,6 +355,7 @@ if ($accion=="P") {
     $firma_req = $_REQUEST['firma'] ?? '';
     $ip_cliente = $_SERVER['REMOTE_ADDR'] ?? '';
     $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    $tipo_destino_req = trim($_REQUEST['tipo_destino'] ?? '');
 
     if ($numero_traslado_req === '') {
         echo json_encode([
@@ -387,22 +388,34 @@ if ($accion=="P") {
     $ip_cliente_sql = $conn->real_escape_string($ip_cliente);
     $user_agent_sql = $conn->real_escape_string($user_agent);
     $firma_sql = $conn->real_escape_string($firma_limpia);
+    $tipo_destino_sql = $conn->real_escape_string($tipo_destino_req);
 
     $sql = "INSERT INTO traslado_bitacora
-            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma)
+            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo)
             VALUES
-            ('{$numero_traslado_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}', '{$firma_sql}')";
+            ('{$numero_traslado_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}', '{$firma_sql}', '{$tipo_destino_sql}')";
 
     $insert_id = sql_insert($sql);
 
     if ($insert_id) {
 
+        if($tipo_destino_req === 'traslado') {
         $result = sql_select("
                                 SELECT ID
                                 FROM orden_traslado
                                 WHERE numero = '".addslashes($numero_traslado_req)."'
                                 LIMIT 1
                             ");
+        } else if($tipo_destino_req === 'domicilio') {
+        $result = sql_select("
+                                SELECT ID
+                                FROM orden_domicilio
+                                WHERE numero = '".addslashes($numero_traslado_req)."'
+                                LIMIT 1
+                            ");
+        }
+
+
 
     if ($result && $result->num_rows > 0) {
 
@@ -410,15 +423,16 @@ if ($accion=="P") {
 
         $id_maestro = intval($row["ID"]);
 
+        if($tipo_destino_req === 'traslado') {
+
         traslado_historial_guardar(
             $id_maestro,
             4,
             'Traslado procesado seguridad',
             'Se registro firma y traslado en puerta con seguridad'
         );
+        }
     }
-
-
 
         echo json_encode([
             'ok' => true,
@@ -441,6 +455,7 @@ $numero_traslado="";
 if ($accion=="L") {
 
 		$result = sql_select("SELECT orden_traslado.* 
+        ,'traslado'as tipo_destino
 		,producto.codigo_alterno,producto.nombre,producto.placa
 		,orden_traslado_estado.nombre AS elestado
 		,l1.nombre AS motorista1
@@ -476,11 +491,45 @@ if ($accion=="L") {
 		ORDER BY FECHA DESC
 		limit 1");
 
+    // Si no encontró en traslado, buscar en domicilio
+    if (!$result || $result->num_rows == 0) {
+
+        $result = sql_select("SELECT orden_domicilio.* 
+            ,'domicilio' AS tipo_destino
+            ,0 kilometraje_salida 
+            ,producto.codigo_alterno,producto.nombre,producto.placa
+            ,orden_domicilio_estado.nombre AS elestado
+            ,l1.nombre AS motorista1
+            ,entidad.nombre AS cliente
+            ,l2.usuario AS solicitante1
+            ,t0.nombre AS tiendanombre
+            FROM orden_domicilio
+            LEFT OUTER JOIN producto ON (orden_domicilio.id_producto=producto.id)
+            LEFT OUTER JOIN orden_domicilio_estado ON (orden_domicilio.id_estado=orden_domicilio_estado.id)
+            LEFT OUTER JOIN usuario l1 ON (orden_domicilio.id_motorista=l1.id)
+            LEFT OUTER JOIN entidad ON (orden_domicilio.cliente_id=entidad.id)
+            LEFT OUTER JOIN usuario l2 ON (orden_domicilio.id_usuario=l2.id)
+            LEFT OUTER JOIN tienda_agencia t1 ON (orden_domicilio.id_tienda=t1.id)
+			LEFT OUTER JOIN tienda t0 ON (t1.tienda_id=t0.id)
+            WHERE producto.codigo_alterno LIKE '%$codigo'
+              AND NOT EXISTS (
+                    SELECT 1
+                    FROM traslado_bitacora b
+                    INNER JOIN orden_domicilio od2
+                        ON od2.numero = b.numero_traslado
+                    WHERE od2.id_producto = orden_domicilio.id_producto
+                )
+            AND orden_domicilio.id_estado=4
+            ORDER BY fecha DESC
+            LIMIT 1");
+    }
+
     if ($result && $result->num_rows > 0) {
 
         $row = $result->fetch_assoc();
 
 		if (isset($row["numero"])) {$numero_traslado= $row["numero"];} else {$numero_traslado= "";}
+        if(isset($row["tipo_destino"])) {$tipo_destino= $row["tipo_destino"];} else {$tipo_destino= "";}
 
 
         echo json_encode([
@@ -680,6 +729,12 @@ $txt_mensaje="";
                         <div class="col-auto">
 							<?php
 								echo campo("kilometraje_salida_lbl", "Kilometraje salida", "labelb", '', ' ');
+							?>
+						</div>
+
+                        <div class="col-auto">
+							<?php
+								echo campo("tipo_destino_lbl", "Tipo", "labelb", '', ' ');
 							?>
 						</div>
                         
@@ -907,6 +962,7 @@ $txt_mensaje="";
         $('#kilometraje_salida_lbl_valor').html('');
         $('#proveedor_lbl_valor').html('');
         setCombustibleValor('combustible_salida', '');
+        $('#tipo_destino_lbl_valor').html('');
         //setCombustibleValor('combustible_entrada', '');
         limpiarFirma();
     }
@@ -1019,6 +1075,7 @@ $txt_mensaje="";
             if (resp.ok) {
 
                 console.log(resp.data);
+                $('#tipo_destino_lbl_valor').html(resp.data.tipo_destino);
 
                     $('#numero_trasladolbl_valor').html(resp.data.numero || '');
                     $('#fecha_lbl_valor').html(formatearFechaDdMmYyyy(resp.data.fecha));
@@ -1038,9 +1095,11 @@ $txt_mensaje="";
                     $('#solicitado_por_lbl_valor').html(resp.data.solicitante1 || '');
                     $('#atendido_por_lbl_valor').html(resp.data.motorista1 || '');
 
-                    $('#kilometraje_salida_lbl_valor').html(
-                        `${Number(resp.data.kilometraje_salida || 0).toLocaleString('es-HN')} km`
-                    );
+$('#kilometraje_salida_lbl_valor').html(
+    Number(resp.data.kilometraje_salida || 0) === 0
+        ? 'NO APLICA'
+        : `${Number(resp.data.kilometraje_salida).toLocaleString('es-HN')} km`
+);
 
                     let destino=resp.data.tipo_destino;
 
@@ -1084,6 +1143,7 @@ $txt_mensaje="";
         e.preventDefault();
 
         var numeroTraslado = ($('#numero_trasladolbl_valor').text() || '').trim();
+        var tipoDestino = ($('#tipo_destino_lbl_valor').text() || '').trim();
 
         if (numeroTraslado === '') {
             mytoast('error', 'Favor buscar el vehiculo', 3000);
@@ -1106,6 +1166,7 @@ $txt_mensaje="";
             data: {
                 a: 'P',
                 numero_traslado: numeroTraslado,
+                tipo_destino: tipoDestino,
                 dispositivo: navigator.platform || '',
                 firma: firmaBase64
             },
