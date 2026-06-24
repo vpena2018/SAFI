@@ -116,6 +116,8 @@ if ($accion=="g") {
 		}
 
 		if (isset($_REQUEST['cp'])) {//completar	
+
+
 			$verror.=validar("Razón del Traslado",$_REQUEST['id_tipo_traslado2'], "int", true);	
 			$kilometraje_entrada = $_REQUEST['kilometraje_entrada'] ?? '';									
 			$verror.=validar("Kilometraje",$kilometraje_entrada, "int", true);
@@ -126,7 +128,27 @@ if ($accion=="g") {
                if ($ke<$ks){
 				   $verror.="El kilometraje de entrada no puede menor";
 			   }
-			}			
+			}
+
+			$result = sql_select("SELECT numero FROM orden_traslado WHERE id = $cid");
+
+			if ($result!=false){
+				if ($result -> num_rows > 0) { 
+					$row = $result -> fetch_assoc(); 
+
+					$traslado = sql_select("SELECT count(*) as count FROM traslado_bitacora WHERE numero_traslado = ".$row['numero']);
+
+					if($traslado!=false){
+						if ($traslado -> num_rows > 0) { 
+							$row2 = $traslado -> fetch_assoc(); 
+							if($row2['count'] == 0){
+								$verror.="No puede completar el traslado, Vehiculo pendiente de salida";
+							}
+						}
+					}
+				}
+			}
+			
 		}
 		
 	} else {
@@ -191,6 +213,9 @@ if ($accion=="g") {
     
 
 	$mov_atender=0;
+
+
+
 
 
 		if (isset($_REQUEST['at'])){
