@@ -60,12 +60,14 @@ if ($accion=="1") {
 	,orden_traslado_estado.nombre AS elestado
 	,l1.usuario AS motorista
 	,t2.nombre AS tienda_destino
+    ,t1.autorizacion_traslado AS autorizacion_traslado
 	,p1.nombre AS elproveedor
     ,l2.usuario AS auditado
 	FROM orden_traslado
 	LEFT OUTER JOIN producto ON (orden_traslado.id_producto=producto.id)
 	LEFT OUTER JOIN orden_traslado_estado ON (orden_traslado.id_estado=orden_traslado_estado.id)
 	LEFT OUTER JOIN usuario l1 ON (orden_traslado.id_motorista=l1.id)  
+    LEFT OUTER JOIN tienda_agencia t1 ON (orden_traslado.id_tienda_salida=t1.id)
 	LEFT OUTER JOIN tienda_agencia t2 ON (orden_traslado.id_tienda_destino=t2.id)   
 	LEFT OUTER JOIN entidad p1 ON (orden_traslado.id_proveedor=p1.id) 
     LEFT OUTER JOIN usuario l2 ON (orden_traslado.id_usuario_auditado=l2.id)
@@ -115,7 +117,7 @@ if ($accion=="1") {
                     $acclavar_btn="btn-info";
                 }
 
-                if ($row["id_estado"]==2 ) {
+                if ($row["id_estado"]==2 && $row["autorizacion_traslado"]==1 ) {
                     if (es_nulo($row["id_usuario_autoriza"])){
                         $acclavar="Autorizar" ;
                     }else{
@@ -124,7 +126,7 @@ if ($accion=="1") {
                     $acclavar_btn="btn-success";
                 }
 
-                if ($row["id_estado"]==4 ) {
+                if ($row["id_estado"]==4 || ($row["id_estado"]==2 && $row["autorizacion_traslado"]==0 )) {
                     $acclavar="Completar" ;
                     $acclavar_btn="btn-success";
                 }

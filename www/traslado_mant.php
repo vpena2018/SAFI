@@ -46,6 +46,7 @@ if ($accion=="v") {
 		,p1.nombre AS elproveedor
 		,t1.nombre AS tiendasalida
 		,t2.nombre AS tiendadestino
+		,t1.autorizacion_traslado AS autorizacion_traslado
 		,t3.nombre as id_tipo_traslado_lbl
 		,t4.nombre as id_tipo_traslado_lbl2
 		FROM orden_traslado
@@ -481,6 +482,9 @@ if (isset($row["id_usuario_autoriza"])) {$id_usuario_autoriza= $row["id_usuario_
 if (isset($row["id_tienda"])) {$id_tienda= $row["id_tienda"]; } else {$id_tienda=$_SESSION['tienda_id'] ;}
 if (isset($row["id_producto"])) {$id_producto= $row["id_producto"]; } else {$id_producto= "";}
 if (isset($row["id_estado"])) {$id_estado= $row["id_estado"]; } else {$id_estado= "1";}
+if (isset($row["autorizacion_traslado"])) {$autorizacion_traslado= $row["autorizacion_traslado"]; } else {$autorizacion_traslado= "0";}
+
+
 if (isset($row["id_inspeccion"])) {$id_inspeccion= $row["id_inspeccion"]; } else {$id_inspeccion= "";}
 if (isset($row["id_servicio"])) {$id_servicio= $row["id_servicio"]; } else {$id_servicio= "";}
 
@@ -566,7 +570,10 @@ if ($id_estado>1) {$disable_combsalida=' disabled="disabled"';}
 //old
 //if ($id_estado>2) {$disable_combentrada=' disabled="disabled"';}
 
-if ($id_estado==2) {$disable_combentrada=' disabled="disabled"';}
+if ($id_estado==2 && $autorizacion_traslado==1) {$disable_combentrada=' disabled="disabled"';}
+
+
+
 
 if ($id_estado>1) {$mostrar_entrada=" ";} else {$mostrar_entrada=" oculto";}
 
@@ -629,7 +636,8 @@ $modificar_salida=$nuevoreg;
 
 				$tras_autorizado=4;
 
-				if ($nuevoreg==false && $id_estado==$tras_autorizado) {
+				//if ($nuevoreg==false && $id_estado==$tras_autorizado) {
+				if ($nuevoreg==false && (($id_estado==$tras_autorizado) || ($id_estado==2 && $autorizacion_traslado==0)))  {	
 					echo campo("id_tipo_traslado2","Razón del Traslado",'select',valores_combobox_db('orden_traslado_tipo','','nombre',' ','','...'),' ','  required ','','');
 				} else {
 					echo campo("id_tipo_traslado_lbl2","Razón del Traslado",'labelb',$id_tipo_traslado_lbl2,'',' '); 
@@ -769,7 +777,8 @@ $modificar_salida=$nuevoreg;
                 <?php 
 			 
 				
-					if ($id_estado==$tras_autorizado) {
+					//if ($id_estado==$tras_autorizado) {
+					if (($id_estado==$tras_autorizado) || ($id_estado==2 && $autorizacion_traslado==0))  {	
 						echo campo("observaciones2","Comentarios",'textarea',$observaciones2,' ',' rows="2"  ');
 					} else {
 						echo campo("observaciones2","Comentarios",'labelb',$observaciones2,'',' '); 
@@ -799,7 +808,8 @@ $modificar_salida=$nuevoreg;
 
 				<div class="col-md-6 <?php echo $mostrar_entrada; ?>">  
 					<?php 
-						if ($id_estado==$tras_autorizado)  {
+					    if (($id_estado==$tras_autorizado) || ($id_estado==2 && $autorizacion_traslado==0))  {
+						//if ($id_estado==$tras_autorizado)  {
 							echo campo("kilometraje_entrada","Kilometraje Entrada",'number',$kilometraje_entrada,' ',$disable_combentrada  .' ');
 						} else {
 							echo campo("kilometraje_entrada","Kilometraje Entrada",'labelb',$kilometraje_entrada,'',' '); 
@@ -948,7 +958,7 @@ $modificar_salida=$nuevoreg;
             }
         }
 
-        if ($id_estado == 4) {//Completar
+        if ($id_estado == 4 || ($id_estado == 2 && $autorizacion_traslado == 0)) {//Completar
         ?>
             <?php if (tiene_permiso(144)) { ?>
                 <div class="col-sm">
@@ -962,7 +972,7 @@ $modificar_salida=$nuevoreg;
         <?php
         }
 
-        if ($id_estado == 2) {//Autorizar
+        if ($id_estado == 2 && $autorizacion_traslado == 1) {//Autorizar
         ?>
             <?php if (tiene_permiso(144)) { ?>
                 <div class="col-sm">
