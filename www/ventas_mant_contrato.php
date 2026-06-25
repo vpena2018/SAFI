@@ -1314,7 +1314,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
 }
 
 //ajax para detectar si un estado puede generar contrato o no
-if ($_GET['a'] === 'check_generar_contrato') {
+if (isset($_GET['a']) && $_GET['a'] === 'check_generar_contrato') {
 
     $estado = intval($_GET['estado']);
 
@@ -1343,7 +1343,7 @@ if ($_GET['a'] === 'check_generar_contrato') {
 }
 
 // VALIDAR (AJAX)
-    if ($_GET['a'] === 'print_check') {
+    if (isset($_GET['a']) && $_GET['a'] === 'print_check') {
         //$id = intval($_GET['id']);
 
         $id =0;
@@ -1389,7 +1389,7 @@ if ($_GET['a'] === 'check_generar_contrato') {
     }
 
     // DESCARGAR (NAVEGADOR)
-    if ($_GET['a'] === 'print') {
+    if (isset($_GET['a']) && $_GET['a'] === 'print') {
         $id = intval($_GET['id']);
         $id_contrato = intval($_GET['id_contrato']);
         $persona_juridica = isset($_REQUEST['persona_juridica'])? (bool) $_REQUEST['persona_juridica']: false;
@@ -1561,6 +1561,70 @@ if($accion=="gfoto")
     
     salida_json($stud_arr);  
     exit;  
+}
+
+// Retorna solo el HTML de la sección de fotos (para recarga parcial)
+if ($accion == "fotos_html") {
+    $cid = isset($_REQUEST['cid']) ? intval($_REQUEST['cid']) : 0;
+    $total_filas = 0;
+    $principal = false;
+
+    $sql = "SELECT id, nombre_archivo, fecha, principal FROM ventas_fotos WHERE id_venta=" . intval($cid) . " ORDER BY principal DESC";
+    $result = sql_select($sql);
+
+    if ($result != false) {
+        $total_filas = $result->num_rows;
+        if ($total_filas > 0) {
+            echo '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;justify-items:center;align-items:start;justify-content:center;">';
+            while ($row = $result->fetch_assoc()) {
+                $es_principal = (bool)$row["principal"];
+                $fext = strtolower(substr($row["nombre_archivo"], -3));
+                if (in_array($fext, ['jpg', 'peg', 'png', 'gif'])) {
+                    echo '<div style="text-align:center;">';
+                    echo '<a href="#" class="foto_br' . $row["id"] . '" 
+                            onclick="mostrar_foto(\'' . $row["nombre_archivo"] . '\',\'uploa_d_ventas/\'); return false;"
+                            style="display:inline-block; transition: transform 0.2s ease-in-out;">
+                            <img class="img img-thumbnail mb-2" 
+                                 src="uploa_d_ventas/thumbnail/' . $row["nombre_archivo"] . '" 
+                                 data-cod="' . $row["id"] . '" 
+                                 style="width:100%; max-width:160px; height:auto; border-radius:6px;">
+                          </a>';
+                    if (tiene_permiso(186)) {
+                        echo '<div style="text-align:center; font-size:13px;">';
+                        echo '<a href="#" class="mr-2 foto_br' . $row["id"] . '" 
+                                onclick="borrar_fotodb(' . $row["id"] . ',\'' . $row["nombre_archivo"] . '\'); return false;"
+                                style="color:#dc3545; text-decoration:none;">
+                                <i class="fa fa-eraser"></i> Borrar
+                            </a>';
+                        if ($es_principal) {
+                            echo '<i class="fa fa-star" title="Foto de portada" style="color:#f0c651;"> Portada</i>';
+                        } else {
+                            echo '<a href="#" onclick="marcar_portada(' . $row["id"] . ',\'' . $row["nombre_archivo"] . '\'); return false;"
+                                    style="color:#6c757d; text-decoration:none;">
+                                    <i class="far fa-star"></i> Portada
+                                 </a>';
+                        }
+                        echo '</div>';
+                    }
+                    echo '</div>';
+                }
+            }
+            echo '</div>';
+        }
+    }
+
+    if (tiene_permiso(186)) {
+        $a = $total_filas;
+        while ($a < 10) {
+            echo '<div class="row"><div class="col-12">';
+            echo '<div class="ins_varias_foto_div">';
+            echo campo_upload_foto_ventas("ins_foto" . $a, "Adjuntar Fotos", 'upload', '', '  ', '', 3, 9, 'NO', false, $principal);
+            echo "</div></div></div>";
+            echo "<hr>";
+            $a++;
+        }
+    }
+    exit;
 }
 
 // borrar ARCHIVO de ventas
@@ -3526,7 +3590,7 @@ Swal.fire({
     var datos= { a: "gfoto", arch: encodeURI(arch),cid:cid,isMain:isMain}; 
 
 
- 	 $.post( 'ventas_mant.php',datos, function(json) {
+ 	 $.post( 'ventas_mant_contrato.php',datos, function(json) {
 	 			
 		if (json.length > 0) {
 			if (json[0].pcode == 0) {
@@ -3534,29 +3598,16 @@ Swal.fire({
 				mytoast('error',json[0].pmsg,3000) ;   
 			}
 			if (json[0].pcode == 1) {
-                $('#'+campo).val(arch);                
-                $('#files_'+campo).text('Guardado');
-                $('#lk'+campo).html(arch);
-               // thumb_agregar(arch);
-               thumb_agregar_foto_venta(arch,campo);
-			
+                mytoast('success','Guardado',3000);
+                // Recargar solo la sección de fotos sin recargar todo el modal
+                $('#archivofotoventas').load('ventas_mant_contrato.php?a=fotos_html&cid=' + cid, function() {
+                    ventas_cambiartab('nav_Fotos_venta');
+                });
 			}
-		} else {mytoast('error',json[0].pmsg,3000) ; }
+		} else {mytoast('error', (json[0] ? json[0].pmsg : 'Error'), 3000) ; }
 		  
 	})
-	  .done(function() { 
-
-        abrir_ventas(cid); 
-        setTimeout(function() {
-            ventas_cambiartab('nav_Fotos_venta');
-
-            $('#insp_tabFotos').tab('show');
-        }, 300);
-
-        mytoast('success','Guardado',3000) ;   
-    
-    })
-	  .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
+	  .fail(function(xhr, status, error) { mytoast('error','Error al guardar la foto',3000); })
 	  .always(function() {	  }); 
     
     }
