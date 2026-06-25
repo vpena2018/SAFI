@@ -84,6 +84,23 @@ if ($accion=="g") {
 	$elcodigo= $cid;
     if (es_nulo($elcodigo)) {$nuevoreg=true;} else {$nuevoreg=false;}
 
+
+
+		$autorizar_traslado = 0;
+
+		$result_agencia = sql_select("SELECT id_tienda FROM orden_traslado WHERE id = $cid");
+
+		if ($result_agencia && $result_agencia->num_rows > 0) {
+			$row = $result_agencia->fetch_assoc();
+
+			$result = sql_select("SELECT autorizacion_traslado FROM tienda_agencia WHERE tienda_id = $row[id_tienda]");
+
+			if ($result && $result->num_rows > 0) {
+				$row = $result->fetch_assoc();
+				$autorizar_traslado = (int)($row["autorizacion_traslado"] ?? 0);
+			}
+		}
+
     //Validar
 	$verror="";
 	$ks="";
@@ -130,7 +147,8 @@ if ($accion=="g") {
 			   }
 			}
 
-			$result = sql_select("SELECT numero FROM orden_traslado WHERE id = $cid");
+			if($autorizar_traslado==1){
+							$result = sql_select("SELECT numero FROM orden_traslado WHERE id = $cid");
 
 			if ($result!=false){
 				if ($result -> num_rows > 0) { 
@@ -148,6 +166,10 @@ if ($accion=="g") {
 					}
 				}
 			}
+				
+			}
+
+
 			
 		}
 		
@@ -210,18 +232,21 @@ if ($accion=="g") {
 	
 	$sqlcampos="";
 	$sqlcampos.=" actualiza = NOW()";
-    
-
 	$mov_atender=0;
-
-
-
 
 
 		if (isset($_REQUEST['at'])){
 			$mov_asignar="Atender ";
 			$sqlcampos.=", traslado_inicio = NOW()";
-			$sqlcampos.=", id_estado = 2";
+
+			if($autorizar_traslado==0){
+				$sqlcampos.=", id_usuario_autoriza =".$_SESSION["usuario_id"];
+				$sqlcampos.=", autorizado = NOW()";
+				$sqlcampos.=", id_estado = 4";
+			}else{
+				$sqlcampos.=", id_estado = 2";
+			}
+			
 			$mov_atender=2;
 		}
 

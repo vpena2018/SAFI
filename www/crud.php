@@ -209,12 +209,14 @@ function guardarforma() {
 			if (isset($columnas_combo)){
 				$key = array_search($campo, $columnas_combo);
 				if ($key===false) {
-					if ( ($tabla=="usuario" or $tabla=="cita_taller" or $tabla=="guardias")and ( $campo=="clave"   or $campo=="activo" or $campo=="interno" or $campo=="externo")) {															
+					if ( ($tabla=="usuario" or $tabla=="cita_taller" or $tabla=="guardias" or $tabla=="tienda_agencia")and ( $campo=="clave"   or $campo=="activo" or $campo=="interno" or $campo=="externo" or $campo=="autorizacion_traslado")) {															
 					      // if ( $campo=="clave") { echo	campo("modboton", "Modificar Contrase&ntilde;a",'boton','',"onClick = \"efectuar_proceso(7,'".'Modificar Contrase&ntilde;a'."',3,$rid,''); return false; \"");}
 						  if ($tabla=="usuario" and $campo=="clave") { echo	campo($campo,"Modificar Contrase&ntilde;a","password", "",$campoclase);}
                             
                            if ($tabla=="usuario" and $campo=="activo") {echo campo($campo,$columnas_etiquetas[$i],'select2',valores_combobox_texto(app_combo_si_no,$row[$campo]),$campoclase);}
-						  
+						 
+						   if ($tabla=="tienda_agencia" and $campo=="autorizacion_traslado") {echo campo($campo,$columnas_etiquetas[$i],'select2',valores_combobox_texto(app_combo_si_no,$row[$campo]),$campoclase);}
+						   
 						   if ($tabla=="cita_taller" and $campo=="interno") {echo campo($campo,$columnas_etiquetas[$i],'select2',valores_combobox_texto(app_combo_si_no,$row[$campo]),$campoclase);}
 
 						   if ($tabla=="cita_taller" and $campo=="activo") {echo campo($campo,$columnas_etiquetas[$i],'select2',valores_combobox_texto(app_combo_si_no,$row[$campo]),$campoclase);}
