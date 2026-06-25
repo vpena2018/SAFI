@@ -455,7 +455,7 @@ $numero_traslado="";
 if ($accion=="L") {
 
 		$result = sql_select("SELECT orden_traslado.* 
-        ,'traslado'as tipo_destino
+        ,'traslado'as tipo_destino_pantalla
 		,producto.codigo_alterno,producto.nombre,producto.placa
 		,orden_traslado_estado.nombre AS elestado
 		,l1.nombre AS motorista1
@@ -492,7 +492,7 @@ if ($accion=="L") {
 		limit 1");
 
     // Si no encontró en traslado, buscar en domicilio
-    if (!$result || $result->num_rows == 0) {
+    /* if (!$result || $result->num_rows == 0) {
 
         $result = sql_select("SELECT orden_domicilio.* 
             ,'domicilio' AS tipo_destino
@@ -522,14 +522,14 @@ if ($accion=="L") {
             AND orden_domicilio.id_estado=4
             ORDER BY fecha DESC
             LIMIT 1");
-    }
+    } */
 
     if ($result && $result->num_rows > 0) {
 
         $row = $result->fetch_assoc();
 
 		if (isset($row["numero"])) {$numero_traslado= $row["numero"];} else {$numero_traslado= "";}
-        if(isset($row["tipo_destino"])) {$tipo_destino= $row["tipo_destino"];} else {$tipo_destino= "";}
+        if(isset($row["tipo_destino_pantalla"])) {$tipo_destino= $row["tipo_destino_pantalla"];} else {$tipo_destino= "";}
 
 
         echo json_encode([
@@ -732,7 +732,7 @@ $txt_mensaje="";
 							?>
 						</div>
 
-                        <div class="col-auto">
+                        <div class="col-auto" style="display:none;">
 							<?php
 								echo campo("tipo_destino_lbl", "Tipo", "labelb", '', ' ');
 							?>
@@ -1075,7 +1075,7 @@ $txt_mensaje="";
             if (resp.ok) {
 
                 console.log(resp.data);
-                $('#tipo_destino_lbl_valor').html(resp.data.tipo_destino);
+                $('#tipo_destino_lbl_valor').html(resp.data.tipo_destino_pantalla || '');
 
                     $('#numero_trasladolbl_valor').html(resp.data.numero || '');
                     $('#fecha_lbl_valor').html(formatearFechaDdMmYyyy(resp.data.fecha));
@@ -1102,6 +1102,8 @@ $('#kilometraje_salida_lbl_valor').html(
 );
 
                     let destino=resp.data.tipo_destino;
+                    let destinopantalla=resp.data.tipo_destino_pantalla;
+                    debugger;
 
 
                     if(destino==1){
