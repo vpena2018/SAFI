@@ -1846,10 +1846,9 @@ if ($accion=="g") {
 
     if ($verror == "") {
 
-        if ($id_estado == $estado_global_negociacion || $id_estado == 20) {
-
-
-
+     ///este validacion es para que cuando el estado sea negociacion
+     if ($id_estado == $estado_global_negociacion && !tiene_permiso(190)) {
+            
             $client_id_val = isset($_REQUEST['cliente_id'])
                 ? (int) $_REQUEST['cliente_id']
                 : 0;
