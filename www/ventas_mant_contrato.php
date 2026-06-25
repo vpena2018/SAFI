@@ -1432,7 +1432,8 @@ if ($accion=="v") {
     ,ventas.representante_legal_direccion
     ,ventas.tipo_documento_ident_venta
     ,ventas.nacionalidad_venta
-
+    ,financieras.nombre AS financiera_nombre
+    ,financieras_estado.nombre AS financiera_estado_nombre
         FROM ventas
         LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)        
         LEFT OUTER JOIN producto ON (ventas.id_producto=producto.id)        
@@ -1440,7 +1441,8 @@ if ($accion=="v") {
         LEFT OUTER JOIN ventas_impuestos ON (ventas.id_impuesto=ventas_impuestos.id)
         LEFT OUTER JOIN ventas_factura ON (ventas.id_factura=ventas_factura.id)
         LEFT OUTER JOIN entidad ON (ventas.cliente_id=entidad.id)
-        
+        left outer join financieras on (ventas.id_financiera=financieras.id)
+        left outer join financieras_estado on (ventas.id_financiera_estado=financieras_estado.id)
     where ventas.id=$cid limit 1");
 
 	if ($result!=false){
@@ -1758,15 +1760,10 @@ if ($foto_original_tele !== '') {
         
         
         if (isset($_REQUEST["precio_minimo"])) { $sqlcampos.= " , precio_minimo =".GetSQLValue($_REQUEST["precio_minimo"],"int"); } 
-        if (isset($_REQUEST["precio_maximo"])) { $sqlcampos.= " , precio_maximo =".GetSQLValue($_REQUEST["precio_maximo"],"int"); } 
-        
+        if (isset($_REQUEST["precio_maximo"])) { $sqlcampos.= " , precio_maximo =".GetSQLValue($_REQUEST["precio_maximo"],"int"); }        
         if (isset($_REQUEST["precio_venta"])) { $sqlcampos.= " , precio_venta =".GetSQLValue($_REQUEST["precio_venta"],"int"); } 
-
         if (isset($_REQUEST["prima_venta"])) { $sqlcampos.= " , prima_venta =".GetSQLValue($_REQUEST["prima_venta"],"int"); } 
-        
-
-        
-
+             
         //if ($persona_juridica == 1 && ($id_estado==11 || $id_estado==20)) {
          if ($persona_juridica == 1 && ($genera_contrato==1)) {
 
@@ -1783,14 +1780,12 @@ if ($foto_original_tele !== '') {
             $sqlcampos .= " , representante_legal_identidad = "
                         . GetSQLValue($rep_id, "text");
 
-
-
              $sqlcampos .= " , representante_legal_direccion = "
             . GetSQLValue($rep_direccion, "text");
 
 
 
-        } else {
+        } else{
 
             // Si NO es persona jurídica, limpiamos los campos
             $sqlcampos .= " , persona_juridica =0";
@@ -1801,8 +1796,6 @@ if ($foto_original_tele !== '') {
             
         }
         
-
-
         if (isset($_REQUEST["kilometraje"])) { $sqlcampos.= " , kilometraje =".GetSQLValue($_REQUEST["kilometraje"],"int"); } 
         if (isset($_REQUEST["cilindraje"])) { $sqlcampos.= " , cilindraje =".GetSQLValue($_REQUEST["cilindraje"],"int"); } 
         if (isset($_REQUEST["trasmision"])) { $sqlcampos.= " , trasmision =".GetSQLValue($_REQUEST["trasmision"],"text"); } 
@@ -1810,20 +1803,12 @@ if ($foto_original_tele !== '') {
         if (isset($_REQUEST["id_factura"])) { $sqlcampos.= " , id_factura =".GetSQLValue($_REQUEST["id_factura"],"int"); } 
         if (isset($_REQUEST["id_vendedor"])) { $sqlcampos.= " , id_vendedor =".GetSQLValue($_REQUEST["id_vendedor"],"int"); } 
         if (isset($_REQUEST["id_televentas"])) { $sqlcampos.= " , id_televentas =".GetSQLValue($_REQUEST["id_televentas"],"int"); } 
-        if (isset($_REQUEST["observaciones"])) { $sqlcampos.= " , observaciones =".GetSQLValue($_REQUEST["observaciones"],"text"); }   
-        
-
+        if (isset($_REQUEST["observaciones"])) { $sqlcampos.= " , observaciones =".GetSQLValue($_REQUEST["observaciones"],"text"); }          
         if (isset($_REQUEST["tipo_documento_ident_venta"])) { $sqlcampos.= " , tipo_documento_ident_venta =".GetSQLValue($_REQUEST["tipo_documento_ident_venta"],"text"); } 
-
-
         if (isset($_REQUEST["nacionalidad_venta"])) { $sqlcampos.= " , nacionalidad_venta =".GetSQLValue($_REQUEST["nacionalidad_venta"],"text"); } 
 
         //if (isset($_REQUEST["ciudad_venta"])) { $sqlcampos.= " , ciudad_venta =".GetSQLValue($_REQUEST["ciudad_venta"],"text"); } 
-        //if (isset($_REQUEST["departamento_venta"])) { $sqlcampos.= " , departamento_venta =".GetSQLValue($_REQUEST["departamento_venta"],"text"); }
-
-
-        
-
+        //if (isset($_REQUEST["departamento_venta"])) { $sqlcampos.= " , departamento_venta =".GetSQLValue($_REQUEST["departamento_venta"],"text"); }     
         //if (isset($_REQUEST["foto"])) { $sqlcampos.= " , foto ='$foto'"; } 
         //if (isset($_REQUEST["foto_televentas"])) { $sqlcampos.= " , foto_televentas = '$foto_televentas'"; } 
 
@@ -1839,10 +1824,14 @@ if ($foto_original_tele !== '') {
         if (isset($_REQUEST["reproceso"])) { $sqlcampos.= " , reproceso =".GetSQLValue($_REQUEST["reproceso"],"text"); } 
         if (isset($_REQUEST["oferta"])) { $sqlcampos.= " , oferta =".GetSQLValue($_REQUEST["oferta"],"int"); } 
 
-
+        if (isset($_REQUEST["id_financiera"])) { $sqlcampos.= " , id_financiera =".GetSQLValue($_REQUEST["id_financiera"],"int"); }
+        if (isset($_REQUEST["id_financiera_estado"])) { $sqlcampos.= " , id_financiera_estado =".GetSQLValue($_REQUEST["id_financiera_estado"],"int"); }
+        if (isset($_REQUEST["venta_cont_cred"])) { $sqlcampos.= " , venta_cont_cred =".GetSQLValue($_REQUEST["venta_cont_cred"],"int"); }
+        if (isset($_REQUEST["asesor_financiera"])) { $sqlcampos.= " , asesor_financiera =".GetSQLValue($_REQUEST["asesor_financiera"],"int"); }
+        
         //$genera_contrato=intval(get_dato_sql("ventas_estado","generar_contrato"," where id=".$id_estado));
-
         //if($id_estado==11 || $id_estado==20){
+
         if($genera_contrato==1){
             $rep_profesion   = trim($_REQUEST['representante_legal_profesion'] ?? '');
 
@@ -2298,8 +2287,12 @@ if ($foto_original_tele !== '') {
     //if (isset($row["ciudad_venta"])) {$ciudad_venta= $row["ciudad_venta"]; } else {$ciudad_venta= "";}
     //if (isset($row["departamento_venta"])) {$departamento_venta= $row["departamento_venta"]; } else {$departamento_venta= "";}
 
+    if(isset($row['venta_cont_cred'])) {$venta_cont_cred = $row['venta_cont_cred']; } else {$venta_cont_cred = 0;}
+    if(isset($row['id_financiera'])) {$id_financiera = $row['id_financiera']; } else {$id_financiera = 0;}
+    if(isset($row['id_estado_financiera'])) {$id_estado_financiera = $row['id_estado_financiera']; } else {$id_estado_financiera = 0;}
+    if(isset($row['asesor_financiera'])) {$asesor_financiera = $row['asesor_financiera']; } else {$asesor_financiera = "";}
+     
 
-   
     $carShopPerfil="";
     $carShopPerfil=get_dato_sql("usuario","grupo_id"," WHERE id=".$_SESSION["usuario_id"]);
     $diff=0;
@@ -2403,7 +2396,7 @@ if ($foto_original_tele !== '') {
     </div>
         <div class="col-md">            
          <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',$disable_sec2); ?>                 
-    </div>   
+     </div>   
         <div class="col-md">            
          <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec2); ?>                 
     </div> 
@@ -2415,11 +2408,6 @@ if ($foto_original_tele !== '') {
 
         
         //echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1,'get.php?a=2&t=1',$cliente_nombre);
-
-
-        
-
-        
 
 
         //echo valores_combobox_array($opciones, 'T02', 'Seleccione una opción');
@@ -2528,19 +2516,36 @@ if ($foto_original_tele !== '') {
                echo campo("id_factura_label","Factura",'label',$lafactura,'','','');
          }  
          ?>    
-    </div>    
-</div>
-
-<div class="row">
+    </div>   
+    
     <div class="col-md">
          <?php echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2);  ?> 
-    </div>
+    </div>    
+
     <div class="col-md">
          <?php echo campo("id_televentas","Tele Ventas",'select2',valores_combobox_db('usuario',$id_televentas,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2);  ?> 
     </div>
 </div>
 
 <div class="row">
+     <div class="col-md">
+          <?php echo campo("venta_cont_cred","Tipo Venta",'select', valores_combobox_texto(app_tipo_vvehiculo,$venta_cont_cred),' ',$disable_sec2); ?>
+     </div>
+
+     <div class="col-md">
+         <?php echo campo("id_financiera","Financiera",'select2',valores_combobox_db('financieras',$id_financiera,'nombre',' ','','...'),' ',' required '.$disable_sec2);  ?> 
+     </div>
+
+     <div class="col-md">
+         <?php echo campo("id_financiera_estado","Status Financiera",'select2',valores_combobox_db('financieras_estados',$id_financiera,'nombre',' ','','...'),' ',' required '.$disable_sec2);  ?> 
+     </div>
+</div>
+
+<div class="row">
+    <div class="col-md">            
+         <?php echo campo("asesor_financiera","Asesor Financiera",'text',$asesor_financiera,' ',$disable_sec2); ?>                 
+     </div>   
+
      <div class="col-md">
          <?php echo campo("oferta","Oferta Web",'checkboxCustom',$oferta,' ',$disable_sec2); ?>          
      </div>
@@ -2721,6 +2726,19 @@ if ($foto_original_tele !== '') {
 
 <script>
 $(function () {
+
+// Habilita/deshabilita campos de financiera según tipo de venta (1=contado, 2=crédito)
+function toggleFinanciera() {
+    var esCredito = $('#venta_cont_cred').val() == '2';
+    $('#id_financiera, #id_financiera_estado').prop('disabled', !esCredito).trigger('change');
+    $('#asesor_financiera').prop('disabled', !esCredito);
+    $('#id_financiera').closest('.col-md').toggle(esCredito);
+    $('#id_financiera_estado').closest('.col-md').toggle(esCredito);
+    $('#asesor_financiera').closest('.col-md').toggle(esCredito);
+}
+
+$('#venta_cont_cred').on('change', toggleFinanciera);
+toggleFinanciera(); // estado inicial al cargar
 
 $('#btnguardar').on('click', function (e) {
     debugger;
