@@ -177,10 +177,10 @@ switch ($numtabla) {
             case 13: 
                 $tabla="tienda_agencia"; 
                 $tabla_etiqueta="Tienda - Agencia";
-                $columnas = array('id','tienda_id','nombre','rentworks_almacen','correo_orden_servicio_nueva','correo_orden_averia_nueva','correo_completada_rdp');
-                $columnas_etiquetas = array('Id','Tienda','Agencia','Rentworks Almacen','Correo Coordinador Flota','Correo Coordinador Averia','Correo de RDP' );
-                $columnas_tipo = array('int','int','text','text','text','text','text' );
-                $columnas_mask = array('','','','','','','');
+                $columnas = array('id','tienda_id','nombre','rentworks_almacen','correo_orden_servicio_nueva','correo_orden_averia_nueva','correo_completada_rdp','autorizacion_traslado');
+                $columnas_etiquetas = array('Id','Tienda','Agencia','Rentworks Almacen','Correo Coordinador Flota','Correo Coordinador Averia','Correo de RDP','Autorizacion Traslado' );
+                $columnas_tipo = array('int','int','text','text','text','text','text','checkbox' );
+                $columnas_mask = array('','','','','','','','');
 
                 $columnas_combo  = array('tienda_id');
                 $columnas_combo2 = array('tienda');
