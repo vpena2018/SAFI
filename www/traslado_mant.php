@@ -346,6 +346,12 @@ if ($accion=="g") {
 			traslado_historial_guardar($cid, $estado_historial, "Nueva Orden de Traslado", "");
 		} else {
 			if (isset($_REQUEST['at'])) {
+
+				if($autorizar_traslado==0 && $estado_historial==4)
+					{
+						$estado_historial=2;
+					}
+
 				traslado_historial_guardar($cid, $estado_historial, "Atender Traslado", "Se registro salida del traslado");
 			} elseif (isset($_REQUEST['cp'])) {
 				traslado_historial_guardar($cid, $estado_historial, "Completar Traslado", "Se registro entrada/finalizacion del traslado");

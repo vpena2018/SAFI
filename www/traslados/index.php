@@ -486,6 +486,7 @@ if ($accion=="L") {
             WHERE b.numero_traslado = orden_traslado.numero
         )
 		AND id_estado=4
+        AND t1.autorizacion_traslado=1
 		ORDER BY FECHA DESC
 		limit 1");
 
