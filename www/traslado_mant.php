@@ -89,12 +89,12 @@ if ($accion=="g") {
 
 		$autorizar_traslado = 0;
 
-		$result_agencia = sql_select("SELECT id_tienda FROM orden_traslado WHERE id = $cid");
+		$result_agencia = sql_select("SELECT id_tienda_salida FROM orden_traslado WHERE id = $cid");
 
 		if ($result_agencia && $result_agencia->num_rows > 0) {
 			$row = $result_agencia->fetch_assoc();
 
-			$result = sql_select("SELECT autorizacion_traslado FROM tienda_agencia WHERE tienda_id = $row[id_tienda]");
+			$result = sql_select("SELECT autorizacion_traslado FROM tienda_agencia WHERE id = $row[id_tienda_salida]");
 
 			if ($result && $result->num_rows > 0) {
 				$row = $result->fetch_assoc();
