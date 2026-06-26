@@ -153,7 +153,7 @@ if (tiene_permiso(186)) {
 <script>
 function ventas_fotos_admin_refrescar(){
   var cid = $('#id').val();
-  $('#nav_Fotos_venta').load('ventas_fotos_admin.php?cid=' + cid);
+  $('#nav_Fotos_venta').load('ventas_fotos_web.php?cid=' + cid);
 }
 
 function mostrar_foto_vta(imagen, folder){
@@ -174,7 +174,7 @@ function borrar_fotodb_vta(codid, arch){
     cancelButtonText: 'No'
   }).then((result) => {
     if (result.value) {
-      $.post('ventas_fotos_admin.php', datos, function(json){
+      $.post('ventas_fotos_web.php', datos, function(json){
         if (json.length > 0 && json[0].pcode == 1) {
           mytoast('success', json[0].pmsg, 3000);
           ventas_fotos_admin_refrescar();
@@ -199,7 +199,7 @@ function marcar_portada_vta(codid, arch){
     cancelButtonText: 'No'
   }).then((result) => {
     if (result.value) {
-      $.post('ventas_fotos_admin.php', datos, function(json){
+      $.post('ventas_fotos_web.php', datos, function(json){
         if (json.length > 0 && json[0].pcode == 1) {
           mytoast('success', json[0].pmsg, 3000);
           ventas_fotos_admin_refrescar();
@@ -214,7 +214,7 @@ function marcar_portada_vta(codid, arch){
 function insp_guardar_foto_ventas(arch, campo, isMain){
   var cid = $("#id").val();
   var datos = { a: "gfoto", arch: encodeURI(arch), cid: cid, isMain: isMain };
-  $.post('ventas_fotos_admin.php', datos, function(json){
+  $.post('ventas_fotos_web.php', datos, function(json){
     if (json && json.length > 0 && json[0].pcode == 1) {
       mytoast('success', (json[0].pmsg ? json[0].pmsg : 'Guardado'), 3000);
       ventas_fotos_admin_refrescar();

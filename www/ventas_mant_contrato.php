@@ -1314,7 +1314,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
 }
 
 //ajax para detectar si un estado puede generar contrato o no
-if ($_GET['a'] === 'check_generar_contrato') {
+if (isset($_GET['a']) && $_GET['a'] === 'check_generar_contrato') {
 
     $estado = intval($_GET['estado']);
 
@@ -1343,7 +1343,7 @@ if ($_GET['a'] === 'check_generar_contrato') {
 }
 
 // VALIDAR (AJAX)
-    if ($_GET['a'] === 'print_check') {
+    if (isset($_GET['a']) && $_GET['a'] === 'print_check') {
         //$id = intval($_GET['id']);
 
         $id =0;
@@ -1389,7 +1389,7 @@ if ($_GET['a'] === 'check_generar_contrato') {
     }
 
     // DESCARGAR (NAVEGADOR)
-    if ($_GET['a'] === 'print') {
+    if (isset($_GET['a']) && $_GET['a'] === 'print') {
         $id = intval($_GET['id']);
         $id_contrato = intval($_GET['id_contrato']);
         $persona_juridica = isset($_REQUEST['persona_juridica'])? (bool) $_REQUEST['persona_juridica']: false;
@@ -1432,7 +1432,8 @@ if ($accion=="v") {
     ,ventas.representante_legal_direccion
     ,ventas.tipo_documento_ident_venta
     ,ventas.nacionalidad_venta
-
+    ,financieras.nombre AS financiera_nombre
+    ,financieras_estados.nombre AS financiera_estado_nombre
         FROM ventas
         LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)        
         LEFT OUTER JOIN producto ON (ventas.id_producto=producto.id)        
@@ -1440,7 +1441,8 @@ if ($accion=="v") {
         LEFT OUTER JOIN ventas_impuestos ON (ventas.id_impuesto=ventas_impuestos.id)
         LEFT OUTER JOIN ventas_factura ON (ventas.id_factura=ventas_factura.id)
         LEFT OUTER JOIN entidad ON (ventas.cliente_id=entidad.id)
-        
+        left outer join financieras on (ventas.id_financiera=financieras.id)
+        left outer join financieras_estados on (ventas.id_financiera_estado=financieras_estados.id)
     where ventas.id=$cid limit 1");
 
 	if ($result!=false){
@@ -1507,134 +1509,6 @@ if ($accion=="dfoto") {
    exit;  
 }
 
-if($accion=="gfoto")
-{
-    $stud_arr[0]["pcode"] = 0;
-    $stud_arr[0]["pmsg"] ="Error";
-    $stud_arr[0]["pcid"] = 0;
-    
-    
-    $cid=0;
-
-    $is_main = isset($_POST['isMain']) ? intval($_POST['isMain']) : 0;
-
-    if (isset($_REQUEST['cid'])) { $cid = intval($_REQUEST["cid"]); }   
-    if (isset($_REQUEST['arch'])) 
-        { 
-
-            $foto_original = urldecode($_REQUEST['arch']);
-            $foto = str_replace(' ', '_', urldecode($_REQUEST["arch"]));
-
-
-
-
-            // Rutas originales
-            $ruta1 = 'uploa_d_ventas/' . $foto_original;
-            $ruta2 = 'uploa_d_ventas/thumbnail/' . $foto_original;
-
-            // Rutas nuevas
-            $nueva1 = 'uploa_d_ventas/' . $foto;
-            $nueva2 = 'uploa_d_ventas/thumbnail/' . $foto;
-
-            // Renombrar
-            if (file_exists($ruta1)) {
-                rename($ruta1, $nueva1);
-            }
-            if (file_exists($ruta2)) {
-                rename($ruta2, $nueva2);
-            }
-        
-        } else{$foto ="";}   
-
-
-    
-     if (!es_nulo($foto) && !es_nulo($cid)){ 
-         sql_insert("INSERT INTO ventas_fotos (id_venta,  nombre_archivo,  principal,fecha)
-         VALUES ( $cid,  '$foto', $is_main, NOW())"); 
-
-         $stud_arr[0]["pcode"] = 1;
-         $stud_arr[0]["pmsg"] ="Foto guardada";     
-         $stud_arr[0]["pcid"] = $cid;     
-    }else{
-         $stud_arr[0]["pmsg"] ="Error al guardar la foto";     
-    } 
-    
-    salida_json($stud_arr);  
-    exit;  
-}
-
-// borrar ARCHIVO de ventas
-if ($accion =="dfotoventas") {
-    $stud_arr[0]["pcode"] = 0;
-    $stud_arr[0]["pmsg"] ="ERROR DB102";
-
-    if (isset($_REQUEST['arch'])) { $arch =GetSQLValue(urldecode($_REQUEST["arch"]),"text"); } else	{$arch ="" ;}
-    if (isset($_REQUEST['cod'])) { $cod = "and id=".GetSQLValue(urldecode($_REQUEST["cod"]),"text"); } else	{$cod ="" ;}
-
-    if (isset($_REQUEST['cid'])) { $cid = intval($_REQUEST["cid"]); }  else	{$cid =0 ;}
-
-    if ($cod<>'' or $arch<>'') {
-
-    borrar_foto_directorio($cid,$cod,$arch,"foto_ventas");
-
-    $result = sql_delete("DELETE FROM ventas_fotos 
-                            WHERE id_venta=$cid 
-                            and nombre_archivo=$arch 
-                            LIMIT 1
-                            ");
-
-
- } else {$result==false;}
-    if ($result!=false){
-
-        //TODO borrar archivo $arch
-
-        $stud_arr[0]["pcode"] = 1;
-        $stud_arr[0]["pmsg"] ="Borrado";
-    }
-
-  salida_json($stud_arr);
-    exit;
-
-}
-
-if ($accion =="ufotoportadaventas") {
-
-    $stud_arr[0]["pcode"] = 0;
-    $stud_arr[0]["pmsg"] ="ERROR DB102";
-
-    if (isset($_REQUEST['arch'])) { $arch =GetSQLValue(urldecode($_REQUEST["arch"]),"text"); } else	{$arch ="" ;}
-    if (isset($_REQUEST['cod'])) { $cod = intval($_REQUEST["cod"]); } else	{$cod ="" ;}
-
-    if (isset($_REQUEST['cid'])) { $cid = intval($_REQUEST["cid"]); }  else	{$cid =0 ;}
-
-    if ($cod<>'' or $arch<>'') {
-
-            $sqlReset="update ventas_fotos set principal=0 where id_venta=".$cid."";
-            $sqlMarcar="update ventas_fotos set principal=1 where id=".$cod." and id_venta=".$cid."  limit 1";
-
-            $resultReset = sql_update($sqlReset);
-
-            $resulMarcar = sql_update($sqlMarcar);
-
-
-
-    }else {$result==false;}
-    if ($resultReset!=false and $resulMarcar!=false){
-
-        //TODO borrar archivo $arch
-
-        $stud_arr[0]["pcode"] = 1;
-        $stud_arr[0]["pmsg"] ="Actualizado";
-    }
-
-    salida_json($stud_arr);
-    exit;
-
-}
-
-
-
 // guardar Datos    ############################  
 if ($accion=="g") {
  //sleep(3);
@@ -1653,9 +1527,16 @@ if ($accion=="g") {
     $verror.=validar("Kilomatraje",$_REQUEST['kilometraje'], "int", true);
     $verror.=validar("Cilindraje",$_REQUEST['cilindraje'], "int", true);
     $verror.=validar("Precio Minimo",$_REQUEST['precio_minimo'], "int", true);
-    $verror.=validar("Precio Maximo",$_REQUEST['precio_maximo'], "int", true);         
+    $verror.=validar("Precio Maximo",$_REQUEST['precio_maximo'], "int", true);             
     $precio_minimo=intval($_REQUEST['precio_minimo']);     
     $precio_maximo=intval($_REQUEST['precio_maximo']);    
+    $venta_cont_cred=intval($_REQUEST['venta_cont_cred']);
+
+    if ($venta_cont_cred==2){
+        $verror.=validar("Financiera",$_REQUEST['id_financiera'], "int", true);
+        $verror.=validar("Estado Financiera",$_REQUEST['id_financiera_estado'], "int", true);
+        $verror.=validar("Asesor Financiera",$_REQUEST['asesor_financiera'], "text", true);
+    }
     
     if ($precio_maximo<$precio_minimo){$verror.='Ingrese el precio maximo tiene que ser mayor';}
     if ($precio_minimo>$precio_maximo){$verror.='Ingrese el precio minimo tiene que ser menor';}
@@ -1886,15 +1767,10 @@ if ($foto_original_tele !== '') {
         
         
         if (isset($_REQUEST["precio_minimo"])) { $sqlcampos.= " , precio_minimo =".GetSQLValue($_REQUEST["precio_minimo"],"int"); } 
-        if (isset($_REQUEST["precio_maximo"])) { $sqlcampos.= " , precio_maximo =".GetSQLValue($_REQUEST["precio_maximo"],"int"); } 
-        
+        if (isset($_REQUEST["precio_maximo"])) { $sqlcampos.= " , precio_maximo =".GetSQLValue($_REQUEST["precio_maximo"],"int"); }        
         if (isset($_REQUEST["precio_venta"])) { $sqlcampos.= " , precio_venta =".GetSQLValue($_REQUEST["precio_venta"],"int"); } 
-
         if (isset($_REQUEST["prima_venta"])) { $sqlcampos.= " , prima_venta =".GetSQLValue($_REQUEST["prima_venta"],"int"); } 
-        
-
-        
-
+             
         //if ($persona_juridica == 1 && ($id_estado==11 || $id_estado==20)) {
          if ($persona_juridica == 1 && ($genera_contrato==1)) {
 
@@ -1911,14 +1787,12 @@ if ($foto_original_tele !== '') {
             $sqlcampos .= " , representante_legal_identidad = "
                         . GetSQLValue($rep_id, "text");
 
-
-
              $sqlcampos .= " , representante_legal_direccion = "
             . GetSQLValue($rep_direccion, "text");
 
 
 
-        } else {
+        } else{
 
             // Si NO es persona jurídica, limpiamos los campos
             $sqlcampos .= " , persona_juridica =0";
@@ -1929,8 +1803,6 @@ if ($foto_original_tele !== '') {
             
         }
         
-
-
         if (isset($_REQUEST["kilometraje"])) { $sqlcampos.= " , kilometraje =".GetSQLValue($_REQUEST["kilometraje"],"int"); } 
         if (isset($_REQUEST["cilindraje"])) { $sqlcampos.= " , cilindraje =".GetSQLValue($_REQUEST["cilindraje"],"int"); } 
         if (isset($_REQUEST["trasmision"])) { $sqlcampos.= " , trasmision =".GetSQLValue($_REQUEST["trasmision"],"text"); } 
@@ -1938,20 +1810,12 @@ if ($foto_original_tele !== '') {
         if (isset($_REQUEST["id_factura"])) { $sqlcampos.= " , id_factura =".GetSQLValue($_REQUEST["id_factura"],"int"); } 
         if (isset($_REQUEST["id_vendedor"])) { $sqlcampos.= " , id_vendedor =".GetSQLValue($_REQUEST["id_vendedor"],"int"); } 
         if (isset($_REQUEST["id_televentas"])) { $sqlcampos.= " , id_televentas =".GetSQLValue($_REQUEST["id_televentas"],"int"); } 
-        if (isset($_REQUEST["observaciones"])) { $sqlcampos.= " , observaciones =".GetSQLValue($_REQUEST["observaciones"],"text"); }   
-        
-
+        if (isset($_REQUEST["observaciones"])) { $sqlcampos.= " , observaciones =".GetSQLValue($_REQUEST["observaciones"],"text"); }          
         if (isset($_REQUEST["tipo_documento_ident_venta"])) { $sqlcampos.= " , tipo_documento_ident_venta =".GetSQLValue($_REQUEST["tipo_documento_ident_venta"],"text"); } 
-
-
         if (isset($_REQUEST["nacionalidad_venta"])) { $sqlcampos.= " , nacionalidad_venta =".GetSQLValue($_REQUEST["nacionalidad_venta"],"text"); } 
 
         //if (isset($_REQUEST["ciudad_venta"])) { $sqlcampos.= " , ciudad_venta =".GetSQLValue($_REQUEST["ciudad_venta"],"text"); } 
-        //if (isset($_REQUEST["departamento_venta"])) { $sqlcampos.= " , departamento_venta =".GetSQLValue($_REQUEST["departamento_venta"],"text"); }
-
-
-        
-
+        //if (isset($_REQUEST["departamento_venta"])) { $sqlcampos.= " , departamento_venta =".GetSQLValue($_REQUEST["departamento_venta"],"text"); }     
         //if (isset($_REQUEST["foto"])) { $sqlcampos.= " , foto ='$foto'"; } 
         //if (isset($_REQUEST["foto_televentas"])) { $sqlcampos.= " , foto_televentas = '$foto_televentas'"; } 
 
@@ -1967,10 +1831,18 @@ if ($foto_original_tele !== '') {
         if (isset($_REQUEST["reproceso"])) { $sqlcampos.= " , reproceso =".GetSQLValue($_REQUEST["reproceso"],"text"); } 
         if (isset($_REQUEST["oferta"])) { $sqlcampos.= " , oferta =".GetSQLValue($_REQUEST["oferta"],"int"); } 
 
-
+        if (isset($_REQUEST["venta_cont_cred"])) { $sqlcampos.= " , venta_cont_cred =".GetSQLValue($_REQUEST["venta_cont_cred"],"int"); }
+        if ($venta_cont_cred == 2) {
+            if (isset($_REQUEST["id_financiera"])) { $sqlcampos.= " , id_financiera =".GetSQLValue($_REQUEST["id_financiera"],"int"); }
+            if (isset($_REQUEST["id_financiera_estado"])) { $sqlcampos.= " , id_financiera_estado =".GetSQLValue($_REQUEST["id_financiera_estado"],"int"); }
+            if (isset($_REQUEST["asesor_financiera"])) { $sqlcampos.= " , asesor_financiera =".GetSQLValue($_REQUEST["asesor_financiera"],"text"); }
+        } else {
+            $sqlcampos .= " , id_financiera = NULL, id_financiera_estado = NULL, asesor_financiera = NULL";
+        }
+        
         //$genera_contrato=intval(get_dato_sql("ventas_estado","generar_contrato"," where id=".$id_estado));
-
         //if($id_estado==11 || $id_estado==20){
+
         if($genera_contrato==1){
             $rep_profesion   = trim($_REQUEST['representante_legal_profesion'] ?? '');
 
@@ -2018,7 +1890,8 @@ if ($foto_original_tele !== '') {
             $result_actual = sql_select("SELECT id_tienda, kilometraje, precio_minimo, precio_maximo,
                                          precio_venta, prima_venta, cliente_id, id_estado,
                                          id_impuesto, id_factura, id_vendedor, id_televentas,
-                                         observaciones, foto, foto_televentas
+                                         observaciones, foto, foto_televentas,
+                                         venta_cont_cred, id_financiera, id_financiera_estado, asesor_financiera
                                          FROM ventas WHERE id = $cid LIMIT 1");
             if ($result_actual && $result_actual->num_rows > 0) {
                 $venta_actual = $result_actual->fetch_assoc();
@@ -2185,8 +2058,36 @@ if ($foto_original_tele !== '') {
              if (!empty($_REQUEST["foto_televentas"]) && $foto_televentas !== $foto_tele_actual_bd) {
                  registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Subida foto recibo de pago', $foto_televentas);
              }
-            
-             
+
+             $venta_cont_cred_bd = isset($venta_actual['venta_cont_cred']) ? intval($venta_actual['venta_cont_cred']) : 0;
+             if (isset($_REQUEST['venta_cont_cred']) && $venta_cont_cred_bd != intval($_REQUEST['venta_cont_cred'])) {
+                 $venta_cont_cred_labels = [1 => 'Contado', 2 => 'Crédito'];
+                 $label_viejo = $venta_cont_cred_labels[$venta_cont_cred_bd] ?? $venta_cont_cred_bd;
+                 $label_nuevo = $venta_cont_cred_labels[intval($_REQUEST['venta_cont_cred'])] ?? $_REQUEST['venta_cont_cred'];
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Tipo Contado/Crédito', "{$label_viejo} → {$label_nuevo}");
+             }
+
+             $id_financiera_bd = isset($venta_actual['id_financiera']) ? intval($venta_actual['id_financiera']) : 0;
+             if (isset($_REQUEST['id_financiera']) && $id_financiera_bd != intval($_REQUEST['id_financiera'])) {
+                 $financiera_name = intval($_REQUEST['id_financiera']) > 0
+                     ? get_dato_sql('financieras', 'nombre', ' where id=' . intval($_REQUEST['id_financiera']))
+                     : 'Ninguna';
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Financiera', $financiera_name);
+             }
+
+             $id_financiera_estado_bd = isset($venta_actual['id_financiera_estado']) ? intval($venta_actual['id_financiera_estado']) : 0;
+             if (isset($_REQUEST['id_financiera_estado']) && $id_financiera_estado_bd != intval($_REQUEST['id_financiera_estado'])) {
+                 $financiera_estado_name = intval($_REQUEST['id_financiera_estado']) > 0
+                     ? get_dato_sql('financieras_estados', 'nombre', ' where id=' . intval($_REQUEST['id_financiera_estado']))
+                     : 'Ninguno';
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Estado Financiera', $financiera_estado_name);
+             }
+
+             $asesor_financiera_bd = trim((string)($venta_actual['asesor_financiera'] ?? ''));
+             if (isset($_REQUEST['asesor_financiera']) && $asesor_financiera_bd !== trim($_REQUEST['asesor_financiera'])) {
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Asesor Financiera', $_REQUEST['asesor_financiera']);
+             }
+
 
             $sql="update ventas set ".$sqlcampos." where id=".$cid." limit 1";
             $result = sql_update($sql);
@@ -2426,8 +2327,12 @@ if ($foto_original_tele !== '') {
     //if (isset($row["ciudad_venta"])) {$ciudad_venta= $row["ciudad_venta"]; } else {$ciudad_venta= "";}
     //if (isset($row["departamento_venta"])) {$departamento_venta= $row["departamento_venta"]; } else {$departamento_venta= "";}
 
+    if(isset($row['venta_cont_cred'])) {$venta_cont_cred = $row['venta_cont_cred']; } else {$venta_cont_cred = 0;}
+    if(isset($row['id_financiera'])) {$id_financiera = $row['id_financiera']; } else {$id_financiera = 0;}
+    if(isset($row['id_estado_financiera'])) {$id_estado_financiera = $row['id_estado_financiera']; } else {$id_estado_financiera = 0;}
+    if(isset($row['asesor_financiera'])) {$asesor_financiera = $row['asesor_financiera']; } else {$asesor_financiera = "";}
+     
 
-   
     $carShopPerfil="";
     $carShopPerfil=get_dato_sql("usuario","grupo_id"," WHERE id=".$_SESSION["usuario_id"]);
     $diff=0;
@@ -2531,7 +2436,7 @@ if ($foto_original_tele !== '') {
     </div>
         <div class="col-md">            
          <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',$disable_sec2); ?>                 
-    </div>   
+     </div>   
         <div class="col-md">            
          <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec2); ?>                 
     </div> 
@@ -2543,11 +2448,6 @@ if ($foto_original_tele !== '') {
 
         
         //echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1,'get.php?a=2&t=1',$cliente_nombre);
-
-
-        
-
-        
 
 
         //echo valores_combobox_array($opciones, 'T02', 'Seleccione una opción');
@@ -2656,19 +2556,36 @@ if ($foto_original_tele !== '') {
                echo campo("id_factura_label","Factura",'label',$lafactura,'','','');
          }  
          ?>    
-    </div>    
-</div>
-
-<div class="row">
+    </div>   
+    
     <div class="col-md">
          <?php echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2);  ?> 
-    </div>
+    </div>    
+
     <div class="col-md">
          <?php echo campo("id_televentas","Tele Ventas",'select2',valores_combobox_db('usuario',$id_televentas,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2);  ?> 
     </div>
 </div>
 
 <div class="row">
+     <div class="col-md">
+          <?php echo campo("venta_cont_cred","Tipo Venta",'select', valores_combobox_texto(app_tipo_vvehiculo,$venta_cont_cred),' ',$disable_sec2); ?>
+     </div>
+
+     <div class="col-md">
+         <?php echo campo("id_financiera","Financiera",'select2',valores_combobox_db('financieras',$id_financiera,'nombre',' ','','...'),' ',' required '.$disable_sec2);  ?> 
+     </div>
+
+     <div class="col-md">
+         <?php echo campo("id_financiera_estado","Status Financiera",'select2',valores_combobox_db('financieras_estados',$id_financiera,'nombre',' ','','...'),' ',' required '.$disable_sec2);  ?> 
+     </div>
+</div>
+
+<div class="row">
+    <div class="col-md">            
+         <?php echo campo("asesor_financiera","Asesor Financiera",'text',$asesor_financiera,' ',$disable_sec2); ?>                 
+     </div>   
+
      <div class="col-md">
          <?php echo campo("oferta","Oferta Web",'checkboxCustom',$oferta,' ',$disable_sec2); ?>          
      </div>
@@ -2797,99 +2714,6 @@ if ($foto_original_tele !== '') {
 
 <!-- fotos ventas -->
 <div class="tab-pane fade " id="nav_Fotos_venta" role="tabpanel" >
-    <div class="" id="insp_fotos_thumbs_ventas">
-    </div>
-    <div class="row">
-    <div class="col-md-10" id="archivofotoventas">
-    <?php
-
-        $total_filas=0;
-        $principal=false;
-        $principalEncontrada=false;
- 
-        $sql="select id,nombre_archivo,fecha,principal from ventas_fotos where id_venta=".GetSQLValue($id,"int")." order by principal desc";
-        $result = sql_select($sql);
-
-        if ($result != false) {
-    $total_filas = $result->num_rows;
-    if ($total_filas > 0) {
-
-        echo '<div style="
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 12px;
-            justify-items: center;
-            align-items: start;
-            justify-content: center;
-        ">';
-
-        while ($row = $result->fetch_assoc()) {
-            $es_principal = (bool)$row["principal"];
-            $fext = strtolower(substr($row["nombre_archivo"], -3));
-
-            if (in_array($fext, ['jpg', 'peg', 'png', 'gif'])) {
-
-                echo '<div style="text-align:center;">';
-
-                // Imagen
-                echo '<a href="#" class="foto_br' . $row["id"] . '" 
-                        onclick="mostrar_foto(\'' . $row["nombre_archivo"] . '\',\'uploa_d_ventas/\'); return false;"
-                        style="display:inline-block; transition: transform 0.2s ease-in-out;">
-                        <img class="img img-thumbnail mb-2" 
-                             src="uploa_d_ventas/thumbnail/' . $row["nombre_archivo"] . '" 
-                             data-cod="' . $row["id"] . '" 
-                             style="width:100%; max-width:160px; height:auto; border-radius:6px;">
-                      </a>';
-
-                // Controles
-                if (tiene_permiso(186)){
-                    echo '<div style="text-align:center; font-size:13px;">';
-                    echo '<a href="#" class="mr-2 foto_br' . $row["id"] . '" 
-                            onclick="borrar_fotodb(' . $row["id"] . ',\'' . $row["nombre_archivo"] . '\'); return false;"
-                            style="color:#dc3545; text-decoration:none;">
-                            <i class="fa fa-eraser"></i> Borrar
-                        </a>';
-                
-                    if ($es_principal) {
-                        echo '<i class="fa fa-star" title="Foto de portada" style="color:#f0c651;"> Portada</i>';
-                    } else {
-                       echo '<a href="#" onclick="marcar_portada(' . $row["id"] . ',\'' . $row["nombre_archivo"] . '\'); return false;"
-                                style="color:#6c757d; text-decoration:none;">
-                                <i class="far fa-star"></i> Portada
-                             </a>';
-                    
-                    }
-                    echo '</div>';
-                }
-                echo '</div>';
-        
-            }
-        }
-
-        echo '</div>';
-    }
-}
-
-
-
-
-
-    if (tiene_permiso(186)){
-        $a=$total_filas;
-        while ($a < 10) {            
-            echo '<div class="row"><div class="col-12">';
-            echo '<div class="ins_varias_foto_div">';
-            echo campo_upload_foto_ventas("ins_foto".$a,"Adjuntar Fotos",'upload','', '  ','',3,9,'NO',false,$principal );
-            echo "</div></div></div>";
-            echo "<hr>"; 
-            $a++;
-            
-
-        }
-    }   
-    ?>
-    </div>
-</div>
 </div>
 
 <!-- CONTRATO HISTORIAL -->
@@ -2942,6 +2766,19 @@ if ($foto_original_tele !== '') {
 
 <script>
 $(function () {
+
+// Habilita/deshabilita campos de financiera según tipo de venta (1=contado, 2=crédito)
+function toggleFinanciera() {
+    var esCredito = $('#venta_cont_cred').val() == '2';
+    $('#id_financiera, #id_financiera_estado').prop('disabled', !esCredito).trigger('change');
+    $('#asesor_financiera').prop('disabled', !esCredito);
+    $('#id_financiera').closest('.col-md').toggle(esCredito);
+    $('#id_financiera_estado').closest('.col-md').toggle(esCredito);
+    $('#asesor_financiera').closest('.col-md').toggle(esCredito);
+}
+
+$('#venta_cont_cred').on('change', toggleFinanciera);
+toggleFinanciera(); // estado inicial al cargar
 
 $('#btnguardar').on('click', function (e) {
     debugger;
@@ -3348,220 +3185,6 @@ if (archivo!='' && archivo!=undefined) {
   }
 }
 
-function thumb_agregar_foto_venta(archivo,campo){
-    var salida='';
-    if (archivo!='' && archivo!=undefined) {
-        
-   
-    var fext= archivo.substr(archivo.length - 3);
-
-   if (fext=='jpg' || fext=='peg' || fext=='png' || fext=='gif') {
-    salida='<a href="#" onclick="mostrar_foto(\''+archivo+'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d_ventas/thumbnail/'+archivo+'" ></a> ';
-   } else {
-    salida='<a href="uploa_d_ventas/'+archivo+'" target="_blank" class="img-thumbnail mb-3 mr-3" >'+archivo+'</a>';
-   }
-
-   $("#"+campo).closest('.ins_varias_foto_div').html(salida +'<a id="del_'+campo+'" href="#" onclick="insp_borrar_foto_venta(\''+archivo+'\',\'del_'+campo+'\'); return false;" class="btn  btn-outline-secondary ml-3 "><i class="fa fa-eraser"></i> Borrar</a>');
-  }
-}
-
-
-
-function insp_borrar_foto_venta(arch,campo){
-
-    var cid=$("#id").val();
-    var datos= { a: "dfotoventas", cid: cid, pid: $("#pid").val() , arch: encodeURI(arch)} ;
-
-
-Swal.fire({
-	  title: 'Borrar Foto',
-	  text:  'Desea Borrar la Foto o Documento adjunto?',
-	  icon: 'question',
-	  showCancelButton: true,
-	  confirmButtonColor: '#3085d6',
-	  cancelButtonColor: '#d33',
-	  confirmButtonText:  'Si',
-	  cancelButtonText:  'No'
-	}).then((result) => {
-	  if (result.value) {
-	    
-            $.post( 'ventas_mant_contrato.php',datos, function(json) {
-                
-                if (json.length > 0) {
-                    if (json[0].pcode == 0) {
-                        
-                        mytoast('error',json[0].pmsg,3000) ;   
-                    }
-                    if (json[0].pcode == 1) {
-                        console.log('->'+campo);
-                        $("#"+campo).closest('.ins_foto_div').html('Eliminado');
-                    
-                    }
-                } else {mytoast('error',json[0].pmsg,3000) ; }
-                
-            })
-            .done(function() {	abrir_ventas(cid); 
-                    setTimeout(function() {
-                        ventas_cambiartab('nav_Fotos_venta');
-                        $('#insp_tabFotos').tab('show');
-
-                    }, 300);
-                    mytoast('success','Borrado',3000) ; 
-            })
-            .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
-            .always(function() {	  });
-
-	  }
-	});
-}
-
-function borrar_fotodb(codid,arch){
-
-    var cid=$("#id").val();
-    var datos= { a: "dfotoventas", cid: cid, pid: $("#pid").val() , cod: codid, arch: encodeURI(arch)} ;
-  
-
-Swal.fire({
-	  title: 'Borrar Foto',
-	  text:  'Desea Borrar la Foto o Documento adjunto?',
-	  icon: 'question',
-	  showCancelButton: true,
-	  confirmButtonColor: '#3085d6',
-	  cancelButtonColor: '#d33',
-	  confirmButtonText:  'Si',
-	  cancelButtonText:  'No'
-	}).then((result) => {
-	  if (result.value) {
-	    
-            $.post( 'ventas_mant_contrato.php',datos, function(json) {
-                
-                if (json.length > 0) {
-                    if (json[0].pcode == 0) {
-                        
-                        mytoast('error',json[0].pmsg,3000) ;   
-                    }
-                    if (json[0].pcode == 1) {
-                        
-                        $(".foto_br"+codid).hide();
-                        mytoast('success',json[0].pmsg,3000) ;
-                    
-                    }
-                } else {mytoast('error',json[0].pmsg,3000) ; }
-                
-            })
-            .done(function() {	  
-                abrir_ventas(cid); 
-                    setTimeout(function() {
-                        ventas_cambiartab('nav_Fotos_venta');
-                        $('#insp_tabFotos').tab('show');
-                    }, 300);
-
-                    mytoast('success','Borrado',3000) ; 
-            })
-            .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
-            .always(function() {	  });
-
-	  }
-	});
-
-
-
-
-}
-
-function marcar_portada(codid,arch){
-    var cid=$("#id").val();
-    var datos= { a: "ufotoportadaventas", cid: cid, pid: $("#pid").val() , cod: codid, arch: encodeURI(arch)} ;
-  
-Swal.fire({
-	  title: '⭐Foto de portada',
-	  text:  'Desea Marcar la foto como portada?',
-	  showCancelButton: true,
-	  confirmButtonColor: '#3085d6',
-	  cancelButtonColor: '#d33',
-	  confirmButtonText:  'Si',
-	  cancelButtonText:  'No'
-	}).then((result) => {
-	  if (result.value) {
-	    
-            $.post( 'ventas_mant_contrato.php',datos, function(json) {
-               
-                if (json.length > 0) {
-                    if (json[0].pcode == 0) {
-                        
-                        mytoast('error',json[0].pmsg,3000) ;   
-                    }
-                    if (json[0].pcode == 1) {
-                        
-                        $(".foto_br"+codid).hide();
-                        mytoast('success',json[0].pmsg,3000) ;
-                    
-                    }
-                } else {mytoast('error',json[0].pmsg,3000) ; }
-                
-            })
-            .done(function() {	  
-                    abrir_ventas(cid); 
-                    setTimeout(function() {
-                        ventas_cambiartab('nav_Fotos_venta');
-                        $('#insp_tabFotos').tab('show');
-                    }, 300);
-
-                    mytoast('success','Actualizado',3000) ; 
-            })
-            .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
-            .always(function() {	  });
-
-	  }
-	});
-
-
-
-
-}
-
-    function insp_guardar_foto_ventas(arch,campo,isMain){
-     
-    var cid=$("#id").val();
-    var datos= { a: "gfoto", arch: encodeURI(arch),cid:cid,isMain:isMain}; 
-
-
- 	 $.post( 'ventas_mant.php',datos, function(json) {
-	 			
-		if (json.length > 0) {
-			if (json[0].pcode == 0) {
-				
-				mytoast('error',json[0].pmsg,3000) ;   
-			}
-			if (json[0].pcode == 1) {
-                $('#'+campo).val(arch);                
-                $('#files_'+campo).text('Guardado');
-                $('#lk'+campo).html(arch);
-               // thumb_agregar(arch);
-               thumb_agregar_foto_venta(arch,campo);
-			
-			}
-		} else {mytoast('error',json[0].pmsg,3000) ; }
-		  
-	})
-	  .done(function() { 
-
-        abrir_ventas(cid); 
-        setTimeout(function() {
-            ventas_cambiartab('nav_Fotos_venta');
-
-            $('#insp_tabFotos').tab('show');
-        }, 300);
-
-        mytoast('success','Guardado',3000) ;   
-    
-    })
-	  .fail(function(xhr, status, error) {         mytoast('error',json[0].pmsg,3000) ; 	  })
-	  .always(function() {	  }); 
-    
-    }
-
-
 function comb_actualizar_veh(){
    
     var datos=$('#id_producto').select2('data')[0];
@@ -3679,7 +3302,13 @@ function ventas_cambiartab(eltab) {
      procesar_ventas_contrato_historial('nav_contratos');
   }
 
-  
+  if (eltab=='nav_Fotos_venta') {
+    var cid = $('#id').val();
+    if (cid > 0) {
+      $('#nav_Fotos_venta').load('ventas_fotos_web.php?cid=' + cid);
+    }
+  }
+
   if (continuar==true){
     $('#'+eltab).show();
     $('#'+eltab).tab('show');
