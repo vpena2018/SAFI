@@ -1433,7 +1433,7 @@ if ($accion=="v") {
     ,ventas.tipo_documento_ident_venta
     ,ventas.nacionalidad_venta
     ,financieras.nombre AS financiera_nombre
-    ,financieras_estado.nombre AS financiera_estado_nombre
+    ,financieras_estados.nombre AS financiera_estado_nombre
         FROM ventas
         LEFT OUTER JOIN tienda ON (ventas.id_tienda=tienda.id)        
         LEFT OUTER JOIN producto ON (ventas.id_producto=producto.id)        
@@ -1442,7 +1442,7 @@ if ($accion=="v") {
         LEFT OUTER JOIN ventas_factura ON (ventas.id_factura=ventas_factura.id)
         LEFT OUTER JOIN entidad ON (ventas.cliente_id=entidad.id)
         left outer join financieras on (ventas.id_financiera=financieras.id)
-        left outer join financieras_estado on (ventas.id_financiera_estado=financieras_estado.id)
+        left outer join financieras_estados on (ventas.id_financiera_estado=financieras_estados.id)
     where ventas.id=$cid limit 1");
 
 	if ($result!=false){
@@ -1527,9 +1527,16 @@ if ($accion=="g") {
     $verror.=validar("Kilomatraje",$_REQUEST['kilometraje'], "int", true);
     $verror.=validar("Cilindraje",$_REQUEST['cilindraje'], "int", true);
     $verror.=validar("Precio Minimo",$_REQUEST['precio_minimo'], "int", true);
-    $verror.=validar("Precio Maximo",$_REQUEST['precio_maximo'], "int", true);         
+    $verror.=validar("Precio Maximo",$_REQUEST['precio_maximo'], "int", true);             
     $precio_minimo=intval($_REQUEST['precio_minimo']);     
     $precio_maximo=intval($_REQUEST['precio_maximo']);    
+    $venta_cont_cred=intval($_REQUEST['venta_cont_cred']);
+
+    if ($venta_cont_cred==2){
+        $verror.=validar("Financiera",$_REQUEST['id_financiera'], "int", true);
+        $verror.=validar("Estado Financiera",$_REQUEST['id_financiera_estado'], "int", true);
+        $verror.=validar("Asesor Financiera",$_REQUEST['asesor_financiera'], "text", true);
+    }
     
     if ($precio_maximo<$precio_minimo){$verror.='Ingrese el precio maximo tiene que ser mayor';}
     if ($precio_minimo>$precio_maximo){$verror.='Ingrese el precio minimo tiene que ser menor';}
@@ -1824,10 +1831,14 @@ if ($foto_original_tele !== '') {
         if (isset($_REQUEST["reproceso"])) { $sqlcampos.= " , reproceso =".GetSQLValue($_REQUEST["reproceso"],"text"); } 
         if (isset($_REQUEST["oferta"])) { $sqlcampos.= " , oferta =".GetSQLValue($_REQUEST["oferta"],"int"); } 
 
-        if (isset($_REQUEST["id_financiera"])) { $sqlcampos.= " , id_financiera =".GetSQLValue($_REQUEST["id_financiera"],"int"); }
-        if (isset($_REQUEST["id_financiera_estado"])) { $sqlcampos.= " , id_financiera_estado =".GetSQLValue($_REQUEST["id_financiera_estado"],"int"); }
         if (isset($_REQUEST["venta_cont_cred"])) { $sqlcampos.= " , venta_cont_cred =".GetSQLValue($_REQUEST["venta_cont_cred"],"int"); }
-        if (isset($_REQUEST["asesor_financiera"])) { $sqlcampos.= " , asesor_financiera =".GetSQLValue($_REQUEST["asesor_financiera"],"int"); }
+        if ($venta_cont_cred == 2) {
+            if (isset($_REQUEST["id_financiera"])) { $sqlcampos.= " , id_financiera =".GetSQLValue($_REQUEST["id_financiera"],"int"); }
+            if (isset($_REQUEST["id_financiera_estado"])) { $sqlcampos.= " , id_financiera_estado =".GetSQLValue($_REQUEST["id_financiera_estado"],"int"); }
+            if (isset($_REQUEST["asesor_financiera"])) { $sqlcampos.= " , asesor_financiera =".GetSQLValue($_REQUEST["asesor_financiera"],"text"); }
+        } else {
+            $sqlcampos .= " , id_financiera = NULL, id_financiera_estado = NULL, asesor_financiera = NULL";
+        }
         
         //$genera_contrato=intval(get_dato_sql("ventas_estado","generar_contrato"," where id=".$id_estado));
         //if($id_estado==11 || $id_estado==20){
@@ -1879,7 +1890,8 @@ if ($foto_original_tele !== '') {
             $result_actual = sql_select("SELECT id_tienda, kilometraje, precio_minimo, precio_maximo,
                                          precio_venta, prima_venta, cliente_id, id_estado,
                                          id_impuesto, id_factura, id_vendedor, id_televentas,
-                                         observaciones, foto, foto_televentas
+                                         observaciones, foto, foto_televentas,
+                                         venta_cont_cred, id_financiera, id_financiera_estado, asesor_financiera
                                          FROM ventas WHERE id = $cid LIMIT 1");
             if ($result_actual && $result_actual->num_rows > 0) {
                 $venta_actual = $result_actual->fetch_assoc();
@@ -2046,8 +2058,36 @@ if ($foto_original_tele !== '') {
              if (!empty($_REQUEST["foto_televentas"]) && $foto_televentas !== $foto_tele_actual_bd) {
                  registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Subida foto recibo de pago', $foto_televentas);
              }
-            
-             
+
+             $venta_cont_cred_bd = isset($venta_actual['venta_cont_cred']) ? intval($venta_actual['venta_cont_cred']) : 0;
+             if (isset($_REQUEST['venta_cont_cred']) && $venta_cont_cred_bd != intval($_REQUEST['venta_cont_cred'])) {
+                 $venta_cont_cred_labels = [1 => 'Contado', 2 => 'Crédito'];
+                 $label_viejo = $venta_cont_cred_labels[$venta_cont_cred_bd] ?? $venta_cont_cred_bd;
+                 $label_nuevo = $venta_cont_cred_labels[intval($_REQUEST['venta_cont_cred'])] ?? $_REQUEST['venta_cont_cred'];
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Tipo Contado/Crédito', "{$label_viejo} → {$label_nuevo}");
+             }
+
+             $id_financiera_bd = isset($venta_actual['id_financiera']) ? intval($venta_actual['id_financiera']) : 0;
+             if (isset($_REQUEST['id_financiera']) && $id_financiera_bd != intval($_REQUEST['id_financiera'])) {
+                 $financiera_name = intval($_REQUEST['id_financiera']) > 0
+                     ? get_dato_sql('financieras', 'nombre', ' where id=' . intval($_REQUEST['id_financiera']))
+                     : 'Ninguna';
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Financiera', $financiera_name);
+             }
+
+             $id_financiera_estado_bd = isset($venta_actual['id_financiera_estado']) ? intval($venta_actual['id_financiera_estado']) : 0;
+             if (isset($_REQUEST['id_financiera_estado']) && $id_financiera_estado_bd != intval($_REQUEST['id_financiera_estado'])) {
+                 $financiera_estado_name = intval($_REQUEST['id_financiera_estado']) > 0
+                     ? get_dato_sql('financieras_estados', 'nombre', ' where id=' . intval($_REQUEST['id_financiera_estado']))
+                     : 'Ninguno';
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Estado Financiera', $financiera_estado_name);
+             }
+
+             $asesor_financiera_bd = trim((string)($venta_actual['asesor_financiera'] ?? ''));
+             if (isset($_REQUEST['asesor_financiera']) && $asesor_financiera_bd !== trim($_REQUEST['asesor_financiera'])) {
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Asesor Financiera', $_REQUEST['asesor_financiera']);
+             }
+
 
             $sql="update ventas set ".$sqlcampos." where id=".$cid." limit 1";
             $result = sql_update($sql);
