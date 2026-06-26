@@ -480,13 +480,11 @@ if ($accion=="L") {
 		LEFT OUTER JOIN orden_traslado_tipo t3 ON (orden_traslado.id_tipo_traslado=t3.id)
 		LEFT OUTER JOIN orden_traslado_tipo t4 ON (orden_traslado.id_tipo_traslado2=t4.id)
 		WHERE producto.codigo_alterno LIKE '%$codigo'
-		      AND NOT EXISTS (
-				    SELECT 1
-				    FROM traslado_bitacora b
-				    INNER JOIN orden_traslado ot2
-				        ON ot2.numero = b.numero_traslado
-				    WHERE ot2.id_producto = orden_traslado.id_producto
-				)
+        AND NOT EXISTS (
+            SELECT 1
+            FROM traslado_bitacora b
+            WHERE b.numero_traslado = orden_traslado.numero
+        )
 		AND id_estado=4
 		ORDER BY FECHA DESC
 		limit 1");
