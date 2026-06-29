@@ -22,6 +22,11 @@ if (php_sapi_name() !== 'cli') {
 // Tiempo máximo de ejecución: 5 minutos
 set_time_limit(300);
 
+// Fijar directorio de trabajo al directorio del script.
+// Necesario cuando se ejecuta via CLI (crontab), donde el CWD puede ser /root u otro.
+// Sin esto, TCPDF no encuentra las imágenes con rutas relativas (uploa_d/, img/, etc.)
+chdir(__DIR__);
+
 define('SAFI_CRON_CONTEXT', true);
 require_once(__DIR__ . '/include/framework_cron.php');
 
