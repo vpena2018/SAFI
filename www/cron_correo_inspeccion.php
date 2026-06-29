@@ -153,7 +153,7 @@ while ($item = $pendientes->fetch_assoc()) {
          */
             
         $guardar_archivo = app_dir . 'reportes/' . 'Inspeccion_' . $correo_row["numero"] . '.pdf';
-        include(__DIR__ . '/inspeccion_pdf.php'); // genera el PDF en $guardar_archivo
+        include(__DIR__ . '/inspeccion_pdf2.php'); // genera el PDF en $guardar_archivo
 
         // Armar el correo
         $subject = 'HOJA DE INSPECCION # ' . $correo_row['numero'];
