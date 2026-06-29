@@ -1552,11 +1552,10 @@ if ($accion=="g") {
     $precio_venta=intval($_REQUEST['precio_venta']);
     $prima_venta=intval($_REQUEST['prima_venta']);
     $prima_raw = $_REQUEST['prima_venta'] ?? '';
+    $descuento_aplicado = isset($_REQUEST['descuento_aplicado']) ? intval($_REQUEST['descuento_aplicado']) : 0;
 
     $persona_juridica=intval($_REQUEST['persona_juridica']);
-
     $id_vendedor=intval($_REQUEST['id_vendedor']);
-
 
     //$id_vendedor=intval(get_dato_sql("ventas","id_vendedor"," where id=".$cid)); 
 
@@ -1618,20 +1617,21 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
         $verror .= 'Ingrese la prima de venta del vehículo. ';
     }
 
-    //valida que el precio de venta no sea menor al precio minimo y que no sea mayor al precio maximo
+    //valida que el precio de venta no sea menor al precio minimo y que no sea mayor al precio maximo  
     if (!tiene_permiso(193)){
+        $precio_venta=intval($_REQUEST['precio_venta'])+intval($_REQUEST['descuento_aplicado']);
         if (!es_nulo($precio_venta) && !es_nulo($precio_minimo) && $precio_venta < $precio_minimo) {
             $verror .= 'El precio de venta no puede ser menor al precio mínimo. ';
         }
     }
-    
+
+        
     if (!es_nulo($precio_venta) && !es_nulo($precio_maximo) && $precio_venta > $precio_maximo) {
         $verror .= 'El precio de venta no puede ser mayor al precio máximo. ';
     }
 
 }
-    
-    
+        
 /*     if (!es_nulo($cid) && ($id_estado!=20 && $id_estado!=11)){
        if (!es_nulo($precio_venta)||!es_nulo($prima_venta)) { $verror.='Precio de venta y prima solo se ingresan, estado de vendido entregado'; }    
     } */
@@ -2334,7 +2334,7 @@ if ($foto_original_tele !== '') {
     if(isset($row['id_financiera'])) {$id_financiera = $row['id_financiera']; } else {$id_financiera = 0;}
     if(isset($row['id_estado_financiera'])) {$id_estado_financiera = $row['id_estado_financiera']; } else {$id_estado_financiera = 0;}
     if(isset($row['asesor_financiera'])) {$asesor_financiera = $row['asesor_financiera']; } else {$asesor_financiera = "";}
-     
+    if(isset($row['descuento_aplicado'])) {$descuento_aplicado = $row['descuento_aplicado']; } else {$descuento_aplicado = 0;}
 
     $carShopPerfil="";
     $carShopPerfil=get_dato_sql("usuario","grupo_id"," WHERE id=".$_SESSION["usuario_id"]);
@@ -2382,6 +2382,7 @@ if ($foto_original_tele !== '') {
         </div>        
     <?php } ?>        
     <?php echo campo("id_inspeccion","Numero",'hidden',$id_inspeccion,' ',' '); ?>          
+    <?php echo campo("descuento_aplicado","Descuento Aplicado",'number',$descuento_aplicado,' ',' disabled="disabled" '); ?>          
 </div>
 
 <div class="row">
