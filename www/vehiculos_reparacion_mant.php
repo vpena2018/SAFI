@@ -1761,12 +1761,20 @@ if ($accion=="g") {
 	$verror="";
     $cid=intval($_REQUEST["id"]);
 
+/*    
     $verror.=validar("Sucursal",$_REQUEST['id_tienda'], "int", true);
     $verror.=validar("Vehiculo",$_REQUEST['id_producto'], "int", true);
     $verror.=validar("Kilomatraje",$_REQUEST['kilometraje'], "int", true);
     $verror.=validar("Observaciones",$_REQUEST['observaciones_reparacion'], "text", true);
     $verror.=validar("Trasmision",$_REQUEST['trasmision'], "text", true);   
-
+    
+*/
+    if (isset($_REQUEST['id_tienda']))                $verror.=validar("Sucursal",      $_REQUEST['id_tienda'],               "int",  true);
+    if (isset($_REQUEST['id_producto']))              $verror.=validar("Vehiculo",      $_REQUEST['id_producto'],             "int",  true);
+    if (isset($_REQUEST['kilometraje']))              $verror.=validar("Kilomatraje",   $_REQUEST['kilometraje'],             "int",  true);
+    if (isset($_REQUEST['observaciones_reparacion'])) $verror.=validar("Observaciones", $_REQUEST['observaciones_reparacion'], "text", true);
+    if (isset($_REQUEST['trasmision']))               $verror.=validar("Trasmision",    $_REQUEST['trasmision'],              "text", true);
+       
     if (es_nulo($cid)){
         $id_producto=intval($_REQUEST['id_producto']);
         $vehiculo=get_dato_sql("ventas","count(*)"," where id_producto=".$id_producto);
@@ -1830,7 +1838,9 @@ if ($accion=="g") {
 
     $id_estado = intval($_REQUEST['id_estado'] ?? 0);
     $foto_comprobante=isset($_REQUEST['foto'])? (bool) $_REQUEST['foto']: false;
+    $foto_recibo=isset($_REQUEST['foto_televentas'])? (bool) $_REQUEST['foto']: false;
     $foto_actual = get_dato_sql("ventas", "foto", " where id=".$cid);
+    $foto_actual_recibo = get_dato_sql("ventas", "foto_televentas", " where id=".$cid);
 
     $persona_juridica = intval($_REQUEST['persona_juridica'] ?? 0);
     $precio_venta_raw = $_REQUEST['precio_venta'] ?? '';
@@ -1847,7 +1857,7 @@ if ($accion=="g") {
     if ($verror == "") {
 
      ///este validacion es para que cuando el estado sea negociacion
-     if ($id_estado == $estado_global_negociacion && !tiene_permiso(190)) {
+     if ($id_estado == $estado_global_negociacion ) {
             
             $client_id_val = isset($_REQUEST['cliente_id'])
                 ? (int) $_REQUEST['cliente_id']
@@ -1887,19 +1897,18 @@ if ($accion=="g") {
             }
             else if ($persona_juridica == 1 && empty(trim($_REQUEST['representante_legal_direccion'] ?? ''))) {
                 $verror = 'La direccion del Representante Legal es obligatoria.';
-            }if (empty($foto_actual) && !$foto_comprobante) {
+            }
+            if (empty($foto_actual) && !$foto_comprobante) {
                 $verror = 'Debe adjuntar comprobante cuando el estado es negociación.';
             }
-
+            if (empty($foto_actual_recibo) && !$foto_recibo) {
+                $verror = 'Debe adjuntar Recibo de Transferencia cuando el estado es negociación.';
+            }
         }
 }
 
-        
-
-
-
-
-    
+     
+ 
     if ($verror=="") {
         //Campos
         $sqlcampos="";
@@ -2044,36 +2053,36 @@ if ($accion=="g") {
             }
 
             $id_tienda = isset($venta_actual['id_tienda']) ? intval($venta_actual['id_tienda']) : 0;
-            if ($id_tienda!=intval($_REQUEST['id_tienda'])){   
+            if (isset($_REQUEST['id_tienda']) && $id_tienda!=intval($_REQUEST['id_tienda'])){   
                $id_tienda_name=get_dato_sql("tienda","nombre"," where id=".$_REQUEST['id_tienda']);
                registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Tienda', $id_tienda_name);
             }
 
             $kilometraje = isset($venta_actual['kilometraje']) ? intval($venta_actual['kilometraje']) : 0;
-            if ($kilometraje!=intval($_REQUEST['kilometraje'])){   
+            if (isset($_REQUEST['kilometraje']) && $kilometraje!=intval($_REQUEST['kilometraje'])){   
                 registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Kilometraje', $_REQUEST['kilometraje']);
             }
 
              $id_pintura = isset($venta_actual['id_estado_pintura']) ? intval($venta_actual['id_estado_pintura']) : 0;
-             if ($id_pintura!=intval($_REQUEST['id_estado_pintura'])){   
+             if (isset($_REQUEST['id_estado_pintura']) && $id_pintura!=intval($_REQUEST['id_estado_pintura'])){   
                  $id_pintura_name=get_dato_sql("ventas_estado","nombre"," where id=".$_REQUEST['id_estado_pintura']);
                  registrar_historial_ventas($cid, $_REQUEST['id_estado_pintura'], 'Modificacion de Estado de Pintura', $id_pintura_name);
              }
 
              $id_interior = isset($venta_actual['id_estado_interior']) ? intval($venta_actual['id_estado_interior']) : 0;
-             if ($id_interior!=intval($_REQUEST['id_estado_interior'])){   
+             if (isset($_REQUEST['id_estado_interior']) && $id_interior!=intval($_REQUEST['id_estado_interior'])){   
                  $id_interior_name=get_dato_sql("ventas_estado","nombre"," where id=".$_REQUEST['id_estado_interior']);
                  registrar_historial_ventas($cid, $_REQUEST['id_estado_interior'], 'Modificacion de Estado de Interior', $id_interior_name);
              }            
 
              $id_mecanica = isset($venta_actual['id_estado_mecanica']) ? intval($venta_actual['id_estado_mecanica']) : 0;
-             if ($id_mecanica!=intval($_REQUEST['id_estado_mecanica'])){   
+             if (isset($_REQUEST['id_estado_mecanica']) && $id_mecanica!=intval($_REQUEST['id_estado_mecanica'])){   
                 $id_mecanica_name=get_dato_sql("ventas_estado","nombre"," where id=".$_REQUEST['id_estado_mecanica']);
                  registrar_historial_ventas($cid, $_REQUEST['id_estado_mecanica'], 'Modificacion de Estado de Mecanica', $id_mecanica_name);
              }
 
              $observaciones = isset($venta_actual['observaciones_reparacion']) ? trim((string)$venta_actual['observaciones_reparacion']) : '';
-             if ($observaciones!=trim($_REQUEST['observaciones_reparacion'])){   
+             if (isset($_REQUEST['observaciones_reparacion']) && $observaciones!=trim($_REQUEST['observaciones_reparacion'])){   
                 registrar_historial_ventas($cid, $estado_global_nuevo, 'Modificacion de Observaciones', $_REQUEST['observaciones_reparacion']);
              }
 
@@ -2296,8 +2305,8 @@ if ($accion =="d") {
     
     //$observaciones_reparacion= "";
     if ($id_estado=='' || $id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion){                
-          $disable_sec1= !tiene_permiso(190) ? ' disabled="disabled" ' : '';  
-          $disable_sec2= !tiene_permiso(169) ? ' disabled="disabled" ' : '';         
+          $disable_sec1= !tiene_permiso(160) ? ' disabled="disabled" ' : ' ';  
+          $disable_sec2= !tiene_permiso(190) ? ' disabled="disabled" ' : ' ';         
     }else{
        $disable_sec1=' disabled="disabled" ';  
        $disable_sec2=' disabled="disabled" ';  
@@ -2380,11 +2389,13 @@ if ($accion =="d") {
     
     
     <div class="col-md">
-        <?php echo campo("kilometraje","Kilometraje",'number',$kilometraje,' ',$disable_sec1); ?>        
+        <?php 
+           echo campo("kilometraje","Kilometraje",'number',$kilometraje,' ',$disable_sec1);
+        ?>        
     </div>
 
     <div class="col-md">
-         <?php echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec1);  ?> 
+         <?php echo campo("trasmision","Trasmision",'select', valores_combobox_texto(app_tipo_trasmision,$trasmision),' ',$disable_sec1); ?>
     </div>
     
     <div class="col-md">
@@ -2417,13 +2428,13 @@ if ($accion =="d") {
 </div>  
 <div class="row">
     <div class="col-md">
-         <?php echo campo("trasmision","Trasmision",'select', valores_combobox_texto(app_tipo_trasmision,$trasmision),' ',$disable_sec1); ?>
+         <?php echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2);  ?> 
     </div>
    <div class="col-md">
-        <?php echo campo("precio_minimo","Precio Minimo",'number',$precio_minimo,' ',$disable_sec2); ?>        
+        <?php echo campo("precio_minimo","Precio Minimo",'number',$precio_minimo,' ',$disable_sec1); ?>        
     </div>
     <div class="col-md">
-        <?php echo campo("precio_maximo","Precio Maximo",'number',$precio_maximo,' ',$disable_sec2); ?>          
+        <?php echo campo("precio_maximo","Precio Maximo",'number',$precio_maximo,' ',$disable_sec1); ?>          
     </div>    
 
 </div>
@@ -2432,12 +2443,12 @@ if ($accion =="d") {
     <div class="col-md">
          <?php echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where id=11 ",'','...'),' ',' required '.$disable_sec2)  ?> 
     </div>
-                <div class="col-md">            
-                <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ', $disable_sec1); ?>                 
-            </div>   
-            <div class="col-md">            
-                <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec1); ?>                 
-            </div> 
+    <div class="col-md">            
+         <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ', $disable_sec2); ?>                 
+    </div>   
+    <div class="col-md">            
+         <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec2); ?>                 
+    </div> 
 </div>
 
 <div class="row">
@@ -2558,9 +2569,9 @@ if ($accion =="d") {
     <div class="col-md-6" id="bloque_foto_pago">
         <h6>Foto Comprobante de Pago</h6>
         <?php
-        if ($foto=='') {
+        if ($foto=='' && $id_estado_pintura==32) {
             echo '<div id="archivofoto">';
-            echo campo_upload("foto","Adjuntar Comprobante de Pago",'upload','', $disable_sec1,'',4,8,'NO',false );
+            echo campo_upload("foto","Adjuntar Comprobante de Pago",'upload','', $disable_sec2,'',4,8,'NO',false );
             echo '</div>';
         }
         ?>
@@ -2582,11 +2593,11 @@ if ($accion =="d") {
     </div>
 
     <div class="col-md-6" id="bloque_foto_televentas">
-        <h6>Foto Comprobante de Recibo de Pago</h6>
+        <h6>Foto de Recibo de Pago</h6>
         <?php
-        if ($foto_televentas=='') {
+        if ($foto_televentas=='' && $id_estado_pintura==32) {
             echo '<div id="archivofoto_televentas">';
-            echo campo_upload("foto_televentas","Adjuntar Recibo de Pago",'upload','', $disable_sec1,'',4,8,'NO',false );
+            echo campo_upload("foto_televentas","Adjuntar Recibo de Pago",'upload','', $disable_sec2,'',4,8,'NO',false );
             echo '</div>';
         }
         ?>
