@@ -2493,7 +2493,7 @@ if ($accion =="d") {
 
         <div class="row">
             <div class="col-md-6">
-                <?php echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1,'get.php?a=2&t=1',$cliente_nombre);  ?>
+                <?php echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec2,'get.php?a=2&t=1',$cliente_nombre);  ?>
             </div>
             <div class="col-md-4">
                 <?php echo campo("tipo_documento_ident_venta","Documento de identificacion",'select2',valores_combobox_array($tipos_docu, $tipo_documento_ident_venta, ''));  ?>
