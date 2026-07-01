@@ -2299,11 +2299,13 @@ if ($accion =="d") {
     
     //$observaciones_reparacion= "";
     if ($id_estado=='' || $id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion){                
-          $disable_sec1= !tiene_permiso(169) ? ' disabled="disabled" ' : ' ';  
-          $disable_sec2= !tiene_permiso(190) ? ' disabled="disabled" ' : ' ';         
+          $disable_sec1= !tiene_permiso(169) ? ' disabled="disabled" ' : ' ';  //169=editar campos de operaciones
+          $disable_sec2= !tiene_permiso(190) ? ' disabled="disabled" ' : ' ';  //190=editar campos de vendedores       
+          $disable_sec3= !tiene_permiso(194) ? ' disabled="disabled" ' : ' ';  //194=editar campos de precio venta       
     }else{
        $disable_sec1=' disabled="disabled" ';  
        $disable_sec2=' disabled="disabled" ';  
+       $disable_sec3=' disabled="disabled" ';  
     }
 
     if ( $id_estado_pintura==32 && $id_estado_interior==32 && $id_estado_mecanica==32 && ($id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion)){
@@ -2433,10 +2435,10 @@ if ($accion =="d") {
          ?> 
     </div>
    <div class="col-md">
-        <?php echo campo("precio_minimo","Precio Minimo",'number',$precio_minimo,' ',$disable_sec1); ?>        
+        <?php echo campo("precio_minimo","Precio Minimo",'number',$precio_minimo,' ',$disable_sec3); ?>        
     </div>
     <div class="col-md">
-        <?php echo campo("precio_maximo","Precio Maximo",'number',$precio_maximo,' ',$disable_sec1); ?>          
+        <?php echo campo("precio_maximo","Precio Maximo",'number',$precio_maximo,' ',$disable_sec3); ?>          
     </div>    
 
 </div>
