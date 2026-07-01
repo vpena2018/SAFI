@@ -1850,7 +1850,7 @@ if ($accion=="g") {
     $precio_maximo=intval($_REQUEST['precio_maximo'] ?? 0);    
     $precio_venta = intval($precio_venta_raw);
 
-    $id_vendedor=intval($_REQUEST['id_vendedor']);
+    $id_vendedor=intval($_REQUEST['id_vendedor'] ?? 0);
 
     $prima_venta  = intval($prima_venta_raw);
 
@@ -1898,10 +1898,12 @@ if ($accion=="g") {
             else if ($persona_juridica == 1 && empty(trim($_REQUEST['representante_legal_direccion'] ?? ''))) {
                 $verror = 'La direccion del Representante Legal es obligatoria.';
             }
-            if (empty($foto_actual) && !$foto_comprobante) {
+            else if (empty($foto_actual) && !$foto_comprobante) {
                 $verror = 'Debe adjuntar comprobante cuando el estado es negociación.';
             }
-            if (empty($foto_actual_recibo) && !$foto_recibo) {
+            else if (empty($id_vendedor)) {
+                $verror = 'Debe seleccionar un vendedor cuando el estado es negociación.';
+            }else if (empty($foto_actual_recibo) && !$foto_recibo) {
                 $verror = 'Debe adjuntar Recibo de Transferencia cuando el estado es negociación.';
             }
         }
@@ -2305,7 +2307,7 @@ if ($accion =="d") {
     
     //$observaciones_reparacion= "";
     if ($id_estado=='' || $id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion){                
-          $disable_sec1= !tiene_permiso(160) ? ' disabled="disabled" ' : ' ';  
+          $disable_sec1= !tiene_permiso(169) ? ' disabled="disabled" ' : ' ';  
           $disable_sec2= !tiene_permiso(190) ? ' disabled="disabled" ' : ' ';         
     }else{
        $disable_sec1=' disabled="disabled" ';  
@@ -2337,6 +2339,10 @@ if ($accion =="d") {
         <?php echo campo("numero","Numero",'label',$numero,' ',' '); ?>        
     </div>    
    
+    <div class="col-md">
+        <?php echo campo("numero","Numero",'label',$id_estado,' ',' '); ?>        
+    </div>    
+
 
 </div>
 
@@ -2428,7 +2434,11 @@ if ($accion =="d") {
 </div>  
 <div class="row">
     <div class="col-md">
-         <?php echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2);  ?> 
+         <?php
+            if($id_estado_pintura==32){ 
+               echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2); 
+            }
+         ?> 
     </div>
    <div class="col-md">
         <?php echo campo("precio_minimo","Precio Minimo",'number',$precio_minimo,' ',$disable_sec1); ?>        
@@ -2441,13 +2451,25 @@ if ($accion =="d") {
 
 <div class="row">
     <div class="col-md">
-         <?php echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where id=11 ",'','...'),' ',' required '.$disable_sec2)  ?> 
+         <?php
+          if ($id_estado_pintura==32){ 
+              echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where id=11 ",'','...'),' ',' required '.$disable_sec2) ; 
+          }
+         ?> 
     </div>
     <div class="col-md">            
-         <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ', $disable_sec2); ?>                 
+         <?php 
+         if ($id_estado_pintura==32){ 
+             echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ', $disable_sec2);
+         }
+         ?>                 
     </div>   
     <div class="col-md">            
-         <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec2); ?>                 
+         <?php
+         if ($id_estado_pintura==32){  
+             echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec2);
+         }    
+         ?>                 
     </div> 
 </div>
 
