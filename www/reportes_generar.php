@@ -896,7 +896,8 @@ case 73:// 	Reporte de averias
                 ,tec1.nombre as tecnombre1
                 ,tec2.nombre as tecnombre2
                 ,tec3.nombre as tecnombre3 
-                ,tec4.nombre as tecnombre4                
+                ,tec4.nombre as tecnombre4  
+                ,tec5.nombre as tecnombre5              
                 ,sd.total_costo
                 
                 FROM servicio
@@ -909,7 +910,8 @@ case 73:// 	Reporte de averias
                 LEFT OUTER JOIN usuario tec1 on (servicio.id_tecnico1=tec1.id) 
                 LEFT OUTER JOIN usuario tec2 on (servicio.id_tecnico2=tec2.id)
                 LEFT OUTER JOIN usuario tec3 on (servicio.id_tecnico3=tec3.id)   
-                LEFT OUTER JOIN usuario tec4 on (servicio.id_tecnico3=tec4.id) 
+                LEFT OUTER JOIN usuario tec4 on (servicio.id_tecnico4=tec4.id) 
+                LEFT OUTER JOIN usuario tec5 on (servicio.id_tecnico5=tec5.id) 
                 LEFT JOIN (
                 SELECT
                     id_servicio,
@@ -936,6 +938,7 @@ case 73:// 	Reporte de averias
                 ,tec2.nombre as tecnombre2
                 ,tec3.nombre as tecnombre3 
                 ,tec4.nombre as tecnombre4 
+                ,tec5.nombre as tecnombre5
                 ,0 as total_costo
                 FROM servicio
                 LEFT OUTER JOIN producto ON (servicio.id_producto=producto.id)
@@ -947,7 +950,8 @@ case 73:// 	Reporte de averias
                 LEFT OUTER JOIN usuario tec1 on (servicio.id_tecnico1=tec1.id) 
                 LEFT OUTER JOIN usuario tec2 on (servicio.id_tecnico2=tec2.id)
                 LEFT OUTER JOIN usuario tec3 on (servicio.id_tecnico3=tec3.id)  
-                LEFT OUTER JOIN usuario tec4 on (servicio.id_tecnico4=tec4.id)                                              
+                LEFT OUTER JOIN usuario tec4 on (servicio.id_tecnico4=tec4.id)     
+                LEFT OUTER JOIN usuario tec5 on (servicio.id_tecnico5=tec5.id)                                         
                 WHERE /* date(servicio.fecha) BETWEEN '$fdesde' AND '$fhasta'*/
                 $where
                 order by servicio.fecha , servicio.id 
@@ -980,6 +984,7 @@ case 73:// 	Reporte de averias
                     $reporte_datos.= "<th>Tecnico 2</th>";
                     $reporte_datos.= "<th>Tecnico 3</th>";  
                     $reporte_datos.= "<th>Tecnico 4</th>";                     
+                    $reporte_datos.= "<th>Tecnico 5</th>";                     
                     $reporte_datos.= "</tr></thead>";
                     
                     //BODY
@@ -1004,6 +1009,7 @@ case 73:// 	Reporte de averias
                         $reporte_datos.= '<td>'.$row['tecnombre2'].'</td>'; 
                         $reporte_datos.= '<td>'.$row['tecnombre3'].'</td>'; 
                         $reporte_datos.= '<td>'.$row['tecnombre4'].'</td>'; 
+                        $reporte_datos.= '<td>'.$row['tecnombre5'].'</td>'; 
                         $reporte_datos.= "</tr>";
     
                     }
