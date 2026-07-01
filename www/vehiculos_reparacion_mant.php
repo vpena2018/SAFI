@@ -1940,10 +1940,6 @@ if ($accion=="g") {
         if (isset($_REQUEST["fecha_promesa_taller"])) { $sqlcampos.= " , fecha_promesa_taller =".GetSQLValue($_REQUEST["fecha_promesa_taller"],"date"); }                            
         if (isset($_REQUEST["id_vendedor"])) { $sqlcampos.= " , id_vendedor =".GetSQLValue($_REQUEST["id_vendedor"],"int"); } 
 
-
-
-
-
         //info de contrato
         if($id_estado==$estado_global_negociacion || $id_estado==20){
             $rep_profesion   = trim($_REQUEST['representante_legal_profesion'] ?? '');
@@ -1958,11 +1954,6 @@ if ($accion=="g") {
             $sqlcampos.= " , cliente_id =null, representante_legal_profesion = null,tipo_documento_ident_venta=null, nacionalidad_venta=null, ciudad_venta=null,departamento_venta=null, precio_venta=null, prima_venta=null";
         }
         
-
-
-
-
-
 
         $estado_nuevo = intval($_REQUEST['id_estado'] ?? 0);
         
