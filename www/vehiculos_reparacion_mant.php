@@ -1903,7 +1903,8 @@ if ($accion=="g") {
             }
             else if (empty($id_vendedor)) {
                 $verror = 'Debe seleccionar un vendedor cuando el estado es negociación.';
-            }else if (empty($foto_actual_recibo) && !$foto_recibo) {
+            }
+            else if (empty($foto_actual_recibo) && !$foto_recibo) {
                 $verror = 'Debe adjuntar Recibo de Transferencia cuando el estado es negociación.';
             }
         }
