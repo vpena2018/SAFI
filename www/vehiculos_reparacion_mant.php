@@ -1829,6 +1829,8 @@ if ($accion=="g") {
         if (!es_nulo($cid) ) {
             $foto_actual = get_dato_sql("ventas", "foto", " where id=".$cid);
             $id_vendedor = get_dato_sql("ventas", "id_vendedor", " where id=".$cid);
+
+            $vendetmp=intval($_REQUEST['id_vendedor'] ?? 0);
             
             // Si hay foto y se está intentando cambiar el vendedor (solo si ya tenía un vendedor asignado)
             if (!es_nulo($foto_actual) && !es_nulo($id_vendedor) && $id_vendedor != intval($_REQUEST['id_vendedor'] ?? 0)) {
@@ -2061,19 +2063,26 @@ if ($accion=="g") {
              $id_pintura = isset($venta_actual['id_estado_pintura']) ? intval($venta_actual['id_estado_pintura']) : 0;
              if (isset($_REQUEST['id_estado_pintura']) && $id_pintura!=intval($_REQUEST['id_estado_pintura'])){   
                  $id_pintura_name=get_dato_sql("ventas_estado","nombre"," where id=".$_REQUEST['id_estado_pintura']);
-                 registrar_historial_ventas($cid, $_REQUEST['id_estado_pintura'], 'Modificacion de Estado de Pintura', $id_pintura_name);
+                 $id_pintura_name_viejo=get_dato_sql("ventas_estado","nombre"," where id=".$id_pintura);
+                 $observacion='Modificacion de '.$id_pintura_name_viejo.' a '.$id_pintura_name;
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado_pintura'], 'Modificacion de Estado de Pintura', $observacion);
+                 
              }
 
              $id_interior = isset($venta_actual['id_estado_interior']) ? intval($venta_actual['id_estado_interior']) : 0;
              if (isset($_REQUEST['id_estado_interior']) && $id_interior!=intval($_REQUEST['id_estado_interior'])){   
                  $id_interior_name=get_dato_sql("ventas_estado","nombre"," where id=".$_REQUEST['id_estado_interior']);
-                 registrar_historial_ventas($cid, $_REQUEST['id_estado_interior'], 'Modificacion de Estado de Interior', $id_interior_name);
+                 $id_interior_name_viejo=get_dato_sql("ventas_estado","nombre"," where id=".$id_interior);
+                 $observacion='Modificacion de '.$id_interior_name_viejo.' a '.$id_interior_name;
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado_interior'], 'Modificacion de Estado de Interior', $observacion);
              }            
 
              $id_mecanica = isset($venta_actual['id_estado_mecanica']) ? intval($venta_actual['id_estado_mecanica']) : 0;
              if (isset($_REQUEST['id_estado_mecanica']) && $id_mecanica!=intval($_REQUEST['id_estado_mecanica'])){   
-                $id_mecanica_name=get_dato_sql("ventas_estado","nombre"," where id=".$_REQUEST['id_estado_mecanica']);
-                 registrar_historial_ventas($cid, $_REQUEST['id_estado_mecanica'], 'Modificacion de Estado de Mecanica', $id_mecanica_name);
+                 $id_mecanica_name=get_dato_sql("ventas_estado","nombre"," where id=".$_REQUEST['id_estado_mecanica']);
+                 $id_mecanica_name_viejo=get_dato_sql("ventas_estado","nombre"," where id=".$id_mecanica);
+                 $observacion='Modificacion de '.$id_mecanica_name_viejo.' a '.$id_mecanica_name;
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado_mecanica'], 'Modificacion de Estado de Mecanica', $observacion);
              }
 
              $observaciones = isset($venta_actual['observaciones_reparacion']) ? trim((string)$venta_actual['observaciones_reparacion']) : '';
@@ -2365,10 +2374,11 @@ if ($accion =="d") {
 </div>
 
 <div class="row">
-    <div class="col-md-4">                
+    <!-- <div class="col-md-4">     --> 
+        <div class="col-md-4" <?= strpos($disable_sec1_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>           
         <?php 
         if (es_nulo($id_estado) || $id_estado == $estado_global_nuevo || $id_estado == $estado_global_negociacion) {             
-            echo campo("id_tienda", "Sucursal", 'select2', valores_combobox_db("tienda", $id_tienda, "nombre", " ", '', '...'), ' ', ' required ' . $disable_sec1_lista, ''); 
+            echo campo("id_tienda", "Sucursal", 'select2', valores_combobox_db("tienda", $id_tienda, "nombre", " ", '', '...'), ' ', ' required ', ''); 
         } else {
             echo campo("id_tienda", "sucursal", 'hidden', $id_tienda, '', '', '');
             echo campo("id_tienda_label", "Sucursal", 'label', $latienda, '', '', '');
@@ -2376,7 +2386,8 @@ if ($accion =="d") {
         ?> 
     </div>    
 
-    <div class="col-md-8">         
+    <!-- <div class="col-md-8">    -->     
+        <div class="col-md-8" <?= strpos($disable_sec1_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>  
         <?php 
         if ($id_estado == '' || $id_estado == $estado_global_nuevo || $id_estado == $estado_global_negociacion) {             
             echo campo("id_producto", "Vehiculo", 'select2ajax', $id_producto, '  class=" " ', ' onchange="comb_actualizar_veh();"  ', 'get.php?a=3&t=1', $producto_etiqueta); 
@@ -2403,27 +2414,33 @@ if ($accion =="d") {
          <?php echo campo("trasmision","Trasmision",'select', valores_combobox_texto(app_tipo_trasmision,$trasmision),' ',$disable_sec1_lista); ?>
     </div>
     
-    <div class="col-md">
+   <!--  <div class="col-md"> -->
+        <div class="col-md" <?= strpos($disable_sec1_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>
          <?php if (es_nulo($id_estado) || $id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion){            
-              echo campo("id_estado_pintura","Pintura",'select2',valores_combobox_db("ventas_estado",$id_estado_pintura,"nombre"," where ventas_reparacion=1 ",'','...'),' ',' required '.$disable_sec1_lista);  
+              //echo campo("id_estado_pintura","Pintura",'select2',valores_combobox_db("ventas_estado",$id_estado_pintura,"nombre"," where ventas_reparacion=1 ",'','...'),' ',' required '.$disable_sec1_lista);  
+              echo campo("id_estado_pintura","Pintura",'select2',valores_combobox_db("ventas_estado",$id_estado_pintura,"nombre"," where ventas_reparacion=1 ",'','...'),' ',' required '); 
          }else{
               echo campo("id_estado_pintura","pintura",'hidden',$id_estado_pintura,'','','');
               echo campo("id_pintura_label","Pintura",'label',$elestado1,'','','');
          }
          ?>         
     </div>
-    <div class="col-md">
+    <!-- <div class="col-md"> -->
+        <div class="col-md" <?= strpos($disable_sec1_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>
          <?php if (es_nulo($id_estado) || $id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion){ 
-              echo campo("id_estado_interior","Interior",'select2',valores_combobox_db("ventas_estado",$id_estado_interior,"nombre"," where ventas_reparacion=1 ",'','...'),' ',' required '.$disable_sec1_lista);  
+              //echo campo("id_estado_interior","Interior",'select2',valores_combobox_db("ventas_estado",$id_estado_interior,"nombre"," where ventas_reparacion=1 ",'','...'),' ',' required '.$disable_sec1_lista);  
+              echo campo("id_estado_interior","Interior",'select2',valores_combobox_db("ventas_estado",$id_estado_interior,"nombre"," where ventas_reparacion=1 ",'','...'),' ',' required '); 
          }else{
               echo campo("id_estado_interior","interior",'hidden',$id_estado_interior,'','','');
               echo campo("id_interior_label","Interior",'label',$elestado2,'','','');
          }
          ?>         
     </div>
-    <div class="col-md">
+    <!-- <div class="col-md"> -->
+        <div class="col-md" <?= strpos($disable_sec1_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>
          <?php if (es_nulo($id_estado) || $id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion){ 
-              echo campo("id_estado_mecanica","Mecanica",'select2',valores_combobox_db("ventas_estado",$id_estado_mecanica,"nombre"," where ventas_reparacion=1 ",'','...'),' ',' required '.$disable_sec1_lista);  
+              //echo campo("id_estado_mecanica","Mecanica",'select2',valores_combobox_db("ventas_estado",$id_estado_mecanica,"nombre"," where ventas_reparacion=1 ",'','...'),' ',' required '.$disable_sec1_lista);  
+              echo campo("id_estado_mecanica","Mecanica",'select2',valores_combobox_db("ventas_estado",$id_estado_mecanica,"nombre"," where ventas_reparacion=1 ",'','...'),' ',' required ');  
          }else{
               echo campo("id_estado_mecanica","mecanica",'hidden',$id_estado_mecanica,'','','');
               echo campo("id_mecanica_label","Mecanica",'label',$elestado3,'','','');
@@ -2432,10 +2449,12 @@ if ($accion =="d") {
     </div>
 </div>  
 <div class="row">
-    <div class="col-md">
+    <!-- <div class="col-md"> -->
+        <div class="col-md" <?= strpos($disable_sec2_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>
          <?php
             if($id_estado_pintura==32){ 
-               echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2_lista); 
+               //echo campo("id_vendedor","Vendedorrr",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2_lista); 
+               echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required'); 
             }
          ?> 
     </div>
@@ -2449,10 +2468,12 @@ if ($accion =="d") {
 </div>
 
 <div class="row">
-    <div class="col-md">
+    <!-- <div class="col-md"> -->
+        <div class="col-md" <?= strpos($disable_sec2_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>
          <?php
           if ($id_estado_pintura==32){ 
-              echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where id=11 ",'','...'),' ',' required '.$disable_sec2_lista) ; 
+              //echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where id=11 ",'','...'),' ',' required '.$disable_sec2_lista) ; 
+              echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where id=11 ",'','...'),' ',' required') ; 
           }
          ?> 
     </div>
@@ -2497,21 +2518,25 @@ if ($accion =="d") {
 
 
         <div class="row">
-            <div class="col-md-6">
-                <?php echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec2_lista,'get.php?a=2&t=1',$cliente_nombre);  ?>
+            <!-- <div class="col-md-6"> -->
+                <div class="col-md-6" <?= strpos($disable_sec2_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>
+                <?php //echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec2_lista,'get.php?a=2&t=1',$cliente_nombre);  ?>
+                <?php echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','"','get.php?a=2&t=1',$cliente_nombre);  ?>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-4" <?= strpos($disable_sec2_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>
+            <!-- <div class="col-md-4"> -->
                 <?php echo campo("tipo_documento_ident_venta","Documento de identificacion",'select2',valores_combobox_array($tipos_docu, $tipo_documento_ident_venta, ''));  ?>
             </div>
 
-            <div class="col-md-2">
+            <!-- <div class="col-md-2"> -->
+                <div class="col-md-2" <?= strpos($disable_sec2_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>
                 <?php echo campo("nacionalidad_venta","Nacionalidad",'select2',valores_combobox_array($nacionalidades, $nacionalidad_venta, ''));  ?>
             </div>
          </div>
 
          <div class="row">
             <div class="col-md-12">
-                <?php echo campo("representante_legal_profesion","Profesión u oficio de comprador",'text',$representante_legal_profesion,' ',''); ?>
+                <?php echo campo("representante_legal_profesion","Profesión u oficio de comprador",'text',$representante_legal_profesion,' ',$disable_sec2); ?>
             </div>
             
          </div>
@@ -2519,7 +2544,8 @@ if ($accion =="d") {
 
 
           <div class="row">
-            <div class="col-md-12">
+           <!--  <div class="col-md-12"> -->
+                <div class="col-md-12" <?= strpos($disable_sec2_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>
                 <?php echo campo("persona_juridica","persona juridica",'checkboxCustom',$persona_juridica,' ',''); ?>
             </div>
          </div>
@@ -2534,7 +2560,7 @@ if ($accion =="d") {
                     'text',
                     $representante_legal_persona_juridica,
                     ' ',
-                    ' '
+                    $disable_sec2
                 ); ?>
             </div>  
 
@@ -2545,7 +2571,7 @@ if ($accion =="d") {
                     'text',
                     $representante_legal_identidad,
                     ' ',
-                    ''
+                    $disable_sec2
                 ); ?>
             </div>
         </div>
@@ -2558,7 +2584,7 @@ if ($accion =="d") {
                     'text',
                     $representante_legal_direccion,
                     ' ',
-                    ' '
+                    $disable_sec2
                 ); ?>
             </div>
 
