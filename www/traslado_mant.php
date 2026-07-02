@@ -147,26 +147,38 @@ if ($accion=="g") {
 				   $verror.="El kilometraje de entrada no puede menor";
 			   }
 			}
+ 
 
 			if($autorizar_traslado==1){
 							$result = sql_select("SELECT numero FROM orden_traslado WHERE id = $cid");
+							$fecha_traslado_result = sql_select("SELECT fecha FROM orden_traslado WHERE id = $cid");
+							$fecha_traslado = '';
 
-			if ($result!=false){
-				if ($result -> num_rows > 0) { 
-					$row = $result -> fetch_assoc(); 
+							if ($fecha_traslado_result!=false && $fecha_traslado_result->num_rows > 0) {
+								$row_fecha = $fecha_traslado_result->fetch_assoc();
+								$fecha_traslado = $row_fecha['fecha'];
+							}
 
-					$traslado = sql_select("SELECT count(*) as count FROM traslado_bitacora WHERE numero_traslado = ".$row['numero']);
+			if ($fecha_traslado >= '2026-07-01') {
+				if ($result!=false){
+					if ($result -> num_rows > 0) { 
+						$row = $result -> fetch_assoc(); 
 
-					if($traslado!=false){
-						if ($traslado -> num_rows > 0) { 
-							$row2 = $traslado -> fetch_assoc(); 
-							if($row2['count'] == 0){
-								$verror.="No puede completar el traslado, Vehiculo pendiente de salida";
+						$traslado = sql_select("SELECT count(*) as count FROM traslado_bitacora WHERE numero_traslado = ".$row['numero']);
+
+						if($traslado!=false){
+							if ($traslado -> num_rows > 0) { 
+								$row2 = $traslado -> fetch_assoc(); 
+								if($row2['count'] == 0){
+									$verror.="No puede completar el traslado, Vehiculo pendiente de salida";
+								}
 							}
 						}
 					}
-				}
 			}
+			}
+
+
 				
 			}
 
