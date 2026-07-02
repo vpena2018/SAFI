@@ -1618,13 +1618,10 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
     }
 
     //valida que el precio de venta no sea menor al precio minimo y que no sea mayor al precio maximo  
-    if (!tiene_permiso(193)){
-        $precio_venta=intval($_REQUEST['precio_venta'])+intval($_REQUEST['descuento_aplicado']);
-        if (!es_nulo($precio_venta) && !es_nulo($precio_minimo) && $precio_venta < $precio_minimo) {
-            $verror .= 'El precio de venta no puede ser menor al precio mínimo. ';
-        }
-    }
-
+    $precio_venta=intval($_REQUEST['precio_venta'])+intval($_REQUEST['descuento_aplicado']);
+    if (!es_nulo($precio_venta) && !es_nulo($precio_minimo) && $precio_venta < $precio_minimo) {
+       $verror .= 'El precio de venta no puede ser menor al precio mínimo. ';
+    }   
         
     if (!es_nulo($precio_venta) && !es_nulo($precio_maximo) && $precio_venta > $precio_maximo) {
         $verror .= 'El precio de venta no puede ser mayor al precio máximo. ';
