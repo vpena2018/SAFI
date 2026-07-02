@@ -1826,7 +1826,7 @@ if ($accion=="g") {
             }
 
     // Ricardo Lagos NUEVA VALIDACIÓN: Si hay foto, no permitir cambiar id_vendedor, pero permitir si estaba vacío
-        if (!es_nulo($cid) and tiene_permiso(190)) {
+        if (!es_nulo($cid) ) {
             $foto_actual = get_dato_sql("ventas", "foto", " where id=".$cid);
             $id_vendedor = get_dato_sql("ventas", "id_vendedor", " where id=".$cid);
             
@@ -2300,10 +2300,10 @@ if ($accion =="d") {
     
     //$observaciones_reparacion= "";
     if ($id_estado=='' || $id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion){        
-          $disable_sec1_lista= !tiene_permiso(169) ? ' disabled="disabled" ' : ' ';  //169=editar campos de operaciones        
-          $disable_sec1= !tiene_permiso(169) ? ' readonly ' : ' ';  //169=editar campos de operaciones          
-          $disable_sec2= !tiene_permiso(190) ? ' readonly ' : ' ';  //190=editar campos de vendedores       
-          $disable_sec2_lista= !tiene_permiso(190) ? ' disabled="disabled" ' : ' ';  //190=editar campos de vendedores       
+          $disable_sec1_lista= !tiene_permiso(190) ? ' disabled="disabled" ' : ' ';  //169=editar campos de operaciones        
+          $disable_sec1= !tiene_permiso(190) ? ' readonly ' : ' ';  //169=editar campos de operaciones          
+          $disable_sec2= !tiene_permiso(195) ? ' readonly ' : ' ';  //190=editar campos de vendedores       
+          $disable_sec2_lista= !tiene_permiso(195) ? ' disabled="disabled" ' : ' ';  //190=editar campos de vendedores       
           $disable_sec3= !tiene_permiso(194) ? ' readonly ' : ' ';  //194=editar campos de precio venta       
     }else{
        $disable_sec1_lista=' disabled="disabled" ';
