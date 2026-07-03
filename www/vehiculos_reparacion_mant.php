@@ -1828,6 +1828,7 @@ if ($accion=="g") {
     // Ricardo Lagos NUEVA VALIDACIÓN: Si hay foto, no permitir cambiar id_vendedor, pero permitir si estaba vacío
         if (!es_nulo($cid) ) {
             $foto_actual = get_dato_sql("ventas", "foto", " where id=".$cid);
+            $foto_actual_recibod = get_dato_sql("ventas", "foto_televentas", " where id=".$cid);
             $id_vendedor = get_dato_sql("ventas", "id_vendedor", " where id=".$cid);
 
             $vendetmp=intval($_REQUEST['id_vendedor'] ?? 0);
@@ -1906,10 +1907,7 @@ if ($accion=="g") {
             }
             else if(empty($foto_actual_recibo) && !$foto_recibo) {
                 $verror = 'Debe adjuntar recibo de pago cuando el estado es negociación.';
-            }
-            else if (empty($id_vendedor)) {
-                $verror = 'Debe seleccionar un vendedor cuando el estado es negociación.';
-            }
+            }    
             
         }
 }
