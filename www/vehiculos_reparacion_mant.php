@@ -1906,7 +1906,7 @@ if ($accion=="g") {
             else if (empty($foto_actual) && !$foto_comprobante)  {
                 $verror = 'Debe adjuntar comprobante cuando el estado es negociación.';
             }
-            else if(empty($foto_actual_recibo) && !$foto_recibo) && $id_estado_puntura==32 {
+            else if(empty($foto_actual_recibo) && !$foto_recibo && $id_estado_pintura==32) {
                 $verror = 'Debe adjuntar recibo de pago cuando el estado es negociación.';
             }    
             
