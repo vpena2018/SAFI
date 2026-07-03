@@ -1844,6 +1844,7 @@ if ($accion=="g") {
     $foto_recibo=isset($_REQUEST['foto_televentas'])? (bool) $_REQUEST['foto_televentas']: false;
     $foto_actual = get_dato_sql("ventas", "foto", " where id=".$cid);
     $foto_actual_recibo = get_dato_sql("ventas", "foto_televentas", " where id=".$cid);
+    $id_estado_pintura = get_dato_sql("ventas", "id_estado_pintura", " where id=".$cid);
 
     $persona_juridica = intval($_REQUEST['persona_juridica'] ?? 0);
     $precio_venta_raw = $_REQUEST['precio_venta'] ?? '';
@@ -1905,7 +1906,7 @@ if ($accion=="g") {
             else if (empty($foto_actual) && !$foto_comprobante)  {
                 $verror = 'Debe adjuntar comprobante cuando el estado es negociación.';
             }
-            else if(empty($foto_actual_recibo) && !$foto_recibo) {
+            else if(empty($foto_actual_recibo) && !$foto_recibo) && $id_estado_puntura==32 {
                 $verror = 'Debe adjuntar recibo de pago cuando el estado es negociación.';
             }    
             
