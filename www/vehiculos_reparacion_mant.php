@@ -2483,6 +2483,8 @@ if ($accion =="d") {
          <?php 
          if ($id_estado_pintura==32){ 
              echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ', $disable_sec2);
+         }else{
+             echo campo("precio_venta","Precio de Venta",'hidden',$precio_venta,'','','') ;
          }
          ?>                 
     </div>   
@@ -2490,6 +2492,8 @@ if ($accion =="d") {
          <?php
          if ($id_estado_pintura==32){  
              echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec2);
+         }else{
+             echo campo("prima_venta","Precio de Reserva",'hidden',$prima_venta,'','','') ;
          }    
          ?>                 
     </div> 
