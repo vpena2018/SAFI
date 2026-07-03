@@ -2455,7 +2455,9 @@ if ($accion =="d") {
             if($id_estado_pintura==32){ 
                //echo campo("id_vendedor","Vendedorrr",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2_lista); 
                echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required'); 
-            }
+            }else{
+               echo campo("id_vendedor","Vendedor",'hidden',$id_vendedor,'','',''); 
+            }              
          ?> 
     </div>
    <div class="col-md">
@@ -2474,6 +2476,8 @@ if ($accion =="d") {
           if ($id_estado_pintura==32){ 
               //echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where id=11 ",'','...'),' ',' required '.$disable_sec2_lista) ; 
               echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where id=11 ",'','...'),' ',' required') ; 
+          }else{
+              echo campo("id_estado","Estado",'hidden',$id_estado,'','','') ;    
           }
          ?> 
     </div>
