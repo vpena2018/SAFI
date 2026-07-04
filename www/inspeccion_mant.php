@@ -2614,20 +2614,7 @@ function insp_buscar_contrato_hertz() {
     .done(function(resp) {
         cargando(false);
         if (!resp || resp.error || !resp.data || resp.data.length === 0) {
-            Swal.fire({
-                title: 'Contrato no encontrado',
-                text: '¿Desea continuar sin cargar los datos del contrato?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Sí, continuar',
-                cancelButtonText: 'No'
-            }).then(function(result) {
-                if (!result.value) {
-                    $('#renta_contrato').focus();
-                }
-            });
+            mytoast('error', 'Contrato no encontrado', 3000);
             return;
         }
         var cli = resp.data[0].Cliente || {};
@@ -2874,14 +2861,7 @@ var validation = Array.prototype.filter.call(forms, function(form) {
       }           
     }
 
-    if (validado==true) {
-      var contrato = $("#renta_contrato").val();
-      if (contrato !== undefined && contrato.length > 10) {
-        mytoast('warning','El Número de Contrato no puede tener más de 10 caracteres',3000);
-        validado=false;
-      }
-    }
-
+    
    if (validado==true) {
       var combus=$("input[name='combustible_entrada']:checked").val();
       if (combus=='' || combus === undefined) {
@@ -2916,6 +2896,13 @@ var validation = Array.prototype.filter.call(forms, function(form) {
            }
         }
 
+        if (validado==true) {
+           var contrato = $("#renta_contrato").val();
+           if (contrato !== undefined && contrato.length > 10) {
+              mytoast('warning','El Número de Contrato no puede tener más de 10 caracteres',3000);
+              validado=false;
+            }
+        }
     }
     if (adicional=='0'){
         <?php if (tiene_permiso(163) && es_nulo($id_usuario_auditado)) { ?>

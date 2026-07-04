@@ -1828,6 +1828,7 @@ if ($accion=="g") {
     // Ricardo Lagos NUEVA VALIDACIÓN: Si hay foto, no permitir cambiar id_vendedor, pero permitir si estaba vacío
         if (!es_nulo($cid) ) {
             $foto_actual = get_dato_sql("ventas", "foto", " where id=".$cid);
+            $foto_actual_recibod = get_dato_sql("ventas", "foto_televentas", " where id=".$cid);
             $id_vendedor = get_dato_sql("ventas", "id_vendedor", " where id=".$cid);
 
             $vendetmp=intval($_REQUEST['id_vendedor'] ?? 0);
@@ -1843,6 +1844,7 @@ if ($accion=="g") {
     $foto_recibo=isset($_REQUEST['foto_televentas'])? (bool) $_REQUEST['foto_televentas']: false;
     $foto_actual = get_dato_sql("ventas", "foto", " where id=".$cid);
     $foto_actual_recibo = get_dato_sql("ventas", "foto_televentas", " where id=".$cid);
+    $id_estado_pintura = get_dato_sql("ventas", "id_estado_pintura", " where id=".$cid);
 
     $persona_juridica = intval($_REQUEST['persona_juridica'] ?? 0);
     $precio_venta_raw = $_REQUEST['precio_venta'] ?? '';
@@ -1904,12 +1906,9 @@ if ($accion=="g") {
             else if (empty($foto_actual) && !$foto_comprobante)  {
                 $verror = 'Debe adjuntar comprobante cuando el estado es negociación.';
             }
-            else if(empty($foto_actual_recibo) && !$foto_recibo) {
+            else if(empty($foto_actual_recibo) && !$foto_recibo && $id_estado_pintura==32) {
                 $verror = 'Debe adjuntar recibo de pago cuando el estado es negociación.';
-            }
-            else if (empty($id_vendedor)) {
-                $verror = 'Debe seleccionar un vendedor cuando el estado es negociación.';
-            }
+            }    
             
         }
 }
@@ -2455,7 +2454,9 @@ if ($accion =="d") {
             if($id_estado_pintura==32){ 
                //echo campo("id_vendedor","Vendedorrr",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2_lista); 
                echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required'); 
-            }
+            }else{
+               echo campo("id_vendedor","Vendedor",'hidden',$id_vendedor,'','',''); 
+            }              
          ?> 
     </div>
    <div class="col-md">
@@ -2474,6 +2475,8 @@ if ($accion =="d") {
           if ($id_estado_pintura==32){ 
               //echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where id=11 ",'','...'),' ',' required '.$disable_sec2_lista) ; 
               echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where id=11 ",'','...'),' ',' required') ; 
+          }else{
+              echo campo("id_estado","Estado",'hidden',$id_estado,'','','') ;    
           }
          ?> 
     </div>
@@ -2481,6 +2484,8 @@ if ($accion =="d") {
          <?php 
          if ($id_estado_pintura==32){ 
              echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ', $disable_sec2);
+         }else{
+             echo campo("precio_venta","Precio de Venta",'hidden',$precio_venta,'','','') ;
          }
          ?>                 
     </div>   
@@ -2488,6 +2493,8 @@ if ($accion =="d") {
          <?php
          if ($id_estado_pintura==32){  
              echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec2);
+         }else{
+             echo campo("prima_venta","Precio de Reserva",'hidden',$prima_venta,'','','') ;
          }    
          ?>                 
     </div> 
@@ -2702,7 +2709,7 @@ if ($accion =="d") {
         <!-- 🔹 FILA 2 -->
     <div class="row">
 
-        <?php if ($id_estado!=20 && tiene_permiso(190)){ ?>
+        <?php if ($id_estado!=20 && tiene_permiso(195)){ ?>
         <div class="col-sm">
             <a href="javascript:void(0);"
                id="btnActualizarContrato"

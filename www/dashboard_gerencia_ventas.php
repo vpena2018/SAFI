@@ -21,6 +21,18 @@ if ($accion == "1") {
         }
     }
 
+    // Filtro de mes (default: mes actual)
+    $filtro_mes = intval(date('n'));
+    if (isset($_REQUEST['mes'])) {
+        $tmpval = sanear_int($_REQUEST['mes']);
+        if (!es_nulo($tmpval) && intval($tmpval) >= 1 && intval($tmpval) <= 12) {
+            $filtro_mes = intval($tmpval);
+        }
+    }
+    $nombres_mes = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                    'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    $nombre_mes_sel = $nombres_mes[$filtro_mes];
+
     // ── 0. Totales activos por tipo (ventas=2, reparación=1) ─────────────────
     $res_tipo = sql_select("SELECT
         ventas.tipo_ventas_reparacion
@@ -91,7 +103,7 @@ if ($accion == "1") {
       AND ventas.id_estado = 20
       AND ventas.fecha_vendido IS NOT NULL
       AND YEAR(ventas.fecha_vendido)  = YEAR(CURDATE())
-      AND MONTH(ventas.fecha_vendido) = MONTH(CURDATE())
+      AND MONTH(ventas.fecha_vendido) = $filtro_mes
       $filtro_tienda
     GROUP BY vendedor.id, vendedor.nombre
     ORDER BY ventas_mes DESC, vendedor.nombre");
@@ -199,7 +211,7 @@ if ($accion == "1") {
             . '<div class="info-box mb-2">'
             . '<span class="info-box-icon bg-success elevation-1"><i class="fas fa-trophy" style="color:white"></i></span>'
             . '<div class="info-box-content">'
-            . '<span class="info-box-text">Vendidos Este Mes</span>'
+            . '<span class="info-box-text">Vendidos ' . htmlspecialchars($nombre_mes_sel) . '</span>'
             . '<span class="info-box-number">' . formato_numero($total_mes_vend, 0) . '</span>'
             . '</div></div></div>';
 
@@ -356,6 +368,22 @@ if ($accion == "2") {
                         valores_combobox_db('tienda', '', 'nombre', '', '', 'Todas'),
                         ' ', ' onkeypress="buscarfiltro(event,\'btn-filtro-gerencia\');"');
                     ?>
+                </div>
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label>Mes</label>
+                        <select name="mes" id="mes" class="form-control">
+                            <?php
+                            $meses_nombres = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                                              'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+                            $mes_actual = intval(date('n'));
+                            for ($i = 1; $i <= 12; $i++) {
+                                $sel = ($i == $mes_actual) ? ' selected' : '';
+                                echo '<option value="'.$i.'"'.$sel.'>'.$meses_nombres[$i-1].'</option>';
+                            }
+                            ?>
+                        </select>
+                    </div>
                 </div>
                 <div class="col-sm-4">
                     <a id="btn-filtro-gerencia" href="#"
