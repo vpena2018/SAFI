@@ -212,7 +212,7 @@ if ($accion=="g") {
 					}
 				}
 				if (es_nulo($Codigo_Alterno)){
-					$ordenesborrador=get_dato_sql("orden_traslado","COUNT(*)"," WHERE id_estado<3 AND id_producto=".intval($_REQUEST['id_producto']));
+					$ordenesborrador=get_dato_sql("orden_traslado","COUNT(*)"," WHERE id_estado in (1,2,4) AND id_producto=".intval($_REQUEST['id_producto']));
 					if ($ordenesborrador>0) {
 					   $verror.=" No puede crear una nueva orden de traslado porque actualmente se encontraron $ordenesborrador  orden en estado de borrador, debe completarlas antes de crear una nueva orden";					
 					}
