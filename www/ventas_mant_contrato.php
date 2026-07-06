@@ -1770,6 +1770,7 @@ if ($foto_original_tele !== '') {
         if (isset($_REQUEST["precio_maximo"])) { $sqlcampos.= " , precio_maximo =".GetSQLValue($_REQUEST["precio_maximo"],"int"); }        
         if (isset($_REQUEST["precio_venta"])) { $sqlcampos.= " , precio_venta =".GetSQLValue($_REQUEST["precio_venta"],"int"); } 
         if (isset($_REQUEST["prima_venta"])) { $sqlcampos.= " , prima_venta =".GetSQLValue($_REQUEST["prima_venta"],"int"); } 
+        if (isset($_REQUEST["descuento_aplicado"])) { $sqlcampos.= " , descuento_aplicado =".GetSQLValue($_REQUEST["descuento_aplicado"],"int"); } 
              
         //if ($persona_juridica == 1 && ($id_estado==11 || $id_estado==20)) {
          if ($persona_juridica == 1 && ($genera_contrato==1)) {
@@ -1899,33 +1900,39 @@ if ($foto_original_tele !== '') {
 
             $id_tienda = isset($venta_actual['id_tienda']) ? intval($venta_actual['id_tienda']) : 0;
             if ($id_tienda != intval($_REQUEST['id_tienda'])) {
+                $id_tienda_name_vieja = get_dato_sql("tienda", "nombre", " where id=" . $id_tienda);
                 $id_tienda_name = get_dato_sql("tienda", "nombre", " where id=" . intval($_REQUEST['id_tienda']));
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Tienda', $id_tienda_name);
+                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Tienda', "{$id_tienda_name_vieja} → {$id_tienda_name}");
             }
 
             $kilometraje = isset($venta_actual['kilometraje']) ? intval($venta_actual['kilometraje']) : 0;
             if ($kilometraje != intval($_REQUEST['kilometraje'])) {
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Kilometraje', $_REQUEST['kilometraje']);
+                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Kilometraje', "{$kilometraje} → {$_REQUEST['kilometraje']}");
             }
 
             $precio_minimo = isset($venta_actual['precio_minimo']) ? intval($venta_actual['precio_minimo']) : 0;
             if ($precio_minimo != intval($_REQUEST['precio_minimo'])) {
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Precio Minimo', $_REQUEST['precio_minimo']);
+                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Precio Minimo', "{$precio_minimo} → {$_REQUEST['precio_minimo']}");
             }
 
             $precio_maximo = isset($venta_actual['precio_maximo']) ? intval($venta_actual['precio_maximo']) : 0;
             if ($precio_maximo != intval($_REQUEST['precio_maximo'])) {
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Precio Maximo', $_REQUEST['precio_maximo']);
+                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Precio Maximo', "{$precio_maximo} → {$_REQUEST['precio_maximo']}");
             }
 
             $precio_venta = isset($venta_actual['precio_venta']) ? intval($venta_actual['precio_venta']) : 0;
             if (isset($_REQUEST['precio_venta']) && $precio_venta != intval($_REQUEST['precio_venta'])) {
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Precio de Venta', $_REQUEST['precio_venta']);
+                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Precio de Venta', "{$precio_venta} → {$_REQUEST['precio_venta']}");
             }
 
             $prima_venta = isset($venta_actual['prima_venta']) ? intval($venta_actual['prima_venta']) : 0;
             if (isset($_REQUEST['prima_venta']) && $prima_venta != intval($_REQUEST['prima_venta'])) {
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Prima de Venta', $_REQUEST['prima_venta']);
+                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Prima de Venta', "{$prima_venta} → {$_REQUEST['prima_venta']}");
+            }
+
+            $descuento_aplicado = isset($venta_actual['descuento_aplicado']) ? intval($venta_actual['descuento_aplicado']) : 0;
+            if (isset($_REQUEST['descuento_aplicado']) && $descuento_aplicado != intval($_REQUEST['descuento_aplicado'])) {
+                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Descuento Aplicado', "{$descuento_aplicado} → {$_REQUEST['descuento_aplicado']}");
             }
 
           
@@ -1995,9 +2002,10 @@ if ($foto_original_tele !== '') {
                 }
                  
                  $fotoRegistro1=get_dato_sql("ventas_estado","foto"," where foto=1 and id=".$id_estado);
+                 $id_estado_viejo_name = get_dato_sql("ventas_estado","nombre"," where id=".$id_estado);
                  $id_estado_name=get_dato_sql("ventas_estado","nombre"," where id=".$_REQUEST['id_estado']);
 
-                 registrar_historial_ventas($cid, $id_estado, 'Modificacion de Estado', $id_estado_name);
+                 registrar_historial_ventas($cid, $id_estado, 'Modificacion de Estado', "{$id_estado_viejo_name} → {$id_estado_name}");
 
                  if($id_estado_name!='en negociacion')
                  {
@@ -2022,26 +2030,30 @@ if ($foto_original_tele !== '') {
 
              $id_impuesto = isset($venta_actual['id_impuesto']) ? intval($venta_actual['id_impuesto']) : 0;
              if ($id_impuesto != intval($_REQUEST['id_impuesto'])) {
+                 $id_impuesto_name_viejo = get_dato_sql("ventas_impuestos", "nombre", " where id=" . $id_impuesto);
                  $id_impuesto_name = get_dato_sql("ventas_impuestos", "nombre", " where id=" . intval($_REQUEST['id_impuesto']));
-                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Impuestos', $id_impuesto_name);
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Impuestos', "{$id_impuesto_name_viejo} → {$id_impuesto_name}");
              }
 
              $id_factura = isset($venta_actual['id_factura']) ? intval($venta_actual['id_factura']) : 0;
              if ($id_factura != intval($_REQUEST['id_factura'])) {
+                 $id_factura_name_vieja = get_dato_sql("ventas_factura", "nombre", " where id=" . $id_factura);
                  $id_factura_name = get_dato_sql("ventas_factura", "nombre", " where id=" . intval($_REQUEST['id_factura']));
-                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Factura', $id_factura_name);
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Factura', "{$id_factura_name_vieja} → {$id_factura_name}");
              }
 
              $id_vendedor = isset($venta_actual['id_vendedor']) ? intval($venta_actual['id_vendedor']) : 0;
              if ($id_vendedor != intval($_REQUEST['id_vendedor'])) {
+                 $id_vendedor_name_viejo = get_dato_sql("usuario", "nombre", " where id=" . $id_vendedor);
                  $id_vendedor_name = get_dato_sql("usuario", "nombre", " where id=" . intval($_REQUEST['id_vendedor']));
-                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Vendedor', $id_vendedor_name);
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Vendedor', "{$id_vendedor_name_viejo} → {$id_vendedor_name}");
              }
 
              $id_televentas = isset($venta_actual['id_televentas']) ? intval($venta_actual['id_televentas']) : 0;
              if ($id_televentas != intval($_REQUEST['id_televentas'])) {
+                 $id_televentas_name_viejo = get_dato_sql("usuario", "nombre", " where id=" . $id_televentas);
                  $id_televentas_name = get_dato_sql("usuario", "nombre", " where id=" . intval($_REQUEST['id_televentas']));
-                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Televentas', $id_televentas_name);
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Televentas', "{$id_televentas_name_viejo} → {$id_televentas_name}");
              }
 
              $observaciones_bd = trim((string)($venta_actual['observaciones'] ?? ''));
@@ -2085,7 +2097,7 @@ if ($foto_original_tele !== '') {
 
              $asesor_financiera_bd = trim((string)($venta_actual['asesor_financiera'] ?? ''));
              if (isset($_REQUEST['asesor_financiera']) && $asesor_financiera_bd !== trim($_REQUEST['asesor_financiera'])) {
-                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Asesor Financiera', $_REQUEST['asesor_financiera']);
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Asesor Financiera', "{$asesor_financiera_bd} → {$_REQUEST['asesor_financiera']}");
              }
 
 
@@ -2378,8 +2390,7 @@ if ($foto_original_tele !== '') {
             <?php echo campo("fecha_neg","Fecha en Negociacion",'label',formato_fechahora_de_mysql($fecha_negociacion),' ',' '); ?>    
         </div>        
     <?php } ?>        
-    <?php echo campo("id_inspeccion","Numero",'hidden',$id_inspeccion,' ',' '); ?>          
-    <?php echo campo("descuento_aplicado","Descuento Aplicado",'number',$descuento_aplicado,' ',' disabled="disabled" '); ?>          
+    <?php echo campo("id_inspeccion","Numero",'hidden',$id_inspeccion,' ',' '); ?>              
 </div>
 
 <div class="row">
@@ -2431,11 +2442,13 @@ if ($foto_original_tele !== '') {
 <div class="row">
     <div class="col-md">
         <?php echo campo("genera_contrato","",'hidden',$genera_contrato,'','',''); ?>
-
          <?php echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where ventas_reparacion=2 ",'','...'),' ',' required '.$disable_sec2)  ?> 
          <?php /*echo campo("id_estado_name","Estado",'label',$elestado,'','','');*/ ?>
     </div>
-        <div class="col-md">            
+     <div class="col-md">            
+         <?php echo campo("descuento_aplicado","Descuento Aplicado",'number',$descuento_aplicado,' ',$disable_sec1); ?>                 
+     </div>   
+     <div class="col-md">            
          <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',$disable_sec2); ?>                 
      </div>   
         <div class="col-md">            
@@ -2780,6 +2793,30 @@ function toggleFinanciera() {
 
 $('#venta_cont_cred').on('change', toggleFinanciera);
 toggleFinanciera(); // estado inicial al cargar
+
+// Calcula precio de venta restando el descuento aplicado al precio de venta original
+function calcularPrecioConDescuento() {
+    var precioOriginal = parseFloat($('#precio_venta').data('precio-original')) || parseFloat($('#precio_venta').val()) || 0;
+    var descuento = parseFloat($('#descuento_aplicado').val()) || 0;
+
+    // Guarda el precio original la primera vez que se edita el descuento
+    if (!$('#precio_venta').data('precio-original')) {
+        $('#precio_venta').data('precio-original', precioOriginal);
+    }
+
+    var precioFinal = precioOriginal - descuento;
+    if (precioFinal < 0) precioFinal = 0;
+    $('#precio_venta').val(precioFinal);
+}
+
+$('#descuento_aplicado').on('input change', calcularPrecioConDescuento);
+
+// Guarda el precio original al enfocar el campo de descuento (por si aún no está guardado)
+$('#descuento_aplicado').on('focus', function () {
+    if (!$('#precio_venta').data('precio-original')) {
+        $('#precio_venta').data('precio-original', parseFloat($('#precio_venta').val()) || 0);
+    }
+});
 
 $('#btnguardar').on('click', function (e) {
     debugger;
