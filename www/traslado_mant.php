@@ -205,6 +205,7 @@ if ($accion=="g") {
 					}
 			    }
 				*/
+				
 				if ($_REQUEST['id_tienda_salida']==8 and $_REQUEST['id_tienda_destino']==1){
 					$VehiculoReproceso=get_dato_sql("ventas","COUNT(*)"," WHERE tipo_ventas_reparacion=1 and reproceso='R' and id_producto=".intval($_REQUEST['id_producto']));  
 					if (es_nulo($VehiculoReproceso)){
