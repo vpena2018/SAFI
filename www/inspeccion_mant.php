@@ -660,7 +660,7 @@ if ($nuevoreg==true) {
           $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspección</a>';
         } 
         
-        $trasladosP=get_dato_sql("orden_traslado","COUNT(*)"," WHERE id_estado<3 AND id_producto=".intval($codigo_veh));
+        $trasladosP=get_dato_sql("orden_traslado","COUNT(*)"," WHERE id_estado in(1,2,4) AND id_producto=".intval($codigo_veh));
         if ($trasladosP>0) {
           $valerror=mensaje("No puede crear una nueva Hoja de Inspección porque existe una Orden de Traslado sin completar del vehiculo",'warning');
           $valerror.='<br><br> <a id="btn-filtro" href="#" onclick="get_page(\'pagina\',\'inspeccion_ver.php\',\'Ver Inspecciones\') ; return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i> Buscar Hojas de Inspección</a>';
