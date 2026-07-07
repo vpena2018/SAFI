@@ -444,6 +444,59 @@ if ($accion=="b") {
    } //fin borrar
 
 
+// borrar orden    ############################  
+if ($accion=="anular") {
+	
+	   
+	if (!tiene_permiso(196)) {
+		$stud_arr[0]["pcode"] = 0;
+		$stud_arr[0]["pmsg"] ="No tiene permiso para anular";
+		salida_json($stud_arr);
+		exit;
+	}
+
+	   $stud_arr[0]["pcode"] = 0;
+	   $stud_arr[0]["pmsg"] ="ERROR";
+   
+	   $cid=0;
+	   if (isset($_REQUEST['cid'])) { $cid = sanear_int($_REQUEST['cid']); }
+   
+   
+	   //Validar
+	   $verror="";
+	   if (es_nulo($cid)) {$verror="Error al Anular [101]";}
+	   
+	   
+	   
+		if ($verror=="") {
+   
+   
+		$estado_historial_borrar = get_dato_sql("orden_traslado","id_estado"," WHERE id=".intval($cid));
+		traslado_historial_guardar($cid, 5, "Anular Orden de Traslado", "Orden anulada");
+		$result=sql_update("update orden_traslado set id_estado=5,usuario_anula=".$_SESSION['usuario_id'].",fecha_anula=now() where id=$cid limit 1");
+	
+	 
+	   
+	   if ($result!=false){   
+   
+		   $stud_arr[0]["pcode"] = 1;
+		   $stud_arr[0]["pmsg"] ="Guardado";
+		   $stud_arr[0]["pcid"] = $cid;
+	   }
+   
+   } else {
+	   $stud_arr[0]["pcode"] = 0;
+	   $stud_arr[0]["pmsg"] =$verror;
+	   $stud_arr[0]["pcid"] = 0;
+   }
+   
+	   salida_json($stud_arr);
+		exit;
+
+}
+
+
+
 // revision de adpc    ############################  
 if ($accion=="adpc") {	   
 	   $stud_arr[0]["pcode"] = 0;
@@ -963,12 +1016,22 @@ $modificar_salida=$nuevoreg;
                     </div>
                 <?php } ?>
 
-                <?php if (tiene_permiso(145)) { ?>
+<!--                 <?php if (tiene_permiso(145)) { ?>
                     <div class="col-sm">
                         <a href="#"
                            onclick="borrar_traslado(); return false;"
                            class="btn btn-danger btn-block mb-2 xfrm">
                             <i class="fa fa-check"></i> <?php echo 'Borrar'; ?>
+                        </a>
+                    </div>
+                <?php } ?> -->
+
+				 <?php if (tiene_permiso(196)) { ?>
+                    <div class="col-sm">
+                        <a href="#"
+                           onclick="anular_traslado(); return false;"
+                           class="btn btn-danger btn-block mb-2 xfrm">
+                            <i class="fa fa-check"></i> <?php echo 'Anular'; ?>
                         </a>
                     </div>
                 <?php } ?>
@@ -1012,7 +1075,11 @@ $modificar_salida=$nuevoreg;
 			  <div class="col-sm"><a href="#" onclick="procesar_traslado('traslado_mant.php?a=adpc&adpc=1','forma_wd',''); return false;" class="btn btn-success btn-block mb-2 xfrm" ><i class="fa fa-check"></i> <?php echo 'Revision ADPC'; ?></a></div>
 		<?php } ?> 
          
+<?php if ($id_estado != 5) { ?>
 		<div class="col-sm"><a href="traslado_imprimir.php?pdfcod=<?php echo $id; ?>" target="_blank"  class="btn btn-secondary mr-2 mb-2"><i class="fa fa-print"></i> Imprimir</a></div>
+<?php } ?>
+
+
         <div class="col-sm"><a href="#" onclick="$('#ModalWindow').modal('hide');  return false;" class="btn btn-light btn-block mb-2 xfrm" >  <?php echo 'Cerrar'; ?></a></div>
 		</div>
 	</div>
@@ -1050,6 +1117,28 @@ Swal.fire({
 	  if (result.value) {
 	    
 		procesar_traslado('traslado_mant.php?a=b','forma_wd','');
+
+	  }
+	});
+	
+}
+
+function anular_traslado(){
+
+	
+Swal.fire({
+	  title: 'Anular',
+	  text:  'Desea Anular la Orden de traslado?',
+	  icon: 'question',
+	  showCancelButton: true,
+	  confirmButtonColor: '#3085d6',
+	  cancelButtonColor: '#d33',
+	  confirmButtonText:  'Si',
+	  cancelButtonText:  'No'
+	}).then((result) => {
+	  if (result.value) {
+	    
+		procesar_traslado('traslado_mant.php?a=anular','forma_wd','');
 
 	  }
 	});

@@ -131,7 +131,7 @@ if ($accion=="1") {
                     $acclavar_btn="btn-success";
                 }
 
-                if ($row["id_estado"]==3 ) {
+                if ($row["id_estado"]==3 || $row["id_estado"]==5) {
                     $acclavar="Ver" ;
                     $acclavar_btn="btn-secondary";
                 }
