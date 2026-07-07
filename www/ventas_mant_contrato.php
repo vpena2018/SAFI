@@ -1618,7 +1618,7 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
     }
 
     //valida que el precio de venta no sea menor al precio minimo y que no sea mayor al precio maximo  
-    $precio_venta=intval($_REQUEST['precio_venta'])+intval($_REQUEST['descuento_aplicado']);
+    $precio_venta=intval($_REQUEST['precio_venta'])+intval($_REQUEST['descuento_aplicado'])*-1;
     if (!es_nulo($precio_venta) && !es_nulo($precio_minimo) && $precio_venta < $precio_minimo) {
        $verror .= 'El precio de venta no puede ser menor al precio mínimo. ';
     }   
@@ -1889,7 +1889,7 @@ if ($foto_original_tele !== '') {
             // Un solo SELECT para leer todos los valores actuales
             $venta_actual = [];
             $result_actual = sql_select("SELECT id_tienda, kilometraje, precio_minimo, precio_maximo,
-                                         precio_venta, prima_venta, cliente_id, id_estado,
+                                         precio_venta, prima_venta, descuento_aplicado, cliente_id, id_estado,
                                          id_impuesto, id_factura, id_vendedor, id_televentas,
                                          observaciones, foto, foto_televentas,
                                          venta_cont_cred, id_financiera, id_financiera_estado, asesor_financiera
@@ -2794,29 +2794,22 @@ function toggleFinanciera() {
 $('#venta_cont_cred').on('change', toggleFinanciera);
 toggleFinanciera(); // estado inicial al cargar
 
+// Inicializar precio original = precio_venta - descuento ya aplicado
+var _precioVentaInit   = parseFloat($('#precio_venta').val()) || 0;
+var _descuentoInit     = parseFloat($('#descuento_aplicado').val()) || 0;
+$('#precio_venta').data('precio-original', _precioVentaInit - _descuentoInit);
+
 // Calcula precio de venta restando el descuento aplicado al precio de venta original
 function calcularPrecioConDescuento() {
-    var precioOriginal = parseFloat($('#precio_venta').data('precio-original')) || parseFloat($('#precio_venta').val()) || 0;
-    var descuento = parseFloat($('#descuento_aplicado').val()) || 0;
-
-    // Guarda el precio original la primera vez que se edita el descuento
-    if (!$('#precio_venta').data('precio-original')) {
-        $('#precio_venta').data('precio-original', precioOriginal);
-    }
-
-    var precioFinal = precioOriginal - descuento;
-    if (precioFinal < 0) precioFinal = 0;
+    var precioOriginal = parseFloat($('#precio_venta').data('precio-original')) || 0;
+    var descuento      = parseFloat($('#descuento_aplicado').val()) || 0;
+// Calcula precio de venta:
+    // descuento positivo → suma al precio | descuento negativo → resta al precio
+    var precioFinal    = precioOriginal + descuento;
     $('#precio_venta').val(precioFinal);
 }
 
 $('#descuento_aplicado').on('input change', calcularPrecioConDescuento);
-
-// Guarda el precio original al enfocar el campo de descuento (por si aún no está guardado)
-$('#descuento_aplicado').on('focus', function () {
-    if (!$('#precio_venta').data('precio-original')) {
-        $('#precio_venta').data('precio-original', parseFloat($('#precio_venta').val()) || 0);
-    }
-});
 
 $('#btnguardar').on('click', function (e) {
     debugger;
