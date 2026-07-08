@@ -1618,7 +1618,7 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
     }
 
     //valida que el precio de venta no sea menor al precio minimo y que no sea mayor al precio maximo  
-    $precio_venta=intval($_REQUEST['precio_venta'])+intval($_REQUEST['descuento_aplicado'])*-1;
+    $precio_venta=intval($_REQUEST['precio_venta'])+intval($_REQUEST['valor_descuento']);
     if (!es_nulo($precio_venta) && !es_nulo($precio_minimo) && $precio_venta < $precio_minimo) {
        $verror .= 'El precio de venta no puede ser menor al precio mínimo. ';
     }   
@@ -1770,7 +1770,8 @@ if ($foto_original_tele !== '') {
         if (isset($_REQUEST["precio_maximo"])) { $sqlcampos.= " , precio_maximo =".GetSQLValue($_REQUEST["precio_maximo"],"int"); }        
         if (isset($_REQUEST["precio_venta"])) { $sqlcampos.= " , precio_venta =".GetSQLValue($_REQUEST["precio_venta"],"int"); } 
         if (isset($_REQUEST["prima_venta"])) { $sqlcampos.= " , prima_venta =".GetSQLValue($_REQUEST["prima_venta"],"int"); } 
-        if (isset($_REQUEST["descuento_aplicado"])) { $sqlcampos.= " , descuento_aplicado =".GetSQLValue($_REQUEST["descuento_aplicado"],"int"); } 
+        if (isset($_REQUEST["valor_descuento"])) { $sqlcampos.= " , valor_descuento =".GetSQLValue($_REQUEST["valor_descuento"],"int"); } 
+        if (isset($_REQUEST["valor_extras"])) { $sqlcampos.= " , valor_extras =".GetSQLValue($_REQUEST["valor_extras"],"int"); } 
              
         //if ($persona_juridica == 1 && ($id_estado==11 || $id_estado==20)) {
          if ($persona_juridica == 1 && ($genera_contrato==1)) {
@@ -1889,7 +1890,7 @@ if ($foto_original_tele !== '') {
             // Un solo SELECT para leer todos los valores actuales
             $venta_actual = [];
             $result_actual = sql_select("SELECT id_tienda, kilometraje, precio_minimo, precio_maximo,
-                                         precio_venta, prima_venta, descuento_aplicado, cliente_id, id_estado,
+                                         precio_venta, prima_venta, valor_descuento, valor_extras, cliente_id, id_estado,
                                          id_impuesto, id_factura, id_vendedor, id_televentas,
                                          observaciones, foto, foto_televentas,
                                          venta_cont_cred, id_financiera, id_financiera_estado, asesor_financiera
@@ -1930,11 +1931,15 @@ if ($foto_original_tele !== '') {
                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Prima de Venta', "{$prima_venta} → {$_REQUEST['prima_venta']}");
             }
 
-            $descuento_aplicado = isset($venta_actual['descuento_aplicado']) ? intval($venta_actual['descuento_aplicado']) : 0;
-            if (isset($_REQUEST['descuento_aplicado']) && $descuento_aplicado != intval($_REQUEST['descuento_aplicado'])) {
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Descuento Aplicado', "{$descuento_aplicado} → {$_REQUEST['descuento_aplicado']}");
+            $valor_descuento = isset($venta_actual['valor_descuento']) ? intval($venta_actual['valor_descuento']) : 0;
+            if (isset($_REQUEST['valor_descuento']) && $valor_descuento != intval($_REQUEST['valor_descuento'])) {
+                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Descuento Aplicado', "{$valor_descuento} → {$_REQUEST['valor_descuento']}");
             }
 
+            $valor_extras = isset($venta_actual['valor_extras']) ? intval($venta_actual['valor_extras']) : 0;
+            if (isset($_REQUEST['valor_extras']) && $valor_extras != intval($_REQUEST['valor_extras'])) {
+                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Extras Aplicados', "{$valor_extras} → {$_REQUEST['valor_extras']}");
+            }
           
             // Normalizar cliente viejo
             $cliente_viejo_raw = $venta_actual['cliente_id'] ?? null;
@@ -2343,7 +2348,8 @@ if ($foto_original_tele !== '') {
     if(isset($row['id_financiera'])) {$id_financiera = $row['id_financiera']; } else {$id_financiera = 0;}
     if(isset($row['id_estado_financiera'])) {$id_estado_financiera = $row['id_estado_financiera']; } else {$id_estado_financiera = 0;}
     if(isset($row['asesor_financiera'])) {$asesor_financiera = $row['asesor_financiera']; } else {$asesor_financiera = "";}
-    if(isset($row['descuento_aplicado'])) {$descuento_aplicado = $row['descuento_aplicado']; } else {$descuento_aplicado = 0;}
+    if(isset($row['valor_descuento'])) {$valor_descuento = $row['valor_descuento']; } else {$valor_descuento = 0;}
+    if(isset($row['valor_extras'])) {$valor_extras = $row['valor_extras']; } else {$valor_extras = 0;}
 
     $carShopPerfil="";
     $carShopPerfil=get_dato_sql("usuario","grupo_id"," WHERE id=".$_SESSION["usuario_id"]);
@@ -2445,9 +2451,15 @@ if ($foto_original_tele !== '') {
          <?php echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where ventas_reparacion=2 ",'','...'),' ',' required '.$disable_sec2)  ?> 
          <?php /*echo campo("id_estado_name","Estado",'label',$elestado,'','','');*/ ?>
     </div>
-     <div class="col-md">            
-         <?php echo campo("descuento_aplicado","Descuento Aplicado",'number',$descuento_aplicado,' ',$disable_sec1); ?>                 
+
+    <div class="col-md">            
+         <?php echo campo("valor_descuento","Valor Descuento",'number',$valor_descuento,' ',$disable_sec1); ?>                 
      </div>   
+     
+     <div class="col-md">            
+         <?php echo campo("valor_extras","Valor Extras",'number',$valor_extras,' ',$disable_sec1); ?>                
+     </div>   
+     
      <div class="col-md">            
          <?php echo campo("precio_venta","Precio de Venta",'number',$precio_venta,' ',$disable_sec2); ?>                 
      </div>   
@@ -2794,22 +2806,22 @@ function toggleFinanciera() {
 $('#venta_cont_cred').on('change', toggleFinanciera);
 toggleFinanciera(); // estado inicial al cargar
 
-// Inicializar precio original = precio_venta - descuento ya aplicado
+// Inicializar base de precio antes de ajustes: final + descuento - extras
 var _precioVentaInit   = parseFloat($('#precio_venta').val()) || 0;
-var _descuentoInit     = parseFloat($('#descuento_aplicado').val()) || 0;
-$('#precio_venta').data('precio-original', _precioVentaInit - _descuentoInit);
+var _descuentoInit     = parseFloat($('#valor_descuento').val()) || 0;
+var _extrasInit        = parseFloat($('#valor_extras').val()) || 0;
+$('#precio_venta').data('precio-original', _precioVentaInit + _descuentoInit - _extrasInit);
 
-// Calcula precio de venta restando el descuento aplicado al precio de venta original
+// Calcula precio de venta: resta descuento y suma extras
 function calcularPrecioConDescuento() {
     var precioOriginal = parseFloat($('#precio_venta').data('precio-original')) || 0;
-    var descuento      = parseFloat($('#descuento_aplicado').val()) || 0;
-// Calcula precio de venta:
-    // descuento positivo → suma al precio | descuento negativo → resta al precio
-    var precioFinal    = precioOriginal + descuento;
+    var descuento      = parseFloat($('#valor_descuento').val()) || 0;
+    var extras         = parseFloat($('#valor_extras').val()) || 0;
+    var precioFinal    = precioOriginal - descuento + extras;
     $('#precio_venta').val(precioFinal);
 }
 
-$('#descuento_aplicado').on('input change', calcularPrecioConDescuento);
+$('#valor_descuento, #valor_extras').on('input change', calcularPrecioConDescuento);
 
 $('#btnguardar').on('click', function (e) {
     debugger;
