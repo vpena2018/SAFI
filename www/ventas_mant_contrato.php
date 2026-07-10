@@ -2603,7 +2603,7 @@ if ($foto_original_tele !== '') {
      </div>
 
      <div class="col-md">
-         <?php echo campo("id_financiera_estado","Status Financiera",'select2',valores_combobox_db('financieras_estados',$id_financiera,'nombre',' ','','...'),' ',' required '.$disable_sec2);  ?> 
+         <?php echo campo("id_financiera_estado","Estatus Financiera",'select2',valores_combobox_db('financieras_estados',$id_financiera,'nombre',' ','','...'),' ',' required '.$disable_sec2);  ?> 
      </div>
 </div>
 
