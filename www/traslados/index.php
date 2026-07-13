@@ -489,11 +489,56 @@ if ($accion=="L") {
             SELECT 1
             FROM traslado_bitacora b
             WHERE b.numero_traslado = orden_traslado.numero
+            and tipo_movimiento = 'salida'
         )
 		AND id_estado=4
         AND t1.autorizacion_traslado=1
 		ORDER BY FECHA DESC
 		limit 1");
+
+
+
+        //Entrada Traslado
+        if (!$result || $result->num_rows == 0){
+            
+            $result = sql_select("SELECT orden_traslado.* 
+            ,'traslado'as tipo_traslado
+            ,producto.codigo_alterno,producto.nombre,producto.placa
+            ,orden_traslado_estado.nombre AS elestado
+            ,l1.nombre AS motorista1
+            ,l2.usuario AS solicitante1
+            ,l3.nombre AS usuariocompleta
+            ,p1.nombre AS elproveedor
+            ,t1.nombre AS tiendasalida
+            ,t2.nombre AS tiendadestino
+            ,t3.nombre as id_tipo_traslado_lbl
+            ,t4.nombre as id_tipo_traslado_lbl2
+            ,t0.nombre AS tiendanombre
+            ,'entrada' AS tipo_movimiento
+            FROM orden_traslado
+            LEFT OUTER JOIN producto ON (orden_traslado.id_producto=producto.id)
+            LEFT OUTER JOIN orden_traslado_estado ON (orden_traslado.id_estado=orden_traslado_estado.id)
+            LEFT OUTER JOIN usuario l1 ON (orden_traslado.id_motorista=l1.id)
+            LEFT OUTER JOIN usuario l2 ON (orden_traslado.id_solicitante=l2.id)
+            LEFT OUTER JOIN usuario l3 ON (orden_traslado.id_usuario_autoriza=l3.id)
+            LEFT OUTER JOIN entidad p1 ON (orden_traslado.id_proveedor=p1.id)
+            LEFT OUTER JOIN tienda_agencia t1 ON (orden_traslado.id_tienda_salida=t1.id)
+            LEFT OUTER JOIN tienda_agencia t2 ON (orden_traslado.id_tienda_destino=t2.id)
+            LEFT OUTER JOIN tienda t0 ON (t1.tienda_id=t0.id)
+            LEFT OUTER JOIN orden_traslado_tipo t3 ON (orden_traslado.id_tipo_traslado=t3.id)
+            LEFT OUTER JOIN orden_traslado_tipo t4 ON (orden_traslado.id_tipo_traslado2=t4.id)
+            WHERE producto.codigo_alterno LIKE '%$codigo'
+              AND NOT EXISTS (
+                    SELECT 1
+                    FROM traslado_bitacora b
+                    WHERE b.numero_traslado = orden_traslado.numero
+                    and tipo_movimiento = 'entrada'
+                )
+              AND id_estado=4
+              AND t1.autorizacion_traslado=1
+              ORDER BY FECHA DESC
+              limit 1");
+        }
 
     // Si no encontró en traslado, buscar en domicilio
     /* if (!$result || $result->num_rows == 0) {
@@ -960,6 +1005,8 @@ $txt_mensaje="";
     }
 
     function limpiarCamposResultado() {
+
+        $('#tipo_movimiento_lbl_valor').html('');
         $('#numero_trasladolbl_valor').html('');
         $('#fecha_lbl_valor').html('');
         $('#tienda_lbl_valor').html('');
