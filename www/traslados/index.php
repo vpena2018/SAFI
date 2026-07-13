@@ -357,6 +357,8 @@ if ($accion=="P") {
     $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
     $tipo_traslado_req = trim($_REQUEST['tipo_traslado'] ?? '');
     $tipo_movimiento_req = trim($_REQUEST['tipo_movimiento'] ?? '');
+    $combustible_entrada_req = trim($_REQUEST['combustible_entrada'] ?? '');
+    $kilometraje_entrada_req = trim($_REQUEST['kilometraje_entrada'] ?? '');
 
     if ($numero_traslado_req === '') {
         echo json_encode([
@@ -370,6 +372,22 @@ if ($accion=="P") {
         echo json_encode([
             'ok' => false,
             'error' => 'Debe capturar la firma'
+        ]);
+        exit;
+    }
+
+    if (strtolower($tipo_movimiento_req) === 'entrada' && $kilometraje_entrada_req === '') {
+        echo json_encode([
+            'ok' => false,
+            'error' => 'Debe ingresar el kilometraje de entrada'
+        ]);
+        exit;
+    }
+
+    if (strtolower($tipo_movimiento_req) === 'entrada' && $combustible_entrada_req === '') {
+        echo json_encode([
+            'ok' => false,
+            'error' => 'Debe ingresar el combustible de entrada'
         ]);
         exit;
     }
@@ -391,11 +409,18 @@ if ($accion=="P") {
     $firma_sql = $conn->real_escape_string($firma_limpia);
     $tipo_traslado_sql = $conn->real_escape_string($tipo_traslado_req);
     $tipo_movimiento_sql = $conn->real_escape_string($tipo_movimiento_req);
+    $combustible_entrada_sql = "NULL";
+    $kilometraje_entrada_sql = "NULL";
+
+    if (strtolower($tipo_movimiento_req) === 'entrada') {
+        $combustible_entrada_sql = "'".$conn->real_escape_string($combustible_entrada_req)."'";
+        $kilometraje_entrada_sql = intval($kilometraje_entrada_req);
+    }
 
     $sql = "INSERT INTO traslado_bitacora
-            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento)
+            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible_entrada, kilometraje_entrada)
             VALUES
-            ('{$numero_traslado_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}', '{$firma_sql}', '{$tipo_traslado_sql}', '{$tipo_movimiento_sql}')";
+            ('{$numero_traslado_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}', '{$firma_sql}', '{$tipo_traslado_sql}', '{$tipo_movimiento_sql}', {$combustible_entrada_sql}, {$kilometraje_entrada_sql})";
 
     $insert_id = sql_insert($sql);
 
@@ -807,7 +832,7 @@ $txt_mensaje="";
 									?>              
 								</div>
 								
-                    <div id="datos_entrada" class="row">
+                    <div id="datos_entrada" class="row" style="display:none;">
                         		<div class="col-md-12">
                                     <span class="outside-label">Combustible Entrada </span>
                                         <?php 		
@@ -1024,10 +1049,30 @@ $txt_mensaje="";
         $('#atendido_por_lbl_valor').html('');
         $('#kilometraje_salida_lbl_valor').html('');
         $('#proveedor_lbl_valor').html('');
+        $('#kilometraje_entrada').val('');
+        setCombustibleValor('combustible_entrada', '');
         setCombustibleValor('combustible_salida', '');
         $('#tipo_traslado_lbl_valor').html('');
         //setCombustibleValor('combustible_entrada', '');
+        actualizarSeccionEntrada('');
         limpiarFirma();
+    }
+
+    function actualizarSeccionEntrada(tipoMovimiento) {
+        const esEntrada = String(tipoMovimiento || '').toLowerCase() === 'entrada';
+        const $seccion = $('#datos_entrada');
+        const $controles = $seccion.find('input');
+
+        if (esEntrada) {
+            $seccion.show();
+            $controles.prop('disabled', false);
+            return;
+        }
+
+        setCombustibleValor('combustible_entrada', '');
+        $('#kilometraje_entrada').val('');
+        $controles.prop('disabled', true);
+        $seccion.hide();
     }
 
 	function popupconfirmar(titulo, mensaje, onSi) {
@@ -1140,6 +1185,7 @@ $txt_mensaje="";
                 //console.log(resp.data);
 
                 $('#tipo_movimiento_lbl_valor').html(resp.data.tipo_movimiento || '');
+                actualizarSeccionEntrada(resp.data.tipo_movimiento || '');
 
                 $('#tipo_traslado_lbl_valor').html(resp.data.tipo_traslado || '');
 
@@ -1213,9 +1259,24 @@ $txt_mensaje="";
         var numeroTraslado = ($('#numero_trasladolbl_valor').text() || '').trim();
         var tipoTraslado = ($('#tipo_traslado_lbl_valor').text() || '').trim();
         var tipo_movimiento=($('#tipo_movimiento_lbl_valor').text() || '').trim();
+        var combustibleEntrada = ($('input[name="combustible_entrada"]:checked').val() || '').trim();
+        var kilometrajeEntrada = ($('#kilometraje_entrada').val() || '').trim();
 
         if (numeroTraslado === '') {
             mytoast('error', 'Favor buscar el vehiculo', 3000);
+            return;
+        }
+
+
+
+        if (tipo_movimiento.toLowerCase() === 'entrada' && kilometrajeEntrada === '') {
+            mytoast('error', 'Debe ingresar el kilometraje de entrada', 3000);
+            $('#kilometraje_entrada').focus();
+            return;
+        }
+
+        if (tipo_movimiento.toLowerCase() === 'entrada' && combustibleEntrada === '') {
+            mytoast('error', 'Debe ingresar el combustible de entrada', 3000);
             return;
         }
 
@@ -1239,6 +1300,8 @@ $txt_mensaje="";
                 tipo_traslado: tipoTraslado,
                 dispositivo: navigator.platform || '',
                 tipo_movimiento: tipo_movimiento,
+                combustible_entrada: combustibleEntrada,
+                kilometraje_entrada: kilometrajeEntrada,
                 firma: firmaBase64
             },
             success: function (resp) {
@@ -1266,6 +1329,7 @@ $txt_mensaje="";
 		});
 
         inicializarFirmaPad();
+        actualizarSeccionEntrada('');
 
         $('#btnLimpiarFirma').on('click', function () {
             limpiarFirma();
