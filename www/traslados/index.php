@@ -565,6 +565,77 @@ if ($accion=="L") {
               limit 1");
         }
 
+
+        //renta
+        //salida renta
+        if (!$result || $result->num_rows == 0){
+            
+            $result = sql_select("SELECT 
+            'renta' AS tipo_traslado
+            ,'salida' AS tipo_movimiento,
+            inspeccion.id,
+            inspeccion.numero AS numero_inspeccion,
+            inspeccion.hora AS fecha_inspeccion,
+            t1.nombre AS tienda_nombre,
+            inspeccion.placa,
+            producto.nombre AS producto_nombre,
+            inspeccion.combustible_entrada AS combustible,
+            inspeccion.cliente_contacto,
+            inspeccion.kilometraje_entrada AS kilometraje,
+            entidad.nombre AS cliente_nombre,
+            entidad.codigo_alterno AS cliente_codigo
+            FROM inspeccion
+            LEFT JOIN entidad
+                ON inspeccion.cliente_id = entidad.id
+            LEFT JOIN producto
+                ON inspeccion.id_producto = producto.id
+            LEFT OUTER JOIN tienda t1 ON (inspeccion.id_tienda=t1.id)
+            WHERE producto.codigo_alterno LIKE '%$codigo'
+            AND NOT EXISTS (
+                SELECT 1
+                FROM traslado_bitacora b
+                WHERE b.numero_traslado = inspeccion.numero
+                AND b.tipo_traslado = 'renta'
+                AND b.tipo_movimiento = 'salida'
+            )
+            ORDER BY inspeccion.hora DESC
+            LIMIT 1");
+        }
+
+        //entrada renta
+        if (!$result || $result->num_rows == 0){
+            $result = sql_select("SELECT 
+            'renta' AS tipo_traslado
+            ,'entrada' AS tipo_movimiento,
+            inspeccion.id,
+            inspeccion.numero AS numero_inspeccion,
+            inspeccion.hora AS fecha_inspeccion,
+            t1.nombre AS tienda_nombre,
+            inspeccion.placa,
+            producto.nombre AS producto_nombre,
+            inspeccion.combustible_entrada AS combustible,
+            inspeccion.cliente_contacto,
+            inspeccion.kilometraje_entrada AS kilometraje,
+            entidad.nombre AS cliente_nombre,
+            entidad.codigo_alterno AS cliente_codigo
+            FROM inspeccion
+            LEFT JOIN entidad
+                ON inspeccion.cliente_id = entidad.id
+            LEFT JOIN producto
+                ON inspeccion.id_producto = producto.id
+            LEFT OUTER JOIN tienda t1 ON (inspeccion.id_tienda=t1.id)
+            WHERE producto.codigo_alterno LIKE '%$codigo'
+            AND NOT EXISTS (
+                SELECT 1
+                FROM traslado_bitacora b
+                WHERE b.numero_traslado = inspeccion.numero
+                AND b.tipo_traslado = 'renta'
+                AND b.tipo_movimiento = 'entrada'
+            )
+            ORDER BY inspeccion.hora DESC
+            LIMIT 1");
+        }
+
     // Si no encontró en traslado, buscar en domicilio
     /* if (!$result || $result->num_rows == 0) {
 
@@ -885,6 +956,18 @@ $txt_mensaje="";
 
                     <div class="row mb-0">
                         <div class="col-auto">
+							<?php echo campo("numero_renta_lbl","Numero",'labelb','',' ');?>
+                        </div>
+                        <div class="col-auto">
+							<?php echo campo("fecha_renta_lbl", "Fecha", "labelb", '', ' ');?>
+                        </div>
+                        <div class="col-auto">
+							<?php echo campo("tienda_renta_lbl", "Tienda", "labelb", '', ' ');?>
+                        </div>
+                    </div>
+
+                    <div class="row mb-0">
+                        <div class="col-auto">
 							<?php echo campo("vehiculo_renta_lbl", "Vehículo", "labelb", '', ' ');?>
                         </div>
                         <div class="col-auto">
@@ -1108,6 +1191,9 @@ $txt_mensaje="";
 
     function LimpiarResultadoBusquedaRenta() {
         $('#tipo_movimiento_renta_lbl_valor').html('');
+        $('#numero_renta_lbl_valor').html('');
+        $('#fecha_renta_lbl_valor').html('');
+        $('#tienda_renta_lbl_valor').html('');
         $('#vehiculo_renta_lbl_valor').html('');
         $('#cliente_renta_lbl_valor').html('');
         $('#contacto_renta_lbl_valor').html('');
@@ -1263,6 +1349,22 @@ $txt_mensaje="";
                     limpiarCamposResultado();
                     LimpiarResultadoBusquedaRenta();
                     MostrarResultadoBusquedaRenta();
+
+                    $('#tipo_movimiento_renta_lbl_valor').html(resp.data.tipo_movimiento || '');
+                    $('#numero_renta_lbl_valor').html(resp.data.numero_inspeccion || '');
+                    $('#fecha_renta_lbl_valor').html(formatearFechaDdMmYyyy(resp.data.fecha_inspeccion));
+                    $('#tienda_renta_lbl_valor').html(resp.data.tienda_nombre || '');
+                    $('#vehiculo_renta_lbl_valor').html((resp.data.placa || '') + ' ' + (resp.data.producto_nombre || ''));
+                    $('#cliente_renta_lbl_valor').html(resp.data.cliente_nombre || '');
+                    $('#contacto_renta_lbl_valor').html(resp.data.cliente_contacto || '');
+
+                    $('#kilometraje_salida_renta_lbl_valor').html(
+                        Number(resp.data.kilometraje || 0) === 0
+                            ? 'NO APLICA'
+                            : `${Number(resp.data.kilometraje).toLocaleString('es-HN')} km`
+                    );
+
+                    setCombustibleValor('combustible_salida_renta', resp.data.combustible || '');
                     return;
                 }
 
