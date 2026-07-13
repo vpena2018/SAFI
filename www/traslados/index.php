@@ -807,14 +807,20 @@ $txt_mensaje="";
 									?>              
 								</div>
 								
-<!-- 
-								<div class="col-md-4 <?php //echo $mostrar_entrada; ?>">  
-								<span class="outside-label">Combustible Entrada</span>
-									<?php 		
-											//$disable_combentrada = 'disabled';				
-										//echo campo_combustible('combustible_entrada','',$disable_combentrada);
-									?>              
-								</div> -->
+                    <div id="datos_entrada" class="row">
+                        		<div class="col-md-12">
+                                    <span class="outside-label">Combustible Entrada </span>
+                                        <?php 		
+                                                $disable_combentrada = '';				
+                                            echo campo_combustible('combustible_entrada','',$disable_combentrada);
+                                        ?>              
+								</div> 
+
+                                <div class="col-md-8" style="margin-left: 10px;">
+                                    <?php echo campo("kilometraje_entrada","Kilometraje Entrada",'number','',' ',$disable_combentrada  .' '); ?> 
+                                </div> 
+                    </div>
+ 
 
 								
 					</div>
