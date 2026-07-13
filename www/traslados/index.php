@@ -820,8 +820,6 @@ $txt_mensaje="";
                         
 
 					</div>
-
-
                     <div class="row mb-2"> 
 								
 								<div class="col-md-12">   
@@ -876,6 +874,10 @@ $txt_mensaje="";
 
                 </div>
 
+                    <div id="resultadoBusquedaRenta"
+                    class="mt-4" style="display:block;">
+                </div>
+
             </div>
 
         </div>
@@ -897,10 +899,6 @@ $txt_mensaje="";
     let firmaDibujando = false;
     let firmaTieneTrazo = false;
 
-	function buscar_vehiculo(){
-		document.getElementById("resultadoBusqueda").style.display = "block";
-
-	}
 
     function ajustarCanvasFirma() {
         if (!firmaCanvas || !firmaCtx) {
