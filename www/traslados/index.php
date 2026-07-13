@@ -875,7 +875,56 @@ $txt_mensaje="";
                 </div>
 
                     <div id="resultadoBusquedaRenta"
-                    class="mt-4" style="display:block;">
+                    class="mt-4" style="display:none;">
+
+                    <div class="row mb-0">
+                        <div class="col-auto" style="background-color: #f0f0d7; font-weight:700;">
+							<?php echo campo("tipo_movimiento_renta_lbl","Operación",'labelb','','','style="background-color: #2533fa; font-weight:700;"');?>
+                        </div>
+                    </div>
+
+                    <div class="row mb-0">
+                        <div class="col-auto">
+							<?php echo campo("vehiculo_renta_lbl", "Vehículo", "labelb", '', ' ');?>
+                        </div>
+                        <div class="col-auto">
+							<?php echo campo("cliente_renta_lbl", "Cliente", "labelb", '', ' ');?>
+                        </div>
+                        <div class="col-auto">
+							<?php echo campo("contacto_renta_lbl", "Nombre del contacto", "labelb", '', ' ');?>
+                        </div>
+                    </div>
+
+                    <div class="row mb-0">
+                        <div class="col-auto">
+							<?php echo campo("kilometraje_salida_renta_lbl", "Kilometraje salida", "labelb", '', ' ');?>
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <span class="outside-label">Combustible Salida</span>
+                            <?php
+                                $disable_combsalida_renta = 'disabled';
+                                echo campo_combustible('combustible_salida_renta','',$disable_combsalida_renta);
+                            ?>
+                        </div>
+                    </div>
+
+                    <div id="datos_entrada_renta" class="row">
+                        <div class="col-md-12">
+                            <span class="outside-label">Combustible Entrada</span>
+                            <?php
+                                $disable_combentrada_renta = '';
+                                echo campo_combustible('combustible_entrada_renta','',$disable_combentrada_renta);
+                            ?>
+                        </div>
+
+                        <div class="col-md-8" style="margin-left: 10px;">
+                            <?php echo campo("kilometraje_entrada_renta","Kilometraje Entrada",'number','',' ',$disable_combentrada_renta .' '); ?>
+                        </div>
+                    </div>
+
                 </div>
 
             </div>
@@ -898,6 +947,7 @@ $txt_mensaje="";
     let firmaCtx = null;
     let firmaDibujando = false;
     let firmaTieneTrazo = false;
+    let moduloBusquedaActivo = '';
 
 
     function ajustarCanvasFirma() {
@@ -1056,6 +1106,33 @@ $txt_mensaje="";
         limpiarFirma();
     }
 
+    function LimpiarResultadoBusquedaRenta() {
+        $('#tipo_movimiento_renta_lbl_valor').html('');
+        $('#vehiculo_renta_lbl_valor').html('');
+        $('#cliente_renta_lbl_valor').html('');
+        $('#contacto_renta_lbl_valor').html('');
+        $('#kilometraje_salida_renta_lbl_valor').html('');
+        setCombustibleValor('combustible_salida_renta', '');
+        setCombustibleValor('combustible_entrada_renta', '');
+        $('#kilometraje_entrada_renta').val('');
+    }
+
+    function MostrarResultadoBusquedaRenta() {
+        moduloBusquedaActivo = 'renta';
+        $('#resultadoBusqueda').hide();
+        $('#resultadoBusquedaRenta').show();
+    }
+
+    function OcultarResultadoBusquedaRenta() {
+        $('#resultadoBusquedaRenta').hide();
+    }
+
+    function MostrarResultadoBusquedaTraslado() {
+        moduloBusquedaActivo = 'traslado';
+        $('#resultadoBusqueda').show();
+        $('#resultadoBusquedaRenta').hide();
+    }
+
     function actualizarSeccionEntrada(tipoMovimiento) {
         const esEntrada = String(tipoMovimiento || '').toLowerCase() === 'entrada';
         const $seccion = $('#datos_entrada');
@@ -1180,6 +1257,17 @@ $txt_mensaje="";
 
             if (resp.ok) {
 
+                const tipoTrasladoRespuesta = String(resp.data.tipo_traslado || '').toLowerCase();
+
+                if (tipoTrasladoRespuesta === 'renta') {
+                    limpiarCamposResultado();
+                    LimpiarResultadoBusquedaRenta();
+                    MostrarResultadoBusquedaRenta();
+                    return;
+                }
+
+                MostrarResultadoBusquedaTraslado();
+
                 //console.log(resp.data);
 
                 $('#tipo_movimiento_lbl_valor').html(resp.data.tipo_movimiento || '');
@@ -1234,6 +1322,9 @@ $txt_mensaje="";
 
             } else {
                 limpiarCamposResultado();
+                LimpiarResultadoBusquedaRenta();
+                OcultarResultadoBusquedaRenta();
+                MostrarResultadoBusquedaTraslado();
                 mytoast(
                     'error',
                     resp.error || 'No se encontró información',
@@ -1242,6 +1333,9 @@ $txt_mensaje="";
             }
         },
         error: function () {
+            LimpiarResultadoBusquedaRenta();
+            OcultarResultadoBusquedaRenta();
+            MostrarResultadoBusquedaTraslado();
             mytoast(
                 'error',
                 'Error de comunicación con el servidor',
@@ -1253,6 +1347,11 @@ $txt_mensaje="";
 
     $('#btnProcesar').on('click', function (e) {
         e.preventDefault();
+
+        if (moduloBusquedaActivo === 'renta') {
+            mytoast('info', 'La integración de renta está pendiente', 3000);
+            return;
+        }
 
         var numeroTraslado = ($('#numero_trasladolbl_valor').text() || '').trim();
         var tipoTraslado = ($('#tipo_traslado_lbl_valor').text() || '').trim();
@@ -1328,6 +1427,9 @@ $txt_mensaje="";
 
         inicializarFirmaPad();
         actualizarSeccionEntrada('');
+        LimpiarResultadoBusquedaRenta();
+        OcultarResultadoBusquedaRenta();
+        MostrarResultadoBusquedaTraslado();
 
         $('#btnLimpiarFirma').on('click', function () {
             limpiarFirma();
