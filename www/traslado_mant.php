@@ -73,8 +73,11 @@ if ($accion=="v") {
 
 } // fin leer datos
 
+
+
 // guardar Datos    ############################  
 if ($accion=="g") {
+	$salida_vehiculo=false;
  //sleep(3);
 	$stud_arr[0]["pcode"] = 0;
     $stud_arr[0]["pmsg"] ="ERROR";
@@ -342,6 +345,7 @@ if ($accion=="g") {
 
 
          $result = sql_update($sql);
+		 
 
 		 if($result && $autorizar_traslado==0)
 			{
@@ -382,6 +386,12 @@ if ($accion=="g") {
 
 							$insert_id = sql_insert($sql);
 
+							if($insert_id>0)
+							{
+								$salida_vehiculo=true;
+							}
+
+
 					}
 					else if($mov_atender==3)
 					{
@@ -416,11 +426,16 @@ if ($accion=="g") {
 							)";
 
 							$insert_id = sql_insert($sql);
+
+							if($insert_id>0)
+							{
+								traslado_historial_guardar($cid, $mov_atender, "Traslado en bitacora/entrada", "Se registro entrada en bitacora");
+							}
 						}
 
 						
 					}
-
+	
 
 
 					
@@ -468,6 +483,10 @@ if ($accion=="g") {
 					}
 
 				traslado_historial_guardar($cid, $estado_historial, "Atender Traslado", "Se registro salida del traslado");
+				if($salida_vehiculo)
+				{
+					traslado_historial_guardar($cid, $estado_historial, "Traslado en bitacora/salida", "Se registro salida en bitacora");
+				}
 			} elseif (isset($_REQUEST['cp'])) {
 				traslado_historial_guardar($cid, $estado_historial, "Completar Traslado", "Se registro entrada/finalizacion del traslado");
 			} elseif (isset($_REQUEST['aut'])) {
