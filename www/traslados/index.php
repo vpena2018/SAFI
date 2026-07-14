@@ -494,12 +494,25 @@ if ($accion=="P") {
 
         if(strtoupper($tipo_traslado_req) === $TIPO_TRASLADO_TRASLADO) {
 
-        traslado_historial_guardar(
-            $id_maestro,
-            4,
-            'Traslado procesado seguridad',
-            'Se registro firma y traslado en puerta con seguridad'
-        );
+        if($tipo_movimiento_req===$TIPO_MOVIMIENTO_SALIDA) {
+            
+            traslado_historial_guardar(
+                $id_maestro,
+                4,
+                'Traslado procesado seguridad',
+                'Se registro salida en puerta con seguridad'
+            );
+
+        }else{
+            traslado_historial_guardar(
+                $id_maestro,
+                4,
+                'Traslado procesado seguridad',
+                'Se registro entrada en puerta con seguridad'
+            );
+        }
+
+
         }
     }
 
