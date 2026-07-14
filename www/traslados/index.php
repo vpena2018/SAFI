@@ -1093,13 +1093,13 @@ $txt_mensaje="";
                         		<div class="col-md-12">
                                     <span class="outside-label">Combustible Entrada </span>
                                         <?php 		
-                                                $disable_combentrada = '';				
+                                                $disable_combentrada = 'disabled';				
                                             echo campo_combustible('combustible_entrada','',$disable_combentrada);
                                         ?>              
 								</div> 
 
                                 <div class="col-md-8" style="margin-left: 10px;">
-                                    <?php echo campo("kilometraje_entrada","Kilometraje Entrada",'number','',' ',$disable_combentrada  .' '); ?> 
+                                    <?php echo campo("kilometraje_entrada","Kilometraje Entrada",'number','',' ','disabled '); ?> 
                                 </div> 
                     </div>
  
@@ -1573,16 +1573,21 @@ $txt_mensaje="";
         const esEntrada = String(tipoMovimiento || '').toLowerCase() === 'entrada';
         const $seccion = $('#datos_entrada');
         const $controles = $seccion.find('input');
+        const $kmEntrada = $('#kilometraje_entrada');
+        const $combEntrada = $('input[name="combustible_entrada"]');
 
         if (esEntrada) {
             $seccion.show();
             $controles.prop('disabled', false);
+            $combEntrada.prop('disabled', true);
+            $kmEntrada.prop('disabled', true);
             return;
         }
 
         setCombustibleValor('combustible_entrada', '');
         $('#kilometraje_entrada').val('');
         $controles.prop('disabled', true);
+        $combEntrada.prop('disabled', true);
         $seccion.hide();
     }
 
@@ -1776,7 +1781,8 @@ $txt_mensaje="";
 
 
                         setCombustibleValor('combustible_salida', resp.data.combustible_salida || '');
-                        //setCombustibleValor('combustible_entrada', resp.data.combustible_entrada || '');
+                        setCombustibleValor('combustible_entrada', resp.data.combustible_entrada || '');
+                        $('#kilometraje_entrada').val(resp.data.kilometraje_entrada || '');
 
                     refrescarCanvasFirmas();
 
@@ -1840,13 +1846,13 @@ $txt_mensaje="";
 
 
         if (tipo_movimiento.toLowerCase() === 'entrada' && kilometrajeEntrada === '') {
-            mytoast('error', 'Debe ingresar el kilometraje de entrada', 3000);
+            mytoast('error', 'Motorista debe ingresar el kilometraje de entrada en traslados', 6000);
             $('#kilometraje_entrada').focus();
             return;
         }
 
         if (tipo_movimiento.toLowerCase() === 'entrada' && combustibleEntrada === '') {
-            mytoast('error', 'Debe ingresar el combustible de entrada', 3000);
+            mytoast('error', 'Motorista debe ingresar el combustible de entrada en traslados', 6000);
             return;
         }
 
