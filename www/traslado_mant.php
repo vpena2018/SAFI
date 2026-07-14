@@ -159,24 +159,40 @@ if ($accion=="g") {
 								$fecha_traslado = $row_fecha['fecha'];
 							}
 
-			if ($fecha_traslado >= '2026-07-01') {
-				if ($result!=false){
-					if ($result -> num_rows > 0) { 
-						$row = $result -> fetch_assoc(); 
+				if ($fecha_traslado >= '2026-07-01') {
+					if ($result!=false){
+						if ($result -> num_rows > 0) { 
+							$row = $result -> fetch_assoc(); 
 
-						$traslado = sql_select("SELECT count(*) as count FROM traslado_bitacora WHERE numero_traslado = ".$row['numero']);
+							$traslado_salida = sql_select("SELECT count(*) as count FROM traslado_bitacora WHERE tipo_movimiento = 'SALIDA' AND numero_traslado = ".$row['numero']);
+							$pendiente_salida = false;
 
-						if($traslado!=false){
-							if ($traslado -> num_rows > 0) { 
-								$row2 = $traslado -> fetch_assoc(); 
-								if($row2['count'] == 0){
-									$verror.="No puede completar el traslado, Vehiculo pendiente de salida";
+							if($traslado_salida!=false){
+								if ($traslado_salida -> num_rows > 0) { 
+									$row2 = $traslado_salida -> fetch_assoc(); 
+									if($row2['count'] == 0){
+										$verror.="No puede completar el traslado, Vehiculo pendiente de salida";
+										$pendiente_salida = true;
+									}
 								}
 							}
+
+							if(!$pendiente_salida)
+								{
+									$traslado_entrada= sql_select("SELECT count(*) as count FROM traslado_bitacora WHERE tipo_movimiento = 'ENTRADA' AND numero_traslado = ".$row['numero']);
+
+									if($traslado_entrada!=false){
+										if ($traslado_entrada -> num_rows > 0) { 
+											$row2 = $traslado_entrada -> fetch_assoc(); 
+											if($row2['count'] == 0){
+												$verror.="No puede completar el traslado, Vehiculo pendiente de entrada";
+											}
+										}
+									}
+								}
 						}
-					}
-			}
-			}
+				}
+				}
 
 
 				

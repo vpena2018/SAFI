@@ -1874,16 +1874,14 @@ $txt_mensaje="";
             return;
         }
 
-
+        if (textoMayuscula(tipo_movimiento) === TIPOS_UI.ENTRADA && combustibleEntrada === '') {
+            mytoast('error', 'Motorista debe ingresar el combustible de entrada en traslados', 6000);
+            return;
+        }
 
         if (textoMayuscula(tipo_movimiento) === TIPOS_UI.ENTRADA && kilometrajeEntrada === '') {
             mytoast('error', 'Motorista debe ingresar el kilometraje de entrada en traslados', 6000);
             $('#kilometraje_entrada').focus();
-            return;
-        }
-
-        if (textoMayuscula(tipo_movimiento) === TIPOS_UI.ENTRADA && combustibleEntrada === '') {
-            mytoast('error', 'Motorista debe ingresar el combustible de entrada en traslados', 6000);
             return;
         }
 
