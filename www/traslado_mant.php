@@ -318,12 +318,98 @@ if ($accion=="g") {
     } else {
          //actualizar	   
 	     $sql="update orden_traslado set ".$sqlcampos." where id=".$cid." limit 1";
+
+		 
 		 
 		  //$debug_file = 'C:/DEV-git/php/sql_debug.log';  
           //file_put_contents($debug_file, date('Y-m-d H:i:s') . " - " . $sql . "\n", FILE_APPEND);
 
 
          $result = sql_update($sql);
+
+		 if($result && $autorizar_traslado==0)
+			{
+
+		 			$usuario=sql_select("SELECT usuario FROM usuario WHERE id=".$_SESSION["usuario_id"]." limit 1");
+					$existe_traslado_salida=sql_select("SELECT id_bitacora FROM traslado_bitacora WHERE numero_traslado = (SELECT numero FROM orden_traslado WHERE id = $cid) AND tipo_movimiento = 'SALIDA' limit 1");
+					$usuario=$usuario->fetch_assoc();
+					$dispositivo = $_SERVER['HTTP_USER_AGENT']; // O detectar según el User-Agent
+
+					if($mov_atender==2 && $existe_traslado_salida->num_rows==0)
+					{
+							$sql = "INSERT INTO traslado_bitacora
+							(
+								numero_traslado,
+								fecha,
+								dispositivo,
+								ip_cliente,
+								user_agent,
+								firma,
+								tipo_traslado,
+								tipo_movimiento,
+								combustible_entrada,
+								kilometraje_entrada
+							)
+							VALUES
+							(
+								(SELECT numero FROM orden_traslado WHERE id = $cid),
+								NOW(),
+								'".$dispositivo."',
+								'".$_SERVER['REMOTE_ADDR']."',
+								'".$usuario["usuario"]."',
+								null,
+								'TRASLADO',
+								'SALIDA',
+								null,
+								null
+							)";
+
+							$insert_id = sql_insert($sql);
+
+					}
+					else if($mov_atender==3)
+					{
+						$existe_traslado_entrada=sql_select("SELECT id_bitacora FROM traslado_bitacora WHERE numero_traslado = (SELECT numero FROM orden_traslado WHERE id = $cid) AND tipo_movimiento = 'ENTRADA' limit 1");
+						if($existe_traslado_entrada->num_rows==0)
+						{
+							$sql = "INSERT INTO traslado_bitacora
+							(
+								numero_traslado,
+								fecha,
+								dispositivo,
+								ip_cliente,
+								user_agent,
+								firma,
+								tipo_traslado,
+								tipo_movimiento,
+								combustible_entrada,
+								kilometraje_entrada
+							)
+							VALUES
+							(
+								(SELECT numero FROM orden_traslado WHERE id = $cid),
+								NOW(),
+								'".$dispositivo."',
+								'".$_SERVER['REMOTE_ADDR']."',
+								'".$usuario["usuario"]."',
+								null,
+								'TRASLADO',
+								'ENTRADA',
+								'".$_REQUEST['combustible_entrada']."',
+								'".$_REQUEST['kilometraje_entrada']."'
+							)";
+
+							$insert_id = sql_insert($sql);
+						}
+
+						
+					}
+
+
+
+					
+			}
+
          $cid=$elcodigo;
     }
 
