@@ -73,8 +73,11 @@ if ($accion=="v") {
 
 } // fin leer datos
 
+
+
 // guardar Datos    ############################  
 if ($accion=="g") {
+	$salida_vehiculo=false;
  //sleep(3);
 	$stud_arr[0]["pcode"] = 0;
     $stud_arr[0]["pmsg"] ="ERROR";
@@ -159,24 +162,40 @@ if ($accion=="g") {
 								$fecha_traslado = $row_fecha['fecha'];
 							}
 
-			if ($fecha_traslado >= '2026-07-01') {
-				if ($result!=false){
-					if ($result -> num_rows > 0) { 
-						$row = $result -> fetch_assoc(); 
+				if ($fecha_traslado >= '2026-07-01') {
+					if ($result!=false){
+						if ($result -> num_rows > 0) { 
+							$row = $result -> fetch_assoc(); 
 
-						$traslado = sql_select("SELECT count(*) as count FROM traslado_bitacora WHERE numero_traslado = ".$row['numero']);
+							$traslado_salida = sql_select("SELECT count(*) as count FROM traslado_bitacora WHERE tipo_movimiento = 'SALIDA' AND numero_traslado = ".$row['numero']);
+							$pendiente_salida = false;
 
-						if($traslado!=false){
-							if ($traslado -> num_rows > 0) { 
-								$row2 = $traslado -> fetch_assoc(); 
-								if($row2['count'] == 0){
-									$verror.="No puede completar el traslado, Vehiculo pendiente de salida";
+							if($traslado_salida!=false){
+								if ($traslado_salida -> num_rows > 0) { 
+									$row2 = $traslado_salida -> fetch_assoc(); 
+									if($row2['count'] == 0){
+										$verror.="No puede completar el traslado, Vehiculo pendiente de salida";
+										$pendiente_salida = true;
+									}
 								}
 							}
+
+							if(!$pendiente_salida)
+								{
+									$traslado_entrada= sql_select("SELECT count(*) as count FROM traslado_bitacora WHERE tipo_movimiento = 'ENTRADA' AND numero_traslado = ".$row['numero']);
+
+									if($traslado_entrada!=false){
+										if ($traslado_entrada -> num_rows > 0) { 
+											$row2 = $traslado_entrada -> fetch_assoc(); 
+											if($row2['count'] == 0){
+												$verror.="No puede completar el traslado, Vehiculo pendiente de entrada";
+											}
+										}
+									}
+								}
 						}
-					}
-			}
-			}
+				}
+				}
 
 
 				
@@ -318,12 +337,110 @@ if ($accion=="g") {
     } else {
          //actualizar	   
 	     $sql="update orden_traslado set ".$sqlcampos." where id=".$cid." limit 1";
+
+		 
 		 
 		  //$debug_file = 'C:/DEV-git/php/sql_debug.log';  
           //file_put_contents($debug_file, date('Y-m-d H:i:s') . " - " . $sql . "\n", FILE_APPEND);
 
 
          $result = sql_update($sql);
+		 
+
+		 if($result && $autorizar_traslado==0)
+			{
+
+		 			$usuario=sql_select("SELECT usuario FROM usuario WHERE id=".$_SESSION["usuario_id"]." limit 1");
+					$existe_traslado_salida=sql_select("SELECT id_bitacora FROM traslado_bitacora WHERE numero_traslado = (SELECT numero FROM orden_traslado WHERE id = $cid) AND tipo_movimiento = 'SALIDA' limit 1");
+					$usuario=$usuario->fetch_assoc();
+					$dispositivo = $_SERVER['HTTP_USER_AGENT']; // O detectar según el User-Agent
+
+					if($mov_atender==2 && $existe_traslado_salida->num_rows==0)
+					{
+							$sql = "INSERT INTO traslado_bitacora
+							(
+								numero_traslado,
+								fecha,
+								dispositivo,
+								ip_cliente,
+								user_agent,
+								firma,
+								tipo_traslado,
+								tipo_movimiento,
+								combustible_entrada,
+								kilometraje_entrada
+							)
+							VALUES
+							(
+								(SELECT numero FROM orden_traslado WHERE id = $cid),
+								NOW(),
+								'".$dispositivo."',
+								'".$_SERVER['REMOTE_ADDR']."',
+								'".$usuario["usuario"]."',
+								null,
+								'TRASLADO',
+								'SALIDA',
+								null,
+								null
+							)";
+
+							$insert_id = sql_insert($sql);
+
+							if($insert_id>0)
+							{
+								$salida_vehiculo=true;
+							}
+
+
+					}
+					else if($mov_atender==3)
+					{
+						$existe_traslado_entrada=sql_select("SELECT id_bitacora FROM traslado_bitacora WHERE numero_traslado = (SELECT numero FROM orden_traslado WHERE id = $cid) AND tipo_movimiento = 'ENTRADA' limit 1");
+						if($existe_traslado_entrada->num_rows==0)
+						{
+							$sql = "INSERT INTO traslado_bitacora
+							(
+								numero_traslado,
+								fecha,
+								dispositivo,
+								ip_cliente,
+								user_agent,
+								firma,
+								tipo_traslado,
+								tipo_movimiento,
+								combustible_entrada,
+								kilometraje_entrada
+							)
+							VALUES
+							(
+								(SELECT numero FROM orden_traslado WHERE id = $cid),
+								NOW(),
+								'".$dispositivo."',
+								'".$_SERVER['REMOTE_ADDR']."',
+								'".$usuario["usuario"]."',
+								null,
+								'TRASLADO',
+								'ENTRADA',
+								'".$_REQUEST['combustible_entrada']."',
+								'".$_REQUEST['kilometraje_entrada']."'
+							)";
+
+							$insert_id = sql_insert($sql);
+
+							if($insert_id>0)
+							{
+								traslado_historial_guardar($cid, $mov_atender, "Traslado en bitacora/entrada", "Se registro entrada en bitacora");
+							}
+						}
+
+						
+					}
+	
+
+
+					
+			}
+
          $cid=$elcodigo;
     }
 
@@ -366,6 +483,10 @@ if ($accion=="g") {
 					}
 
 				traslado_historial_guardar($cid, $estado_historial, "Atender Traslado", "Se registro salida del traslado");
+				if($salida_vehiculo)
+				{
+					traslado_historial_guardar($cid, $estado_historial, "Traslado en bitacora/salida", "Se registro salida en bitacora");
+				}
 			} elseif (isset($_REQUEST['cp'])) {
 				traslado_historial_guardar($cid, $estado_historial, "Completar Traslado", "Se registro entrada/finalizacion del traslado");
 			} elseif (isset($_REQUEST['aut'])) {
