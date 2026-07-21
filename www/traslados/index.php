@@ -974,7 +974,7 @@ $txt_mensaje="";
 </div>
 
         <div class="text-center mb-1 form-1-titulo" style="font-size:2rem; font-weight:700; letter-spacing:1px;">
-            TRASLADO VEHICULOS
+            MOVIMIENTO VEHICULOS
         </div>
 
 
