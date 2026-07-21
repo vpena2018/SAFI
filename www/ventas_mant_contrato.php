@@ -1622,7 +1622,7 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
     }
 
     //valida que el precio de venta no sea menor al precio minimo y que no sea mayor al precio maximo  
-    $precio_venta=intval($_REQUEST['precio_venta'])+intval($_REQUEST['valor_extras'])-intval($_REQUEST['valor_descuento']);
+    $precio_venta=intval($_REQUEST['precio_venta'])-intval($_REQUEST['valor_extras'])+intval($_REQUEST['valor_descuento']);
     if (!es_nulo($precio_venta) && !es_nulo($precio_minimo) && $precio_venta < $precio_minimo) {
        $verror .= 'El precio de venta no puede ser menor al precio mínimo. ';
     }   
