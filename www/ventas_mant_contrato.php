@@ -1607,6 +1607,10 @@ if ($accion=="g") {
 //if (!es_nulo($cid) && in_array($id_estado, [11, 20], true)) {
 if (!es_nulo($cid) && $genera_contrato == 1) {
 
+    //Tipo de Venta: obligatorio
+    if (es_nulo($venta_cont_cred)) {
+        $verror .= 'Seleccione el tipo de venta. ';
+    }
     // Precio: obligatorio
     if (es_nulo($precio_venta)) {
         $verror .= 'Ingrese el precio de venta del vehículo. ';
@@ -1625,7 +1629,7 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
         
     if (!es_nulo($precio_venta) && !es_nulo($precio_maximo) && $precio_venta > $precio_maximo) {
         $verror .= 'El precio de venta no puede ser mayor al precio máximo. ';
-    }
+    }    
 
 }
         
