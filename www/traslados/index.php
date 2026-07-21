@@ -740,7 +740,7 @@ if ($accion=="L") {
                     and tipo_movimiento = '{$TIPO_MOVIMIENTO_ENTRADA}'
                 )
               AND id_estado=4
-              AND t1.autorizacion_traslado=1
+              AND t2.autorizacion_traslado=1
               ORDER BY FECHA DESC
               limit 1");
         }
