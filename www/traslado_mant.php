@@ -90,26 +90,44 @@ if ($accion=="g") {
 
 
 
-		$autorizar_traslado = 0;
+		$autorizar_traslado_salida = 0;
+		$autorizar_traslado_entrada = 0;
 
-		$result_agencia = sql_select("SELECT id_tienda_salida FROM orden_traslado WHERE id = $cid");
+		$result_agencia = sql_select("SELECT id_tienda_salida,id_tienda_destino FROM orden_traslado WHERE id = $cid");
 
 		if ($result_agencia && $result_agencia->num_rows > 0) {
 			$row = $result_agencia->fetch_assoc();
+			//$result = sql_select("SELECT autorizacion_traslado FROM tienda_agencia WHERE id = $row[id_tienda_salida]");
 
-			$result = sql_select("SELECT autorizacion_traslado FROM tienda_agencia WHERE id = $row[id_tienda_salida]");
+			$result = sql_select("
+			SELECT 
+				salida.autorizacion_traslado AS autorizacion_salida,
+				destino.autorizacion_traslado AS autorizacion_destino
+			FROM 
+				tienda_agencia salida,
+				tienda_agencia destino
+			WHERE 
+				salida.id = $row[id_tienda_salida]
+				AND destino.id = $row[id_tienda_destino]
+			");
 
 			if ($result && $result->num_rows > 0) {
 				$row = $result->fetch_assoc();
-				$autorizar_traslado = (int)($row["autorizacion_traslado"] ?? 0);
+				$autorizar_traslado_salida = (int)($row["autorizacion_salida"] ?? 0);
+				$autorizar_traslado_entrada = (int)($row["autorizacion_destino"] ?? 0);
 			}
 		}
 
     //Validar
+
 	$verror="";
 	$ks="";
 	$ke="";
 	$ks1="";
+
+
+
+
 	if (isset($_REQUEST['tipo_destino'])) {
 		if ($_REQUEST['tipo_destino']==1) {
 			$verror.=validar("Destino a",$_REQUEST['id_tienda_destino'], "int", true);
@@ -152,7 +170,7 @@ if ($accion=="g") {
 			}
  
 
-			if($autorizar_traslado==1){
+			if($autorizar_traslado_salida==1 || $autorizar_traslado_entrada==1){
 							$result = sql_select("SELECT numero FROM orden_traslado WHERE id = $cid");
 							$fecha_traslado_result = sql_select("SELECT fecha FROM orden_traslado WHERE id = $cid");
 							$fecha_traslado = '';
@@ -167,10 +185,13 @@ if ($accion=="g") {
 						if ($result -> num_rows > 0) { 
 							$row = $result -> fetch_assoc(); 
 
+
+
 							$traslado_salida = sql_select("SELECT count(*) as count FROM traslado_bitacora WHERE tipo_movimiento = 'SALIDA' AND numero_traslado = ".$row['numero']);
 							$pendiente_salida = false;
+							
 
-							if($traslado_salida!=false){
+							if($traslado_salida!=false && $autorizar_traslado_salida==1){
 								if ($traslado_salida -> num_rows > 0) { 
 									$row2 = $traslado_salida -> fetch_assoc(); 
 									if($row2['count'] == 0){
@@ -180,7 +201,7 @@ if ($accion=="g") {
 								}
 							}
 
-							if(!$pendiente_salida)
+							if(!$pendiente_salida && $autorizar_traslado_entrada==1)
 								{
 									$traslado_entrada= sql_select("SELECT count(*) as count FROM traslado_bitacora WHERE tipo_movimiento = 'ENTRADA' AND numero_traslado = ".$row['numero']);
 
@@ -272,7 +293,7 @@ if ($accion=="g") {
 			$mov_asignar="Atender ";
 			$sqlcampos.=", traslado_inicio = NOW()";
 
-			if($autorizar_traslado==0){
+			if($autorizar_traslado_salida==0){
 				$sqlcampos.=", id_usuario_autoriza =".$_SESSION["usuario_id"];
 				$sqlcampos.=", autorizado = NOW()";
 				$sqlcampos.=", id_estado = 4";
@@ -347,7 +368,7 @@ if ($accion=="g") {
          $result = sql_update($sql);
 		 
 
-		 if($result && $autorizar_traslado==0)
+		 if($result)
 			{
 
 		 			$usuario=sql_select("SELECT usuario FROM usuario WHERE id=".$_SESSION["usuario_id"]." limit 1");
@@ -355,7 +376,7 @@ if ($accion=="g") {
 					$usuario=$usuario->fetch_assoc();
 					$dispositivo = $_SERVER['HTTP_USER_AGENT']; // O detectar según el User-Agent
 
-					if($mov_atender==2 && $existe_traslado_salida->num_rows==0)
+					if($mov_atender==2 && $existe_traslado_salida->num_rows==0 && $autorizar_traslado_salida==0)
 					{
 							$sql = "INSERT INTO traslado_bitacora
 							(
@@ -393,7 +414,7 @@ if ($accion=="g") {
 
 
 					}
-					else if($mov_atender==3)
+					else if($mov_atender==3 && $autorizar_traslado_entrada==0)
 					{
 						$existe_traslado_entrada=sql_select("SELECT id_bitacora FROM traslado_bitacora WHERE numero_traslado = (SELECT numero FROM orden_traslado WHERE id = $cid) AND tipo_movimiento = 'ENTRADA' limit 1");
 						if($existe_traslado_entrada->num_rows==0)
@@ -477,7 +498,7 @@ if ($accion=="g") {
 		} else {
 			if (isset($_REQUEST['at'])) {
 
-				if($autorizar_traslado==0 && $estado_historial==4)
+				if($autorizar_traslado_salida==0 && $estado_historial==4)
 					{
 						$estado_historial=2;
 					}
