@@ -418,7 +418,8 @@ if ($accion=="g") {
 
      if (isset($_REQUEST["observaciones_adpc"])) { $sqlcampos.= " , observaciones_adpc =".GetSQLValue($_REQUEST["observaciones_adpc"],"text"); }        
      if (isset($_REQUEST["id_adpc_categoria"])) { $sqlcampos.= " , id_adpc_categoria =".GetSQLValue($_REQUEST["id_adpc_categoria"],"int"); }        
-      
+     if (isset($_REQUEST["usuario_vendedor_rentworks"])) { $sqlcampos.= " , usuario_vendedor_rentworks =".GetSQLValue($_REQUEST["usuario_vendedor_rentworks"],"text"); }
+
      $actualizarkm=false;//ojo no quitar . por si esta modificando 
      $enviar_orden_email=false;
      $lbl_estado="Borrador";
@@ -855,6 +856,7 @@ if (isset($row["fecha_auditado"])) {$fecha_auditado= $row["fecha_auditado"]; } e
 if (isset($row["id_usuario_auditado"])) {$id_usuario_auditado= $row["id_usuario_auditado"]; } else {$id_usuario_auditado= "0";}
 if (isset($row["id_adpc_categoria"])) {$id_adpc_categoria= $row["id_adpc_categoria"]; } else {$id_adpc_categoria= "";}
 if (isset($row["observaciones_adpc"])) {$observaciones_adpc= $row["observaciones_adpc"]; } else {$observaciones_adpc= "";}
+if (isset($roow["usuario_vendedor_rentworks"])) {$usuario_vendedor_rentworks= $row["usuario_vendedor_rentworks"]; } else {$usuario_vendedor_rentworks= "";}
 
 //********* */
 if ($nuevoreg==true) {
@@ -979,7 +981,8 @@ if ($nuevoreg==true) {
       $cliente_contacto_telefono= $row_anterior["cliente_contacto_telefono"];
       $id_empresa= $row_anterior["id_empresa"];
       $renta_contrato= $row_anterior["renta_contrato"];
-      $renta_factura= $row_anterior["renta_factura"];    
+      $renta_factura= $row_anterior["renta_factura"];  
+      $usuario_vendedor_rentworks=$row_anterior["usuario_vendedor_rentworks"];  
   }
       $kilometraje_minimo= $row_anterior["kilometraje_entrada"];
       $plantilla_vehiculo= $row_anterior["plantilla_vehiculo"]; 
@@ -1164,6 +1167,9 @@ $mostrar_actarv = ($cliente_prefijo_cco && intval($tipo_inspeccion)==1 && intval
             </div>
             <div class="col-md-2">       
                 <?php echo campo("tipo_doc_lb","Movimiento",'label',get_tipo_doc($tipo_doc),' ',' '); ?>                              
+            </div>
+            <div class="col-md-2">       
+                <?php echo campo("usuario_vendedor_rentworks","Vendedor",'hidden',$usuario_vendedor_rentworks,' ',' '); ?>
             </div>
 </div>
 
@@ -2620,13 +2626,15 @@ function insp_buscar_contrato_hertz() {
         var cli = resp.data[0].Cliente || {};
         var tel = cli.Telephone        || {};
         var doc = cli.Document         || {};
+        var ven = resp.data[0].Vendedor || {};
 
         if ($('#cliente_id').val() == '2262') {
             $('#cliente_email').val(cli.Email || '');
         }
         $('#cliente_contacto_identidad').val(doc.number || '');
         $('#cliente_contacto_telefono').val(tel['1']    || '');
-
+        $('#usuario_vendedor_rentworks').val(ven);
+        
         mytoast('success', 'Datos del contrato cargados', 3000);
     })
     .fail(function() {

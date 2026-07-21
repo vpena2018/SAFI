@@ -1607,6 +1607,10 @@ if ($accion=="g") {
 //if (!es_nulo($cid) && in_array($id_estado, [11, 20], true)) {
 if (!es_nulo($cid) && $genera_contrato == 1) {
 
+    //Tipo de Venta: obligatorio
+    if (es_nulo($venta_cont_cred)) {
+        $verror .= 'Seleccione el tipo de venta. ';
+    }
     // Precio: obligatorio
     if (es_nulo($precio_venta)) {
         $verror .= 'Ingrese el precio de venta del vehículo. ';
@@ -1617,15 +1621,14 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
         $verror .= 'Ingrese la prima de venta del vehículo. ';
     }
 
-    //valida que el precio de venta no sea menor al precio minimo y que no sea mayor al precio maximo  
-    $precio_venta=intval($_REQUEST['precio_venta'])-intval($_REQUEST['valor_extras'])+intval($_REQUEST['valor_descuento']);
+    //valida que el precio de venta no sea menor al precio minimo y que no sea mayor al precio maximo      
     if (!es_nulo($precio_venta) && !es_nulo($precio_minimo) && $precio_venta < $precio_minimo) {
        $verror .= 'El precio de venta no puede ser menor al precio mínimo. ';
     }   
         
     if (!es_nulo($precio_venta) && !es_nulo($precio_maximo) && $precio_venta > $precio_maximo) {
         $verror .= 'El precio de venta no puede ser mayor al precio máximo. ';
-    }
+    }    
 
 }
         
@@ -2807,18 +2810,18 @@ $('#venta_cont_cred').on('change', toggleFinanciera);
 toggleFinanciera(); // estado inicial al cargar
 
 // Inicializar base de precio antes de ajustes: final + descuento - extras
-var _precioVentaInit   = parseFloat($('#precio_venta').val()) || 0;
+var _precioVentaInit   = parseFloat($('#precio_minimo').val()) || 0;
 var _descuentoInit     = parseFloat($('#valor_descuento').val()) || 0;
 var _extrasInit        = parseFloat($('#valor_extras').val()) || 0;
-$('#precio_venta').data('precio-original', _precioVentaInit + _descuentoInit - _extrasInit);
+$('#precio_minimo').data('precio-original', _precioVentaInit + _descuentoInit - _extrasInit);
 
 // Calcula precio de venta: resta descuento y suma extras
 function calcularPrecioConDescuento() {
-    var precioOriginal = parseFloat($('#precio_venta').data('precio-original')) || 0;
+    var precioOriginal = parseFloat($('#precio_minimo').data('precio-original')) || 0;
     var descuento      = parseFloat($('#valor_descuento').val()) || 0;
     var extras         = parseFloat($('#valor_extras').val()) || 0;
     var precioFinal    = precioOriginal - descuento + extras;
-    $('#precio_venta').val(precioFinal);
+    $('#precio_minimo').val(precioFinal);
 }
 
 $('#valor_descuento, #valor_extras').on('input change', calcularPrecioConDescuento);
