@@ -657,6 +657,8 @@ if ($accion=="PR") {
 
 //variables
 $numero_traslado="";
+$fecha_implementacion="2026-07-21";
+$fecha_busqueda_inspecciones="2024-04-24";
 
 // Leer Datos    ############################  
 if ($accion=="L") {
@@ -695,6 +697,7 @@ if ($accion=="L") {
             FROM traslado_bitacora b
             WHERE b.numero_traslado = orden_traslado.numero
             and tipo_movimiento = '{$TIPO_MOVIMIENTO_SALIDA}'
+            and fecha >= '{$fecha_implementacion}'
         )
 		AND id_estado=4
         AND t1.autorizacion_traslado=1
@@ -738,9 +741,10 @@ if ($accion=="L") {
                     FROM traslado_bitacora b
                     WHERE b.numero_traslado = orden_traslado.numero
                     and tipo_movimiento = '{$TIPO_MOVIMIENTO_ENTRADA}'
+                    and fecha >= '{$fecha_implementacion}'
                 )
               AND id_estado=4
-              AND t1.autorizacion_traslado=1
+              AND t2.autorizacion_traslado=1
               ORDER BY FECHA DESC
               limit 1");
         }
@@ -748,23 +752,30 @@ if ($accion=="L") {
 
         //renta
 
+        $salida_antes_de_implementacion=false;
+
+        //estado completado inspeccion.id_estado = 2, tipo mov salida inspeccion.tipo_doc=2,tipo inspeccion renta o taller inspeccion.tipo_inspeccion=1
         $ultimaInspeccion = sql_select("
-        SELECT inspeccion.numero
+        SELECT inspeccion.numero,inspeccion.fecha
         FROM inspeccion
         LEFT JOIN producto
             ON inspeccion.id_producto = producto.id
         WHERE producto.codigo_alterno LIKE '%$codigo'
-        AND inspeccion.id_estado = 3
+        AND inspeccion.id_estado = 2
+        AND inspeccion.tipo_doc=2
+        AND inspeccion.tipo_inspeccion=1
+        AND inspeccion.fecha >= '{$fecha_busqueda_inspecciones}'
         ORDER BY inspeccion.hora DESC
         LIMIT 1");
 
         if ($ultimaInspeccion && $ultimaInspeccion->num_rows > 0) {
+            $row = $ultimaInspeccion->fetch_assoc();
+            $numeroInspeccion = $row['numero'];
+            $fechaInspeccion = $row['fecha'];
+
         //salida renta
         if (!$result || $result->num_rows == 0){
 
-            $row = $ultimaInspeccion->fetch_assoc();
-            $numeroInspeccion = $row['numero'];
-            
             $result = sql_select("SELECT 
             '{$TIPO_TRASLADO_RENTA}' AS tipo_traslado
             ,'{$TIPO_MOVIMIENTO_SALIDA}' AS tipo_movimiento,
@@ -793,14 +804,28 @@ if ($accion=="L") {
                 WHERE b.numero_traslado = inspeccion.numero
                 AND b.tipo_traslado = '{$TIPO_TRASLADO_RENTA}'
                 AND b.tipo_movimiento = '{$TIPO_MOVIMIENTO_SALIDA}'
+                and b.fecha >= '{$fecha_implementacion}'
             )
-            AND inspeccion.id_estado=3
+            /*AND inspeccion.id_estado=3*/
             ORDER BY inspeccion.hora DESC
             LIMIT 1");
+
+            if($result && $result->num_rows > 0) {
+                if ($fechaInspeccion <= $fecha_implementacion) {
+                $salida_antes_de_implementacion = true;
+
+                $sql = "INSERT INTO traslado_bitacora
+                (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible_entrada, kilometraje_entrada)
+                VALUES
+                ('{$conn->real_escape_string($numeroInspeccion)}', NOW(),'', '{$_SERVER['REMOTE_ADDR']}', '{$_SERVER['HTTP_USER_AGENT']}', '', '{$TIPO_TRASLADO_RENTA}', '{$TIPO_MOVIMIENTO_SALIDA}', NULL, NULL)";
+
+                    $insert_id = sql_insert($sql);
+                }
+            }
         }
 
         //entrada renta
-        if (!$result || $result->num_rows == 0){
+        if ((!$result || $result->num_rows == 0) || $salida_antes_de_implementacion) {
             $result = sql_select("SELECT 
             '{$TIPO_TRASLADO_RENTA}' AS tipo_traslado
             ,'{$TIPO_MOVIMIENTO_ENTRADA}' AS tipo_movimiento,
@@ -829,8 +854,9 @@ if ($accion=="L") {
                 WHERE b.numero_traslado = inspeccion.numero
                 AND b.tipo_traslado = '{$TIPO_TRASLADO_RENTA}'
                 AND b.tipo_movimiento = '{$TIPO_MOVIMIENTO_ENTRADA}'
+                and b.fecha >= '{$fecha_implementacion}'
             )
-            AND inspeccion.id_estado=3
+            /*AND inspeccion.id_estado=3*/
             ORDER BY inspeccion.hora DESC
             LIMIT 1");
         }
@@ -948,7 +974,7 @@ $txt_mensaje="";
 </div>
 
         <div class="text-center mb-1 form-1-titulo" style="font-size:2rem; font-weight:700; letter-spacing:1px;">
-            TRASLADO VEHICULOS
+            MOVIMIENTO VEHICULOS
         </div>
 
 
@@ -1969,14 +1995,14 @@ $txt_mensaje="";
             return;
         }
 
-        if (tipoMovimientoRenta === TIPOS_UI.ENTRADA && kilometrajeEntradaRenta === '') {
-            mytoast('error', 'Debe ingresar el kilometraje de entrada', 3000);
-            $('#kilometraje_entrada_renta').focus();
+        if (tipoMovimientoRenta === TIPOS_UI.ENTRADA && combustibleEntradaRenta === '') {
+            mytoast('error', 'Debe ingresar el combustible de entrada', 3000);
             return;
         }
 
-        if (tipoMovimientoRenta === TIPOS_UI.ENTRADA && combustibleEntradaRenta === '') {
-            mytoast('error', 'Debe ingresar el combustible de entrada', 3000);
+        if (tipoMovimientoRenta === TIPOS_UI.ENTRADA && kilometrajeEntradaRenta === '') {
+            mytoast('error', 'Debe ingresar el kilometraje de entrada', 3000);
+            $('#kilometraje_entrada_renta').focus();
             return;
         }
 
