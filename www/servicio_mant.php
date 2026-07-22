@@ -1415,7 +1415,7 @@ if (!es_nulo($id_estado)){
             letter-spacing: 0.5px;
             border-radius: 8px 8px 0 0;">
             Detalle Actividades     
-            <?php if (($id_estado != 7 && $id_estado != 22) || es_nulo($id_estado)) {  ?>       
+            <?php if ($id_estado != 22 || es_nulo($id_estado)) {  ?>       
                 <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Compra Realizada','servicio_mant_repuesto.php?a=comprea&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Compra Realizada</a>
                 <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Solicitud de Compra','servicio_mant_repuesto.php?a=solcomp&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Solicitud Compra</a>
                 <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Realizado','servicio_mant_repuesto.php?a=realiza&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-check"></i> Realizado</a>
@@ -1488,7 +1488,7 @@ if (!es_nulo($id_estado)){
             letter-spacing: 0.5px;
             border-radius: 8px 8px 0 0;">
            Repuestos 
-           <?php if (($id_estado != 7 && $id_estado != 22) || es_nulo($id_estado)) {  ?>       
+           <?php if ($id_estado != 22 || es_nulo($id_estado)) {  ?>       
               <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Devolver Repuesto','servicio_mant_repuesto.php?a=dev&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-minus"></i> Devolver</a>
               <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Repuesto NO Recibido','servicio_mant_repuesto.php?a=norec&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-store-slash"></i> No Recibido</a>           
               <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Compra Realizada','servicio_mant_repuesto.php?a=comprea&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Compra Realizada</a>    
@@ -1892,8 +1892,6 @@ function servicio_totlinea(linea){
 	  
 		  //	calcular_totales();
 		  }	
-
-
 
 
 function servicio_editarcampo(nombre,etiqueta,valor,adicional=''){
