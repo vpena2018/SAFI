@@ -658,7 +658,8 @@ if ($accion=="PR") {
 //variables
 $numero_traslado="";
 $fecha_implementacion="2026-07-21";
-$fecha_busqueda_inspecciones="2024-04-24";
+//$fecha_busqueda_inspecciones="2024-04-24";
+$fecha_busqueda_inspecciones="2026-06-21";
 
 // Leer Datos    ############################  
 if ($accion=="L") {
