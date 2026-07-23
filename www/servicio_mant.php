@@ -1654,6 +1654,15 @@ if (!es_nulo($id_estado)){
                    <a href="#" onclick="servicio_editarcampo('auditado','Auditado','23','<?php echo $addfecha; ?>'); return false;" class="btn btn-outline-secondary ml-3 mr-2 mb-2 xfrm" ><i class="fa fa-clock <?php echo $visible_guardar; ?>"></i> Revision ADPC</a>
                    
             <?php }    ?>
+ 
+            <?php  if (tiene_permiso(198)) {   ?>            
+             
+              <?php if (!es_nulo($id_inspeccion)) { ?>
+                    <a href="#" onclick="servicio_copiar_fotos(); return false;" class="btn btn-outline-info ml-3 mr-2 mb-2 xfrm" ><i class="fa fa-copy"></i> Copiar Fotos</a>
+              <?php } ?>
+                   
+            <?php }    ?>
+
 
             <?php if ($nuevoreg==false) { ?>
               <div class="float-right">
@@ -1833,6 +1842,35 @@ function procesar_servicio_foto(campo){
 
 	});
 		
+}
+
+function servicio_copiar_fotos(){
+  var cid = $('#id').val();
+  var pid = $('#id_producto').val();
+  var insp = $('#id_inspeccion').val();
+
+  if (!insp || insp === '0') {
+    mytoast('warning','No hay inspeccion relacionada para copiar fotos',3000);
+    return;
+  }
+
+  cargando(true);
+  $.post('servicio_fotos.php?a=c&cid='+cid+'&pid='+pid+'&insp='+insp, function(json) {
+    cargando(false);
+    if (json.length > 0) {
+      if (json[0].pcode == 1) {
+        mytoast('success', json[0].pmsg, 3000);
+        procesar_servicio_foto('nav_fotos');
+      } else {
+        mytoast('error', json[0].pmsg, 3000);
+      }
+    } else {
+      mymodal('error','Error','Se produjo un error. Favor vuelva a intentar');
+    }
+  }).fail(function() {
+    cargando(false);
+    mymodal('error','Error','Se produjo un error. Favor vuelva a intentar');
+  });
 }
 
 function procesar_servicio_historial(campo){
