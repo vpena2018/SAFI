@@ -13,7 +13,7 @@ pagina_permiso(123);
  
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="v";}
 
-
+$autorizacion_traslado=0;
 // Leer Datos    ############################  
 if ($accion=="v") {
 	$cid=0;
@@ -29,7 +29,9 @@ if ($accion=="v") {
 		,l1.nombre AS motorista1
 		,entidad.nombre AS cliente
 		,l2.usuario AS solicitante
+		,t1.autorizacion_traslado AS autorizacion_traslado
 		FROM orden_domicilio
+		LEFT OUTER JOIN tienda t1 ON (orden_domicilio.id_tienda=t1.id)
 		LEFT OUTER JOIN producto ON (orden_domicilio.id_producto=producto.id)
 		LEFT OUTER JOIN orden_domicilio_estado ON (orden_domicilio.id_estado=orden_domicilio_estado.id)
 		LEFT OUTER JOIN usuario l1 ON (orden_domicilio.id_motorista=l1.id)
@@ -41,7 +43,7 @@ if ($accion=="v") {
 
 		if ($result!=false){
 			if ($result -> num_rows > 0) { 
-				$row = $result -> fetch_assoc(); 
+				$row = $result -> fetch_assoc();
 			}
 		}
 
@@ -111,6 +113,30 @@ if ($accion=="g") {
 	
 	$sqlcampos="";
 	$sqlcampos.=" actualiza = NOW()";
+
+
+		$autorizar_traslado_salida = 0;
+
+		$result_agencia = sql_select("SELECT id_tienda FROM orden_domicilio WHERE id = $cid");
+
+		if ($result_agencia && $result_agencia->num_rows > 0) {
+			$row = $result_agencia->fetch_assoc();
+			//$result = sql_select("SELECT autorizacion_traslado FROM tienda_agencia WHERE id = $row[id_tienda_salida]");
+
+			$result = sql_select("
+			SELECT 
+				salida.autorizacion_traslado AS autorizacion_salida
+			FROM 
+				tienda salida
+			WHERE 
+				salida.id = $row[id_tienda]
+			");
+
+			if ($result && $result->num_rows > 0) {
+				$row = $result->fetch_assoc();
+				$autorizar_traslado_salida = (int)($row["autorizacion_salida"] ?? 0);
+			}
+		}
     
 
 	
@@ -119,12 +145,16 @@ if ($accion=="g") {
 		if (isset($_REQUEST['at'])){
 			$mov_asignar="Atender ";
 			$sqlcampos.=", domicilio_inicio = NOW()";
-			$sqlcampos.=", id_estado = 2";
+			if($autorizar_traslado_salida==1) {
+				$sqlcampos.=", id_estado = 2";
+			} else {
+				$sqlcampos.=", id_estado = 4";
+			}
+			// $sqlcampos.=", id_estado = 2";
 		}
 
 		if (isset($_REQUEST['aut'])) {
 			$mov_asignar="Autorizar ";
-			//$sqlcampos.=", id_usuario_autoriza =".$_SESSION["usuario_id"];
 			$sqlcampos.=", id_estado = 4";
 			$sqlcampos.=", autorizado = NOW()";
 		} 

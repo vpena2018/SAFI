@@ -789,7 +789,7 @@ if ($accion=="L") {
                   AND i.tipo_doc = 2
                   AND i.tipo_inspeccion = 1
                 LIMIT 1
-            ), '1/4') AS combustible_salida,
+            ), 0) AS combustible_salida,
 
             l1.nombre AS motorista1,
             entidad.nombre AS cliente,
@@ -830,6 +830,7 @@ if ($accion=="L") {
             )
           AND orden_domicilio.id_estado = 4
           AND orden_domicilio.desplazamiento = 'EXTERNO'
+          AND t0.autorizacion_traslado=1
 
         ORDER BY orden_domicilio.fecha DESC
         LIMIT 1");
@@ -906,8 +907,9 @@ if ($accion=="L") {
                 WHERE od2.id_producto = orden_domicilio.id_producto
                 AND b.tipo_movimiento = '{$TIPO_MOVIMIENTO_ENTRADA}'
             )
-          AND orden_domicilio.id_estado = 4
+          AND orden_domicilio.id_estado > 1
           AND orden_domicilio.desplazamiento = 'EXTERNO'
+          AND t0.autorizacion_traslado=1
 
         ORDER BY orden_domicilio.fecha DESC
         LIMIT 1");
@@ -1767,7 +1769,7 @@ $txt_mensaje="";
         const $kmEntrada = $('#kilometraje_entrada');
         const $combEntrada = $('input[name="combustible_entrada"]');
 
-        if (esEntrada || esDomicilio) {
+        if (esEntrada) {
             $seccion.show();
             $controles.prop('disabled', false);
 
