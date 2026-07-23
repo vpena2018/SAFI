@@ -2,7 +2,7 @@
 
 if (isset($_REQUEST['cid'])) { $cid = intval($_REQUEST['cid']); } else { exit; }
 if (isset($_REQUEST['pid'])) { $pid = intval($_REQUEST['pid']); } else { exit; }
-$accion = isset($_REQUEST['a']) && in_array($_REQUEST['a'], ['g', 'd']) ? $_REQUEST['a'] : '';
+$accion = isset($_REQUEST['a']) && in_array($_REQUEST['a'], ['g', 'd', 'c']) ? $_REQUEST['a'] : '';
 
 require_once ('include/framework.php');
 
@@ -106,6 +106,42 @@ if ($accion == "d") {
     if ($result != false) {
         $stud_arr[0]["pcode"] = 1;
         $stud_arr[0]["pmsg"] = "Borrado";
+    }
+
+    salida_json($stud_arr);
+    exit;
+}
+
+if ($accion == "c") {
+    $stud_arr[0]["pcode"] = 0;
+    $stud_arr[0]["pmsg"] = "ERROR DB103";
+
+    if (isset($_REQUEST['insp'])) { $insp = intval($_REQUEST['insp']); } else { $insp = 0; }
+    if ($insp <= 0) {
+        $stud_arr[0]["pmsg"] = "No hay inspeccion relacionada";
+        salida_json($stud_arr);
+        exit;
+    }
+
+    $id_usuario = intval($_SESSION['usuario_id']);
+    $sql_copiar = "INSERT INTO servicio_foto (id_servicio, archivo, fecha, id_usuario)
+                   SELECT $cid, inspeccion_foto.archivo, CURDATE(), $id_usuario
+                   FROM inspeccion_foto
+                   LEFT OUTER JOIN inspeccion ON (inspeccion.id = inspeccion_foto.id_inspeccion)
+                   LEFT OUTER JOIN servicio_foto
+                     ON (servicio_foto.id_servicio = $cid AND servicio_foto.archivo = inspeccion_foto.archivo)
+                   WHERE inspeccion_foto.id_inspeccion = $insp
+                     AND inspeccion.id_producto = $pid
+                     AND servicio_foto.id IS NULL";
+
+    if ($conn->query($sql_copiar)) {
+        $copiadas = intval($conn->affected_rows);
+        $stud_arr[0]["pcode"] = 1;
+        if ($copiadas > 0) {
+            $stud_arr[0]["pmsg"] = "Fotos copiadas: " . $copiadas;
+        } else {
+            $stud_arr[0]["pmsg"] = "No hay fotos nuevas para copiar";
+        }
     }
 
     salida_json($stud_arr);
