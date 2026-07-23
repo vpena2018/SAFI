@@ -412,7 +412,7 @@ if ($accion=="P") {
         if (strtoupper($tipo_movimiento_req) === $TIPO_MOVIMIENTO_ENTRADA && $combustible_entrada_req === '') {
             echo json_encode([
                 'ok' => false,
-                'error' => 'Debe ingresar el combustible de entrada'
+                'error' => 'Debe seleccionar el combustible de entrada'
             ]);
             exit;
         }
@@ -1431,6 +1431,7 @@ $txt_mensaje="";
     const TIPOS_UI = {
         RENTA: 'RENTA',
         TRASLADO: 'TRASLADO',
+        DOMICILIO: 'DOMICILIO',
         ENTRADA: 'ENTRADA',
         SALIDA: 'SALIDA',
         MODULO_RENTA: 'renta',
@@ -1699,7 +1700,7 @@ $txt_mensaje="";
         $('#tipo_traslado_lbl_valor').html('');
         trasladoCombustibleSalidaActual = '';
         trasladoKilometrajeSalidaActual = '';
-        actualizarSeccionEntrada('');
+        actualizarSeccionEntrada('', '');
         limpiarFirma();
     }
 
@@ -1758,18 +1759,23 @@ $txt_mensaje="";
         refrescarCanvasFirmas();
     }
 
-    function actualizarSeccionEntrada(tipoMovimiento) {
+    function actualizarSeccionEntrada(tipoMovimiento, tipoTraslado) {
         const esEntrada = textoMayuscula(tipoMovimiento) === TIPOS_UI.ENTRADA;
+        const esDomicilio = textoMayuscula(tipoTraslado) === TIPOS_UI.DOMICILIO;
         const $seccion = $('#datos_entrada');
         const $controles = $seccion.find('input');
         const $kmEntrada = $('#kilometraje_entrada');
         const $combEntrada = $('input[name="combustible_entrada"]');
 
-        if (esEntrada) {
+        if (esEntrada || esDomicilio) {
             $seccion.show();
             $controles.prop('disabled', false);
-            $combEntrada.prop('disabled', true);
-            $kmEntrada.prop('disabled', true);
+
+            if (!esDomicilio) {
+                $combEntrada.prop('disabled', true);
+                $kmEntrada.prop('disabled', true);
+            }
+
             return;
         }
 
@@ -1926,7 +1932,7 @@ $txt_mensaje="";
 
                 $('#tipo_movimiento_lbl_valor').html(resp.data.tipo_movimiento || '');
                 $('#tipo_traslado_mostrar_lbl_valor').html(resp.data.tipo_traslado || '');
-                actualizarSeccionEntrada(resp.data.tipo_movimiento || '');
+                actualizarSeccionEntrada(resp.data.tipo_movimiento || '', resp.data.tipo_traslado || '');
                 trasladoCombustibleSalidaActual = (resp.data.combustible_salida || '').toString().trim();
                 trasladoKilometrajeSalidaActual = (resp.data.kilometraje_salida || '').toString().trim();
 
@@ -2038,9 +2044,24 @@ $txt_mensaje="";
             return;
         }
 
-        if(tipoTraslado!='DOMICILIO')
+        if(tipoTraslado==='DOMICILIO')
         {
-    
+            if (textoMayuscula(tipo_movimiento) === TIPOS_UI.ENTRADA && combustibleEntrada === '') {
+                mytoast('error', 'debe seleccionar el combustible de entrada', 6000);
+                return;
+            }
+
+            if (textoMayuscula(tipo_movimiento) === TIPOS_UI.ENTRADA && kilometrajeEntrada === '') {
+                mytoast('error', 'debe ingresar el kilometraje de entrada', 6000);
+                $('#kilometraje_entrada').focus();
+                return;
+            }
+
+            if (textoMayuscula(tipo_movimiento) === TIPOS_UI.ENTRADA && Number(kilometrajeEntrada) < Number(kilometrajeSalida)) {
+                mytoast('error', 'El kilometraje de entrada no puede ser menor al de salida', 3000);
+                return;
+            }
+        }else{
             if (combustibleSalida === '' || kilometrajeSalida === '') {
                 mytoast('error', 'Faltan datos de salida (combustible o kilometraje)', 3000);
                 return;
@@ -2052,7 +2073,7 @@ $txt_mensaje="";
             }
 
             if (textoMayuscula(tipo_movimiento) === TIPOS_UI.ENTRADA && combustibleEntrada === '') {
-                mytoast('error', 'Motorista debe ingresar el combustible de entrada en traslados', 6000);
+                mytoast('error', 'Motorista debe seleccionar el combustible de entrada en traslados', 6000);
                 return;
             }
 
@@ -2071,8 +2092,11 @@ $txt_mensaje="";
                 mytoast('error', 'El kilometraje de entrada no puede ser menor al de salida', 3000);
                 return;
             }
-
         }
+    
+
+
+        
 
 
         var firmaBase64 = obtenerFirmaBase64();
@@ -2150,7 +2174,7 @@ $txt_mensaje="";
         }
 
         if (tipoMovimientoRenta === TIPOS_UI.ENTRADA && combustibleEntradaRenta === '') {
-            mytoast('error', 'Debe ingresar el combustible de entrada', 3000);
+            mytoast('error', 'Debe seleccionar el combustible de entrada', 3000);
             return;
         }
 
@@ -2220,7 +2244,7 @@ $txt_mensaje="";
 
         inicializarFirmaPad();
         inicializarFirmaPadRenta();
-        actualizarSeccionEntrada('');
+        actualizarSeccionEntrada('', '');
         actualizarSeccionEntradaRenta('');
         LimpiarResultadoBusquedaRenta();
         OcultarResultadoBusquedaRenta();
