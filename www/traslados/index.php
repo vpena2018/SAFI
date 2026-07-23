@@ -670,7 +670,7 @@ $fecha_busqueda_inspecciones="2026-06-21";
 // Leer Datos    ############################  
 if ($accion=="L") {
         
-
+        //TRASLADOS
         //Salida Traslado
 		$result = sql_select("SELECT orden_traslado.* 
         ,'{$TIPO_TRASLADO_TRASLADO}' as tipo_traslado
@@ -756,9 +756,44 @@ if ($accion=="L") {
               limit 1");
         }
 
+    //DOMICILIO
+    //salida domicilio
+     if (!$result || $result->num_rows == 0) {
 
-        //renta
+        $result = sql_select("SELECT orden_domicilio.* 
+            ,'{$TIPO_TRASLADO_DOMICILIO}' AS tipo_traslado
+            ,'{$TIPO_MOVIMIENTO_SALIDA}' AS tipo_movimiento
+            ,0 kilometraje_salida 
+            ,producto.codigo_alterno,producto.nombre,producto.placa
+            ,orden_domicilio_estado.nombre AS elestado
+            ,l1.nombre AS motorista1
+            ,entidad.nombre AS cliente
+            ,l2.usuario AS solicitante1
+            ,t0.nombre AS tiendanombre
+            FROM orden_domicilio
+            LEFT OUTER JOIN producto ON (orden_domicilio.id_producto=producto.id)
+            LEFT OUTER JOIN orden_domicilio_estado ON (orden_domicilio.id_estado=orden_domicilio_estado.id)
+            LEFT OUTER JOIN usuario l1 ON (orden_domicilio.id_motorista=l1.id)
+            LEFT OUTER JOIN entidad ON (orden_domicilio.cliente_id=entidad.id)
+            LEFT OUTER JOIN usuario l2 ON (orden_domicilio.id_usuario=l2.id)
+            LEFT OUTER JOIN tienda_agencia t1 ON (orden_domicilio.id_tienda=t1.id)
+			LEFT OUTER JOIN tienda t0 ON (t1.tienda_id=t0.id)
+            WHERE producto.codigo_alterno LIKE '%$codigo'
+              AND NOT EXISTS (
+                    SELECT 1
+                    FROM traslado_bitacora b
+                    INNER JOIN orden_domicilio od2
+                        ON od2.numero = b.numero_traslado
+                    WHERE od2.id_producto = orden_domicilio.id_producto
+                )
+            AND orden_domicilio.id_estado=4
+            AND orden_domicilio.desplazamiento='EXTERNO'
+            ORDER BY fecha DESC
+            LIMIT 1");
+    }
 
+
+        
         $salida_antes_de_implementacion=false;
 
         //estado completado inspeccion.id_estado = 2, tipo mov salida inspeccion.tipo_doc=2,tipo inspeccion renta o taller inspeccion.tipo_inspeccion=1
@@ -780,6 +815,7 @@ if ($accion=="L") {
             $numeroInspeccion = $row['numero'];
             $fechaInspeccion = $row['fecha'];
 
+        //RENTA
         //salida renta
         if (!$result || $result->num_rows == 0){
 
@@ -871,40 +907,7 @@ if ($accion=="L") {
 
 
        
-
-    // Si no encontró en traslado, buscar en domicilio SALIDA
-     if (!$result || $result->num_rows == 0) {
-
-        $result = sql_select("SELECT orden_domicilio.* 
-            ,'{$TIPO_TRASLADO_DOMICILIO}' AS tipo_traslado
-            ,'{$TIPO_MOVIMIENTO_SALIDA}' AS tipo_movimiento
-            ,0 kilometraje_salida 
-            ,producto.codigo_alterno,producto.nombre,producto.placa
-            ,orden_domicilio_estado.nombre AS elestado
-            ,l1.nombre AS motorista1
-            ,entidad.nombre AS cliente
-            ,l2.usuario AS solicitante1
-            ,t0.nombre AS tiendanombre
-            FROM orden_domicilio
-            LEFT OUTER JOIN producto ON (orden_domicilio.id_producto=producto.id)
-            LEFT OUTER JOIN orden_domicilio_estado ON (orden_domicilio.id_estado=orden_domicilio_estado.id)
-            LEFT OUTER JOIN usuario l1 ON (orden_domicilio.id_motorista=l1.id)
-            LEFT OUTER JOIN entidad ON (orden_domicilio.cliente_id=entidad.id)
-            LEFT OUTER JOIN usuario l2 ON (orden_domicilio.id_usuario=l2.id)
-            LEFT OUTER JOIN tienda_agencia t1 ON (orden_domicilio.id_tienda=t1.id)
-			LEFT OUTER JOIN tienda t0 ON (t1.tienda_id=t0.id)
-            WHERE producto.codigo_alterno LIKE '%$codigo'
-              AND NOT EXISTS (
-                    SELECT 1
-                    FROM traslado_bitacora b
-                    INNER JOIN orden_domicilio od2
-                        ON od2.numero = b.numero_traslado
-                    WHERE od2.id_producto = orden_domicilio.id_producto
-                )
-            AND orden_domicilio.id_estado=4
-            ORDER BY fecha DESC
-            LIMIT 1");
-    } 
+     
 
     if ($result && $result->num_rows > 0) {
 
