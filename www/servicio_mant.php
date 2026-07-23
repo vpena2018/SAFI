@@ -1658,7 +1658,7 @@ if (!es_nulo($id_estado)){
             <?php  if (tiene_permiso(198)) {   ?>            
              
               <?php if (!es_nulo($id_inspeccion)) { ?>
-                    <a href="#" onclick="servicio_copiar_fotos(); return false;" class="btn btn-outline-info ml-3 mr-2 mb-2 xfrm" ><i class="fa fa-copy"></i> Copiar Fotos</a>
+                    <a href="#" onclick="servicio_copiar_fotos(); return false;" class="btn btn-outline-info ml-3 mr-2 mb-2 xfrm" ><i class="fa fa-copy"></i> Copiar Fotos HI</a>
               <?php } ?>
                    
             <?php }    ?>
