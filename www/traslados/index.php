@@ -464,7 +464,7 @@ if ($accion=="P") {
     $kilometraje_entrada_sql = floatval($kilometraje_bitacora_req);
 
     $sql = "INSERT INTO traslado_bitacora
-            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible_entrada, kilometraje_entrada)
+            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible, kilometraje)
             VALUES
             ('{$numero_traslado_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}', '{$firma_sql}', '{$tipo_traslado_sql}', '{$tipo_movimiento_sql}', {$combustible_entrada_sql}, {$kilometraje_entrada_sql})";
 
@@ -640,7 +640,7 @@ if ($accion=="PR") {
     $kilometraje_entrada_sql = floatval($kilometraje_bitacora_req);
 
     $sql = "INSERT INTO traslado_bitacora
-            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible_entrada, kilometraje_entrada)
+            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible, kilometraje)
             VALUES
             ('{$numero_inspeccion_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}', '{$firma_sql}', '{$TIPO_TRASLADO_RENTA}', '{$tipo_movimiento_sql}', {$combustible_entrada_sql}, {$kilometraje_entrada_sql})";
 
@@ -760,40 +760,162 @@ if ($accion=="L") {
     //salida domicilio
      if (!$result || $result->num_rows == 0) {
 
-        $result = sql_select("SELECT orden_domicilio.* 
-            ,'{$TIPO_TRASLADO_DOMICILIO}' AS tipo_traslado
-            ,'{$TIPO_MOVIMIENTO_SALIDA}' AS tipo_movimiento
-            ,0 kilometraje_salida 
-            ,producto.codigo_alterno,producto.nombre,producto.placa
-            ,orden_domicilio_estado.nombre AS elestado
-            ,l1.nombre AS motorista1
-            ,entidad.nombre AS cliente
-            ,l2.usuario AS solicitante1
-            ,t0.nombre AS tiendanombre
-            FROM orden_domicilio
-            LEFT OUTER JOIN producto ON (orden_domicilio.id_producto=producto.id)
-            LEFT OUTER JOIN orden_domicilio_estado ON (orden_domicilio.id_estado=orden_domicilio_estado.id)
-            LEFT OUTER JOIN usuario l1 ON (orden_domicilio.id_motorista=l1.id)
-            LEFT OUTER JOIN entidad ON (orden_domicilio.cliente_id=entidad.id)
-            LEFT OUTER JOIN usuario l2 ON (orden_domicilio.id_usuario=l2.id)
-            LEFT OUTER JOIN tienda_agencia t1 ON (orden_domicilio.id_tienda=t1.id)
-			LEFT OUTER JOIN tienda t0 ON (t1.tienda_id=t0.id)
-            WHERE producto.codigo_alterno LIKE '%$codigo'
-              AND NOT EXISTS (
-                    SELECT 1
-                    FROM traslado_bitacora b
-                    INNER JOIN orden_domicilio od2
-                        ON od2.numero = b.numero_traslado
-                    WHERE od2.id_producto = orden_domicilio.id_producto
-                )
-            AND orden_domicilio.id_estado=4
-            AND orden_domicilio.desplazamiento='EXTERNO'
-            ORDER BY fecha DESC
-            LIMIT 1");
-    }
+    $result = sql_select("SELECT 
+            orden_domicilio.*,
+            '{$TIPO_TRASLADO_DOMICILIO}' AS tipo_traslado,
+            '{$TIPO_MOVIMIENTO_SALIDA}' AS tipo_movimiento,
+
+            COALESCE((
+                SELECT km
+                FROM inspeccion i
+                WHERE i.id_producto = orden_domicilio.id_producto
+                  AND i.id_estado = 1 /*BORRADOR*/
+                  AND i.tipo_doc = 2 /*SALIDA*/
+                  AND i.tipo_inspeccion = 1 /*RENTA*/
+                LIMIT 1
+            ), 0) AS kilometraje_salida,
+
+            producto.codigo_alterno,
+            producto.nombre,
+            producto.placa,
+
+            orden_domicilio_estado.nombre AS elestado,
+
+            COALESCE((
+                SELECT i.combustible_entrada
+                FROM inspeccion i
+                WHERE i.id_producto = orden_domicilio.id_producto
+                  AND i.id_estado = 1
+                  AND i.tipo_doc = 2
+                  AND i.tipo_inspeccion = 1
+                LIMIT 1
+            ), '1/4') AS combustible_salida,
+
+            l1.nombre AS motorista1,
+            entidad.nombre AS cliente,
+            l2.usuario AS solicitante1,
+            t0.nombre AS tiendanombre
+
+        FROM orden_domicilio
+
+        LEFT OUTER JOIN producto
+            ON orden_domicilio.id_producto = producto.id
+
+        LEFT OUTER JOIN orden_domicilio_estado
+            ON orden_domicilio.id_estado = orden_domicilio_estado.id
+
+        LEFT OUTER JOIN usuario l1
+            ON orden_domicilio.id_motorista = l1.id
+
+        LEFT OUTER JOIN entidad
+            ON orden_domicilio.cliente_id = entidad.id
+
+        LEFT OUTER JOIN usuario l2
+            ON orden_domicilio.id_usuario = l2.id
+
+        LEFT OUTER JOIN tienda_agencia t1
+            ON orden_domicilio.id_tienda = t1.id
+
+        LEFT OUTER JOIN tienda t0
+            ON t1.tienda_id = t0.id
+
+        WHERE producto.codigo_alterno LIKE '%$codigo'
+          AND NOT EXISTS (
+                SELECT 1
+                FROM traslado_bitacora b
+                INNER JOIN orden_domicilio od2
+                    ON od2.numero = b.numero_traslado
+                WHERE od2.id_producto = orden_domicilio.id_producto
+                AND b.tipo_movimiento = '{$TIPO_MOVIMIENTO_SALIDA}'
+            )
+          AND orden_domicilio.id_estado = 4
+          AND orden_domicilio.desplazamiento = 'EXTERNO'
+
+        ORDER BY orden_domicilio.fecha DESC
+        LIMIT 1");
+}
+
+        //ENTRADA domicilio
+        if (!$result || $result->num_rows == 0) {
+
+    $result = sql_select("SELECT 
+            orden_domicilio.*,
+            '{$TIPO_TRASLADO_DOMICILIO}' AS tipo_traslado,
+            '{$TIPO_MOVIMIENTO_ENTRADA}' AS tipo_movimiento,
+
+            COALESCE((
+                SELECT km
+                FROM inspeccion i
+                WHERE i.id_producto = orden_domicilio.id_producto
+                  AND i.id_estado = 1 /*BORRADOR*/
+                  AND i.tipo_doc = 2 /*SALIDA*/
+                  AND i.tipo_inspeccion = 1 /*RENTA*/
+                LIMIT 1
+            ), 0) AS kilometraje_salida,
+
+            producto.codigo_alterno,
+            producto.nombre,
+            producto.placa,
+
+            orden_domicilio_estado.nombre AS elestado,
+
+            COALESCE((
+                SELECT i.combustible_entrada
+                FROM inspeccion i
+                WHERE i.id_producto = orden_domicilio.id_producto
+                  AND i.id_estado = 1
+                  AND i.tipo_doc = 2
+                  AND i.tipo_inspeccion = 1
+                LIMIT 1
+            ), '1/4') AS combustible_salida,
+
+            l1.nombre AS motorista1,
+            entidad.nombre AS cliente,
+            l2.usuario AS solicitante1,
+            t0.nombre AS tiendanombre
+
+        FROM orden_domicilio
+
+        LEFT OUTER JOIN producto
+            ON orden_domicilio.id_producto = producto.id
+
+        LEFT OUTER JOIN orden_domicilio_estado
+            ON orden_domicilio.id_estado = orden_domicilio_estado.id
+
+        LEFT OUTER JOIN usuario l1
+            ON orden_domicilio.id_motorista = l1.id
+
+        LEFT OUTER JOIN entidad
+            ON orden_domicilio.cliente_id = entidad.id
+
+        LEFT OUTER JOIN usuario l2
+            ON orden_domicilio.id_usuario = l2.id
+
+        LEFT OUTER JOIN tienda_agencia t1
+            ON orden_domicilio.id_tienda = t1.id
+
+        LEFT OUTER JOIN tienda t0
+            ON t1.tienda_id = t0.id
+
+        WHERE producto.codigo_alterno LIKE '%$codigo'
+          AND NOT EXISTS (
+                SELECT 1
+                FROM traslado_bitacora b
+                INNER JOIN orden_domicilio od2
+                    ON od2.numero = b.numero_traslado
+                WHERE od2.id_producto = orden_domicilio.id_producto
+                AND b.tipo_movimiento = '{$TIPO_MOVIMIENTO_ENTRADA}'
+            )
+          AND orden_domicilio.id_estado = 4
+          AND orden_domicilio.desplazamiento = 'EXTERNO'
+
+        ORDER BY orden_domicilio.fecha DESC
+        LIMIT 1");
+}
 
 
-        
+        //RENTA
+        //salida renta
         $salida_antes_de_implementacion=false;
 
         //estado completado inspeccion.id_estado = 2, tipo mov salida inspeccion.tipo_doc=2,tipo inspeccion renta o taller inspeccion.tipo_inspeccion=1
@@ -815,8 +937,7 @@ if ($accion=="L") {
             $numeroInspeccion = $row['numero'];
             $fechaInspeccion = $row['fecha'];
 
-        //RENTA
-        //salida renta
+  
         if (!$result || $result->num_rows == 0){
 
             $result = sql_select("SELECT 
@@ -1773,6 +1894,7 @@ $txt_mensaje="";
                     LimpiarResultadoBusquedaRenta();
                     MostrarResultadoBusquedaRenta();
 
+
                     $('#tipo_movimiento_renta_lbl_valor').html(resp.data.tipo_movimiento || '');
                     $('#tipo_traslado_renta_mostrar_lbl_valor').html(resp.data.tipo_traslado || '');
                     actualizarSeccionEntradaRenta(resp.data.tipo_movimiento || '');
@@ -1797,6 +1919,8 @@ $txt_mensaje="";
                 }
 
                 MostrarResultadoBusquedaTraslado();
+
+                debugger;
 
                 //console.log(resp.data);
 

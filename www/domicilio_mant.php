@@ -151,7 +151,6 @@ if ($accion=="g") {
 	if ($nuevoreg==true){
         //Crear nuevo            
         $sqlcampos.= " , fecha =NOW(), hora =NOW()"; 
-		$sqlcampos.= " , desplazamiento =".GetSQLValue($tipo_desplazamiento,"text"); 
         $sqlcampos.= " , id_usuario =".$_SESSION["usuario_id"];
         $sqlcampos.= " , id_tienda =".$_SESSION['tienda_id'];
         $sqlcampos.= " , id_estado =1";
