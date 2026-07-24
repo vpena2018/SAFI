@@ -926,15 +926,19 @@ if ($accion=="L") {
     //salida cita
             if (!$result || $result->num_rows == 0)
                 {
-                    $result = sql_select("SELECT cita.*
-                    ,'{$TIPO_TRASLADO_CITA}' AS tipo_traslado
-                    ,'{$TIPO_MOVIMIENTO_SALIDA}' AS tipo_movimiento
+                    $result = sql_select("SELECT 							
+                    cita.numero
+                    ,cita.fecha
+                    ,cita.empresa
+                    ,cita.id_tienda
+                    , '{$TIPO_TRASLADO_CITA}' AS tipo_traslado
+                    , '{$TIPO_MOVIMIENTO_SALIDA}' AS tipo_movimiento
                     ,t0.nombre AS tiendanombre
                     ,producto.codigo_alterno
                     ,producto.placa
                     ,producto.nombre AS producto_nombre
-                    ,entidad.codigo_alterno AS elcodcliente
-                    ,entidad.nombre AS elcliente
+                    ,entidad.codigo_alterno AS cliente_codigo
+                    ,entidad.nombre AS cliente_nombre
                     FROM cita
                     LEFT OUTER JOIN tienda t0 ON (cita.id_tienda=t0.id)
                     LEFT OUTER JOIN producto ON (cita.id_producto=producto.id)
