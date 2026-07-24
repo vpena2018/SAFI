@@ -662,11 +662,170 @@ if ($accion=="PR") {
     exit;
 }
 
+if ($accion=="PC") {
+
+    $numero_cita_req = trim($_REQUEST['numero_cita'] ?? '');
+    $dispositivo_req = trim($_REQUEST['dispositivo'] ?? '');
+    $firma_req = $_REQUEST['firma'] ?? '';
+    $ip_cliente = $_SERVER['REMOTE_ADDR'] ?? '';
+    $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    $tipo_movimiento_req = strtoupper(trim($_REQUEST['tipo_movimiento'] ?? ''));
+    $combustible_salida_req = trim($_REQUEST['combustible_salida'] ?? '');
+    $kilometraje_salida_req = trim($_REQUEST['kilometraje_salida'] ?? '');
+    $combustible_entrada_req = trim($_REQUEST['combustible_entrada'] ?? '');
+    $kilometraje_entrada_req = trim($_REQUEST['kilometraje_entrada'] ?? '');
+
+    if ($numero_cita_req === '') {
+        echo json_encode([
+            'ok' => false,
+            'error' => 'No hay numero de cita para procesar'
+        ]);
+        exit;
+    }
+
+    if ($firma_req === '') {
+        echo json_encode([
+            'ok' => false,
+            'error' => 'Debe capturar la firma'
+        ]);
+        exit;
+    }
+
+    if ($tipo_movimiento_req !== $TIPO_MOVIMIENTO_SALIDA && $tipo_movimiento_req !== $TIPO_MOVIMIENTO_ENTRADA) {
+        echo json_encode([
+            'ok' => false,
+            'error' => 'Tipo de movimiento no valido'
+        ]);
+        exit;
+    }
+
+    $kilometraje_salida_val = null;
+    $combustible_salida_val = '';
+    $combustible_guardar = '';
+    $kilometraje_guardar = null;
+
+    if ($tipo_movimiento_req === $TIPO_MOVIMIENTO_SALIDA) {
+        if ($kilometraje_salida_req === '' || $combustible_salida_req === '') {
+            echo json_encode([
+                'ok' => false,
+                'error' => 'Debe ingresar kilometraje y combustible de salida'
+            ]);
+            exit;
+        }
+
+        if (!is_numeric($kilometraje_salida_req)) {
+            echo json_encode([
+                'ok' => false,
+                'error' => 'El kilometraje de salida no es valido'
+            ]);
+            exit;
+        }
+
+        $kilometraje_salida_val = floatval($kilometraje_salida_req);
+        $combustible_salida_val = $combustible_salida_req;
+        $combustible_guardar = $combustible_salida_req;
+        $kilometraje_guardar = $kilometraje_salida_val;
+    } else {
+        $sql_salida = "
+            SELECT combustible, kilometraje
+            FROM traslado_bitacora
+            WHERE numero_traslado = '".$conn->real_escape_string($numero_cita_req)."'
+              AND tipo_traslado = '".$TIPO_TRASLADO_CITA."'
+              AND tipo_movimiento = '".$TIPO_MOVIMIENTO_SALIDA."'
+                        ORDER BY id_bitacora DESC
+            LIMIT 1
+        ";
+
+        $result_salida = sql_select($sql_salida);
+
+        if (!$result_salida || $result_salida->num_rows === 0) {
+            echo json_encode([
+                'ok' => false,
+                'error' => 'No existe salida registrada para esta cita'
+            ]);
+            exit;
+        }
+
+        $row_salida = $result_salida->fetch_assoc();
+        $kilometraje_salida_val = floatval($row_salida['kilometraje'] ?? 0);
+        $combustible_salida_val = trim($row_salida['combustible'] ?? '');
+
+        if ($kilometraje_entrada_req === '' || $combustible_entrada_req === '') {
+            echo json_encode([
+                'ok' => false,
+                'error' => 'Debe ingresar kilometraje y combustible de entrada'
+            ]);
+            exit;
+        }
+
+        if (!is_numeric($kilometraje_entrada_req)) {
+            echo json_encode([
+                'ok' => false,
+                'error' => 'El kilometraje de entrada no es valido'
+            ]);
+            exit;
+        }
+
+        if (floatval($kilometraje_entrada_req) < $kilometraje_salida_val) {
+            echo json_encode([
+                'ok' => false,
+                'error' => 'El kilometraje de entrada no puede ser menor al kilometraje de salida'
+            ]);
+            exit;
+        }
+
+        $combustible_guardar = $combustible_entrada_req;
+        $kilometraje_guardar = floatval($kilometraje_entrada_req);
+    }
+
+    $firma_limpia = preg_replace('#^data:image/\w+;base64,#i', '', trim($firma_req));
+
+    if ($firma_limpia === '' || !preg_match('/^[A-Za-z0-9+\/=\r\n]+$/', $firma_limpia)) {
+        echo json_encode([
+            'ok' => false,
+            'error' => 'La firma no es valida'
+        ]);
+        exit;
+    }
+
+    $numero_cita_sql = $conn->real_escape_string($numero_cita_req);
+    $dispositivo_sql = $conn->real_escape_string($dispositivo_req);
+    $ip_cliente_sql = $conn->real_escape_string($ip_cliente);
+    $user_agent_sql = $conn->real_escape_string($user_agent);
+    $firma_sql = $conn->real_escape_string($firma_limpia);
+    $tipo_movimiento_sql = $conn->real_escape_string($tipo_movimiento_req);
+    $combustible_sql = "'".$conn->real_escape_string($combustible_guardar)."'";
+    $kilometraje_sql = floatval($kilometraje_guardar);
+
+    $sql = "INSERT INTO traslado_bitacora
+            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible, kilometraje)
+            VALUES
+            ('{$numero_cita_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}', '{$firma_sql}', '{$TIPO_TRASLADO_CITA}', '{$tipo_movimiento_sql}', {$combustible_sql}, {$kilometraje_sql})";
+
+    $insert_id = sql_insert($sql);
+
+    if ($insert_id) {
+        echo json_encode([
+            'ok' => true,
+            'id' => $insert_id,
+            'combustible_salida' => $combustible_salida_val,
+            'kilometraje_salida' => $kilometraje_salida_val
+        ]);
+    } else {
+        echo json_encode([
+            'ok' => false,
+            'error' => 'No se pudo guardar el registro de cita'
+        ]);
+    }
+
+    exit;
+}
+
 //variables
 $numero_traslado="";
-$fecha_implementacion="2026-07-21";
+$fecha_implementacion="2026-07-24";
 //$fecha_busqueda_inspecciones="2024-04-24";
-$fecha_busqueda_inspecciones="2026-06-21";
+$fecha_busqueda_inspecciones="2024-03-21";
 
 // Leer Datos    ############################  
 if ($accion=="L") {
@@ -944,6 +1103,7 @@ if ($accion=="L") {
                     LEFT OUTER JOIN producto ON (cita.id_producto=producto.id)
                     LEFT OUTER JOIN entidad ON (cita.cliente_id=entidad.id)
                     WHERE producto.codigo_alterno LIKE '%$codigo'
+                    AND cita.id_estado = 1
                     AND DATE(cita.fecha_cita) = CURDATE()
                     AND NOT EXISTS (
                         SELECT 1
@@ -956,13 +1116,71 @@ if ($accion=="L") {
                     LIMIT 1");
                 }
 
+    //entrada cita
+            if (!$result || $result->num_rows == 0)
+                {
+                    $result = sql_select("SELECT
+                    cita.numero
+                    ,cita.fecha_cita fecha
+                    ,cita.empresa
+                    ,cita.id_tienda
+                    , '{$TIPO_TRASLADO_CITA}' AS tipo_traslado
+                    , '{$TIPO_MOVIMIENTO_ENTRADA}' AS tipo_movimiento
+                    ,t0.nombre AS tiendanombre
+                    ,producto.codigo_alterno
+                    ,producto.placa
+                    ,producto.nombre AS producto_nombre
+                    ,entidad.codigo_alterno AS cliente_codigo
+                    ,entidad.nombre AS cliente_nombre
+                    ,(
+                        SELECT b2.combustible
+                        FROM traslado_bitacora b2
+                        WHERE b2.numero_traslado = cita.numero
+                        AND b2.tipo_movimiento = '{$TIPO_MOVIMIENTO_SALIDA}'
+                        AND b2.tipo_traslado = '{$TIPO_TRASLADO_CITA}'
+                        ORDER BY b2.id_bitacora DESC
+                        LIMIT 1
+                    ) AS combustible_salida
+                    ,(
+                        SELECT b2.kilometraje
+                        FROM traslado_bitacora b2
+                        WHERE b2.numero_traslado = cita.numero
+                        AND b2.tipo_movimiento = '{$TIPO_MOVIMIENTO_SALIDA}'
+                        AND b2.tipo_traslado = '{$TIPO_TRASLADO_CITA}'
+                        ORDER BY b2.id_bitacora DESC
+                        LIMIT 1
+                    ) AS kilometraje_salida
+                    FROM cita
+                    LEFT OUTER JOIN tienda t0 ON (cita.id_tienda=t0.id)
+                    LEFT OUTER JOIN producto ON (cita.id_producto=producto.id)
+                    LEFT OUTER JOIN entidad ON (cita.cliente_id=entidad.id)
+                    WHERE producto.codigo_alterno LIKE '%$codigo'
+                    AND DATE(cita.fecha_cita) = CURDATE()
+                    AND EXISTS (
+                        SELECT 1
+                        FROM traslado_bitacora b
+                        WHERE b.numero_traslado = cita.numero
+                        AND b.tipo_movimiento = '{$TIPO_MOVIMIENTO_SALIDA}'
+                        AND b.tipo_traslado = '{$TIPO_TRASLADO_CITA}'
+                    )
+                    AND NOT EXISTS (
+                        SELECT 1
+                        FROM traslado_bitacora b
+                        WHERE b.numero_traslado = cita.numero
+                        AND b.tipo_movimiento = '{$TIPO_MOVIMIENTO_ENTRADA}'
+                        AND b.tipo_traslado = '{$TIPO_TRASLADO_CITA}'
+                    )
+                    ORDER BY cita.fecha_cita DESC
+                    LIMIT 1");
+                }
+
         //RENTA
         //salida renta
         $salida_antes_de_implementacion=false;
 
         //estado completado inspeccion.id_estado = 2, tipo mov salida inspeccion.tipo_doc=2,tipo inspeccion renta o taller inspeccion.tipo_inspeccion=1
         $ultimaInspeccion = sql_select("
-        SELECT inspeccion.numero,inspeccion.fecha
+        SELECT inspeccion.numero,inspeccion.fecha,inspeccion.combustible_entrada,inspeccion.kilometraje_entrada
         FROM inspeccion
         LEFT JOIN producto
             ON inspeccion.id_producto = producto.id
@@ -1021,9 +1239,9 @@ if ($accion=="L") {
                 $salida_antes_de_implementacion = true;
 
                 $sql = "INSERT INTO traslado_bitacora
-                (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible_entrada, kilometraje_entrada)
+                (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible, kilometraje)
                 VALUES
-                ('{$conn->real_escape_string($numeroInspeccion)}', NOW(),'', '{$_SERVER['REMOTE_ADDR']}', '{$_SERVER['HTTP_USER_AGENT']}', '', '{$TIPO_TRASLADO_RENTA}', '{$TIPO_MOVIMIENTO_SALIDA}', NULL, NULL)";
+                ('{$conn->real_escape_string($numeroInspeccion)}', NOW(),'AUTOMATICO', '{$_SERVER['REMOTE_ADDR']}', '{$_SERVER['HTTP_USER_AGENT']}', '', '{$TIPO_TRASLADO_RENTA}', '{$TIPO_MOVIMIENTO_SALIDA}', '{$row['combustible_entrada']}', '{$row['kilometraje_entrada']}')";
 
                     $insert_id = sql_insert($sql);
                 }
@@ -1351,6 +1569,93 @@ $txt_mensaje="";
 
                 </div>
 
+                <div id="resultadoBusquedaCita"
+                    class="mt-4" style="display:none;">
+
+                    <div class="row mb-0">
+                        <div class="col-auto" style="background-color: #f0f0d7; font-weight:700;">
+                            <?php echo campo("tipo_movimiento_cita_lbl","Movimiento",'labelb','','','style="background-color: #2533fa; font-weight:700;"');?>
+                        </div>
+                        <div class="col-auto" style="background-color: #f0f0d7; font-weight:700;">
+                            <?php echo campo("tipo_traslado_cita_mostrar_lbl","Tipo traslado",'labelb','','','style="background-color: #2533fa; font-weight:700;"');?>
+                        </div>
+                    </div>
+
+                    <div class="row mb-0">
+                        <div class="col-auto">
+                            <?php echo campo("numero_cita_lbl","Numero",'labelb','',' ');?>
+                        </div>
+                        <div class="col-auto">
+                            <?php echo campo("fecha_cita_lbl", "Fecha", "labelb", '', ' ');?>
+                        </div>
+                        <div class="col-auto">
+                            <?php echo campo("tienda_cita_lbl", "Tienda", "labelb", '', ' ');?>
+                        </div>
+                    </div>
+
+                    <div class="row mb-0">
+                        <div class="col-auto">
+                            <?php echo campo("vehiculo_cita_lbl", "Vehiculo", "labelb", '', ' ');?>
+                        </div>
+                        <div class="col-auto">
+                            <?php echo campo("cliente_cita_lbl", "Cliente", "labelb", '', ' ');?>
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <span class="outside-label">Combustible Salida</span>
+                            <?php
+                                $disable_combsalida_cita = '';
+                                echo campo_combustible('combustible_salida_cita','',$disable_combsalida_cita);
+                            ?>
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-md-8" style="margin-left: 10px;">
+                            <?php echo campo("kilometraje_salida_cita","Kilometraje salida",'number','',' '); ?>
+                        </div>
+                    </div>
+
+                    <div id="datos_entrada_cita" class="row" style="display:none;">
+                        <div class="col-md-12">
+                            <span class="outside-label">Combustible Entrada</span>
+                            <?php
+                                $disable_combentrada_cita = '';
+                                echo campo_combustible('combustible_entrada_cita','',$disable_combentrada_cita);
+                            ?>
+                        </div>
+
+                        <div class="col-md-8" style="margin-left: 10px;">
+                            <?php echo campo("kilometraje_entrada_cita","Kilometraje Entrada",'number','',' ',$disable_combentrada_cita .' '); ?>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <label class="outside-label" for="firmaPadCita">Firma</label>
+                            <canvas id="firmaPadCita"
+                                    style="width:100%; height:140px; border:2px solid #c8ced4; border-radius:8px; background:#fff; touch-action:none;"></canvas>
+                            <div class="text-right mt-2">
+                                <button type="button" id="btnLimpiarFirmaCita" class="btn btn-outline-secondary btn-sm">Limpiar firma</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <button type="button"
+                                    id="btnProcesarCita"
+                                    class="btn btn-success btn-lg w-100 py-3"
+                                    style="font-weight:700; letter-spacing:.5px;">
+                                PROCESAR
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
                     <div id="resultadoBusquedaRenta"
                     class="mt-4" style="display:none;">
 
@@ -1463,12 +1768,19 @@ $txt_mensaje="";
     let firmaCtxRenta = null;
     let firmaDibujandoRenta = false;
     let firmaTieneTrazoRenta = false;
+    let firmaCanvasCita = null;
+    let firmaCtxCita = null;
+    let firmaDibujandoCita = false;
+    let firmaTieneTrazoCita = false;
     let moduloBusquedaActivo = '';
     let trasladoCombustibleSalidaActual = '';
     let trasladoKilometrajeSalidaActual = '';
     let rentaNumeroInspeccionActual = '';
     let rentaCombustibleSalidaActual = '';
     let rentaKilometrajeSalidaActual = '';
+    let citaNumeroActual = '';
+    let citaCombustibleSalidaActual = '';
+    let citaKilometrajeSalidaActual = '';
 
     const TIPOS_UI = {
         RENTA: 'RENTA',
@@ -1476,8 +1788,10 @@ $txt_mensaje="";
         DOMICILIO: 'DOMICILIO',
         ENTRADA: 'ENTRADA',
         SALIDA: 'SALIDA',
+        CITA: 'CITA',
         MODULO_RENTA: 'renta',
-        MODULO_TRASLADO: 'traslado'
+        MODULO_TRASLADO: 'traslado',
+        MODULO_CITA: 'cita'
     };
 
 
@@ -1669,6 +1983,100 @@ $txt_mensaje="";
         firmaCanvasRenta.addEventListener('touchcancel', terminarFirmaRenta, { passive: false });
     }
 
+    function ajustarCanvasFirmaCita() {
+        if (!firmaCanvasCita || !firmaCtxCita) {
+            return;
+        }
+
+        const ratio = window.devicePixelRatio || 1;
+        const rect = firmaCanvasCita.getBoundingClientRect();
+        firmaCanvasCita.width = Math.max(1, Math.floor(rect.width * ratio));
+        firmaCanvasCita.height = Math.max(1, Math.floor(rect.height * ratio));
+        firmaCtxCita.setTransform(ratio, 0, 0, ratio, 0, 0);
+        firmaCtxCita.lineWidth = 2;
+        firmaCtxCita.lineCap = 'round';
+        firmaCtxCita.strokeStyle = '#111';
+    }
+
+    function obtenerPosicionFirmaCita(evt) {
+        const rect = firmaCanvasCita.getBoundingClientRect();
+        if (evt.touches && evt.touches.length > 0) {
+            return {
+                x: evt.touches[0].clientX - rect.left,
+                y: evt.touches[0].clientY - rect.top
+            };
+        }
+
+        return {
+            x: evt.clientX - rect.left,
+            y: evt.clientY - rect.top
+        };
+    }
+
+    function iniciarFirmaCita(evt) {
+        evt.preventDefault();
+        firmaDibujandoCita = true;
+        const pos = obtenerPosicionFirmaCita(evt);
+        firmaCtxCita.beginPath();
+        firmaCtxCita.moveTo(pos.x, pos.y);
+    }
+
+    function moverFirmaCita(evt) {
+        if (!firmaDibujandoCita) {
+            return;
+        }
+        evt.preventDefault();
+        const pos = obtenerPosicionFirmaCita(evt);
+        firmaCtxCita.lineTo(pos.x, pos.y);
+        firmaCtxCita.stroke();
+        firmaTieneTrazoCita = true;
+    }
+
+    function terminarFirmaCita(evt) {
+        if (!firmaDibujandoCita) {
+            return;
+        }
+        evt.preventDefault();
+        firmaDibujandoCita = false;
+        firmaCtxCita.closePath();
+    }
+
+    function limpiarFirmaCita() {
+        if (!firmaCanvasCita || !firmaCtxCita) {
+            return;
+        }
+        firmaCtxCita.clearRect(0, 0, firmaCanvasCita.width, firmaCanvasCita.height);
+        firmaTieneTrazoCita = false;
+    }
+
+    function obtenerFirmaBase64Cita() {
+        if (!firmaCanvasCita || !firmaTieneTrazoCita) {
+            return '';
+        }
+        return firmaCanvasCita.toDataURL('image/png');
+    }
+
+    function inicializarFirmaPadCita() {
+        firmaCanvasCita = document.getElementById('firmaPadCita');
+        if (!firmaCanvasCita) {
+            return;
+        }
+
+        firmaCtxCita = firmaCanvasCita.getContext('2d');
+        ajustarCanvasFirmaCita();
+        window.addEventListener('resize', ajustarCanvasFirmaCita);
+
+        firmaCanvasCita.addEventListener('mousedown', iniciarFirmaCita);
+        firmaCanvasCita.addEventListener('mousemove', moverFirmaCita);
+        firmaCanvasCita.addEventListener('mouseup', terminarFirmaCita);
+        firmaCanvasCita.addEventListener('mouseleave', terminarFirmaCita);
+
+        firmaCanvasCita.addEventListener('touchstart', iniciarFirmaCita, { passive: false });
+        firmaCanvasCita.addEventListener('touchmove', moverFirmaCita, { passive: false });
+        firmaCanvasCita.addEventListener('touchend', terminarFirmaCita, { passive: false });
+        firmaCanvasCita.addEventListener('touchcancel', terminarFirmaCita, { passive: false });
+    }
+
     function formatearFechaDdMmYyyy(fechaRaw) {
         if (!fechaRaw) {
             return '';
@@ -1697,6 +2105,7 @@ $txt_mensaje="";
             window.requestAnimationFrame(function () {
                 ajustarCanvasFirma();
                 ajustarCanvasFirmaRenta();
+                ajustarCanvasFirmaCita();
             });
         });
     }
@@ -1766,6 +2175,25 @@ $txt_mensaje="";
         limpiarFirmaRenta();
     }
 
+    function LimpiarResultadoBusquedaCita() {
+        $('#tipo_movimiento_cita_lbl_valor').html('');
+        $('#tipo_traslado_cita_mostrar_lbl_valor').html('');
+        $('#numero_cita_lbl_valor').html('');
+        $('#fecha_cita_lbl_valor').html('');
+        $('#tienda_cita_lbl_valor').html('');
+        $('#vehiculo_cita_lbl_valor').html('');
+        $('#cliente_cita_lbl_valor').html('');
+        $('#kilometraje_salida_cita').val('');
+        setCombustibleValor('combustible_salida_cita', '');
+        setCombustibleValor('combustible_entrada_cita', '');
+        $('#kilometraje_entrada_cita').val('');
+        citaNumeroActual = '';
+        citaCombustibleSalidaActual = '';
+        citaKilometrajeSalidaActual = '';
+        actualizarSeccionEntradaCita('');
+        limpiarFirmaCita();
+    }
+
     function actualizarSeccionEntradaRenta(tipoMovimiento) {
         const esEntrada = textoMayuscula(tipoMovimiento) === TIPOS_UI.ENTRADA;
         const $seccion = $('#datos_entrada_renta');
@@ -1786,6 +2214,7 @@ $txt_mensaje="";
     function MostrarResultadoBusquedaRenta() {
         moduloBusquedaActivo = TIPOS_UI.MODULO_RENTA;
         $('#resultadoBusqueda').hide();
+        $('#resultadoBusquedaCita').hide();
         $('#resultadoBusquedaRenta').show();
         refrescarCanvasFirmas();
     }
@@ -1794,11 +2223,47 @@ $txt_mensaje="";
         $('#resultadoBusquedaRenta').hide();
     }
 
+    function MostrarResultadoBusquedaCita() {
+        moduloBusquedaActivo = TIPOS_UI.MODULO_CITA;
+        $('#resultadoBusqueda').hide();
+        $('#resultadoBusquedaRenta').hide();
+        $('#resultadoBusquedaCita').show();
+        refrescarCanvasFirmas();
+    }
+
+    function OcultarResultadoBusquedaCita() {
+        $('#resultadoBusquedaCita').hide();
+    }
+
     function MostrarResultadoBusquedaTraslado() {
         moduloBusquedaActivo = TIPOS_UI.MODULO_TRASLADO;
         $('#resultadoBusqueda').show();
+        $('#resultadoBusquedaCita').hide();
         $('#resultadoBusquedaRenta').hide();
         refrescarCanvasFirmas();
+    }
+
+    function actualizarSeccionEntradaCita(tipoMovimiento) {
+        const esEntrada = textoMayuscula(tipoMovimiento) === TIPOS_UI.ENTRADA;
+        const $seccion = $('#datos_entrada_cita');
+        const $controles = $seccion.find('input');
+        const $kmSalida = $('#kilometraje_salida_cita');
+        const $combSalida = $('input[name="combustible_salida_cita"]');
+
+        if (esEntrada) {
+            $seccion.show();
+            $controles.prop('disabled', false);
+            $combSalida.prop('disabled', true);
+            $kmSalida.prop('disabled', true);
+            return;
+        }
+
+        setCombustibleValor('combustible_entrada_cita', '');
+        $('#kilometraje_entrada_cita').val('');
+        $controles.prop('disabled', true);
+        $combSalida.prop('disabled', false);
+        $kmSalida.prop('disabled', false);
+        $seccion.hide();
     }
 
     function actualizarSeccionEntrada(tipoMovimiento, tipoTraslado) {
@@ -1910,6 +2375,7 @@ $txt_mensaje="";
     e.preventDefault();
 
 	limpiarFirma();
+    limpiarFirmaCita();
 
     var codigo = $('#num_inv').val().trim();
 
@@ -1936,6 +2402,32 @@ $txt_mensaje="";
             if (resp.ok) {
 
                 const tipoTrasladoRespuesta = textoMayuscula(resp.data.tipo_traslado);
+
+                if (tipoTrasladoRespuesta === TIPOS_UI.CITA) {
+                    limpiarCamposResultado();
+                    LimpiarResultadoBusquedaRenta();
+                    LimpiarResultadoBusquedaCita();
+                    MostrarResultadoBusquedaCita();
+
+                    const tipoMovimientoCita = resp.data.tipo_movimiento || '';
+                    $('#tipo_movimiento_cita_lbl_valor').html(tipoMovimientoCita);
+                    $('#tipo_traslado_cita_mostrar_lbl_valor').html(resp.data.tipo_traslado || '');
+                    $('#numero_cita_lbl_valor').html(resp.data.numero || '');
+                    $('#fecha_cita_lbl_valor').html(formatearFechaDdMmYyyy(resp.data.fecha));
+                    $('#tienda_cita_lbl_valor').html(resp.data.tiendanombre || '');
+                    $('#vehiculo_cita_lbl_valor').html((resp.data.placa || '') + ' ' + (resp.data.producto_nombre || ''));
+                    $('#cliente_cita_lbl_valor').html(resp.data.cliente_nombre || '');
+
+                    citaNumeroActual = (resp.data.numero || '').toString().trim();
+                    citaCombustibleSalidaActual = (resp.data.combustible_salida || '').toString().trim();
+                    citaKilometrajeSalidaActual = (resp.data.kilometraje_salida || '').toString().trim();
+
+                    setCombustibleValor('combustible_salida_cita', citaCombustibleSalidaActual);
+                    $('#kilometraje_salida_cita').val(citaKilometrajeSalidaActual);
+
+                    actualizarSeccionEntradaCita(tipoMovimientoCita);
+                    return;
+                }
 
                 if (tipoTrasladoRespuesta === TIPOS_UI.RENTA) {
                     limpiarCamposResultado();
@@ -2042,7 +2534,9 @@ $txt_mensaje="";
             } else {
                 limpiarCamposResultado();
                 LimpiarResultadoBusquedaRenta();
+                LimpiarResultadoBusquedaCita();
                 OcultarResultadoBusquedaRenta();
+                OcultarResultadoBusquedaCita();
                 MostrarResultadoBusquedaTraslado();
                 mytoast(
                     'error',
@@ -2053,7 +2547,9 @@ $txt_mensaje="";
         },
         error: function () {
             LimpiarResultadoBusquedaRenta();
+            LimpiarResultadoBusquedaCita();
             OcultarResultadoBusquedaRenta();
+            OcultarResultadoBusquedaCita();
             MostrarResultadoBusquedaTraslado();
             mytoast(
                 'error',
@@ -2066,6 +2562,11 @@ $txt_mensaje="";
 
     $('#btnProcesar').on('click', function (e) {
         e.preventDefault();
+
+        if (moduloBusquedaActivo === TIPOS_UI.MODULO_CITA) {
+            mytoast('info', 'Use el boton PROCESAR CITA', 3000);
+            return;
+        }
 
         if (moduloBusquedaActivo === TIPOS_UI.MODULO_RENTA) {
             mytoast('info', 'Use el botón PROCESAR RENTA', 3000);
@@ -2277,6 +2778,113 @@ $txt_mensaje="";
         });
     });
 
+    $('#btnProcesarCita').on('click', function (e) {
+        e.preventDefault();
+
+        if (moduloBusquedaActivo !== TIPOS_UI.MODULO_CITA) {
+            mytoast('error', 'Debe buscar un registro de cita', 3000);
+            return;
+        }
+
+        var numeroCita = (citaNumeroActual || '').trim();
+        var tipoMovimientoCita = textoMayuscula(($('#tipo_movimiento_cita_lbl_valor').text() || '').trim());
+        var combustibleSalidaCita = ($('input[name="combustible_salida_cita"]:checked').val() || '').trim();
+        var kilometrajeSalidaCita = ($('#kilometraje_salida_cita').val() || '').trim();
+        var combustibleEntradaCita = ($('input[name="combustible_entrada_cita"]:checked').val() || '').trim();
+        var kilometrajeEntradaCita = ($('#kilometraje_entrada_cita').val() || '').trim();
+
+        if (numeroCita === '') {
+            mytoast('error', 'No hay numero de cita para procesar', 3000);
+            return;
+        }
+
+        if (tipoMovimientoCita === TIPOS_UI.SALIDA) {
+            if (combustibleSalidaCita === '') {
+                mytoast('error', 'Debe seleccionar el combustible de salida', 3000);
+                return;
+            }
+
+            if (kilometrajeSalidaCita === '') {
+                mytoast('error', 'Debe ingresar el kilometraje de salida', 3000);
+                return;
+            }
+
+            if (isNaN(Number(kilometrajeSalidaCita))) {
+                mytoast('error', 'Kilometraje de salida no valido', 3000);
+                return;
+            }
+        }
+
+        if (tipoMovimientoCita === TIPOS_UI.ENTRADA) {
+            if (citaCombustibleSalidaActual === '' || citaKilometrajeSalidaActual === '') {
+                mytoast('error', 'No existe referencia de salida para la cita', 3000);
+                return;
+            }
+
+            if (combustibleEntradaCita === '') {
+                mytoast('error', 'Debe seleccionar el combustible de entrada', 3000);
+                return;
+            }
+
+            if (kilometrajeEntradaCita === '') {
+                mytoast('error', 'Debe ingresar el kilometraje de entrada', 3000);
+                $('#kilometraje_entrada_cita').focus();
+                return;
+            }
+
+            if (isNaN(Number(kilometrajeEntradaCita))) {
+                mytoast('error', 'Kilometraje de entrada no valido', 3000);
+                return;
+            }
+
+            if (Number(kilometrajeEntradaCita) < Number(citaKilometrajeSalidaActual)) {
+                mytoast('error', 'El kilometraje de entrada no puede ser menor al de salida', 3000);
+                return;
+            }
+        }
+
+        var firmaBase64Cita = obtenerFirmaBase64Cita();
+        if (firmaBase64Cita === '') {
+            mytoast('error', 'Debe capturar la firma de cita', 3000);
+            return;
+        }
+
+        var $btn = $(this);
+        $btn.prop('disabled', true);
+
+        $.ajax({
+            url: 'index.php',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                a: 'PC',
+                numero_cita: numeroCita,
+                dispositivo: navigator.platform || '',
+                tipo_movimiento: tipoMovimientoCita,
+                combustible_salida: combustibleSalidaCita,
+                kilometraje_salida: kilometrajeSalidaCita,
+                combustible_entrada: combustibleEntradaCita,
+                kilometraje_entrada: kilometrajeEntradaCita,
+                firma: firmaBase64Cita
+            },
+            success: function (resp) {
+                if (resp.ok) {
+                    mytoast('success', 'Cita procesada correctamente', 3000);
+                    LimpiarResultadoBusquedaCita();
+                    $('#num_inv').val('').focus();
+                } else {
+                    mytoast('error', resp.error || 'Error al procesar cita', 3000);
+                }
+            },
+            error: function () {
+                mytoast('error', 'Error de comunicacion con el servidor', 3000);
+            },
+            complete: function () {
+                $btn.prop('disabled', false);
+            }
+        });
+    });
+
 	$(document).ready(function() {
 
 		$.ajaxSetup({
@@ -2285,10 +2893,14 @@ $txt_mensaje="";
 
         inicializarFirmaPad();
         inicializarFirmaPadRenta();
+        inicializarFirmaPadCita();
         actualizarSeccionEntrada('', '');
         actualizarSeccionEntradaRenta('');
+        actualizarSeccionEntradaCita('');
         LimpiarResultadoBusquedaRenta();
+        LimpiarResultadoBusquedaCita();
         OcultarResultadoBusquedaRenta();
+        OcultarResultadoBusquedaCita();
         MostrarResultadoBusquedaTraslado();
         refrescarCanvasFirmas();
 
@@ -2300,6 +2912,10 @@ $txt_mensaje="";
 
         $('#btnLimpiarFirmaRenta').on('click', function () {
             limpiarFirmaRenta();
+        });
+
+        $('#btnLimpiarFirmaCita').on('click', function () {
+            limpiarFirmaCita();
         });
 
 	});
