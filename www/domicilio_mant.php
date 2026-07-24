@@ -3,10 +3,17 @@ require_once ('include/framework.php');
 pagina_permiso(123);
 
 
+        $tipo_desplazamiento= [
+			['valor' => '', 'texto' => '...'],
+            ['valor' => 'INTERNO', 'texto' => 'INTERNO'],
+            ['valor' => 'EXTERNO', 'texto' => 'EXTERNO'],
+        ];
+
+
  
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="v";}
 
-
+$autorizacion_traslado=0;
 // Leer Datos    ############################  
 if ($accion=="v") {
 	$cid=0;
@@ -22,7 +29,9 @@ if ($accion=="v") {
 		,l1.nombre AS motorista1
 		,entidad.nombre AS cliente
 		,l2.usuario AS solicitante
+		,t1.autorizacion_traslado AS autorizacion_traslado
 		FROM orden_domicilio
+		LEFT OUTER JOIN tienda t1 ON (orden_domicilio.id_tienda=t1.id)
 		LEFT OUTER JOIN producto ON (orden_domicilio.id_producto=producto.id)
 		LEFT OUTER JOIN orden_domicilio_estado ON (orden_domicilio.id_estado=orden_domicilio_estado.id)
 		LEFT OUTER JOIN usuario l1 ON (orden_domicilio.id_motorista=l1.id)
@@ -34,7 +43,7 @@ if ($accion=="v") {
 
 		if ($result!=false){
 			if ($result -> num_rows > 0) { 
-				$row = $result -> fetch_assoc(); 
+				$row = $result -> fetch_assoc();
 			}
 		}
 
@@ -51,6 +60,8 @@ if ($accion=="g") {
     $cid=0;
 	if (isset($_REQUEST['cid'])) { $cid = sanear_int($_REQUEST['cid']); }
 
+	if (isset($_REQUEST['tipo_desplazamiento'])) { $tipo_desplazamiento = $_REQUEST['tipo_desplazamiento']; }
+
 	$elcodigo= $cid;
     if (es_nulo($elcodigo)) {$nuevoreg=true;} else {$nuevoreg=false;}
 
@@ -65,6 +76,13 @@ if ($accion=="g") {
 			else {
 				$verror.="el campo atendido por es obligatorio";
 			}
+
+				if($tipo_desplazamiento=='') {
+					$verror.="el campo tipo de desplazamiento es obligatorio";
+				}
+
+
+
 			}
 		}
 	} else {
@@ -76,6 +94,10 @@ if ($accion=="g") {
 		if (isset($_REQUEST['cliente_id'])) {
 			$verror.=validar("Cliente",$_REQUEST['cliente_id'], "int", true);
 		} else {$verror.=validar("Cliente",' ', "int", true);}
+
+		if($tipo_desplazamiento=='') {
+			$verror.="el campo tipo de desplazamiento es obligatorio";
+		}
 
 	}
     
@@ -91,6 +113,30 @@ if ($accion=="g") {
 	
 	$sqlcampos="";
 	$sqlcampos.=" actualiza = NOW()";
+
+
+		$autorizar_traslado_salida = 0;
+
+		$result_agencia = sql_select("SELECT id_tienda FROM orden_domicilio WHERE id = $cid");
+
+		if ($result_agencia && $result_agencia->num_rows > 0) {
+			$row = $result_agencia->fetch_assoc();
+			//$result = sql_select("SELECT autorizacion_traslado FROM tienda_agencia WHERE id = $row[id_tienda_salida]");
+
+			$result = sql_select("
+			SELECT 
+				salida.autorizacion_traslado AS autorizacion_salida
+			FROM 
+				tienda salida
+			WHERE 
+				salida.id = $row[id_tienda]
+			");
+
+			if ($result && $result->num_rows > 0) {
+				$row = $result->fetch_assoc();
+				$autorizar_traslado_salida = (int)($row["autorizacion_salida"] ?? 0);
+			}
+		}
     
 
 	
@@ -99,12 +145,16 @@ if ($accion=="g") {
 		if (isset($_REQUEST['at'])){
 			$mov_asignar="Atender ";
 			$sqlcampos.=", domicilio_inicio = NOW()";
-			$sqlcampos.=", id_estado = 2";
+			if($autorizar_traslado_salida==1) {
+				$sqlcampos.=", id_estado = 2";
+			} else {
+				$sqlcampos.=", id_estado = 4";
+			}
+			// $sqlcampos.=", id_estado = 2";
 		}
 
 		if (isset($_REQUEST['aut'])) {
 			$mov_asignar="Autorizar ";
-			//$sqlcampos.=", id_usuario_autoriza =".$_SESSION["usuario_id"];
 			$sqlcampos.=", id_estado = 4";
 			$sqlcampos.=", autorizado = NOW()";
 		} 
@@ -119,6 +169,7 @@ if ($accion=="g") {
 
 	if (tiene_permiso(126)) {
 		if (isset($_REQUEST["id_motorista"])) { $sqlcampos.= " , id_motorista =".GetSQLValue($_REQUEST["id_motorista"],"int"); } 
+		if (isset($_REQUEST["tipo_desplazamiento"])) { $sqlcampos.= " , desplazamiento =".GetSQLValue($_REQUEST["tipo_desplazamiento"],"text"); } 
 	
 	}
 
@@ -244,6 +295,8 @@ if (isset($row["id_servicio"])) {$id_servicio= $row["id_servicio"]; } else {$id_
 if (isset($row["id_motorista"])) {$id_motorista= $row["id_motorista"]; } else {$id_motorista= ""; }
 if (isset($row["motorista1"])) {$motorista1= $row["motorista1"]; } else {$motorista1= "...";}
 
+if (isset($row["desplazamiento"])) {$desplazamiento= $row["desplazamiento"]; } else {$desplazamiento= ""; }
+
 if (isset($row["cliente_id"])) {$cliente_id= $row["cliente_id"]; } else {$cliente_id= "";}
 if (isset($row["cliente"])) {$cliente= $row["cliente"]; } else {$cliente= "";}
 if (isset($row["observaciones"])) {$observaciones= $row["observaciones"]; } else {$observaciones= "";}
@@ -350,9 +403,6 @@ echo campo("mov","mov",'hidden',$mov,'','');
 <div class="row mb-2"> 
 				 
 
-				
-				
-            
             <div class="col-md-6">       
                 <?php 
 				$disable_combsalida='';
@@ -383,6 +433,29 @@ echo campo("mov","mov",'hidden',$mov,'','');
 				
 				?>              
             </div>
+
+			
+
+	<div class="col-md-6" >       
+                <?php 
+				$disable_combsalida_desplazamiento='';
+				if ($id_estado>=2) {$disable_combsalida_desplazamiento=' disabled="disabled"';}else{$disable_combsalida_desplazamiento='';}
+				echo campo("tipo_desplazamiento","Tipo de desplazamiento",'select2',valores_combobox_array($tipo_desplazamiento,$desplazamiento,''),' ','  '.$disable_combsalida_desplazamiento,'');
+				//if ($id_estado==2) {$disable_combsalida=' disabled="disabled"';}else{$disable_combsalida='';}
+					
+				//echo campo("tipo_traslado","Tipo de desplazamiento",'select2',valores_combobox_array($tipos_traslados,$desplazamiento,''));
+					
+				
+				
+				?>              
+            </div>
+
+			
+
+
+
+
+
  			<div class="col-md-6">       
                    <?php
 				   if(!es_nulo($solicitante)) {
