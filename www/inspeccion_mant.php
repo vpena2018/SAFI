@@ -856,7 +856,7 @@ if (isset($row["fecha_auditado"])) {$fecha_auditado= $row["fecha_auditado"]; } e
 if (isset($row["id_usuario_auditado"])) {$id_usuario_auditado= $row["id_usuario_auditado"]; } else {$id_usuario_auditado= "0";}
 if (isset($row["id_adpc_categoria"])) {$id_adpc_categoria= $row["id_adpc_categoria"]; } else {$id_adpc_categoria= "";}
 if (isset($row["observaciones_adpc"])) {$observaciones_adpc= $row["observaciones_adpc"]; } else {$observaciones_adpc= "";}
-if (isset($roow["usuario_vendedor_rentworks"])) {$usuario_vendedor_rentworks= $row["usuario_vendedor_rentworks"]; } else {$usuario_vendedor_rentworks= "";}
+if (isset($row["usuario_vendedor_rentworks"])) {$usuario_vendedor_rentworks= $row["usuario_vendedor_rentworks"]; } else {$usuario_vendedor_rentworks= "";}
 
 //********* */
 if ($nuevoreg==true) {
@@ -1167,10 +1167,7 @@ $mostrar_actarv = ($cliente_prefijo_cco && intval($tipo_inspeccion)==1 && intval
             </div>
             <div class="col-md-2">       
                 <?php echo campo("tipo_doc_lb","Movimiento",'label',get_tipo_doc($tipo_doc),' ',' '); ?>                              
-            </div>
-            <div class="col-md-2">       
-                <?php echo campo("usuario_vendedor_rentworks","Vendedor",'hidden',$usuario_vendedor_rentworks,' ',' '); ?>
-            </div>
+            </div>            
 </div>
 
 <div class="tab-content" id="nav-tabContent">
@@ -1205,7 +1202,7 @@ $mostrar_actarv = ($cliente_prefijo_cco && intval($tipo_inspeccion)==1 && intval
  <div id="insp_encb1"> 
       <div class="row"> 
             <div class="col-md-6">                     
-                <?php   
+                <?php                     
                   echo campo("nombre_cliente","",'hidden',$nombre_cliente,'','','');         
                   echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "',' onchange="insp_actualizar_email_cliente();" '.$disable_sec1  ,'get.php?a=2&t=1',$cliente_nombre);                            
                 ?>                    
@@ -1289,8 +1286,10 @@ $mostrar_actarv = ($cliente_prefijo_cco && intval($tipo_inspeccion)==1 && intval
             <div class="col-md-4"> 
                 <?php echo campo("renta_contrato","Contrato No.",'text',$renta_contrato,' ',$disable_sec1 .' onchange="insp_buscar_contrato_hertz();" ');  ?>
             </div>
+
             <div class="col-md-4"> 
               <?php //echo campo("renta_factura","Factura No.",'text',$renta_factura,' ',$disable_sec1 .' ');
+              echo campo("usuario_vendedor_rentworks","",'hidden',$usuario_vendedor_rentworks,'','',''); 
               ?>
             </div>
             <div class="col-md-4"> 
