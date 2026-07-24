@@ -416,7 +416,7 @@ if ($accion=="g") {
 					}
 					else if($mov_atender==3 && $autorizar_traslado_entrada==0)
 					{
-						$existe_traslado_entrada=sql_select("SELECT id_bitacora FROM traslado_bitacora WHERE numero_traslado = (SELECT numero FROM orden_traslado WHERE id = $cid) AND tipo_movimiento = 'ENTRADA' limit 1");
+						$existe_traslado_entrada=sql_select("SELECT id_bitacora FROM traslado_bitacora WHERE numero_traslado = (SELECT numero FROM orden_traslado WHERE id = $cid) AND tipo_traslado = 'TRASLADO' AND tipo_movimiento = 'ENTRADA' limit 1");
 						if($existe_traslado_entrada->num_rows==0)
 						{
 							$sql = "INSERT INTO traslado_bitacora
@@ -429,8 +429,8 @@ if ($accion=="g") {
 								firma,
 								tipo_traslado,
 								tipo_movimiento,
-								combustible_entrada,
-								kilometraje_entrada
+								combustible,
+								kilometraje
 							)
 							VALUES
 							(
