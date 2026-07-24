@@ -108,6 +108,15 @@ if ($accion == "1") {
     GROUP BY vendedor.id, vendedor.nombre
     ORDER BY ventas_mes DESC, vendedor.nombre");
 
+        // ── 3b. En negociacion por tipo de pago (contado/crédito) ───────────────
+        $res_vend_pago = sql_select("SELECT
+                SUM(CASE WHEN ventas.venta_cont_cred = 1 THEN 1 ELSE 0 END) AS total_contado
+                ,SUM(CASE WHEN ventas.venta_cont_cred = 2 THEN 1 ELSE 0 END) AS total_credito
+        FROM ventas
+        WHERE ventas.tipo_ventas_reparacion = 2
+            AND ventas.id_estado = 11
+            $filtro_tienda");
+
     // Indexar resultados por vendedor
     $map_disp = [];
     if ($res_disp && $res_disp->num_rows > 0) {
@@ -136,6 +145,14 @@ if ($accion == "1") {
             $total_semana     += intval($r['ventas_semana']);
             $total_mes_vend   += intval($r['ventas_mes']);
         }
+    }
+
+    $total_contado = 0;
+    $total_credito = 0;
+    if ($res_vend_pago && $res_vend_pago->num_rows > 0) {
+        $r_pago = $res_vend_pago->fetch_assoc();
+        $total_contado = intval($r_pago['total_contado']);
+        $total_credito = intval($r_pago['total_credito']);
     }
 
     $map_disp_tienda = [];
@@ -213,6 +230,27 @@ if ($accion == "1") {
             . '<div class="info-box-content">'
             . '<span class="info-box-text">Vendidos ' . htmlspecialchars($nombre_mes_sel) . '</span>'
             . '<span class="info-box-number">' . formato_numero($total_mes_vend, 0) . '</span>'
+            . '</div></div></div>';
+
+        $html .= '</div>';
+
+        $html .= '<h6 class="mb-2"><i class="fas fa-credit-card mr-1"></i> Tipo de Financiamiento</h6>';
+        $html .= '<div class="row mb-3">';
+
+        $html .= '<div class="col-12 col-sm-6 col-lg-3">'
+            . '<div class="info-box mb-2">'
+            . '<span class="info-box-icon bg-secondary elevation-1"><i class="fas fa-money-bill-wave" style="color:white"></i></span>'
+            . '<div class="info-box-content">'
+            . '<span class="info-box-text">Contado</span>'
+            . '<span class="info-box-number">' . formato_numero($total_contado, 0) . '</span>'
+            . '</div></div></div>';
+
+        $html .= '<div class="col-12 col-sm-6 col-lg-3">'
+            . '<div class="info-box mb-2">'
+            . '<span class="info-box-icon bg-indigo elevation-1"><i class="fas fa-landmark fa-bank" style="color:white"></i></span>'
+            . '<div class="info-box-content">'
+            . '<span class="info-box-text">Crédito</span>'
+            . '<span class="info-box-number">' . formato_numero($total_credito, 0) . '</span>'
             . '</div></div></div>';
 
         $html .= '</div>'; // fin row tarjetas
