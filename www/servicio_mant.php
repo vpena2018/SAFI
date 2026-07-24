@@ -1415,7 +1415,7 @@ if (!es_nulo($id_estado)){
             letter-spacing: 0.5px;
             border-radius: 8px 8px 0 0;">
             Detalle Actividades     
-            <?php if ($id_estado != 22 || es_nulo($id_estado)) {  ?>       
+            <?php if ($id_estado != 20 && $id_estado != 22 || es_nulo($id_estado)) {  ?>
                 <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Compra Realizada','servicio_mant_repuesto.php?a=comprea&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Compra Realizada</a>
                 <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Solicitud de Compra','servicio_mant_repuesto.php?a=solcomp&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Solicitud Compra</a>
                 <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Realizado','servicio_mant_repuesto.php?a=realiza&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-check"></i> Realizado</a>
@@ -1488,7 +1488,7 @@ if (!es_nulo($id_estado)){
             letter-spacing: 0.5px;
             border-radius: 8px 8px 0 0;">
            Repuestos 
-           <?php if ($id_estado != 22 || es_nulo($id_estado)) {  ?>       
+           <?php if ($id_estado != 20 || $id_estado != 22 || es_nulo($id_estado)) {  ?>
               <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Devolver Repuesto','servicio_mant_repuesto.php?a=dev&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-minus"></i> Devolver</a>
               <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Repuesto NO Recibido','servicio_mant_repuesto.php?a=norec&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-store-slash"></i> No Recibido</a>           
               <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Compra Realizada','servicio_mant_repuesto.php?a=comprea&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Compra Realizada</a>    
@@ -1655,9 +1655,8 @@ if (!es_nulo($id_estado)){
                    
             <?php }    ?>
  
-            <?php  if (tiene_permiso(198)) {   ?>            
-             
-              <?php if (!es_nulo($id_inspeccion)) { ?>
+            <?php  if (tiene_permiso(198)) {   ?>                         
+              <?php if (($id_estado != 20 && $id_estado != 22) and !es_nulo($id_inspeccion)) { ?>
                     <a href="#" onclick="servicio_copiar_fotos(); return false;" class="btn btn-outline-info ml-3 mr-2 mb-2 xfrm" ><i class="fa fa-copy"></i> Copiar Fotos HI</a>
               <?php } ?>
                    
@@ -1854,22 +1853,35 @@ function servicio_copiar_fotos(){
     return;
   }
 
-  cargando(true);
-  $.post('servicio_fotos.php?a=c&cid='+cid+'&pid='+pid+'&insp='+insp, function(json) {
-    cargando(false);
-    if (json.length > 0) {
-      if (json[0].pcode == 1) {
-        mytoast('success', json[0].pmsg, 3000);
-        procesar_servicio_foto('nav_fotos');
-      } else {
-        mytoast('error', json[0].pmsg, 3000);
-      }
-    } else {
-      mymodal('error','Error','Se produjo un error. Favor vuelva a intentar');
+  Swal.fire({
+    title: 'Confirmar',
+    text: 'Desea copiar las fotos HI?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Si',
+    cancelButtonText: 'No'
+  }).then((result) => {
+    if (!result.value) {
+      return;
     }
-  }).fail(function() {
-    cargando(false);
-    mymodal('error','Error','Se produjo un error. Favor vuelva a intentar');
+
+    cargando(true);
+    $.post('servicio_fotos.php?a=c&cid='+cid+'&pid='+pid+'&insp='+insp, function(json) {
+      cargando(false);
+      if (json.length > 0) {
+        if (json[0].pcode == 1) {
+          mytoast('success', json[0].pmsg, 3000);
+          procesar_servicio_foto('nav_fotos');
+        } else {
+          mytoast('error', json[0].pmsg, 3000);
+        }
+      } else {
+        mymodal('error','Error','Se produjo un error. Favor vuelva a intentar');
+      }
+    }).fail(function() {
+      cargando(false);
+      mymodal('error','Error','Se produjo un error. Favor vuelva a intentar');
+    });
   });
 }
 
