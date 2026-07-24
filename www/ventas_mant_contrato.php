@@ -1628,8 +1628,11 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
         
     if (!es_nulo($precio_venta) && !es_nulo($precio_maximo) && $precio_venta > $precio_maximo) {
         $verror .= 'El precio de venta no puede ser mayor al precio máximo. ';
-    }    
+    }        
 
+    if (es_nulo($venta_cont_cred) ) {
+        $verror .= 'Seleccione el tipo de venta. ';
+    }   
 }
         
 /*     if (!es_nulo($cid) && ($id_estado!=20 && $id_estado!=11)){
@@ -2598,7 +2601,7 @@ if ($foto_original_tele !== '') {
 
 <div class="row">
      <div class="col-md">
-          <?php echo campo("venta_cont_cred","Tipo Venta",'select', valores_combobox_texto(app_tipo_vvehiculo,$venta_cont_cred),' ',$disable_sec2); ?>
+         <?php echo campo("venta_cont_cred","Tipo Venta",'select', valores_combobox_texto(app_tipo_vvehiculo,$venta_cont_cred,'Seleccionar'),' ',$disable_sec2); ?>
      </div>
 
      <div class="col-md">
