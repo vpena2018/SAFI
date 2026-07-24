@@ -928,7 +928,7 @@ if ($accion=="L") {
                 {
                     $result = sql_select("SELECT 							
                     cita.numero
-                    ,cita.fecha
+                    ,cita.fecha_cita fecha
                     ,cita.empresa
                     ,cita.id_tienda
                     , '{$TIPO_TRASLADO_CITA}' AS tipo_traslado
