@@ -91,6 +91,18 @@ if ($accion == "1") {
     GROUP BY vendedor.id, vendedor.nombre
     ORDER BY vendedor.nombre");
 
+        // ── 2b. En negociación por tienda (estado 11) ───────────────────────────
+        $res_neg_tienda = sql_select("SELECT
+                IFNULL(tienda.nombre, 'Sin tienda') AS tienda
+                ,COUNT(*) AS total
+        FROM ventas
+        LEFT OUTER JOIN tienda ON (ventas.id_tienda = tienda.id)
+        WHERE ventas.tipo_ventas_reparacion = 2
+            AND ventas.id_estado = 11
+            $filtro_tienda
+        GROUP BY tienda.id, tienda.nombre
+        ORDER BY tienda.nombre");
+
     // ── 3. Vendidos este mes (estado 20, fecha_vendido mes actual) ────────────
     $res_vend = sql_select("SELECT
         IFNULL(vendedor.nombre, 'Sin vendedor') AS vendedor
@@ -164,6 +176,15 @@ if ($accion == "1") {
         }
     }
 
+    $map_neg_tienda = [];
+    $total_neg_global = 0;
+    if ($res_neg_tienda && $res_neg_tienda->num_rows > 0) {
+        while ($r = $res_neg_tienda->fetch_assoc()) {
+            $map_neg_tienda[$r['tienda']] = intval($r['total']);
+            $total_neg_global += intval($r['total']);
+        }
+    }
+
     // Unión de vendedores
     $vendedores = array_unique(array_merge(
         array_keys($map_disp),
@@ -176,7 +197,6 @@ if ($accion == "1") {
 
         // Totales globales
         $total_disp    = array_sum($map_disp);
-        $total_neg     = array_sum($map_neg);
 
         // ── Tarjetas Ventas / Reparación ───────────────────────────────────────
         $html  = '<div class="row mb-3">';
@@ -198,15 +218,8 @@ if ($accion == "1") {
 
         $html .= '</div>';
 
-        // ── Tarjetas de totales ────────────────────────────────────────────────
+        $html .= '<h6 class="mb-2"><i class="fas fa-chart-line mr-1"></i> Vendidos</h6>';
         $html .= '<div class="row mb-3">';
-        $html .= '<div class="col-12 col-sm-6 col-lg-3">'
-            . '<div class="info-box mb-2" style="cursor:pointer" onclick="ver_detalle_negociacion()">'
-            . '<span class="info-box-icon bg-info elevation-1"><i class="fas fa-handshake" style="color:white"></i></span>'
-            . '<div class="info-box-content">'
-            . '<span class="info-box-text">En Negociaci&oacute;n <i class="fas fa-search-plus fa-xs"></i></span>'
-            . '<span class="info-box-number">' . formato_numero($total_neg, 0) . '</span>'
-            . '</div></div></div>';
 
         $html .= '<div class="col-12 col-sm-6 col-lg-3">'
             . '<div class="info-box mb-2">'
@@ -247,13 +260,36 @@ if ($accion == "1") {
 
         $html .= '<div class="col-12 col-sm-6 col-lg-3">'
             . '<div class="info-box mb-2">'
-            . '<span class="info-box-icon bg-indigo elevation-1"><i class="fas fa-landmark fa-bank" style="color:white"></i></span>'
+            . '<span class="info-box-icon bg-success elevation-1"><i class="fas fa-credit-card" style="color:white"></i></span>'
             . '<div class="info-box-content">'
             . '<span class="info-box-text">Crédito</span>'
             . '<span class="info-box-number">' . formato_numero($total_credito, 0) . '</span>'
             . '</div></div></div>';
 
         $html .= '</div>'; // fin row tarjetas
+
+        // ── Tarjetas en negociación por tienda ────────────────────────────────
+        $html .= '<h6 class="mb-2"><i class="fas fa-handshake mr-1"></i> En Negociación por Tienda</h6>';
+        $html .= '<div class="row mb-3">';
+        foreach ($map_neg_tienda as $nombreTienda => $cantTienda) {
+            $html .= '<div class="col-12 col-sm-6 col-lg-3">'
+                . '<div class="info-box mb-2">'
+                . '<span class="info-box-icon bg-secondary elevation-1"><i class="fas fa-store" style="color:white"></i></span>'
+                . '<div class="info-box-content">'
+                . '<span class="info-box-text">' . htmlspecialchars($nombreTienda) . '</span>'
+                . '<span class="info-box-number">' . formato_numero($cantTienda, 0) . '</span>'
+                . '</div></div></div>';
+        }
+
+        // Tarjeta total negociación
+        $html .= '<div class="col-12 col-sm-6 col-lg-3">'
+            . '<div class="info-box mb-2" style="cursor:pointer" onclick="ver_detalle_negociacion()">'
+            . '<span class="info-box-icon bg-dark elevation-1"><i class="fas fa-handshake" style="color:white"></i></span>'
+            . '<div class="info-box-content">'
+            . '<span class="info-box-text">Total En Negociación <i class="fas fa-search-plus fa-xs"></i></span>'
+            . '<span class="info-box-number">' . formato_numero($total_neg_global, 0) . '</span>'
+            . '</div></div></div>';
+        $html .= '</div>';
 
         // ── Tarjetas disponibles por tienda ───────────────────────────────────
         if (count($map_disp_tienda) > 0) {
