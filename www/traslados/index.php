@@ -368,6 +368,7 @@ if ($accion=="P") {
     $kilometraje_salida_req = trim($_REQUEST['kilometraje_salida'] ?? '');
     $combustible_entrada_req = trim($_REQUEST['combustible_entrada'] ?? '');
     $kilometraje_entrada_req = trim($_REQUEST['kilometraje_entrada'] ?? '');
+    $codigo_alterno_req = trim($_REQUEST['codigo_alterno'] ?? '');
 
     if ($numero_traslado_req === '') {
         echo json_encode([
@@ -455,6 +456,7 @@ if ($accion=="P") {
     $firma_sql = $conn->real_escape_string($firma_limpia);
     $tipo_traslado_sql = $conn->real_escape_string($tipo_traslado_req);
     $tipo_movimiento_sql = $conn->real_escape_string($tipo_movimiento_req);
+    $codigo_alterno_sql = $conn->real_escape_string($codigo_alterno_req);
     $combustible_bitacora_req = $combustible_salida_req;
     $kilometraje_bitacora_req = $kilometraje_salida_req;
     if (strtoupper($tipo_movimiento_req) === $TIPO_MOVIMIENTO_ENTRADA) {
@@ -465,9 +467,9 @@ if ($accion=="P") {
     $kilometraje_entrada_sql = floatval($kilometraje_bitacora_req);
 
     $sql = "INSERT INTO traslado_bitacora
-            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible, kilometraje)
+            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible, kilometraje, codigo_alterno)
             VALUES
-            ('{$numero_traslado_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}', '{$firma_sql}', '{$tipo_traslado_sql}', '{$tipo_movimiento_sql}', {$combustible_entrada_sql}, {$kilometraje_entrada_sql})";
+            ('{$numero_traslado_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}', '{$firma_sql}', '{$tipo_traslado_sql}', '{$tipo_movimiento_sql}', {$combustible_entrada_sql}, {$kilometraje_entrada_sql}, '{$codigo_alterno_sql}')";
 
     $insert_id = sql_insert($sql);
 
@@ -549,6 +551,7 @@ if ($accion=="PR") {
     $kilometraje_salida_req = trim($_REQUEST['kilometraje_salida'] ?? '');
     $combustible_entrada_req = trim($_REQUEST['combustible_entrada'] ?? '');
     $kilometraje_entrada_req = trim($_REQUEST['kilometraje_entrada'] ?? '');
+    $codigo_alterno_req = trim($_REQUEST['codigo_alterno'] ?? '');
 
     if ($numero_inspeccion_req === '') {
         echo json_encode([
@@ -630,6 +633,7 @@ if ($accion=="PR") {
     $user_agent_sql = $conn->real_escape_string($user_agent);
     $firma_sql = $conn->real_escape_string($firma_limpia);
     $tipo_movimiento_sql = $conn->real_escape_string($tipo_movimiento_req);
+    $codigo_alterno_sql = $conn->real_escape_string($codigo_alterno_req);
 
     $combustible_bitacora_req = $combustible_salida_req;
     $kilometraje_bitacora_req = $kilometraje_salida_req;
@@ -641,9 +645,9 @@ if ($accion=="PR") {
     $kilometraje_entrada_sql = floatval($kilometraje_bitacora_req);
 
     $sql = "INSERT INTO traslado_bitacora
-            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible, kilometraje)
+            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible, kilometraje, codigo_alterno)
             VALUES
-            ('{$numero_inspeccion_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}', '{$firma_sql}', '{$TIPO_TRASLADO_RENTA}', '{$tipo_movimiento_sql}', {$combustible_entrada_sql}, {$kilometraje_entrada_sql})";
+            ('{$numero_inspeccion_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}', '{$firma_sql}', '{$TIPO_TRASLADO_RENTA}', '{$tipo_movimiento_sql}', {$combustible_entrada_sql}, {$kilometraje_entrada_sql}, '{$codigo_alterno_sql}')";
 
     $insert_id = sql_insert($sql);
 
@@ -674,6 +678,7 @@ if ($accion=="PC") {
     $kilometraje_salida_req = trim($_REQUEST['kilometraje_salida'] ?? '');
     $combustible_entrada_req = trim($_REQUEST['combustible_entrada'] ?? '');
     $kilometraje_entrada_req = trim($_REQUEST['kilometraje_entrada'] ?? '');
+    $codigo_alterno_req = trim($_REQUEST['codigo_alterno'] ?? '');
 
     if ($numero_cita_req === '') {
         echo json_encode([
@@ -794,13 +799,14 @@ if ($accion=="PC") {
     $user_agent_sql = $conn->real_escape_string($user_agent);
     $firma_sql = $conn->real_escape_string($firma_limpia);
     $tipo_movimiento_sql = $conn->real_escape_string($tipo_movimiento_req);
+    $codigo_alterno_sql = $conn->real_escape_string($codigo_alterno_req);
     $combustible_sql = "'".$conn->real_escape_string($combustible_guardar)."'";
     $kilometraje_sql = floatval($kilometraje_guardar);
 
     $sql = "INSERT INTO traslado_bitacora
-            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible, kilometraje)
+            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible, kilometraje, codigo_alterno)
             VALUES
-            ('{$numero_cita_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}', '{$firma_sql}', '{$TIPO_TRASLADO_CITA}', '{$tipo_movimiento_sql}', {$combustible_sql}, {$kilometraje_sql})";
+            ('{$numero_cita_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}', '{$firma_sql}', '{$TIPO_TRASLADO_CITA}', '{$tipo_movimiento_sql}', {$combustible_sql}, {$kilometraje_sql}, '{$codigo_alterno_sql}')";
 
     $insert_id = sql_insert($sql);
 
@@ -837,8 +843,6 @@ if ($accion=="L") {
 		,producto.codigo_alterno,producto.nombre,producto.placa
 		,orden_traslado_estado.nombre AS elestado
 		,l1.nombre AS motorista1
-        ,l1.grupo_id
-        ,orden_traslado.observaciones2
         ,l1.grupo_id
         ,orden_traslado.observaciones2
 		,l2.usuario AS solicitante1
@@ -1187,7 +1191,7 @@ if ($accion=="L") {
 
         //estado completado inspeccion.id_estado = 2, tipo mov salida inspeccion.tipo_doc=2,tipo inspeccion renta o taller inspeccion.tipo_inspeccion=1
         $ultimaInspeccion = sql_select("
-        SELECT inspeccion.numero,inspeccion.fecha,inspeccion.combustible_entrada,inspeccion.kilometraje_entrada
+        SELECT inspeccion.numero,inspeccion.fecha,inspeccion.combustible_entrada,inspeccion.kilometraje_entrada,producto.codigo_alterno
         FROM inspeccion
         LEFT JOIN producto
             ON inspeccion.id_producto = producto.id
@@ -1215,6 +1219,7 @@ if ($accion=="L") {
             inspeccion.hora AS fecha_inspeccion,
             t1.nombre AS tienda_nombre,
             inspeccion.placa,
+            producto.codigo_alterno,
             producto.nombre AS producto_nombre,
             inspeccion.combustible_entrada AS combustible,
             inspeccion.cliente_contacto,
@@ -1246,9 +1251,9 @@ if ($accion=="L") {
                 $salida_antes_de_implementacion = true;
 
                 $sql = "INSERT INTO traslado_bitacora
-                (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible, kilometraje)
+                (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible, kilometraje, codigo_alterno)
                 VALUES
-                ('{$conn->real_escape_string($numeroInspeccion)}', NOW(),'AUTOMATICO', '{$_SERVER['REMOTE_ADDR']}', '{$_SERVER['HTTP_USER_AGENT']}', '', '{$TIPO_TRASLADO_RENTA}', '{$TIPO_MOVIMIENTO_SALIDA}', '{$row['combustible_entrada']}', '{$row['kilometraje_entrada']}')";
+                ('{$conn->real_escape_string($numeroInspeccion)}', NOW(),'AUTOMATICO', '{$_SERVER['REMOTE_ADDR']}', '{$_SERVER['HTTP_USER_AGENT']}', '', '{$TIPO_TRASLADO_RENTA}', '{$TIPO_MOVIMIENTO_SALIDA}', '{$row['combustible_entrada']}', '{$row['kilometraje_entrada']}', '{$conn->real_escape_string($row['codigo_alterno'] ?? '')}')";
 
                     $insert_id = sql_insert($sql);
                 }
@@ -1265,6 +1270,7 @@ if ($accion=="L") {
             inspeccion.hora AS fecha_inspeccion,
             t1.nombre AS tienda_nombre,
             inspeccion.placa,
+            producto.codigo_alterno,
             producto.nombre AS producto_nombre,
             inspeccion.combustible_entrada AS combustible,
             inspeccion.cliente_contacto,
@@ -1793,6 +1799,9 @@ $txt_mensaje="";
     let rentaNumeroInspeccionActual = '';
     let rentaCombustibleSalidaActual = '';
     let rentaKilometrajeSalidaActual = '';
+    let trasladoCodigoAlternoActual = '';
+    let rentaCodigoAlternoActual = '';
+    let citaCodigoAlternoActual = '';
     let citaNumeroActual = '';
     let citaCombustibleSalidaActual = '';
     let citaKilometrajeSalidaActual = '';
@@ -2176,6 +2185,7 @@ $txt_mensaje="";
         trasladoCombustibleSalidaActual = '';
         trasladoKilometrajeSalidaActual = '';
         trasladoGrupoMotoristaActual = '';
+        trasladoCodigoAlternoActual = '';
         actualizarSeccionEntrada('', '');
         limpiarFirma();
     }
@@ -2196,6 +2206,7 @@ $txt_mensaje="";
         rentaNumeroInspeccionActual = '';
         rentaCombustibleSalidaActual = '';
         rentaKilometrajeSalidaActual = '';
+        rentaCodigoAlternoActual = '';
         actualizarSeccionEntradaRenta('');
         limpiarFirmaRenta();
     }
@@ -2215,6 +2226,7 @@ $txt_mensaje="";
         citaNumeroActual = '';
         citaCombustibleSalidaActual = '';
         citaKilometrajeSalidaActual = '';
+        citaCodigoAlternoActual = '';
         actualizarSeccionEntradaCita('');
         limpiarFirmaCita();
     }
@@ -2447,6 +2459,7 @@ $txt_mensaje="";
                     citaNumeroActual = (resp.data.numero || '').toString().trim();
                     citaCombustibleSalidaActual = (resp.data.combustible_salida || '').toString().trim();
                     citaKilometrajeSalidaActual = (resp.data.kilometraje_salida || '').toString().trim();
+                    citaCodigoAlternoActual = (resp.data.codigo_alterno || '').toString().trim();
 
                     setCombustibleValor('combustible_salida_cita', citaCombustibleSalidaActual);
                     $('#kilometraje_salida_cita').val(citaKilometrajeSalidaActual);
@@ -2481,6 +2494,7 @@ $txt_mensaje="";
                     rentaNumeroInspeccionActual = (resp.data.numero_inspeccion || '').toString().trim();
                     rentaCombustibleSalidaActual = (resp.data.combustible || '').toString().trim();
                     rentaKilometrajeSalidaActual = (resp.data.kilometraje || '').toString().trim();
+                    rentaCodigoAlternoActual = (resp.data.codigo_alterno || '').toString().trim();
                     return;
                 }
 
@@ -2492,6 +2506,7 @@ $txt_mensaje="";
                 $('#tipo_movimiento_lbl_valor').html(resp.data.tipo_movimiento || '');
                 $('#tipo_traslado_mostrar_lbl_valor').html(resp.data.tipo_traslado || '');
                 trasladoGrupoMotoristaActual = (resp.data.grupo_id || '').toString().trim();
+                trasladoCodigoAlternoActual = (resp.data.codigo_alterno || '').toString().trim();
                 actualizarSeccionEntrada(resp.data.tipo_movimiento || '', resp.data.tipo_traslado || '', trasladoGrupoMotoristaActual);
                 trasladoCombustibleSalidaActual = (resp.data.combustible_salida || '').toString().trim();
                 trasladoKilometrajeSalidaActual = (resp.data.kilometraje_salida || '').toString().trim();
@@ -2703,6 +2718,7 @@ $txt_mensaje="";
                 kilometraje_salida: kilometrajeSalida,
                 combustible_entrada: combustibleEntrada,
                 kilometraje_entrada: kilometrajeEntrada,
+                codigo_alterno: (trasladoCodigoAlternoActual || ($('#num_inv').val() || '')).trim(),
                 firma: firmaBase64
             },
             success: function (resp) {
@@ -2796,6 +2812,7 @@ $txt_mensaje="";
                 kilometraje_salida: kilometrajeSalidaRenta,
                 combustible_entrada: combustibleEntradaRenta,
                 kilometraje_entrada: kilometrajeEntradaRenta,
+                codigo_alterno: (rentaCodigoAlternoActual || ($('#num_inv').val() || '')).trim(),
                 firma: firmaBase64Renta
             },
             success: function (resp) {
@@ -2903,6 +2920,7 @@ $txt_mensaje="";
                 kilometraje_salida: kilometrajeSalidaCita,
                 combustible_entrada: combustibleEntradaCita,
                 kilometraje_entrada: kilometrajeEntradaCita,
+                codigo_alterno: (citaCodigoAlternoActual || ($('#num_inv').val() || '')).trim(),
                 firma: firmaBase64Cita
             },
             success: function (resp) {
