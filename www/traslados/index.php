@@ -837,6 +837,10 @@ if ($accion=="L") {
 		,producto.codigo_alterno,producto.nombre,producto.placa
 		,orden_traslado_estado.nombre AS elestado
 		,l1.nombre AS motorista1
+        ,l1.grupo_id
+        ,orden_traslado.observaciones2
+        ,l1.grupo_id
+        ,orden_traslado.observaciones2
 		,l2.usuario AS solicitante1
 		,l3.nombre AS usuariocompleta
 		,p1.nombre AS elproveedor
@@ -882,6 +886,8 @@ if ($accion=="L") {
             ,producto.codigo_alterno,producto.nombre,producto.placa
             ,orden_traslado_estado.nombre AS elestado
             ,l1.nombre AS motorista1
+            ,l1.grupo_id
+            ,orden_traslado.observaciones2
             ,l2.usuario AS solicitante1
             ,l3.nombre AS usuariocompleta
             ,p1.nombre AS elproveedor
@@ -1177,6 +1183,7 @@ if ($accion=="L") {
         //RENTA
         //salida renta
         $salida_antes_de_implementacion=false;
+        
 
         //estado completado inspeccion.id_estado = 2, tipo mov salida inspeccion.tipo_doc=2,tipo inspeccion renta o taller inspeccion.tipo_inspeccion=1
         $ultimaInspeccion = sql_select("
@@ -1515,6 +1522,14 @@ $txt_mensaje="";
                         
 
 					</div>
+
+                    <div class="row mb-2" id="fila_observaciones2_traslado" style="display:none;">
+                        <div class="col-md-12">
+                            <label class="outside-label" for="observaciones2_traslado">Observaciones</label>
+                            <textarea id="observaciones2_traslado" class="form-control" rows="2" readonly></textarea>
+                        </div>
+                    </div>
+
                     <div class="row mb-2"> 
 								
 								<div class="col-md-12">   
@@ -1781,6 +1796,7 @@ $txt_mensaje="";
     let citaNumeroActual = '';
     let citaCombustibleSalidaActual = '';
     let citaKilometrajeSalidaActual = '';
+    let trasladoGrupoMotoristaActual = '';
 
     const TIPOS_UI = {
         RENTA: 'RENTA',
@@ -2114,6 +2130,12 @@ $txt_mensaje="";
         return String(valor || '').toUpperCase();
     }
 
+    function esEntradaTrasladoGrupo20(tipoMovimiento, tipoTraslado, grupoMotorista) {
+        return textoMayuscula(tipoMovimiento) === TIPOS_UI.ENTRADA
+            && textoMayuscula(tipoTraslado) === TIPOS_UI.TRASLADO
+            && Number(grupoMotorista) === 20;
+    }
+
     function setCombustibleValor(nombreCampo, valor) {
         const selector = 'input[name="' + nombreCampo + '"]';
         const $grupo = $(selector);
@@ -2149,8 +2171,11 @@ $txt_mensaje="";
         setCombustibleValor('combustible_entrada', '');
         setCombustibleValor('combustible_salida', '');
         $('#tipo_traslado_lbl_valor').html('');
+        $('#observaciones2_traslado').val('');
+        $('#fila_observaciones2_traslado').hide();
         trasladoCombustibleSalidaActual = '';
         trasladoKilometrajeSalidaActual = '';
+        trasladoGrupoMotoristaActual = '';
         actualizarSeccionEntrada('', '');
         limpiarFirma();
     }
@@ -2266,9 +2291,10 @@ $txt_mensaje="";
         $seccion.hide();
     }
 
-    function actualizarSeccionEntrada(tipoMovimiento, tipoTraslado) {
+    function actualizarSeccionEntrada(tipoMovimiento, tipoTraslado, grupoMotorista) {
         const esEntrada = textoMayuscula(tipoMovimiento) === TIPOS_UI.ENTRADA;
         const esDomicilio = textoMayuscula(tipoTraslado) === TIPOS_UI.DOMICILIO;
+        const requiereCapturaGuardia = esEntradaTrasladoGrupo20(tipoMovimiento, tipoTraslado, grupoMotorista);
         const $seccion = $('#datos_entrada');
         const $controles = $seccion.find('input');
         const $kmEntrada = $('#kilometraje_entrada');
@@ -2278,7 +2304,7 @@ $txt_mensaje="";
             $seccion.show();
             $controles.prop('disabled', false);
 
-            if (!esDomicilio) {
+            if (!esDomicilio && !requiereCapturaGuardia) {
                 $combEntrada.prop('disabled', true);
                 $kmEntrada.prop('disabled', true);
             }
@@ -2465,7 +2491,8 @@ $txt_mensaje="";
 
                 $('#tipo_movimiento_lbl_valor').html(resp.data.tipo_movimiento || '');
                 $('#tipo_traslado_mostrar_lbl_valor').html(resp.data.tipo_traslado || '');
-                actualizarSeccionEntrada(resp.data.tipo_movimiento || '', resp.data.tipo_traslado || '');
+                trasladoGrupoMotoristaActual = (resp.data.grupo_id || '').toString().trim();
+                actualizarSeccionEntrada(resp.data.tipo_movimiento || '', resp.data.tipo_traslado || '', trasladoGrupoMotoristaActual);
                 trasladoCombustibleSalidaActual = (resp.data.combustible_salida || '').toString().trim();
                 trasladoKilometrajeSalidaActual = (resp.data.kilometraje_salida || '').toString().trim();
 
@@ -2528,6 +2555,16 @@ $txt_mensaje="";
                         setCombustibleValor('combustible_entrada', resp.data.combustible_entrada || '');
                         $('#kilometraje_entrada').val(resp.data.kilometraje_entrada || '');
 
+                    const esTrasladoGrupo20 = textoMayuscula(resp.data.tipo_traslado) === TIPOS_UI.TRASLADO
+                        && Number(resp.data.grupo_id) === 20;
+                    if (esTrasladoGrupo20) {
+                        $('#observaciones2_traslado').val(resp.data.observaciones2 || '');
+                        $('#fila_observaciones2_traslado').show();
+                    } else {
+                        $('#observaciones2_traslado').val('');
+                        $('#fila_observaciones2_traslado').hide();
+                    }
+
                     refrescarCanvasFirmas();
 
 
@@ -2580,6 +2617,7 @@ $txt_mensaje="";
         var kilometrajeSalida = (trasladoKilometrajeSalidaActual || '').toString().trim();
         var combustibleEntrada = ($('input[name="combustible_entrada"]:checked').val() || '').trim();
         var kilometrajeEntrada = ($('#kilometraje_entrada').val() || '').trim();
+        var requiereCapturaGuardia = esEntradaTrasladoGrupo20(tipo_movimiento, tipoTraslado, trasladoGrupoMotoristaActual);
 
         if (numeroTraslado === '') {
             mytoast('error', 'Favor buscar el vehiculo', 3000);
@@ -2615,12 +2653,12 @@ $txt_mensaje="";
             }
 
             if (textoMayuscula(tipo_movimiento) === TIPOS_UI.ENTRADA && combustibleEntrada === '') {
-                mytoast('error', 'Motorista debe seleccionar el combustible de entrada en traslados', 6000);
+                mytoast('error', requiereCapturaGuardia ? 'Debe seleccionar el combustible de entrada en traslados' : 'Motorista debe seleccionar el combustible de entrada en traslados', 6000);
                 return;
             }
 
             if (textoMayuscula(tipo_movimiento) === TIPOS_UI.ENTRADA && kilometrajeEntrada === '') {
-                mytoast('error', 'Motorista debe ingresar el kilometraje de entrada en traslados', 6000);
+                mytoast('error', requiereCapturaGuardia ? 'Debe ingresar el kilometraje de entrada en traslados' : 'Motorista debe ingresar el kilometraje de entrada en traslados', 6000);
                 $('#kilometraje_entrada').focus();
                 return;
             }
