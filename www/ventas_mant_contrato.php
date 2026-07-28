@@ -2226,7 +2226,7 @@ if ($foto_original_tele !== '') {
          */
         if($enviar_correo_sin_fotos  == true)
         {
-          //  require_once ('correo_ventas_verificacion.php');
+            require_once ('correo_ventas_verificacion.php');
         }
         
 
