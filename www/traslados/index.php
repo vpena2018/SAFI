@@ -923,7 +923,11 @@ if ($accion=="L") {
                     and fecha >= '{$fecha_implementacion}'
                 )
               AND id_estado=4
-              AND t2.autorizacion_traslado=1
+              AND (
+                    (orden_traslado.id_proveedor IS NOT NULL AND t1.autorizacion_traslado = 1)
+                    OR
+                    (orden_traslado.id_proveedor IS NULL AND t2.autorizacion_traslado = 1)
+                )
               ORDER BY FECHA DESC
               limit 1");
         }

@@ -99,22 +99,45 @@ if ($accion=="g") {
 			$row = $result_agencia->fetch_assoc();
 			//$result = sql_select("SELECT autorizacion_traslado FROM tienda_agencia WHERE id = $row[id_tienda_salida]");
 
+		$esproveedor=false;
+
+			if (empty($row['id_tienda_destino'])) {
+
 			$result = sql_select("
-			SELECT 
-				salida.autorizacion_traslado AS autorizacion_salida,
-				destino.autorizacion_traslado AS autorizacion_destino
-			FROM 
-				tienda_agencia salida,
-				tienda_agencia destino
-			WHERE 
-				salida.id = $row[id_tienda_salida]
-				AND destino.id = $row[id_tienda_destino]
+				SELECT
+					autorizacion_traslado AS autorizacion_salida,
+					NULL AS autorizacion_destino
+				FROM tienda_agencia
+				WHERE id = {$row['id_tienda_salida']}
 			");
+
+			$esproveedor=true;
+
+		} else {
+
+			$result = sql_select("
+				SELECT
+					salida.autorizacion_traslado AS autorizacion_salida,
+					destino.autorizacion_traslado AS autorizacion_destino
+				FROM
+					tienda_agencia salida,
+					tienda_agencia destino
+				WHERE
+					salida.id = {$row['id_tienda_salida']}
+					AND destino.id = {$row['id_tienda_destino']}
+			");
+
+		}
 
 			if ($result && $result->num_rows > 0) {
 				$row = $result->fetch_assoc();
 				$autorizar_traslado_salida = (int)($row["autorizacion_salida"] ?? 0);
+
+				if($esproveedor){
+				$autorizar_traslado_entrada = (int)($row["autorizacion_salida"] ?? 0);
+			}else{
 				$autorizar_traslado_entrada = (int)($row["autorizacion_destino"] ?? 0);
+				}
 			}
 		}
 
@@ -343,6 +366,12 @@ if ($accion=="g") {
 	if (isset($_REQUEST["id_solicitante"])) { $sqlcampos.= " , id_solicitante =".GetSQLValue($_REQUEST["id_solicitante"],"int"); } 
 	if (isset($_REQUEST["id_proveedor"])) { $sqlcampos.= " , id_proveedor =".GetSQLValue($_REQUEST["id_proveedor"],"int"); } 
 
+	$kilometraje_salida = $_REQUEST['kilometraje_salida'] ?? '';
+	$kilometraje_entrada = $_REQUEST['kilometraje_entrada'] ?? '';
+	$combustible_salida = $_REQUEST['combustible_salida'] ?? '';
+	$combustible_entrada = $_REQUEST['combustible_entrada'] ?? '';
+	$id_producto = $_REQUEST['id_producto'] ?? '';
+
 	if ($nuevoreg==true){
         //Crear nuevo     
 		if (isset($_REQUEST["tipo_destino"])) { $sqlcampos.= " , tipo_destino =".GetSQLValue($_REQUEST["tipo_destino"],"int"); }        
@@ -374,6 +403,8 @@ if ($accion=="g") {
 		 			$usuario=sql_select("SELECT usuario FROM usuario WHERE id=".$_SESSION["usuario_id"]." limit 1");
 					$existe_traslado_salida=sql_select("SELECT id_bitacora FROM traslado_bitacora WHERE numero_traslado = (SELECT numero FROM orden_traslado WHERE id = $cid) AND tipo_movimiento = 'SALIDA' limit 1");
 					$usuario=$usuario->fetch_assoc();
+					$producto=sql_select("SELECT codigo_alterno FROM producto WHERE id= (SELECT id_producto FROM orden_traslado WHERE id = $cid) limit 1");
+					$producto=$producto->fetch_assoc();
 					$dispositivo = $_SERVER['HTTP_USER_AGENT']; // O detectar según el User-Agent
 
 					if($mov_atender==2 && $existe_traslado_salida->num_rows==0 && $autorizar_traslado_salida==0)
@@ -389,7 +420,8 @@ if ($accion=="g") {
 								tipo_traslado,
 								tipo_movimiento,
 								combustible,
-								kilometraje
+								kilometraje,
+								codigo_alterno
 							)
 							VALUES
 							(
@@ -401,8 +433,9 @@ if ($accion=="g") {
 								null,
 								'TRASLADO',
 								'SALIDA',
-								null,
-								null
+								'$combustible_salida',
+								'$kilometraje_salida',
+								'".$producto["codigo_alterno"]."'
 							)";
 
 							$insert_id = sql_insert($sql);
@@ -430,7 +463,8 @@ if ($accion=="g") {
 								tipo_traslado,
 								tipo_movimiento,
 								combustible,
-								kilometraje
+								kilometraje,
+								codigo_alterno
 							)
 							VALUES
 							(
@@ -442,8 +476,9 @@ if ($accion=="g") {
 								null,
 								'TRASLADO',
 								'ENTRADA',
-								'".$_REQUEST['combustible_entrada']."',
-								'".$_REQUEST['kilometraje_entrada']."'
+								'$combustible_entrada',
+								'$kilometraje_entrada',
+								'".$producto["codigo_alterno"]."'
 							)";
 
 							$insert_id = sql_insert($sql);
