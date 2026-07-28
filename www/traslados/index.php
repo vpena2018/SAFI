@@ -844,7 +844,7 @@ if ($accion=="L") {
 		,orden_traslado_estado.nombre AS elestado
 		,l1.nombre AS motorista1
         ,l1.grupo_id
-        ,orden_traslado.observaciones2
+        ,orden_traslado.observaciones
 		,l2.usuario AS solicitante1
 		,l3.nombre AS usuariocompleta
 		,p1.nombre AS elproveedor
@@ -891,7 +891,7 @@ if ($accion=="L") {
             ,orden_traslado_estado.nombre AS elestado
             ,l1.nombre AS motorista1
             ,l1.grupo_id
-            ,orden_traslado.observaciones2
+            ,orden_traslado.observaciones
             ,l2.usuario AS solicitante1
             ,l3.nombre AS usuariocompleta
             ,p1.nombre AS elproveedor
@@ -2573,7 +2573,7 @@ $txt_mensaje="";
                     const esTrasladoGrupo20 = textoMayuscula(resp.data.tipo_traslado) === TIPOS_UI.TRASLADO
                         && Number(resp.data.grupo_id) === 20;
                     if (esTrasladoGrupo20) {
-                        $('#observaciones2_traslado').val(resp.data.observaciones2 || '');
+                        $('#observaciones2_traslado').val(resp.data.observaciones || '');
                         $('#fila_observaciones2_traslado').show();
                     } else {
                         $('#observaciones2_traslado').val('');
