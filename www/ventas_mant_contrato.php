@@ -1619,7 +1619,7 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
     // Prima: puede ser 0, pero no vacía
     if (trim($prima_raw) === '') {
         $verror .= 'Ingrese la prima de venta del vehículo. ';
-    }
+    } 
 
     //valida que el precio de venta no sea menor al precio minimo y que no sea mayor al precio maximo      
     if (!es_nulo($precio_venta) && !es_nulo($precio_minimo) && $precio_venta < $precio_minimo) {
@@ -1646,7 +1646,7 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
             $verror.='No es posible realizar el cambio de vendedor';
         }        
         $id_estado_ant=intval(get_dato_sql("ventas","id_estado"," where id=".$cid));          
-        if ($id_estado==5){ 
+        if (!es_nulo($id_estado_ant) && $id_estado_ant!==11){
             $verror.='No es posible realizar el cambio de estado';
         }
     }
@@ -2226,7 +2226,7 @@ if ($foto_original_tele !== '') {
          */
         if($enviar_correo_sin_fotos  == true)
         {
-            require_once ('correo_ventas_verificacion.php');
+          //  require_once ('correo_ventas_verificacion.php');
         }
         
 
