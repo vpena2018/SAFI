@@ -85,7 +85,7 @@ if ($accion=="1") {
 
 				$datos.='<tr>
 				<td><a href="#" class="btn btn-sm btn-info" onclick="'.htmlspecialchars($onclick, ENT_QUOTES).'">'.($row["numero_traslado"]).'</a></td>
-				<td align="left" style="white-space: nowrap;">'.(formato_fecha_de_mysql($row["fecha"])).'</td>
+				<td align="left" style="white-space: nowrap;">'.date('d/m/Y h:i A', strtotime($row["fecha"])).'</td>
 				<td>'.($row["codigo_alterno"]).'</td>
 				<td>'.($row["combustible"]).'</td>
 				<td align="center" style="white-space: nowrap;">'.($row["kilometraje"]).'</td>
