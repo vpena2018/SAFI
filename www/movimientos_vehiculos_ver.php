@@ -58,7 +58,7 @@ if ($accion=="1") {
 	FROM traslado_bitacora
 	WHERE 1=1
 	$filtros
-	ORDER BY traslado_bitacora.fecha DESC, traslado_bitacora.id_bitacora DESC");
+	ORDER BY traslado_bitacora.fecha DESC, traslado_bitacora.id_bitacora DESC limit 100");
 
 	if ($result!=false){
 		if ($result -> num_rows > 0) {

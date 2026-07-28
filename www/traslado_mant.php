@@ -388,8 +388,8 @@ if ($accion=="g") {
 								firma,
 								tipo_traslado,
 								tipo_movimiento,
-								combustible_entrada,
-								kilometraje_entrada
+								combustible,
+								kilometraje
 							)
 							VALUES
 							(
