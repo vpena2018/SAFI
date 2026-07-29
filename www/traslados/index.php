@@ -386,7 +386,28 @@ if ($accion=="P") {
         exit;
     }
 
-    if($tipo_traslado_req!=$TIPO_TRASLADO_DOMICILIO){
+    $tipo_traslado_req_mayus = strtoupper($tipo_traslado_req);
+    $tipo_movimiento_req_mayus = strtoupper($tipo_movimiento_req);
+
+    if ($tipo_traslado_req_mayus === $TIPO_TRASLADO_DOMICILIO && $tipo_movimiento_req_mayus === $TIPO_MOVIMIENTO_SALIDA) {
+        if ($combustible_salida_req === '' || $kilometraje_salida_req === '') {
+            echo json_encode([
+                'ok' => false,
+                'error' => 'Debe ingresar combustible y kilometraje de salida para domicilio'
+            ]);
+            exit;
+        }
+
+        if (!is_numeric($kilometraje_salida_req)) {
+            echo json_encode([
+                'ok' => false,
+                'error' => 'El kilometraje de salida no es valido'
+            ]);
+            exit;
+        }
+    }
+
+	if($tipo_traslado_req_mayus!=$TIPO_TRASLADO_DOMICILIO){
             if ($combustible_salida_req === '' || $kilometraje_salida_req === '') {
             echo json_encode([
                 'ok' => false,
@@ -403,7 +424,7 @@ if ($accion=="P") {
             exit;
         }
 
-        if (strtoupper($tipo_movimiento_req) === $TIPO_MOVIMIENTO_ENTRADA && $kilometraje_entrada_req === '') {
+        if ($tipo_movimiento_req_mayus === $TIPO_MOVIMIENTO_ENTRADA && $kilometraje_entrada_req === '') {
             echo json_encode([
                 'ok' => false,
                 'error' => 'Debe ingresar el kilometraje de entrada'
@@ -411,7 +432,7 @@ if ($accion=="P") {
             exit;
         }
 
-        if (strtoupper($tipo_movimiento_req) === $TIPO_MOVIMIENTO_ENTRADA && $combustible_entrada_req === '') {
+        if ($tipo_movimiento_req_mayus === $TIPO_MOVIMIENTO_ENTRADA && $combustible_entrada_req === '') {
             echo json_encode([
                 'ok' => false,
                 'error' => 'Debe seleccionar el combustible de entrada'
@@ -419,7 +440,7 @@ if ($accion=="P") {
             exit;
         }
 
-        if (strtoupper($tipo_movimiento_req) === $TIPO_MOVIMIENTO_ENTRADA && !is_numeric($kilometraje_entrada_req)) {
+        if ($tipo_movimiento_req_mayus === $TIPO_MOVIMIENTO_ENTRADA && !is_numeric($kilometraje_entrada_req)) {
             echo json_encode([
                 'ok' => false,
                 'error' => 'El kilometraje de entrada no es valido'
@@ -427,7 +448,7 @@ if ($accion=="P") {
             exit;
         }
 
-        if (strtoupper($tipo_movimiento_req) === $TIPO_MOVIMIENTO_ENTRADA && floatval($kilometraje_entrada_req) < floatval($kilometraje_salida_req)) {
+        if ($tipo_movimiento_req_mayus === $TIPO_MOVIMIENTO_ENTRADA && floatval($kilometraje_entrada_req) < floatval($kilometraje_salida_req)) {
             echo json_encode([
                 'ok' => false,
                 'error' => 'El kilometraje de entrada no puede ser menor al kilometraje de salida'
@@ -459,7 +480,7 @@ if ($accion=="P") {
     $codigo_alterno_sql = $conn->real_escape_string($codigo_alterno_req);
     $combustible_bitacora_req = $combustible_salida_req;
     $kilometraje_bitacora_req = $kilometraje_salida_req;
-    if (strtoupper($tipo_movimiento_req) === $TIPO_MOVIMIENTO_ENTRADA) {
+    if ($tipo_movimiento_req_mayus === $TIPO_MOVIMIENTO_ENTRADA) {
         $combustible_bitacora_req = $combustible_entrada_req;
         $kilometraje_bitacora_req = $kilometraje_entrada_req;
     }
@@ -1002,6 +1023,7 @@ if ($accion=="L") {
                 INNER JOIN orden_domicilio od2
                     ON od2.numero = b.numero_traslado
                 WHERE od2.id_producto = orden_domicilio.id_producto
+                AND od2.numero = orden_domicilio.numero
                 AND b.tipo_movimiento = '{$TIPO_MOVIMIENTO_SALIDA}'
                 and b.tipo_traslado='{$TIPO_TRASLADO_DOMICILIO}'
             )
@@ -1024,12 +1046,12 @@ if ($accion=="L") {
                     '{$TIPO_MOVIMIENTO_ENTRADA}' AS tipo_movimiento,
 
                     COALESCE((
-                        SELECT km
-                        FROM inspeccion i
-                        WHERE i.id_producto = orden_domicilio.id_producto
-                        AND i.id_estado = 1 /*BORRADOR*/
-                        AND i.tipo_doc = 2 /*SALIDA*/
-                        AND i.tipo_inspeccion = 1 /*RENTA*/
+                        SELECT b.kilometraje
+                        FROM traslado_bitacora b
+                        WHERE b.numero_traslado = orden_domicilio.numero
+                        AND b.tipo_traslado = '{$TIPO_TRASLADO_DOMICILIO}'
+                        AND b.tipo_movimiento = '{$TIPO_MOVIMIENTO_SALIDA}'
+                        ORDER BY b.id_bitacora DESC
                         LIMIT 1
                     ), 0) AS kilometraje_salida,
 
@@ -1040,12 +1062,12 @@ if ($accion=="L") {
                     orden_domicilio_estado.nombre AS elestado,
 
                     COALESCE((
-                        SELECT i.combustible_entrada
-                        FROM inspeccion i
-                        WHERE i.id_producto = orden_domicilio.id_producto
-                        AND i.id_estado = 1
-                        AND i.tipo_doc = 2
-                        AND i.tipo_inspeccion = 1
+                        SELECT b.combustible
+                        FROM traslado_bitacora b
+                        WHERE b.numero_traslado = orden_domicilio.numero
+                        AND b.tipo_traslado = '{$TIPO_TRASLADO_DOMICILIO}'
+                        AND b.tipo_movimiento = '{$TIPO_MOVIMIENTO_SALIDA}'
+                        ORDER BY b.id_bitacora DESC
                         LIMIT 1
                     ), '1/4') AS combustible_salida,
 
@@ -1090,6 +1112,7 @@ if ($accion=="L") {
                     )
                 AND (orden_domicilio.id_estado =4 or orden_domicilio.id_estado =3 )
                 AND orden_domicilio.desplazamiento = 'EXTERNO'
+                AND orden_domicilio.tipo_entrega_domicilio<>'VENTA_CARSHOP'
                 AND t0.autorizacion_traslado=1
                 AND orden_domicilio.fecha >= '{$fecha_implementacion}'
 
@@ -1553,6 +1576,10 @@ $txt_mensaje="";
 										echo campo_combustible('combustible_salida','',$disable_combsalida);       
 									?>              
 								</div>
+
+                            <div class="col-md-8" id="fila_km_salida_domicilio" style="margin-left: 10px; display:none;">
+                                <?php echo campo("kilometraje_salida","Kilometraje salida",'number','',' ','disabled '); ?>
+                            </div>
 								
                     <div id="datos_entrada" class="row" style="display:none;">
                         		<div class="col-md-12">
@@ -2185,6 +2212,7 @@ $txt_mensaje="";
         $('#kilometraje_salida_lbl_valor').html('');
         $('#proveedor_lbl_valor').html('');
         $('#kilometraje_entrada').val('');
+        $('#kilometraje_salida').val('');
         setCombustibleValor('combustible_entrada', '');
         setCombustibleValor('combustible_salida', '');
         $('#tipo_traslado_lbl_valor').html('');
@@ -2196,6 +2224,29 @@ $txt_mensaje="";
         trasladoCodigoAlternoActual = '';
         actualizarSeccionEntrada('', '');
         limpiarFirma();
+    }
+
+    function actualizarCapturaSalidaDomicilio(tipoMovimiento, tipoTraslado) {
+        const esSalida = textoMayuscula(tipoMovimiento) === TIPOS_UI.SALIDA;
+        const esDomicilio = textoMayuscula(tipoTraslado) === TIPOS_UI.DOMICILIO;
+        const habilitarCaptura = esSalida && esDomicilio;
+
+        const $combSalida = $('input[name="combustible_salida"]');
+        const $filaKmSalida = $('#fila_km_salida_domicilio');
+        const $kmSalida = $('#kilometraje_salida');
+
+        $combSalida.prop('disabled', !habilitarCaptura);
+
+        if (habilitarCaptura) {
+            $filaKmSalida.show();
+            $kmSalida.prop('disabled', false);
+            $kmSalida.val(trasladoKilometrajeSalidaActual || '');
+            return;
+        }
+
+        $kmSalida.val('');
+        $kmSalida.prop('disabled', true);
+        $filaKmSalida.hide();
     }
 
     function LimpiarResultadoBusquedaRenta() {
@@ -2518,6 +2569,12 @@ $txt_mensaje="";
                 actualizarSeccionEntrada(resp.data.tipo_movimiento || '', resp.data.tipo_traslado || '', trasladoGrupoMotoristaActual);
                 trasladoCombustibleSalidaActual = (resp.data.combustible_salida || '').toString().trim();
                 trasladoKilometrajeSalidaActual = (resp.data.kilometraje_salida || '').toString().trim();
+                if (textoMayuscula(resp.data.tipo_traslado) === TIPOS_UI.DOMICILIO
+                    && textoMayuscula(resp.data.tipo_movimiento) === TIPOS_UI.SALIDA
+                    && (trasladoKilometrajeSalidaActual === '0' || trasladoKilometrajeSalidaActual === '0.00')) {
+                    trasladoKilometrajeSalidaActual = '';
+                }
+                actualizarCapturaSalidaDomicilio(resp.data.tipo_movimiento || '', resp.data.tipo_traslado || '');
 
                 $('#tipo_traslado_lbl_valor').html(resp.data.tipo_traslado || '');
 
@@ -2641,14 +2698,37 @@ $txt_mensaje="";
         var combustibleEntrada = ($('input[name="combustible_entrada"]:checked').val() || '').trim();
         var kilometrajeEntrada = ($('#kilometraje_entrada').val() || '').trim();
         var requiereCapturaGuardia = esEntradaTrasladoGrupo20(tipo_movimiento, tipoTraslado, trasladoGrupoMotoristaActual);
+        var esDomicilio = textoMayuscula(tipoTraslado) === TIPOS_UI.DOMICILIO;
+        var esSalida = textoMayuscula(tipo_movimiento) === TIPOS_UI.SALIDA;
+
+        if (esDomicilio && esSalida) {
+            combustibleSalida = ($('input[name="combustible_salida"]:checked').val() || '').trim();
+            kilometrajeSalida = ($('#kilometraje_salida').val() || '').trim();
+        }
 
         if (numeroTraslado === '') {
             mytoast('error', 'Favor buscar el vehiculo', 3000);
             return;
         }
 
-        if(tipoTraslado==='DOMICILIO')
+        if(esDomicilio)
         {
+            if (esSalida && combustibleSalida === '') {
+                mytoast('error', 'Debe seleccionar el combustible de salida', 6000);
+                return;
+            }
+
+            if (esSalida && kilometrajeSalida === '') {
+                mytoast('error', 'Debe ingresar el kilometraje de salida', 6000);
+                $('#kilometraje_salida').focus();
+                return;
+            }
+
+            if (esSalida && isNaN(Number(kilometrajeSalida))) {
+                mytoast('error', 'Kilometraje de salida no valido', 3000);
+                return;
+            }
+
             if (textoMayuscula(tipo_movimiento) === TIPOS_UI.ENTRADA && combustibleEntrada === '') {
                 mytoast('error', 'debe seleccionar el combustible de entrada', 6000);
                 return;
@@ -2959,6 +3039,7 @@ $txt_mensaje="";
         inicializarFirmaPadRenta();
         inicializarFirmaPadCita();
         actualizarSeccionEntrada('', '');
+        actualizarCapturaSalidaDomicilio('', '');
         actualizarSeccionEntradaRenta('');
         actualizarSeccionEntradaCita('');
         LimpiarResultadoBusquedaRenta();
