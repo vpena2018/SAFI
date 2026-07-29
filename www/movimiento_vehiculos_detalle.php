@@ -527,6 +527,12 @@ if ($parametros_validos) {
 			<div class="card-body">
 
 				<div class="row mb-2">
+					<div class="col-md-4"><?php echo campo("numero_renta_lbl","Numero",'labelb',$documento['numero_inspeccion'],' ',' '); ?></div>
+					<div class="col-md-4"><?php echo campo("fecha_renta_lbl","Fecha",'labelb',$fecha_renta,' ',' '); ?></div>
+					<div class="col-md-4"><?php echo campo("tienda_renta_lbl","Tienda",'labelb',$documento['tienda_nombre'],' ',' '); ?></div>
+				</div>
+
+				<div class="row mb-2">
 					<div class="col-md-6">
 						<div style="background-color: #f0f0d7; padding: 8px; border-radius: 4px;">
 							<?php echo campo("tipo_movimiento_renta_lbl","Movimiento",'labelb',$tipo_movimiento,' ',' '); ?>
@@ -537,12 +543,6 @@ if ($parametros_validos) {
 							<?php echo campo("tipo_traslado_renta_mostrar_lbl","Tipo traslado",'labelb',$tipo_traslado,' ',' '); ?>
 						</div>
 					</div>
-				</div>
-
-				<div class="row mb-2">
-					<div class="col-md-4"><?php echo campo("numero_renta_lbl","Numero",'labelb',$documento['numero_inspeccion'],' ',' '); ?></div>
-					<div class="col-md-4"><?php echo campo("fecha_renta_lbl","Fecha",'labelb',$fecha_renta,' ',' '); ?></div>
-					<div class="col-md-4"><?php echo campo("tienda_renta_lbl","Tienda",'labelb',$documento['tienda_nombre'],' ',' '); ?></div>
 				</div>
 
 				<div class="row mb-2">
@@ -620,6 +620,13 @@ if ($parametros_validos) {
 			<div class="card-body">
 
 				<div class="row mb-2">
+					<div class="col-md-3"><?php echo campo("numero_domicilio_lbl","Numero",'labelb',$documento['numero'],' ',' '); ?></div>
+					<div class="col-md-3"><?php echo campo("fecha_domicilio_lbl","Fecha",'labelb',$fecha_domicilio,' ',' '); ?></div>
+					<div class="col-md-3"><?php echo campo("tienda_domicilio_lbl","Tienda",'labelb',$documento['tiendanombre'],' ',' '); ?></div>
+					<div class="col-md-3"><?php echo campo("estado_domicilio_lbl","Estado",'labelb',$documento['elestado'],' ',' '); ?></div>
+				</div>
+
+				<div class="row mb-2">
 					<div class="col-md-6">
 						<div style="background-color: #f0f0d7; padding: 8px; border-radius: 4px;">
 							<?php echo campo("tipo_movimiento_domicilio_lbl","Movimiento",'labelb',$tipo_movimiento,' ',' '); ?>
@@ -630,13 +637,6 @@ if ($parametros_validos) {
 							<?php echo campo("tipo_traslado_domicilio_lbl","Tipo traslado",'labelb',$tipo_traslado,' ',' '); ?>
 						</div>
 					</div>
-				</div>
-
-				<div class="row mb-2">
-					<div class="col-md-3"><?php echo campo("numero_domicilio_lbl","Numero",'labelb',$documento['numero'],' ',' '); ?></div>
-					<div class="col-md-3"><?php echo campo("fecha_domicilio_lbl","Fecha",'labelb',$fecha_domicilio,' ',' '); ?></div>
-					<div class="col-md-3"><?php echo campo("tienda_domicilio_lbl","Tienda",'labelb',$documento['tiendanombre'],' ',' '); ?></div>
-					<div class="col-md-3"><?php echo campo("estado_domicilio_lbl","Estado",'labelb',$documento['elestado'],' ',' '); ?></div>
 				</div>
 
 				<div class="row mb-2">
@@ -722,6 +722,12 @@ if ($parametros_validos) {
 			<div class="card-body">
 
 				<div class="row mb-2">
+					<div class="col-md-4"><?php echo campo("numero_cita_lbl","Numero",'labelb',$documento['numero'],' ',' '); ?></div>
+					<div class="col-md-4"><?php echo campo("fecha_cita_lbl","Fecha",'labelb',$fecha_cita,' ',' '); ?></div>
+					<div class="col-md-4"><?php echo campo("tienda_cita_lbl","Tienda",'labelb',$documento['tiendanombre'],' ',' '); ?></div>
+				</div>
+
+				<div class="row mb-2">
 					<div class="col-md-6">
 						<div style="background-color: #f0f0d7; padding: 8px; border-radius: 4px;">
 							<?php echo campo("tipo_movimiento_cita_lbl","Movimiento",'labelb',$tipo_movimiento,' ',' '); ?>
@@ -732,12 +738,6 @@ if ($parametros_validos) {
 							<?php echo campo("tipo_traslado_cita_lbl","Tipo traslado",'labelb',$tipo_traslado,' ',' '); ?>
 						</div>
 					</div>
-				</div>
-
-				<div class="row mb-2">
-					<div class="col-md-4"><?php echo campo("numero_cita_lbl","Numero",'labelb',$documento['numero'],' ',' '); ?></div>
-					<div class="col-md-4"><?php echo campo("fecha_cita_lbl","Fecha",'labelb',$fecha_cita,' ',' '); ?></div>
-					<div class="col-md-4"><?php echo campo("tienda_cita_lbl","Tienda",'labelb',$documento['tiendanombre'],' ',' '); ?></div>
 				</div>
 
 				<div class="row mb-2">
