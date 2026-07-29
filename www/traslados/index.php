@@ -1083,10 +1083,11 @@ if ($accion=="L") {
                         INNER JOIN orden_domicilio od2
                             ON od2.numero = b.numero_traslado
                         WHERE od2.id_producto = orden_domicilio.id_producto
+                        AND od2.numero = orden_domicilio.numero
                         AND b.tipo_movimiento = '{$TIPO_MOVIMIENTO_ENTRADA}'
                         and b.tipo_traslado='{$TIPO_TRASLADO_DOMICILIO}'
                     )
-                AND orden_domicilio.id_estado =4 or orden_domicilio.id_estado =3 
+                AND (orden_domicilio.id_estado =4 or orden_domicilio.id_estado =3 )
                 AND orden_domicilio.desplazamiento = 'EXTERNO'
                 AND t0.autorizacion_traslado=1
 
