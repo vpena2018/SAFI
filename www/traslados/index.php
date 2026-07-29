@@ -1086,7 +1086,7 @@ if ($accion=="L") {
                         AND b.tipo_movimiento = '{$TIPO_MOVIMIENTO_ENTRADA}'
                         and b.tipo_traslado='{$TIPO_TRASLADO_DOMICILIO}'
                     )
-                AND orden_domicilio.id_estado =4 and orden_domicilio.id_estado =3 
+                AND orden_domicilio.id_estado =4 or orden_domicilio.id_estado =3 
                 AND orden_domicilio.desplazamiento = 'EXTERNO'
                 AND t0.autorizacion_traslado=1
 
