@@ -9,6 +9,12 @@ pagina_permiso(123);
             ['valor' => 'EXTERNO', 'texto' => 'EXTERNO'],
         ];
 
+		$tipo_entrega_domicilio= [
+			['valor' => '', 'texto' => '...'],
+            ['valor' => 'EMPRESA', 'texto' => 'ENTREGA EMPRESA'],
+            ['valor' => 'VENTA_CARSHOP', 'texto' => 'VENTA CARSHOP'],
+        ];
+
 
  
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="v";}
@@ -60,7 +66,11 @@ if ($accion=="g") {
     $cid=0;
 	if (isset($_REQUEST['cid'])) { $cid = sanear_int($_REQUEST['cid']); }
 
-	if (isset($_REQUEST['tipo_desplazamiento'])) { $tipo_desplazamiento = $_REQUEST['tipo_desplazamiento']; }
+	$tipo_desplazamiento_req='';
+	if (isset($_REQUEST['tipo_desplazamiento'])) { $tipo_desplazamiento_req = $_REQUEST['tipo_desplazamiento']; }
+
+	$tipo_entrega_domicilio_req='';
+	if (isset($_REQUEST['tipo_entrega_domicilio'])) { $tipo_entrega_domicilio_req = $_REQUEST['tipo_entrega_domicilio']; }
 
 	$elcodigo= $cid;
     if (es_nulo($elcodigo)) {$nuevoreg=true;} else {$nuevoreg=false;}
@@ -77,8 +87,12 @@ if ($accion=="g") {
 				$verror.="el campo atendido por es obligatorio";
 			}
 
-				if($tipo_desplazamiento=='') {
-					$verror.="el campo tipo de desplazamiento es obligatorio";
+				if($tipo_desplazamiento_req=='') {
+					$verror.="el campo tipo de desplazamiento es obligatorio<br>";
+				}
+
+				if($tipo_entrega_domicilio_req=='') {
+					$verror.="el campo tipo de entrega es obligatorio<br>";
 				}
 
 
@@ -95,8 +109,12 @@ if ($accion=="g") {
 			$verror.=validar("Cliente",$_REQUEST['cliente_id'], "int", true);
 		} else {$verror.=validar("Cliente",' ', "int", true);}
 
-		if($tipo_desplazamiento=='') {
-			$verror.="el campo tipo de desplazamiento es obligatorio";
+		if($tipo_desplazamiento_req=='') {
+			$verror.="el campo tipo de desplazamiento es obligatorio<br>";
+		}
+
+		if($tipo_entrega_domicilio_req=='') {
+			$verror.="el campo tipo de entrega es obligatorio<br>";
 		}
 
 	}
@@ -170,6 +188,7 @@ if ($accion=="g") {
 	if (tiene_permiso(126)) {
 		if (isset($_REQUEST["id_motorista"])) { $sqlcampos.= " , id_motorista =".GetSQLValue($_REQUEST["id_motorista"],"int"); } 
 		if (isset($_REQUEST["tipo_desplazamiento"])) { $sqlcampos.= " , desplazamiento =".GetSQLValue($_REQUEST["tipo_desplazamiento"],"text"); } 
+		if (isset($_REQUEST["tipo_entrega_domicilio"])) { $sqlcampos.= " , tipo_entrega_domicilio =".GetSQLValue($_REQUEST["tipo_entrega_domicilio"],"text"); } 
 	
 	}
 
@@ -296,6 +315,7 @@ if (isset($row["id_motorista"])) {$id_motorista= $row["id_motorista"]; } else {$
 if (isset($row["motorista1"])) {$motorista1= $row["motorista1"]; } else {$motorista1= "...";}
 
 if (isset($row["desplazamiento"])) {$desplazamiento= $row["desplazamiento"]; } else {$desplazamiento= ""; }
+if (isset($row["tipo_entrega_domicilio"])) {$tipo_entrega_domicilio_valor= $row["tipo_entrega_domicilio"]; } else {$tipo_entrega_domicilio_valor= ""; }
 
 if (isset($row["cliente_id"])) {$cliente_id= $row["cliente_id"]; } else {$cliente_id= "";}
 if (isset($row["cliente"])) {$cliente= $row["cliente"]; } else {$cliente= "";}
@@ -447,6 +467,14 @@ echo campo("mov","mov",'hidden',$mov,'','');
 					
 				
 				
+				?>              
+            </div>
+
+	<div class="col-md-6" >       
+                <?php 
+				$disable_comb_tipo_entrega='';
+				if ($id_estado>=2) {$disable_comb_tipo_entrega=' disabled="disabled"';}else{$disable_comb_tipo_entrega='';}
+				echo campo("tipo_entrega_domicilio","Tipo de entrega",'select2',valores_combobox_array($tipo_entrega_domicilio,$tipo_entrega_domicilio_valor,''),' ','  '.$disable_comb_tipo_entrega,'');
 				?>              
             </div>
 
