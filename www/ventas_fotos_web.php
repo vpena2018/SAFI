@@ -29,8 +29,8 @@ if ($accion == 'gfoto') {
     }
 
     if (!es_nulo($foto) && !es_nulo($cid)) {
-        $insert = sql_insert("INSERT INTO ventas_fotos (id_venta, nombre_archivo, principal, fecha)
-                              VALUES ($cid, ".GetSQLValue($foto, "text").", $is_main, NOW())");
+        $insert = sql_insert("INSERT INTO ventas_fotos (id_venta, nombre_archivo, principal, fecha, pagina_web)
+                              VALUES ($cid, ".GetSQLValue($foto, "text").", $is_main, NOW(), 2)");
         if ($insert !== false) {
             $stud_arr[0]["pcode"] = 1;
             $stud_arr[0]["pmsg"] = "Foto guardada";
@@ -105,7 +105,7 @@ if ($cid <= 0) {
 $total_filas = 0;
 $principal = false;
 
-$sql = "SELECT id,nombre_archivo,fecha,principal FROM ventas_fotos WHERE id_venta=".GetSQLValue($cid,"int")." ORDER BY principal DESC,id DESC";
+$sql = "SELECT id,nombre_archivo,fecha,principal FROM ventas_fotos WHERE pagina_web=2 AND id_venta=".GetSQLValue($cid,"int")." ORDER BY principal DESC,id DESC";
 $result = sql_select($sql);
 if ($result != false) {
     $total_filas = $result->num_rows;
