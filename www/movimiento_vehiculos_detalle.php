@@ -478,22 +478,19 @@ if ($parametros_validos) {
 					$firma_src = construir_src_firma($bitacora['firma']);
 				?>
 
-				<div class="row mb-2">
-					<div class="col-md-6"><?php echo campo("fecha_registro","Fecha Registro",'labelb',$fecha_bitacora,' ',' '); ?></div>
-					<div class="col-md-6"><?php echo campo("codigo_alterno","Vehiculo",'labelb',$bitacora['codigo_alterno'],' ',' '); ?></div>
+				<div class="row mb-1">
+					<div class="col-md-3"><?php echo campo("fecha_registro","Fecha Registro",'labelb',$fecha_bitacora,' ',' '); ?></div>
+					<div class="col-md-3"><?php echo campo("codigo_alterno","Vehiculo",'labelb',$bitacora['codigo_alterno'],' ',' '); ?></div>
+					<div class="col-md-3"><?php echo campo("combustible","{$txt_mov['combustible']}",'labelb',$bitacora['combustible'],' ',' '); ?></div>
+					<div class="col-md-3"><?php echo campo("kilometraje","{$txt_mov['kilometraje']}",'labelb',$bitacora['kilometraje'],' ',' '); ?></div>
 				</div>
 
-				<div class="row mb-2">
-					<div class="col-md-6"><?php echo campo("combustible","{$txt_mov['combustible']}",'labelb',$bitacora['combustible'],' ',' '); ?></div>
-					<div class="col-md-6"><?php echo campo("kilometraje","{$txt_mov['kilometraje']}",'labelb',$bitacora['kilometraje'],' ',' '); ?></div>
-				</div>
-
-				<div class="row mb-2">
+				<div class="row mb-1">
 					<div class="col-md-6"><?php echo campo("dispositivo","Dispositivo",'labelb',$bitacora['dispositivo'],' ',' '); ?></div>
 					<div class="col-md-6"><?php echo campo("ip_cliente","IP Cliente",'labelb',$bitacora['ip_cliente'],' ',' '); ?></div>
 				</div>
 
-				<div class="row mb-2">
+				<div class="row mb-1">
 					<div class="col-md-12"><?php echo campo("user_agent","User Agent",'labelb',$bitacora['user_agent'],' ',' '); ?></div>
 				</div>
 
@@ -527,18 +524,15 @@ if ($parametros_validos) {
 			<div class="card-body">
 
 				<div class="row mb-2">
-					<div class="col-md-4"><?php echo campo("numero_renta_lbl","Numero",'labelb',$documento['numero_inspeccion'],' ',' '); ?></div>
-					<div class="col-md-4"><?php echo campo("fecha_renta_lbl","Fecha",'labelb',$fecha_renta,' ',' '); ?></div>
-					<div class="col-md-4"><?php echo campo("tienda_renta_lbl","Tienda",'labelb',$documento['tienda_nombre'],' ',' '); ?></div>
-				</div>
-
-				<div class="row mb-2">
-					<div class="col-md-6">
+					<div class="col-md-2"><?php echo campo("numero_renta_lbl","Numero",'labelb',$documento['numero_inspeccion'],' ',' '); ?></div>
+					<div class="col-md-2"><?php echo campo("fecha_renta_lbl","Fecha",'labelb',$fecha_renta,' ',' '); ?></div>
+					<div class="col-md-2"><?php echo campo("tienda_renta_lbl","Tienda",'labelb',$documento['tienda_nombre'],' ',' '); ?></div>
+					<div class="col-md-3">
 						<div style="background-color: #f0f0d7; padding: 8px; border-radius: 4px;">
 							<?php echo campo("tipo_movimiento_renta_lbl","Movimiento",'labelb',$tipo_movimiento,' ',' '); ?>
 						</div>
 					</div>
-					<div class="col-md-6">
+					<div class="col-md-3">
 						<div style="background-color: #f0f0d7; padding: 8px; border-radius: 4px;">
 							<?php echo campo("tipo_traslado_renta_mostrar_lbl","Tipo traslado",'labelb',$tipo_traslado,' ',' '); ?>
 						</div>
@@ -565,22 +559,19 @@ if ($parametros_validos) {
 					$firma_src = construir_src_firma($bitacora['firma']);
 				?>
 
-				<div class="row mb-2">
-					<div class="col-md-6"><?php echo campo("fecha_registro_renta","Fecha Registro",'labelb',$fecha_bitacora,' ',' '); ?></div>
-					<div class="col-md-6"><?php echo campo("codigo_alterno_renta","Vehiculo",'labelb',$bitacora['codigo_alterno'],' ',' '); ?></div>
+				<div class="row mb-1">
+					<div class="col-md-3"><?php echo campo("fecha_registro_renta","Fecha Registro",'labelb',$fecha_bitacora,' ',' '); ?></div>
+					<div class="col-md-3"><?php echo campo("codigo_alterno_renta","Vehiculo",'labelb',$bitacora['codigo_alterno'],' ',' '); ?></div>
+					<div class="col-md-3"><?php echo campo("combustible_renta","{$txt_mov['combustible']}",'labelb',$bitacora['combustible'],' ',' '); ?></div>
+					<div class="col-md-3"><?php echo campo("kilometraje_renta","{$txt_mov['kilometraje']}",'labelb',$bitacora['kilometraje'],' ',' '); ?></div>
 				</div>
 
-				<div class="row mb-2">
-					<div class="col-md-6"><?php echo campo("combustible_renta","{$txt_mov['combustible']}",'labelb',$bitacora['combustible'],' ',' '); ?></div>
-					<div class="col-md-6"><?php echo campo("kilometraje_renta","{$txt_mov['kilometraje']}",'labelb',$bitacora['kilometraje'],' ',' '); ?></div>
-				</div>
-
-				<div class="row mb-2">
+				<div class="row mb-1">
 					<div class="col-md-6"><?php echo campo("dispositivo_renta","Dispositivo",'labelb',$bitacora['dispositivo'],' ',' '); ?></div>
 					<div class="col-md-6"><?php echo campo("ip_cliente_renta","IP Cliente",'labelb',$bitacora['ip_cliente'],' ',' '); ?></div>
 				</div>
 
-				<div class="row mb-2">
+				<div class="row mb-1">
 					<div class="col-md-12"><?php echo campo("user_agent_renta","User Agent",'labelb',$bitacora['user_agent'],' ',' '); ?></div>
 				</div>
 
@@ -620,23 +611,23 @@ if ($parametros_validos) {
 			<div class="card-body">
 
 				<div class="row mb-2">
-					<div class="col-md-3"><?php echo campo("numero_domicilio_lbl","Numero",'labelb',$documento['numero'],' ',' '); ?></div>
-					<div class="col-md-3"><?php echo campo("fecha_domicilio_lbl","Fecha",'labelb',$fecha_domicilio,' ',' '); ?></div>
-					<div class="col-md-3"><?php echo campo("tienda_domicilio_lbl","Tienda",'labelb',$documento['tiendanombre'],' ',' '); ?></div>
-					<div class="col-md-3"><?php echo campo("estado_domicilio_lbl","Estado",'labelb',$documento['elestado'],' ',' '); ?></div>
-				</div>
-
-				<div class="row mb-2">
-					<div class="col-md-6">
+					<div class="col-md-2"><?php echo campo("numero_domicilio_lbl","Numero",'labelb',$documento['numero'],' ',' '); ?></div>
+					<div class="col-md-2"><?php echo campo("fecha_domicilio_lbl","Fecha",'labelb',$fecha_domicilio,' ',' '); ?></div>
+					<div class="col-md-2"><?php echo campo("tienda_domicilio_lbl","Tienda",'labelb',$documento['tiendanombre'],' ',' '); ?></div>
+					<div class="col-md-3">
 						<div style="background-color: #f0f0d7; padding: 8px; border-radius: 4px;">
 							<?php echo campo("tipo_movimiento_domicilio_lbl","Movimiento",'labelb',$tipo_movimiento,' ',' '); ?>
 						</div>
 					</div>
-					<div class="col-md-6">
+					<div class="col-md-3">
 						<div style="background-color: #f0f0d7; padding: 8px; border-radius: 4px;">
 							<?php echo campo("tipo_traslado_domicilio_lbl","Tipo traslado",'labelb',$tipo_traslado,' ',' '); ?>
 						</div>
 					</div>
+				</div>
+
+				<div class="row mb-2">
+					<div class="col-md-4"><?php echo campo("estado_domicilio_lbl","Estado",'labelb',$documento['elestado'],' ',' '); ?></div>
 				</div>
 
 				<div class="row mb-2">
@@ -673,22 +664,19 @@ if ($parametros_validos) {
 					$firma_src = construir_src_firma($bitacora['firma']);
 				?>
 
-				<div class="row mb-2">
-					<div class="col-md-6"><?php echo campo("fecha_registro_domicilio","Fecha Registro",'labelb',$fecha_bitacora,' ',' '); ?></div>
-					<div class="col-md-6"><?php echo campo("codigo_alterno_domicilio","Vehiculo",'labelb',$bitacora['codigo_alterno'],' ',' '); ?></div>
+				<div class="row mb-1">
+					<div class="col-md-3"><?php echo campo("fecha_registro_domicilio","Fecha Registro",'labelb',$fecha_bitacora,' ',' '); ?></div>
+					<div class="col-md-3"><?php echo campo("codigo_alterno_domicilio","Vehiculo",'labelb',$bitacora['codigo_alterno'],' ',' '); ?></div>
+					<div class="col-md-3"><?php echo campo("combustible_domicilio","{$txt_mov['combustible']}",'labelb',$bitacora['combustible'],' ',' '); ?></div>
+					<div class="col-md-3"><?php echo campo("kilometraje_domicilio","{$txt_mov['kilometraje']}",'labelb',$bitacora['kilometraje'],' ',' '); ?></div>
 				</div>
 
-				<div class="row mb-2">
-					<div class="col-md-6"><?php echo campo("combustible_domicilio","{$txt_mov['combustible']}",'labelb',$bitacora['combustible'],' ',' '); ?></div>
-					<div class="col-md-6"><?php echo campo("kilometraje_domicilio","{$txt_mov['kilometraje']}",'labelb',$bitacora['kilometraje'],' ',' '); ?></div>
-				</div>
-
-				<div class="row mb-2">
+				<div class="row mb-1">
 					<div class="col-md-6"><?php echo campo("dispositivo_domicilio","Dispositivo",'labelb',$bitacora['dispositivo'],' ',' '); ?></div>
 					<div class="col-md-6"><?php echo campo("ip_cliente_domicilio","IP Cliente",'labelb',$bitacora['ip_cliente'],' ',' '); ?></div>
 				</div>
 
-				<div class="row mb-2">
+				<div class="row mb-1">
 					<div class="col-md-12"><?php echo campo("user_agent_domicilio","User Agent",'labelb',$bitacora['user_agent'],' ',' '); ?></div>
 				</div>
 
@@ -722,18 +710,15 @@ if ($parametros_validos) {
 			<div class="card-body">
 
 				<div class="row mb-2">
-					<div class="col-md-4"><?php echo campo("numero_cita_lbl","Numero",'labelb',$documento['numero'],' ',' '); ?></div>
-					<div class="col-md-4"><?php echo campo("fecha_cita_lbl","Fecha",'labelb',$fecha_cita,' ',' '); ?></div>
-					<div class="col-md-4"><?php echo campo("tienda_cita_lbl","Tienda",'labelb',$documento['tiendanombre'],' ',' '); ?></div>
-				</div>
-
-				<div class="row mb-2">
-					<div class="col-md-6">
+					<div class="col-md-2"><?php echo campo("numero_cita_lbl","Numero",'labelb',$documento['numero'],' ',' '); ?></div>
+					<div class="col-md-2"><?php echo campo("fecha_cita_lbl","Fecha",'labelb',$fecha_cita,' ',' '); ?></div>
+					<div class="col-md-2"><?php echo campo("tienda_cita_lbl","Tienda",'labelb',$documento['tiendanombre'],' ',' '); ?></div>
+					<div class="col-md-3">
 						<div style="background-color: #f0f0d7; padding: 8px; border-radius: 4px;">
 							<?php echo campo("tipo_movimiento_cita_lbl","Movimiento",'labelb',$tipo_movimiento,' ',' '); ?>
 						</div>
 					</div>
-					<div class="col-md-6">
+					<div class="col-md-3">
 						<div style="background-color: #f0f0d7; padding: 8px; border-radius: 4px;">
 							<?php echo campo("tipo_traslado_cita_lbl","Tipo traslado",'labelb',$tipo_traslado,' ',' '); ?>
 						</div>
@@ -764,22 +749,19 @@ if ($parametros_validos) {
 					$firma_src = construir_src_firma($bitacora['firma']);
 				?>
 
-				<div class="row mb-2">
-					<div class="col-md-6"><?php echo campo("fecha_registro_cita","Fecha Registro",'labelb',$fecha_bitacora,' ',' '); ?></div>
-					<div class="col-md-6"><?php echo campo("codigo_alterno_cita","Vehiculo",'labelb',$bitacora['codigo_alterno'],' ',' '); ?></div>
+				<div class="row mb-1">
+					<div class="col-md-3"><?php echo campo("fecha_registro_cita","Fecha Registro",'labelb',$fecha_bitacora,' ',' '); ?></div>
+					<div class="col-md-3"><?php echo campo("codigo_alterno_cita","Vehiculo",'labelb',$bitacora['codigo_alterno'],' ',' '); ?></div>
+					<div class="col-md-3"><?php echo campo("combustible_cita","{$txt_mov['combustible']}",'labelb',$bitacora['combustible'],' ',' '); ?></div>
+					<div class="col-md-3"><?php echo campo("kilometraje_cita","{$txt_mov['kilometraje']}",'labelb',$bitacora['kilometraje'],' ',' '); ?></div>
 				</div>
 
-				<div class="row mb-2">
-					<div class="col-md-6"><?php echo campo("combustible_cita","{$txt_mov['combustible']}",'labelb',$bitacora['combustible'],' ',' '); ?></div>
-					<div class="col-md-6"><?php echo campo("kilometraje_cita","{$txt_mov['kilometraje']}",'labelb',$bitacora['kilometraje'],' ',' '); ?></div>
-				</div>
-
-				<div class="row mb-2">
+				<div class="row mb-1">
 					<div class="col-md-6"><?php echo campo("dispositivo_cita","Dispositivo",'labelb',$bitacora['dispositivo'],' ',' '); ?></div>
 					<div class="col-md-6"><?php echo campo("ip_cliente_cita","IP Cliente",'labelb',$bitacora['ip_cliente'],' ',' '); ?></div>
 				</div>
 
-				<div class="row mb-2">
+				<div class="row mb-1">
 					<div class="col-md-12"><?php echo campo("user_agent_cita","User Agent",'labelb',$bitacora['user_agent'],' ',' '); ?></div>
 				</div>
 
