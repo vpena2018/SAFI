@@ -213,6 +213,84 @@ function obtener_documento_domicilio_entrada($numero) {
 	return false;
 }
 
+function obtener_documento_cita_salida($numero) {
+	$sql = "SELECT
+	cita.numero
+	,cita.fecha_cita fecha
+	,cita.empresa
+	,cita.id_tienda
+	,cita.cliente_contacto
+	,'CITA' AS tipo_traslado
+	,'SALIDA' AS tipo_movimiento
+	,t0.nombre AS tiendanombre
+	,producto.codigo_alterno
+	,producto.placa
+	,producto.nombre AS producto_nombre
+	,entidad.codigo_alterno AS cliente_codigo
+	,entidad.nombre AS cliente_nombre
+	FROM cita
+	LEFT OUTER JOIN tienda t0 ON (cita.id_tienda=t0.id)
+	LEFT OUTER JOIN producto ON (cita.id_producto=producto.id)
+	LEFT OUTER JOIN entidad ON (cita.cliente_id=entidad.id)
+	WHERE cita.numero = ".GetSQLValue($numero,'int')."
+	LIMIT 1";
+
+	$result = sql_select($sql);
+	if ($result!=false && $result->num_rows > 0) {
+		return $result->fetch_assoc();
+	}
+
+	return false;
+}
+
+function obtener_documento_cita_entrada($numero) {
+	$sql = "SELECT
+	cita.numero
+	,cita.fecha_cita fecha
+	,cita.empresa
+	,cita.id_tienda
+	,cita.cliente_contacto
+	,'CITA' AS tipo_traslado
+	,'ENTRADA' AS tipo_movimiento
+	,t0.nombre AS tiendanombre
+	,producto.codigo_alterno
+	,producto.placa
+	,producto.nombre AS producto_nombre
+	,entidad.codigo_alterno AS cliente_codigo
+	,entidad.nombre AS cliente_nombre
+	,(
+		SELECT b2.combustible
+		FROM traslado_bitacora b2
+		WHERE b2.numero_traslado = cita.numero
+		AND b2.tipo_movimiento = 'SALIDA'
+		AND b2.tipo_traslado = 'CITA'
+		ORDER BY b2.id_bitacora DESC
+		LIMIT 1
+	) AS combustible_salida
+	,(
+		SELECT b2.kilometraje
+		FROM traslado_bitacora b2
+		WHERE b2.numero_traslado = cita.numero
+		AND b2.tipo_movimiento = 'SALIDA'
+		AND b2.tipo_traslado = 'CITA'
+		ORDER BY b2.id_bitacora DESC
+		LIMIT 1
+	) AS kilometraje_salida
+	FROM cita
+	LEFT OUTER JOIN tienda t0 ON (cita.id_tienda=t0.id)
+	LEFT OUTER JOIN producto ON (cita.id_producto=producto.id)
+	LEFT OUTER JOIN entidad ON (cita.cliente_id=entidad.id)
+	WHERE cita.numero = ".GetSQLValue($numero,'int')."
+	LIMIT 1";
+
+	$result = sql_select($sql);
+	if ($result!=false && $result->num_rows > 0) {
+		return $result->fetch_assoc();
+	}
+
+	return false;
+}
+
 function obtener_bitacora_seguridad($numero, $tipo_traslado, $tipo_movimiento) {
 	$sql = "SELECT *
 	FROM traslado_bitacora
@@ -292,8 +370,18 @@ if ($parametros_validos) {
 			break;
 
 		case 'CITA':
-			// Pendiente: implementar GUI de CITA
-			$mensaje_error = 'GUI de CITA pendiente de implementacion.';
+			// GUI CITA
+			if ($tipo_movimiento==='SALIDA') {
+				$documento = obtener_documento_cita_salida($numero);
+			} else {
+				$documento = obtener_documento_cita_entrada($numero);
+			}
+
+			if ($documento===false) {
+				$mensaje_error = 'No se encontro el documento de cita.';
+			} else {
+				$bitacora = obtener_bitacora_seguridad($numero, $tipo_traslado, $tipo_movimiento);
+			}
 			break;
 	}
 } else {
@@ -602,6 +690,97 @@ if ($parametros_validos) {
 
 				<div class="row mb-2">
 					<div class="col-md-12"><?php echo campo("user_agent_domicilio","User Agent",'labelb',$bitacora['user_agent'],' ',' '); ?></div>
+				</div>
+
+				<div class="row mb-2">
+					<div class="col-md-12">
+						<label class="outside-label">Firma</label>
+						<div class="border rounded p-2 bg-white" style="min-height: 130px;">
+							<?php if ($firma_src==='') { ?>
+								<div class="text-muted">Sin firma registrada.</div>
+							<?php } else { ?>
+								<img src="<?php echo $firma_src; ?>" alt="Firma" style="max-width: 100%; height: auto; max-height: 220px;" />
+							<?php } ?>
+						</div>
+					</div>
+				</div>
+
+				<?php } ?>
+			</div>
+		</div>
+
+		<?php } ?>
+
+		<?php if ($documento!==false && $tipo_traslado==='CITA') {
+			$txt_mov = obtener_texto_movimiento($tipo_movimiento);
+			$fecha_cita = '';
+			if (isset($documento['fecha']) && !es_nulo($documento['fecha'])) { $fecha_cita = formato_fecha_de_mysql($documento['fecha']); }
+		?>
+
+		<div class="card mb-3">
+			<div class="card-header font-weight-bold">DATOS DEL DOCUMENTO</div>
+			<div class="card-body">
+
+				<div class="row mb-2">
+					<div class="col-md-6">
+						<div style="background-color: #f0f0d7; padding: 8px; border-radius: 4px;">
+							<?php echo campo("tipo_movimiento_cita_lbl","Movimiento",'labelb',$tipo_movimiento,' ',' '); ?>
+						</div>
+					</div>
+					<div class="col-md-6">
+						<div style="background-color: #f0f0d7; padding: 8px; border-radius: 4px;">
+							<?php echo campo("tipo_traslado_cita_lbl","Tipo traslado",'labelb',$tipo_traslado,' ',' '); ?>
+						</div>
+					</div>
+				</div>
+
+				<div class="row mb-2">
+					<div class="col-md-4"><?php echo campo("numero_cita_lbl","Numero",'labelb',$documento['numero'],' ',' '); ?></div>
+					<div class="col-md-4"><?php echo campo("fecha_cita_lbl","Fecha",'labelb',$fecha_cita,' ',' '); ?></div>
+					<div class="col-md-4"><?php echo campo("tienda_cita_lbl","Tienda",'labelb',$documento['tiendanombre'],' ',' '); ?></div>
+				</div>
+
+				<div class="row mb-2">
+					<div class="col-md-6"><?php echo campo("vehiculo_cita_lbl","Vehiculo",'labelb',trim($documento['codigo_alterno'].' '.$documento['producto_nombre'].' '.$documento['placa']),' ',' '); ?></div>
+					<div class="col-md-6"><?php echo campo("cliente_cita_lbl","Cliente",'labelb',trim($documento['cliente_codigo'].' '.$documento['cliente_nombre']),' ',' '); ?></div>
+				</div>
+
+				<div class="row mb-2">
+					<div class="col-md-6"><?php echo campo("empresa_cita_lbl","Empresa",'labelb',$documento['empresa'],' ',' '); ?></div>
+					<div class="col-md-6"><?php echo campo("contacto_cita_lbl","Nombre del contacto",'labelb',$documento['cliente_contacto'],' ',' '); ?></div>
+				</div>
+
+			</div>
+		</div>
+
+		<div class="card mb-3">
+			<div class="card-header font-weight-bold">BIT&Aacute;CORA DE SEGURIDAD</div>
+			<div class="card-body">
+				<?php if ($bitacora===false) { ?>
+					<div class="alert alert-light border mb-0">No hay registro de bitacora para este movimiento.</div>
+				<?php } else {
+					$fecha_bitacora = '';
+					if (isset($bitacora['fecha']) && !es_nulo($bitacora['fecha'])) { $fecha_bitacora = formato_fechahora_de_mysql($bitacora['fecha']); }
+					$firma_src = construir_src_firma($bitacora['firma']);
+				?>
+
+				<div class="row mb-2">
+					<div class="col-md-6"><?php echo campo("fecha_registro_cita","Fecha Registro",'labelb',$fecha_bitacora,' ',' '); ?></div>
+					<div class="col-md-6"><?php echo campo("codigo_alterno_cita","Vehiculo",'labelb',$bitacora['codigo_alterno'],' ',' '); ?></div>
+				</div>
+
+				<div class="row mb-2">
+					<div class="col-md-6"><?php echo campo("combustible_cita","{$txt_mov['combustible']}",'labelb',$bitacora['combustible'],' ',' '); ?></div>
+					<div class="col-md-6"><?php echo campo("kilometraje_cita","{$txt_mov['kilometraje']}",'labelb',$bitacora['kilometraje'],' ',' '); ?></div>
+				</div>
+
+				<div class="row mb-2">
+					<div class="col-md-6"><?php echo campo("dispositivo_cita","Dispositivo",'labelb',$bitacora['dispositivo'],' ',' '); ?></div>
+					<div class="col-md-6"><?php echo campo("ip_cliente_cita","IP Cliente",'labelb',$bitacora['ip_cliente'],' ',' '); ?></div>
+				</div>
+
+				<div class="row mb-2">
+					<div class="col-md-12"><?php echo campo("user_agent_cita","User Agent",'labelb',$bitacora['user_agent'],' ',' '); ?></div>
 				</div>
 
 				<div class="row mb-2">
