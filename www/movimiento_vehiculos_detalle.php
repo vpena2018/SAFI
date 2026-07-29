@@ -51,6 +51,68 @@ function obtener_documento_traslado($numero) {
 	return false;
 }
 
+function obtener_documento_renta_salida($numero) {
+	$sql = "SELECT
+	'RENTA' AS tipo_traslado
+	,'SALIDA' AS tipo_movimiento
+	,inspeccion.id
+	,inspeccion.numero AS numero_inspeccion
+	,inspeccion.hora AS fecha_inspeccion
+	,t1.nombre AS tienda_nombre
+	,inspeccion.placa
+	,producto.codigo_alterno
+	,producto.nombre AS producto_nombre
+	,inspeccion.combustible_entrada AS combustible
+	,inspeccion.cliente_contacto
+	,inspeccion.kilometraje_entrada AS kilometraje
+	,entidad.nombre AS cliente_nombre
+	,entidad.codigo_alterno AS cliente_codigo
+	FROM inspeccion
+	LEFT JOIN entidad ON inspeccion.cliente_id = entidad.id
+	LEFT JOIN producto ON inspeccion.id_producto = producto.id
+	LEFT OUTER JOIN tienda t1 ON (inspeccion.id_tienda=t1.id)
+	WHERE inspeccion.numero = ".GetSQLValue($numero,'int')."
+	LIMIT 1";
+
+	$result = sql_select($sql);
+	if ($result!=false && $result->num_rows > 0) {
+		return $result->fetch_assoc();
+	}
+
+	return false;
+}
+
+function obtener_documento_renta_entrada($numero) {
+	$sql = "SELECT
+	'RENTA' AS tipo_traslado
+	,'ENTRADA' AS tipo_movimiento
+	,inspeccion.id
+	,inspeccion.numero AS numero_inspeccion
+	,inspeccion.hora AS fecha_inspeccion
+	,t1.nombre AS tienda_nombre
+	,inspeccion.placa
+	,producto.codigo_alterno
+	,producto.nombre AS producto_nombre
+	,inspeccion.combustible_entrada AS combustible
+	,inspeccion.cliente_contacto
+	,inspeccion.kilometraje_entrada AS kilometraje
+	,entidad.nombre AS cliente_nombre
+	,entidad.codigo_alterno AS cliente_codigo
+	FROM inspeccion
+	LEFT JOIN entidad ON inspeccion.cliente_id = entidad.id
+	LEFT JOIN producto ON inspeccion.id_producto = producto.id
+	LEFT OUTER JOIN tienda t1 ON (inspeccion.id_tienda=t1.id)
+	WHERE inspeccion.numero = ".GetSQLValue($numero,'int')."
+	LIMIT 1";
+
+	$result = sql_select($sql);
+	if ($result!=false && $result->num_rows > 0) {
+		return $result->fetch_assoc();
+	}
+
+	return false;
+}
+
 function obtener_bitacora_seguridad($numero, $tipo_traslado, $tipo_movimiento) {
 	$sql = "SELECT *
 	FROM traslado_bitacora
@@ -100,8 +162,18 @@ if ($parametros_validos) {
 			break;
 
 		case 'RENTA':
-			// Pendiente: implementar GUI de RENTA
-			$mensaje_error = 'GUI de RENTA pendiente de implementacion.';
+			// GUI RENTA
+			if ($tipo_movimiento==='SALIDA') {
+				$documento = obtener_documento_renta_salida($numero);
+			} else {
+				$documento = obtener_documento_renta_entrada($numero);
+			}
+
+			if ($documento===false) {
+				$mensaje_error = 'No se encontro el documento de renta.';
+			} else {
+				$bitacora = obtener_bitacora_seguridad($numero, $tipo_traslado, $tipo_movimiento);
+			}
 			break;
 
 		case 'DOMICILIO':
@@ -225,6 +297,93 @@ if ($parametros_validos) {
 
 				<div class="row mb-2">
 					<div class="col-md-12"><?php echo campo("user_agent","User Agent",'labelb',$bitacora['user_agent'],' ',' '); ?></div>
+				</div>
+
+				<div class="row mb-2">
+					<div class="col-md-12">
+						<label class="outside-label">Firma</label>
+						<div class="border rounded p-2 bg-white" style="min-height: 130px;">
+							<?php if ($firma_src==='') { ?>
+								<div class="text-muted">Sin firma registrada.</div>
+							<?php } else { ?>
+								<img src="<?php echo $firma_src; ?>" alt="Firma" style="max-width: 100%; height: auto; max-height: 220px;" />
+							<?php } ?>
+						</div>
+					</div>
+				</div>
+
+				<?php } ?>
+			</div>
+		</div>
+
+		<?php } ?>
+
+		<?php if ($documento!==false && $tipo_traslado==='RENTA') {
+			$txt_mov = obtener_texto_movimiento($tipo_movimiento);
+			$fecha_renta = '';
+			if (isset($documento['fecha_inspeccion']) && !es_nulo($documento['fecha_inspeccion'])) { $fecha_renta = formato_fechahora_de_mysql($documento['fecha_inspeccion']); }
+		?>
+
+		<div class="card mb-3">
+			<div class="card-header font-weight-bold">DATOS DEL DOCUMENTO</div>
+			<div class="card-body">
+
+				<div class="row mb-2">
+					<div class="col-md-6">
+						<div style="background-color: #f0f0d7; padding: 8px; border-radius: 4px;">
+							<?php echo campo("tipo_movimiento_renta_lbl","Movimiento",'labelb',$tipo_movimiento,' ',' '); ?>
+						</div>
+					</div>
+					<div class="col-md-6">
+						<div style="background-color: #f0f0d7; padding: 8px; border-radius: 4px;">
+							<?php echo campo("tipo_traslado_renta_mostrar_lbl","Tipo traslado",'labelb',$tipo_traslado,' ',' '); ?>
+						</div>
+					</div>
+				</div>
+
+				<div class="row mb-2">
+					<div class="col-md-4"><?php echo campo("numero_renta_lbl","Numero",'labelb',$documento['numero_inspeccion'],' ',' '); ?></div>
+					<div class="col-md-4"><?php echo campo("fecha_renta_lbl","Fecha",'labelb',$fecha_renta,' ',' '); ?></div>
+					<div class="col-md-4"><?php echo campo("tienda_renta_lbl","Tienda",'labelb',$documento['tienda_nombre'],' ',' '); ?></div>
+				</div>
+
+				<div class="row mb-2">
+					<div class="col-md-4"><?php echo campo("vehiculo_renta_lbl","Vehiculo",'labelb',trim($documento['codigo_alterno'].' '.$documento['producto_nombre'].' '.$documento['placa']),' ',' '); ?></div>
+					<div class="col-md-4"><?php echo campo("cliente_renta_lbl","Cliente",'labelb',trim($documento['cliente_codigo'].' '.$documento['cliente_nombre']),' ',' '); ?></div>
+					<div class="col-md-4"><?php echo campo("contacto_renta_lbl","Nombre del contacto",'labelb',$documento['cliente_contacto'],' ',' '); ?></div>
+				</div>
+
+			</div>
+		</div>
+
+		<div class="card mb-3">
+			<div class="card-header font-weight-bold">BIT&Aacute;CORA DE SEGURIDAD</div>
+			<div class="card-body">
+				<?php if ($bitacora===false) { ?>
+					<div class="alert alert-light border mb-0">No hay registro de bitacora para este movimiento.</div>
+				<?php } else {
+					$fecha_bitacora = '';
+					if (isset($bitacora['fecha']) && !es_nulo($bitacora['fecha'])) { $fecha_bitacora = formato_fechahora_de_mysql($bitacora['fecha']); }
+					$firma_src = construir_src_firma($bitacora['firma']);
+				?>
+
+				<div class="row mb-2">
+					<div class="col-md-6"><?php echo campo("fecha_registro_renta","Fecha Registro",'labelb',$fecha_bitacora,' ',' '); ?></div>
+					<div class="col-md-6"><?php echo campo("codigo_alterno_renta","Vehiculo",'labelb',$bitacora['codigo_alterno'],' ',' '); ?></div>
+				</div>
+
+				<div class="row mb-2">
+					<div class="col-md-6"><?php echo campo("combustible_renta","{$txt_mov['combustible']}",'labelb',$bitacora['combustible'],' ',' '); ?></div>
+					<div class="col-md-6"><?php echo campo("kilometraje_renta","{$txt_mov['kilometraje']}",'labelb',$bitacora['kilometraje'],' ',' '); ?></div>
+				</div>
+
+				<div class="row mb-2">
+					<div class="col-md-6"><?php echo campo("dispositivo_renta","Dispositivo",'labelb',$bitacora['dispositivo'],' ',' '); ?></div>
+					<div class="col-md-6"><?php echo campo("ip_cliente_renta","IP Cliente",'labelb',$bitacora['ip_cliente'],' ',' '); ?></div>
+				</div>
+
+				<div class="row mb-2">
+					<div class="col-md-12"><?php echo campo("user_agent_renta","User Agent",'labelb',$bitacora['user_agent'],' ',' '); ?></div>
 				</div>
 
 				<div class="row mb-2">
