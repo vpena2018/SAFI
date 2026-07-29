@@ -1008,6 +1008,7 @@ if ($accion=="L") {
           AND orden_domicilio.id_estado = 4
           AND orden_domicilio.desplazamiento = 'EXTERNO'
           AND t0.autorizacion_traslado=1
+          AND orden_domicilio.fecha >= '{$fecha_implementacion}'
 
         ORDER BY orden_domicilio.fecha DESC
         LIMIT 1");
@@ -1090,6 +1091,7 @@ if ($accion=="L") {
                 AND (orden_domicilio.id_estado =4 or orden_domicilio.id_estado =3 )
                 AND orden_domicilio.desplazamiento = 'EXTERNO'
                 AND t0.autorizacion_traslado=1
+                AND orden_domicilio.fecha >= '{$fecha_implementacion}'
 
                 ORDER BY orden_domicilio.fecha DESC
                 LIMIT 1");
