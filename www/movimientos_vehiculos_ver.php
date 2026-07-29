@@ -81,7 +81,8 @@ if ($accion=="1") {
 			while ($row = $result -> fetch_assoc()) {
 				$numero_js = json_encode((string)$row["numero_traslado"]);
 				$tipo_js = json_encode((string)$row["tipo_traslado"]);
-				$onclick = "movimiento_vehiculo_abrir($numero_js,$tipo_js); return false;";
+				$tipo_movimiento_js = json_encode((string)$row["tipo_movimiento"]);
+				$onclick = "movimiento_vehiculo_abrir($numero_js,$tipo_js,$tipo_movimiento_js); return false;";
 
 				$datos.='<tr>
 				<td><a href="#" class="btn btn-sm btn-info" onclick="'.htmlspecialchars($onclick, ENT_QUOTES).'">'.($row["numero_traslado"]).'</a></td>
@@ -220,12 +221,13 @@ $("#numero_traslado" ).focus();
 
 $("#btn-filtro" ).click();
 
-function movimiento_vehiculo_abrir(numero, tipo_traslado){
+function movimiento_vehiculo_abrir(numero, tipo_traslado, tipo_movimiento=''){
 
 	modalwindow(
 		'Detalle Movimiento Veh\u00edculo',
 		'movimiento_vehiculos_detalle.php?numero=' + numero +
-		'&tipo_traslado=' + encodeURIComponent(tipo_traslado)
+		'&tipo_traslado=' + encodeURIComponent(tipo_traslado) +
+		'&tipo_movimiento=' + encodeURIComponent(tipo_movimiento)
 	);
 
 }
