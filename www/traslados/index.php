@@ -829,9 +829,9 @@ if ($accion=="PC") {
 
 //variables
 $numero_traslado="";
-$fecha_implementacion="2026-07-28";
+$fecha_implementacion="2026-07-29";
 //$fecha_busqueda_inspecciones="2024-04-24";
-$fecha_busqueda_inspecciones="2024-03-21";
+$fecha_busqueda_inspecciones="2026-07-29";
 
 // Leer Datos    ############################  
 if ($accion=="L") {
@@ -1252,7 +1252,8 @@ if ($accion=="L") {
             LIMIT 1");
 
             if($result && $result->num_rows > 0) {
-                if ($fechaInspeccion <= $fecha_implementacion) {
+                //if ($fechaInspeccion <= $fecha_implementacion) {
+                    if (1>3) {
                 $salida_antes_de_implementacion = true;
 
                 $sql = "INSERT INTO traslado_bitacora
