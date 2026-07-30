@@ -97,6 +97,13 @@ function campo_combustible($nombre,$valor,$adicional=""){
     return $salida;
 }
 
+function indice_nivel_combustible_cita($valor) {
+    $niveles = array('E','1/16','1/8','3/16','1/4','5/16','3/8','7/16','1/2','9/16','5/8','11/16','3/4','13/16','7/8','15/16','F');
+    $indice = array_search(trim((string)$valor), $niveles, true);
+    if ($indice === false) { return -1; }
+    return intval($indice);
+}
+
 	function campo($nombre,$etiqueta,$tipo,$valor,$class="",$adicional="",$valor2="",$valor_etiqueta="",$numero="") {
 	$salida="";
 	$salida_end="";
@@ -731,6 +738,28 @@ if ($accion=="PC") {
     $kilometraje_guardar = null;
 
     if ($tipo_movimiento_req === $TIPO_MOVIMIENTO_SALIDA) {
+        $result_entrada_cita = sql_select("
+            SELECT combustible, kilometraje
+            FROM traslado_bitacora
+            WHERE numero_traslado = '".$conn->real_escape_string($numero_cita_req)."'
+              AND tipo_traslado = '".$TIPO_TRASLADO_CITA."'
+              AND tipo_movimiento = '".$TIPO_MOVIMIENTO_ENTRADA."'
+            ORDER BY id_bitacora DESC
+            LIMIT 1
+        ");
+
+        if (!$result_entrada_cita || $result_entrada_cita->num_rows === 0) {
+            echo json_encode([
+                'ok' => false,
+                'error' => 'No existe referencia de entrada para la cita'
+            ]);
+            exit;
+        }
+
+        $row_entrada_cita = $result_entrada_cita->fetch_assoc();
+        $kilometraje_entrada_db = floatval($row_entrada_cita['kilometraje'] ?? 0);
+        $combustible_entrada_db = trim($row_entrada_cita['combustible'] ?? '');
+
         if ($kilometraje_salida_req === '' || $combustible_salida_req === '') {
             echo json_encode([
                 'ok' => false,
@@ -747,35 +776,38 @@ if ($accion=="PC") {
             exit;
         }
 
+        if ($kilometraje_salida_req < $kilometraje_entrada_db) {
+            echo json_encode([
+                'ok' => false,
+                'error' => 'El kilometraje de salida no puede ser menor al kilometraje de entrada'
+            ]);
+            exit;
+        }
+
+        $indice_entrada_db = indice_nivel_combustible_cita($combustible_entrada_db);
+        $indice_salida_req = indice_nivel_combustible_cita($combustible_salida_req);
+
+        if ($indice_entrada_db === -1 || $indice_salida_req === -1) {
+            echo json_encode([
+                'ok' => false,
+                'error' => 'El combustible no es valido'
+            ]);
+            exit;
+        }
+
+        if ($indice_salida_req > $indice_entrada_db) {
+            echo json_encode([
+                'ok' => false,
+                'error' => 'El combustible de salida no puede ser mayor al de entrada'
+            ]);
+            exit;
+        }
+
         $kilometraje_salida_val = floatval($kilometraje_salida_req);
         $combustible_salida_val = $combustible_salida_req;
         $combustible_guardar = $combustible_salida_req;
         $kilometraje_guardar = $kilometraje_salida_val;
     } else {
-        $sql_salida = "
-            SELECT combustible, kilometraje
-            FROM traslado_bitacora
-            WHERE numero_traslado = '".$conn->real_escape_string($numero_cita_req)."'
-              AND tipo_traslado = '".$TIPO_TRASLADO_CITA."'
-              AND tipo_movimiento = '".$TIPO_MOVIMIENTO_SALIDA."'
-                        ORDER BY id_bitacora DESC
-            LIMIT 1
-        ";
-
-        $result_salida = sql_select($sql_salida);
-
-        if (!$result_salida || $result_salida->num_rows === 0) {
-            echo json_encode([
-                'ok' => false,
-                'error' => 'No existe salida registrada para esta cita'
-            ]);
-            exit;
-        }
-
-        $row_salida = $result_salida->fetch_assoc();
-        $kilometraje_salida_val = floatval($row_salida['kilometraje'] ?? 0);
-        $combustible_salida_val = trim($row_salida['combustible'] ?? '');
-
         if ($kilometraje_entrada_req === '' || $combustible_entrada_req === '') {
             echo json_encode([
                 'ok' => false,
@@ -792,14 +824,7 @@ if ($accion=="PC") {
             exit;
         }
 
-        if (floatval($kilometraje_entrada_req) < $kilometraje_salida_val) {
-            echo json_encode([
-                'ok' => false,
-                'error' => 'El kilometraje de entrada no puede ser menor al kilometraje de salida'
-            ]);
-            exit;
-        }
-
+        $combustible_salida_val = '';
         $combustible_guardar = $combustible_entrada_req;
         $kilometraje_guardar = floatval($kilometraje_entrada_req);
     }
@@ -1122,44 +1147,10 @@ if ($accion=="L") {
 
 
     //CITAS
-    //salida cita
+    //entrada cita primero
             if (!$result || $result->num_rows == 0)
                 {
-                    $result = sql_select("SELECT 							
-                    cita.numero
-                    ,cita.fecha_cita fecha
-                    ,cita.empresa
-                    ,cita.id_tienda
-                    , '{$TIPO_TRASLADO_CITA}' AS tipo_traslado
-                    , '{$TIPO_MOVIMIENTO_SALIDA}' AS tipo_movimiento
-                    ,t0.nombre AS tiendanombre
-                    ,producto.codigo_alterno
-                    ,producto.placa
-                    ,producto.nombre AS producto_nombre
-                    ,entidad.codigo_alterno AS cliente_codigo
-                    ,entidad.nombre AS cliente_nombre
-                    FROM cita
-                    LEFT OUTER JOIN tienda t0 ON (cita.id_tienda=t0.id)
-                    LEFT OUTER JOIN producto ON (cita.id_producto=producto.id)
-                    LEFT OUTER JOIN entidad ON (cita.cliente_id=entidad.id)
-                    WHERE producto.codigo_alterno LIKE '%$codigo'
-                    AND cita.id_estado = 1
-                    AND DATE(cita.fecha_cita) = CURDATE()
-                    AND NOT EXISTS (
-                        SELECT 1
-                        FROM traslado_bitacora b
-                        WHERE b.numero_traslado = cita.numero
-                        AND b.tipo_movimiento = '{$TIPO_MOVIMIENTO_SALIDA}'
-                        AND b.tipo_traslado = '{$TIPO_TRASLADO_CITA}'
-                    )
-                    ORDER BY cita.fecha_cita DESC
-                    LIMIT 1");
-                }
-
-    //entrada cita
-            if (!$result || $result->num_rows == 0)
-                {
-                    $result = sql_select("SELECT
+                    $result = sql_select("SELECT 					
                     cita.numero
                     ,cita.fecha_cita fecha
                     ,cita.empresa
@@ -1172,37 +1163,15 @@ if ($accion=="L") {
                     ,producto.nombre AS producto_nombre
                     ,entidad.codigo_alterno AS cliente_codigo
                     ,entidad.nombre AS cliente_nombre
-                    ,(
-                        SELECT b2.combustible
-                        FROM traslado_bitacora b2
-                        WHERE b2.numero_traslado = cita.numero
-                        AND b2.tipo_movimiento = '{$TIPO_MOVIMIENTO_SALIDA}'
-                        AND b2.tipo_traslado = '{$TIPO_TRASLADO_CITA}'
-                        ORDER BY b2.id_bitacora DESC
-                        LIMIT 1
-                    ) AS combustible_salida
-                    ,(
-                        SELECT b2.kilometraje
-                        FROM traslado_bitacora b2
-                        WHERE b2.numero_traslado = cita.numero
-                        AND b2.tipo_movimiento = '{$TIPO_MOVIMIENTO_SALIDA}'
-                        AND b2.tipo_traslado = '{$TIPO_TRASLADO_CITA}'
-                        ORDER BY b2.id_bitacora DESC
-                        LIMIT 1
-                    ) AS kilometraje_salida
+                    ,'' AS combustible_entrada
+                    ,'' AS kilometraje_entrada
                     FROM cita
                     LEFT OUTER JOIN tienda t0 ON (cita.id_tienda=t0.id)
                     LEFT OUTER JOIN producto ON (cita.id_producto=producto.id)
                     LEFT OUTER JOIN entidad ON (cita.cliente_id=entidad.id)
                     WHERE producto.codigo_alterno LIKE '%$codigo'
+                    AND cita.id_estado = 1
                     AND DATE(cita.fecha_cita) = CURDATE()
-                    AND EXISTS (
-                        SELECT 1
-                        FROM traslado_bitacora b
-                        WHERE b.numero_traslado = cita.numero
-                        AND b.tipo_movimiento = '{$TIPO_MOVIMIENTO_SALIDA}'
-                        AND b.tipo_traslado = '{$TIPO_TRASLADO_CITA}'
-                    )
                     AND NOT EXISTS (
                         SELECT 1
                         FROM traslado_bitacora b
@@ -1213,6 +1182,66 @@ if ($accion=="L") {
                     ORDER BY cita.fecha_cita DESC
                     LIMIT 1");
                 }
+
+            if (!$result || $result->num_rows == 0)
+                {
+                    $result = sql_select("SELECT 					
+                    cita.numero
+                    ,cita.fecha_cita fecha
+                    ,cita.empresa
+                    ,cita.id_tienda
+                    , '{$TIPO_TRASLADO_CITA}' AS tipo_traslado
+                    , '{$TIPO_MOVIMIENTO_SALIDA}' AS tipo_movimiento
+                    ,t0.nombre AS tiendanombre
+                    ,producto.codigo_alterno
+                    ,producto.placa
+                    ,producto.nombre AS producto_nombre
+                    ,entidad.codigo_alterno AS cliente_codigo
+                    ,entidad.nombre AS cliente_nombre
+                    ,(
+                        SELECT b.combustible
+                        FROM traslado_bitacora b
+                        WHERE b.numero_traslado = cita.numero
+                        AND b.tipo_traslado = '{$TIPO_TRASLADO_CITA}'
+                        AND b.tipo_movimiento = '{$TIPO_MOVIMIENTO_ENTRADA}'
+                        ORDER BY b.id_bitacora DESC
+                        LIMIT 1
+                    ) AS combustible_entrada
+                    ,(
+                        SELECT b.kilometraje
+                        FROM traslado_bitacora b
+                        WHERE b.numero_traslado = cita.numero
+                        AND b.tipo_traslado = '{$TIPO_TRASLADO_CITA}'
+                        AND b.tipo_movimiento = '{$TIPO_MOVIMIENTO_ENTRADA}'
+                        ORDER BY b.id_bitacora DESC
+                        LIMIT 1
+                    ) AS kilometraje_entrada
+                    FROM cita
+                    LEFT OUTER JOIN tienda t0 ON (cita.id_tienda=t0.id)
+                    LEFT OUTER JOIN producto ON (cita.id_producto=producto.id)
+                    LEFT OUTER JOIN entidad ON (cita.cliente_id=entidad.id)
+                    WHERE producto.codigo_alterno LIKE '%$codigo'
+                    AND cita.id_estado = 1
+                    AND DATE(cita.fecha_cita) = CURDATE()
+                    AND EXISTS (
+                        SELECT 1
+                        FROM traslado_bitacora b
+                        WHERE b.numero_traslado = cita.numero
+                        AND b.tipo_movimiento = '{$TIPO_MOVIMIENTO_ENTRADA}'
+                        AND b.tipo_traslado = '{$TIPO_TRASLADO_CITA}'
+                    )
+                    AND NOT EXISTS (
+                        SELECT 1
+                        FROM traslado_bitacora b
+                        WHERE b.numero_traslado = cita.numero
+                        AND b.tipo_movimiento = '{$TIPO_MOVIMIENTO_SALIDA}'
+                        AND b.tipo_traslado = '{$TIPO_TRASLADO_CITA}'
+                    )
+                    ORDER BY cita.fecha_cita DESC
+                    LIMIT 1");
+                }
+
+   
 
         //RENTA
         //salida renta
@@ -1658,22 +1687,6 @@ $txt_mensaje="";
                         </div>
                     </div>
 
-                    <div class="row mb-2">
-                        <div class="col-md-12">
-                            <span class="outside-label">Combustible Salida</span>
-                            <?php
-                                $disable_combsalida_cita = '';
-                                echo campo_combustible('combustible_salida_cita','',$disable_combsalida_cita);
-                            ?>
-                        </div>
-                    </div>
-
-                    <div class="row mb-2">
-                        <div class="col-md-8" style="margin-left: 10px;">
-                            <?php echo campo("kilometraje_salida_cita","Kilometraje salida",'number','',' '); ?>
-                        </div>
-                    </div>
-
                     <div id="datos_entrada_cita" class="row" style="display:none;">
                         <div class="col-md-12">
                             <span class="outside-label">Combustible Entrada</span>
@@ -1685,6 +1698,19 @@ $txt_mensaje="";
 
                         <div class="col-md-8" style="margin-left: 10px;">
                             <?php echo campo("kilometraje_entrada_cita","Kilometraje Entrada",'number','',' ',$disable_combentrada_cita .' '); ?>
+                        </div>
+                    </div>
+
+                                        <div class="row mb-2" id="fila_salida_cita">
+                        <div class="col-md-12">
+                            <span class="outside-label">Combustible Salida</span>
+                            <?php
+                                $disable_combsalida_cita = '';
+                                echo campo_combustible('combustible_salida_cita','',$disable_combsalida_cita);
+                            ?>
+                        </div>
+                        <div class="col-md-8" style="margin-left: 10px;">
+                            <?php echo campo("kilometraje_salida_cita","Kilometraje salida",'number','',' '); ?>
                         </div>
                     </div>
 
@@ -1838,6 +1864,8 @@ $txt_mensaje="";
     let rentaCodigoAlternoActual = '';
     let citaCodigoAlternoActual = '';
     let citaNumeroActual = '';
+    let citaCombustibleEntradaActual = '';
+    let citaKilometrajeEntradaActual = '';
     let citaCombustibleSalidaActual = '';
     let citaKilometrajeSalidaActual = '';
     let trasladoGrupoMotoristaActual = '';
@@ -2174,6 +2202,11 @@ $txt_mensaje="";
         return String(valor || '').toUpperCase();
     }
 
+    function indiceNivelCombustibleCita(valor) {
+        const niveles = ['E','1/16','1/8','3/16','1/4','5/16','3/8','7/16','1/2','9/16','5/8','11/16','3/4','13/16','7/8','15/16','F'];
+        return niveles.indexOf(String(valor || '').trim());
+    }
+
     function esEntradaTrasladoGrupo20(tipoMovimiento, tipoTraslado, grupoMotorista) {
         return textoMayuscula(tipoMovimiento) === TIPOS_UI.ENTRADA
             && textoMayuscula(tipoTraslado) === TIPOS_UI.TRASLADO
@@ -2343,23 +2376,24 @@ $txt_mensaje="";
         const esEntrada = textoMayuscula(tipoMovimiento) === TIPOS_UI.ENTRADA;
         const $seccion = $('#datos_entrada_cita');
         const $controles = $seccion.find('input');
+        const $filaSalida = $('#fila_salida_cita');
         const $kmSalida = $('#kilometraje_salida_cita');
         const $combSalida = $('input[name="combustible_salida_cita"]');
 
         if (esEntrada) {
             $seccion.show();
             $controles.prop('disabled', false);
+            $filaSalida.hide();
             $combSalida.prop('disabled', true);
             $kmSalida.prop('disabled', true);
             return;
         }
 
-        setCombustibleValor('combustible_entrada_cita', '');
-        $('#kilometraje_entrada_cita').val('');
+        $seccion.show();
         $controles.prop('disabled', true);
+        $filaSalida.show();
         $combSalida.prop('disabled', false);
         $kmSalida.prop('disabled', false);
-        $seccion.hide();
     }
 
     function actualizarSeccionEntrada(tipoMovimiento, tipoTraslado, grupoMotorista) {
@@ -2516,12 +2550,31 @@ $txt_mensaje="";
                     $('#cliente_cita_lbl_valor').html(resp.data.cliente_nombre || '');
 
                     citaNumeroActual = (resp.data.numero || '').toString().trim();
-                    citaCombustibleSalidaActual = (resp.data.combustible_salida || '').toString().trim();
-                    citaKilometrajeSalidaActual = (resp.data.kilometraje_salida || '').toString().trim();
                     citaCodigoAlternoActual = (resp.data.codigo_alterno || '').toString().trim();
 
+                    citaCombustibleEntradaActual = (resp.data.combustible_entrada || '').toString().trim();
+                    citaKilometrajeEntradaActual = (resp.data.kilometraje_entrada || '').toString().trim();
+
+                    if (textoMayuscula(tipoMovimientoCita) === TIPOS_UI.ENTRADA) {
+                        citaCombustibleSalidaActual = '';
+                        citaKilometrajeSalidaActual = '';
+                    } else {
+                        citaCombustibleSalidaActual = '';
+                        citaKilometrajeSalidaActual = '';
+                    }
+
+                    setCombustibleValor('combustible_entrada_cita', citaCombustibleEntradaActual);
+                    $('#kilometraje_entrada_cita').val(citaKilometrajeEntradaActual);
                     setCombustibleValor('combustible_salida_cita', citaCombustibleSalidaActual);
                     $('#kilometraje_salida_cita').val(citaKilometrajeSalidaActual);
+
+                    if (textoMayuscula(tipoMovimientoCita) === TIPOS_UI.ENTRADA) {
+                        $('#fila_salida_cita').hide();
+                        $('#datos_entrada_cita').show();
+                    } else {
+                        $('#fila_salida_cita').show();
+                        $('#datos_entrada_cita').show();
+                    }
 
                     actualizarSeccionEntradaCita(tipoMovimientoCita);
                     return;
@@ -2942,6 +2995,11 @@ $txt_mensaje="";
         }
 
         if (tipoMovimientoCita === TIPOS_UI.SALIDA) {
+            if (combustibleEntradaCita === '' || kilometrajeEntradaCita === '') {
+                mytoast('error', 'No existe referencia de entrada para la cita', 3000);
+                return;
+            }
+
             if (combustibleSalidaCita === '') {
                 mytoast('error', 'Debe seleccionar el combustible de salida', 3000);
                 return;
@@ -2956,14 +3014,32 @@ $txt_mensaje="";
                 mytoast('error', 'Kilometraje de salida no valido', 3000);
                 return;
             }
-        }
 
-        if (tipoMovimientoCita === TIPOS_UI.ENTRADA) {
-            if (citaCombustibleSalidaActual === '' || citaKilometrajeSalidaActual === '') {
-                mytoast('error', 'No existe referencia de salida para la cita', 3000);
+            if (isNaN(Number(kilometrajeEntradaCita))) {
+                mytoast('error', 'Kilometraje de entrada no valido', 3000);
                 return;
             }
 
+            if (Number(kilometrajeSalidaCita) < Number(kilometrajeEntradaCita)) {
+                mytoast('error', 'El kilometraje de salida no puede ser menor al kilometraje de entrada', 3000);
+                return;
+            }
+
+            const indiceCombEntrada = indiceNivelCombustibleCita(combustibleEntradaCita);
+            const indiceCombSalida = indiceNivelCombustibleCita(combustibleSalidaCita);
+
+            if (indiceCombEntrada === -1 || indiceCombSalida === -1) {
+                mytoast('error', 'El combustible no es valido', 3000);
+                return;
+            }
+
+            if (indiceCombSalida > indiceCombEntrada) {
+                mytoast('error', 'El combustible de salida no puede ser mayor al de entrada', 3000);
+                return;
+            }
+        }
+
+        if (tipoMovimientoCita === TIPOS_UI.ENTRADA) {
             if (combustibleEntradaCita === '') {
                 mytoast('error', 'Debe seleccionar el combustible de entrada', 3000);
                 return;
@@ -2980,10 +3056,6 @@ $txt_mensaje="";
                 return;
             }
 
-            if (Number(kilometrajeEntradaCita) < Number(citaKilometrajeSalidaActual)) {
-                mytoast('error', 'El kilometraje de entrada no puede ser menor al de salida', 3000);
-                return;
-            }
         }
 
         var firmaBase64Cita = obtenerFirmaBase64Cita();

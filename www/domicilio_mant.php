@@ -12,8 +12,8 @@ pagina_permiso(123);
 		$tipo_entrega_domicilio= [
 			['valor' => '', 'texto' => '...'],
 			['valor' => 'ENTREGA_INTERNA', 'texto' => 'ENTREGA INTERNA'],
-            ['valor' => 'EMPRESA', 'texto' => 'ENTREGA EMPRESA'],
-            ['valor' => 'VENTA_CARSHOP', 'texto' => 'VENTA CARSHOP'],
+            ['valor' => 'EMPRESA', 'texto' => 'ENTREGA EMPRESA (EXTERNO)'],
+            ['valor' => 'VENTA_CARSHOP', 'texto' => 'VENTA CARSHOP (EXTERNO)'],
         ];
 
 
