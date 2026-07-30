@@ -84,6 +84,13 @@ if ($accion=="1") {
 				$tipo_js = json_encode((string)$row["tipo_traslado"]);
 				$tipo_movimiento_js = json_encode((string)$row["tipo_movimiento"]);
 				$onclick = "movimiento_vehiculo_abrir($numero_js,$tipo_js,$tipo_movimiento_js); return false;";
+				$tipo_movimiento = strtoupper(trim((string)$row["tipo_movimiento"]));
+				$estilo_movimiento = 'background-color:#f8f9fa; color:#495057;';
+				if ($tipo_movimiento === 'ENTRADA') {
+					$estilo_movimiento = 'background-color:#d4edda; color:#155724; font-weight:700;';
+				} elseif ($tipo_movimiento === 'SALIDA') {
+					$estilo_movimiento = 'background-color:#f8d7da; color:#721c24; font-weight:700;';
+				}
 
 				$datos.='<tr>
 				<td><a href="#" class="btn btn-sm btn-info" onclick="'.htmlspecialchars($onclick, ENT_QUOTES).'">'.($row["numero_traslado"]).'</a></td>
@@ -92,7 +99,7 @@ if ($accion=="1") {
 				<td>'.($row["combustible"]).'</td>
 				<td align="center" style="white-space: nowrap;">'.($row["kilometraje"]).'</td>
 				<td>'.($row["tipo_traslado"]).'</td>
-				<td>'.($row["tipo_movimiento"]).'</td>
+				<td style="'.$estilo_movimiento.'">'.($row["tipo_movimiento"]).'</td>
 				</tr>';
 			}
 

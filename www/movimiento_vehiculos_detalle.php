@@ -140,7 +140,7 @@ function obtener_documento_domicilio_salida($numero) {
 		AND i.tipo_inspeccion = 1
 		LIMIT 1
 	), 0) AS combustible_salida,
-	orden_domicilio.desplazamiento,
+	CASE WHEN orden_domicilio.desplazamiento = 'VENTA_CARSHOP' THEN 'VENTA CARSHOP' ELSE orden_domicilio.desplazamiento END AS desplazamiento,
 	l1.nombre AS motorista1,
 	entidad.nombre AS cliente,
 	l2.usuario AS solicitante1,
