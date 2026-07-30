@@ -795,13 +795,13 @@ if ($accion=="PC") {
             exit;
         }
 
-        if ($indice_salida_req > $indice_entrada_db) {
+/*         if ($indice_salida_req > $indice_entrada_db) {
             echo json_encode([
                 'ok' => false,
                 'error' => 'El combustible de salida no puede ser mayor al de entrada'
             ]);
             exit;
-        }
+        } */
 
         $kilometraje_salida_val = floatval($kilometraje_salida_req);
         $combustible_salida_val = $combustible_salida_req;
@@ -3032,10 +3032,10 @@ $txt_mensaje="";
                 return;
             }
 
-            if (indiceCombSalida > indiceCombEntrada) {
+/*             if (indiceCombSalida > indiceCombEntrada) {
                 mytoast('error', 'El combustible de salida no puede ser mayor al de entrada', 3000);
                 return;
-            }
+            } */
         }
 
         if (tipoMovimientoCita === TIPOS_UI.ENTRADA) {
