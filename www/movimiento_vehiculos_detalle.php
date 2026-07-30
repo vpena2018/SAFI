@@ -141,12 +141,6 @@ function obtener_documento_domicilio_salida($numero) {
 		LIMIT 1
 	), 0) AS combustible_salida,
 	orden_domicilio.desplazamiento,
-	orden_domicilio.tipo_entrega_domicilio,
-	CASE orden_domicilio.tipo_entrega_domicilio
-		WHEN 'EMPRESA' THEN 'ENTREGA EMPRESA'
-		WHEN 'VENTA_CARSHOP' THEN 'VENTA CARSHOP'
-		ELSE ''
-	END AS tipo_entrega_domicilio_lbl,
 	l1.nombre AS motorista1,
 	entidad.nombre AS cliente,
 	l2.usuario AS solicitante1,
@@ -198,12 +192,6 @@ function obtener_documento_domicilio_entrada($numero) {
 		LIMIT 1
 	), '1/4') AS combustible_salida,
 	orden_domicilio.desplazamiento,
-	orden_domicilio.tipo_entrega_domicilio,
-	CASE orden_domicilio.tipo_entrega_domicilio
-		WHEN 'EMPRESA' THEN 'ENTREGA EMPRESA'
-		WHEN 'VENTA_CARSHOP' THEN 'VENTA CARSHOP'
-		ELSE ''
-	END AS tipo_entrega_domicilio_lbl,
 	l1.nombre AS motorista1,
 	entidad.nombre AS cliente,
 	l2.usuario AS solicitante1,
@@ -613,9 +601,6 @@ if ($parametros_validos) {
 			$fecha_domicilio = '';
 			if (isset($documento['fecha']) && !es_nulo($documento['fecha'])) { $fecha_domicilio = formato_fecha_de_mysql($documento['fecha']); }
 			$desplazamiento_domicilio = isset($documento['desplazamiento']) ? $documento['desplazamiento'] : '';
-			$tipo_entrega_domicilio_lbl = isset($documento['tipo_entrega_domicilio_lbl']) && !es_nulo($documento['tipo_entrega_domicilio_lbl'])
-				? $documento['tipo_entrega_domicilio_lbl']
-				: (isset($documento['tipo_entrega_domicilio']) ? $documento['tipo_entrega_domicilio'] : '');
 
 			$inicio_domicilio = '';
 			if (isset($documento['domicilio_inicio']) && !es_nulo($documento['domicilio_inicio'])) { $inicio_domicilio = formato_fechahora_de_mysql($documento['domicilio_inicio']); }
@@ -660,7 +645,6 @@ if ($parametros_validos) {
 
 				<div class="row mb-2">
 					<div class="col-md-6"><?php echo campo("desplazamiento_domicilio_lbl","Tipo de desplazamiento",'labelb',$desplazamiento_domicilio,' ',' '); ?></div>
-					<div class="col-md-6"><?php echo campo("tipo_entrega_domicilio_lbl","Tipo de entrega",'labelb',$tipo_entrega_domicilio_lbl,' ',' '); ?></div>
 				</div>
 
 				<div class="row mb-2">

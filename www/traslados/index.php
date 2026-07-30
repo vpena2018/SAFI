@@ -1053,7 +1053,7 @@ if ($accion=="L") {
                 and b.tipo_traslado='{$TIPO_TRASLADO_DOMICILIO}'
             )
           AND orden_domicilio.id_estado = 4
-          AND orden_domicilio.desplazamiento = 'EXTERNO'
+          AND (orden_domicilio.desplazamiento = 'EXTERNO' or orden_domicilio.desplazamiento = 'VENTA_CARSHOP')
           AND t0.autorizacion_traslado=1
           AND orden_domicilio.fecha >= '{$fecha_implementacion}'
 
@@ -1137,7 +1137,6 @@ if ($accion=="L") {
                     )
                 AND (orden_domicilio.id_estado =4 or orden_domicilio.id_estado =3 )
                 AND orden_domicilio.desplazamiento = 'EXTERNO'
-                AND orden_domicilio.tipo_entrega_domicilio<>'VENTA_CARSHOP'
                 AND t0.autorizacion_traslado=1
                 AND orden_domicilio.fecha >= '{$fecha_implementacion}'
 

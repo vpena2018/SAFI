@@ -54,8 +54,9 @@ if ($accion=="1") {
 
 	$datos="";
 
-	$result = sql_select("SELECT traslado_bitacora.*
+	$result = sql_select("SELECT traslado_bitacora.*, producto.nombre as nombre_producto
 	FROM traslado_bitacora
+    inner join producto on producto.codigo_alterno=traslado_bitacora.codigo_alterno
 	WHERE 1=1
 	$filtros
 	ORDER BY traslado_bitacora.fecha DESC, traslado_bitacora.id_bitacora DESC limit 100");
@@ -87,7 +88,7 @@ if ($accion=="1") {
 				$datos.='<tr>
 				<td><a href="#" class="btn btn-sm btn-info" onclick="'.htmlspecialchars($onclick, ENT_QUOTES).'">'.($row["numero_traslado"]).'</a></td>
 				<td align="left" style="white-space: nowrap;">'.date('d/m/Y h:i A', strtotime($row["fecha"])).'</td>
-				<td>'.($row["codigo_alterno"]).'</td>
+				<td>'.($row["codigo_alterno"] ).' - '.($row["nombre_producto"]).'</td>
 				<td>'.($row["combustible"]).'</td>
 				<td align="center" style="white-space: nowrap;">'.($row["kilometraje"]).'</td>
 				<td>'.($row["tipo_traslado"]).'</td>
