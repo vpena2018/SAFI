@@ -1402,7 +1402,7 @@ $txt_mensaje="";
     <meta name="description" content="Inglosa Gestion de cita para servicio">
     <meta name="author" content="">
     <meta name="robots" content="none" />
-    <title>INGLOSA - Programar cita para servicio</title>
+    <title>INGLOSA - Movimiento Vehículos</title>
  
        
     <link rel="icon" href="img/favicon.ico">
