@@ -2018,7 +2018,7 @@ if ($foto_original_tele !== '') {
 
                  registrar_historial_ventas($cid, $id_estado, 'Modificacion de Estado', "{$id_estado_viejo_name} → {$id_estado_name}");
 
-                 if($id_estado_name!='en negociacion')
+                 if($id_estado_name!='en negociacion' && $id_estado_name!='Vendido entregado')
                  {
                      registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificación de cliente', 'Cliente eliminado al quitar estado de en negociacion');
                  }
