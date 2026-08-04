@@ -796,8 +796,8 @@ if ($accion =="aut" or $accion =="rec" or $accion =="norec" or $accion =="dev" o
         // Se comento bloque de codigo para que no se cambie el estado del servicio a atender, ya que se hace en el boton de atender
         if ($accion =="atender" ) { 
               $actual_estado=intval(get_dato_sql("servicio","id_estado","where id=$cid"));
-              if ($actual_estado<>4) {
-                 $result_atender = sql_update("UPDATE servicio SET id_estado=4 where id=$cid and id_estado<>4  limit 1");
+              if ($actual_estado==3) {
+                 $result_atender = sql_update("UPDATE servicio SET id_estado=4 where id=$cid and id_estado==3  limit 1");
                  sql_insert("INSERT INTO servicio_historial_estado
                  (id_servicio, id_estado, id_usuario, id_proveedor, nombre, fecha, observaciones)
                  VALUES ( $cid, 4, ".$_SESSION['usuario_id'].", 0, 'Modificacion de Estado', NOW(), 'Atender')");         
