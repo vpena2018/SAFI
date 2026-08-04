@@ -793,7 +793,7 @@ if ($accion =="aut" or $accion =="rec" or $accion =="norec" or $accion =="dev" o
         (id_servicio,  id_usuario,  nombre, fecha, observaciones)
         VALUES ( $cid,  ".$_SESSION['usuario_id'].", '$botontxt Repuestos/servicios', NOW(), '')");
         
-        /*// Se comento bloque de codigo para que no se cambie el estado del servicio a atender, ya que se hace en el boton de atender
+        // Se comento bloque de codigo para que no se cambie el estado del servicio a atender, ya que se hace en el boton de atender
         if ($accion =="atender" ) { 
               $actual_estado=intval(get_dato_sql("servicio","id_estado","where id=$cid"));
               if ($actual_estado<>4) {
@@ -803,7 +803,7 @@ if ($accion =="aut" or $accion =="rec" or $accion =="norec" or $accion =="dev" o
                  VALUES ( $cid, 4, ".$_SESSION['usuario_id'].", 0, 'Modificacion de Estado', NOW(), 'Atender')");         
             }       
         }
-        */
+        
        
         if ($accion =="aut" and $tipo==2 ) {            
             // enviar correo alerta
