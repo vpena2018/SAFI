@@ -650,11 +650,12 @@ if ($elcodigo<>"") {
       //   salida_json($stud_arr);
       //   exit;
       // }
+
       $est_validacion=true;
       if (intval($_REQUEST["id_estado"])==4) {
         $idestado_actual=intval(get_dato_sql("servicio","id_estado","WHERE id=".$elcodigo));
-        if ($idestado_actual==7) { //si esta en paso por repuestro permitir regresar a en proceso
-          $est_validacion=false;
+        if ($idestado_actual==7) { //si esta en paro por repuestro permitir regresar a en proceso
+           $est_validacion=false;
         }
       }
        
