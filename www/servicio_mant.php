@@ -1416,13 +1416,14 @@ if (!es_nulo($id_estado)){
             letter-spacing: 0.5px;
             border-radius: 8px 8px 0 0;">
             Detalle Actividades     
+            <?php $deshabilitado = ($id_estado == 7) ? 'disabled' : ''; ?>
             <?php if ($id_estado != 20 && $id_estado != 22 || es_nulo($id_estado)) {  ?>
                 <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Compra Realizada','servicio_mant_repuesto.php?a=comprea&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Compra Realizada</a>
                 <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Solicitud de Compra','servicio_mant_repuesto.php?a=solcomp&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Solicitud Compra</a>
                 <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Realizado','servicio_mant_repuesto.php?a=realiza&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-check"></i> Realizado</a>
-                <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Atender','servicio_mant_repuesto.php?a=atender&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-wrench"></i> Atender</a>
+                <a class="mr-3  btn btn-sm btn-info  d-print-none float-right <?php echo $deshabilitado; ?>" href="#" onclick="modalwindow2('Atender','servicio_mant_repuesto.php?a=atender&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-wrench"></i> Atender</a>
                 <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Autorizar Servicio','servicio_mant_repuesto.php?a=aut&tipo=3&cid='+$('#id').val()); return false;"><i class="fa fa-check"></i> Autorizar</a>
-                <a class="mr-3  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Agregar Servicio','servicio_mant_repuesto.php?a=agr&tipo=3&cid='+$('#id').val()+'&estactual='+$('#id_estado').val()+'&taller='+$('#taller_externo').val()); return false;"><i class="fa fa-plus"></i> Agregar</a>
+                <a class="mr-3  btn btn-sm btn-info  d-print-none float-right <?php echo $deshabilitado; ?>" href="#" onclick="modalwindow2('Agregar Servicio','servicio_mant_repuesto.php?a=agr&tipo=3&cid='+$('#id').val()+'&estactual='+$('#id_estado').val()+'&taller='+$('#taller_externo').val()); return false;"><i class="fa fa-plus"></i> Agregar</a>
             <?php }  ?>
          </div>
         <div class="card-body"> 
