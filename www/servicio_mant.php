@@ -1490,7 +1490,7 @@ if (!es_nulo($id_estado)){
             letter-spacing: 0.5px;
             border-radius: 8px 8px 0 0;">
            Repuestos 
-           <?php if ($id_estado != 20 || $id_estado != 22 || es_nulo($id_estado)) {  ?>
+           <?php if ($id_estado != 20 && $id_estado != 22 || es_nulo($id_estado)) {  ?>
               <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Devolver Repuesto','servicio_mant_repuesto.php?a=dev&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-minus"></i> Devolver</a>
               <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Repuesto NO Recibido','servicio_mant_repuesto.php?a=norec&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-store-slash"></i> No Recibido</a>           
               <a class="mr-3 mb-1  btn btn-sm btn-info  d-print-none float-right" href="#" onclick="modalwindow2('Compra Realizada','servicio_mant_repuesto.php?a=comprea&tipo=2&cid='+$('#id').val()); return false;"><i class="fa fa-shopping-cart"></i> Compra Realizada</a>    
