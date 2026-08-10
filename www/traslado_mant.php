@@ -1233,7 +1233,7 @@ $modificar_salida=$nuevoreg;
 
         if ($id_estado == 2 && $autorizacion_traslado == 1) {//Autorizar
         ?>
-            <?php if (tiene_permiso(144)) { ?>
+            <?php if (tiene_permiso(199)) { ?>
                 <div class="col-sm">
                     <a href="#"
                        onclick="procesar_autorizacion('traslado_mant.php?a=g&aut=1','forma_wd',''); return false;"

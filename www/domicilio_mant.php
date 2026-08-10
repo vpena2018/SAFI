@@ -574,7 +574,7 @@ echo campo("mov","mov",'hidden',$mov,'','');
 
 		if ($id_estado == 2) {
 
-                    if (tiene_permiso(127)) {
+                    if (tiene_permiso(199)) {
         ?>
                         <div class="col-sm">
                             <a href="#"
