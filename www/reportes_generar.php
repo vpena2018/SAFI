@@ -1412,6 +1412,10 @@ case 73:// 	Reporte de averias
          if (!es_nulo($id_tienda)) {
             $where.=' AND  servicio.id_tienda='.$id_tienda;
          } 
+         
+        if (!es_nulo($id_tipo_mant)) {
+            $where.=' AND  servicio.id_tipo_mant='.$id_tipo_mant;
+        } 
 
         if (!es_nulo($actividad_repuesto)) {
             $where.=' AND  servicio_detalle.producto_tipo='.$actividad_repuesto;
@@ -1424,7 +1428,7 @@ case 73:// 	Reporte de averias
             ,servicio_estado.nombre AS elestado
             ,servicio_tipo_mant.nombre AS eltipo
             ,entidad.nombre as elcliente
-            
+            ,servicio_detalle.producto_codigoalterno
             ,servicio_detalle.producto_nombre
             ,servicio_detalle.precio_costo
             ,servicio_detalle.cantidad
@@ -1462,6 +1466,7 @@ case 73:// 	Reporte de averias
                     $reporte_datos.= "<th>Servicio #</th>";
                     $reporte_datos.= "<th>Tipo</th>";
                     $reporte_datos.= "<th>Cant.</th>";
+                    $reporte_datos.= "<th>Codigo</th>";
                     $reporte_datos.= "<th>Descripcion</th>";
                     $reporte_datos.= "<th>Estado</th>";
                     $reporte_datos.= "<th>Tipo Revision</th>";
@@ -1482,6 +1487,7 @@ case 73:// 	Reporte de averias
                         $reporte_datos.= '<td align="center" style="white-space: nowrap;">'.$row['numero'].'</td>';
                         $reporte_datos.= '<td align=""> '.$row['eltipo'].'</td>';
                         $reporte_datos.= '<td align="center"> '.$row['cantidad'].'</td>';
+                        $reporte_datos.= '<td align=""> '.$row['producto_codigoalterno'].'</td>';
                         $reporte_datos.= '<td align=""> '.$row['producto_nombre'].'</td>';
                         $reporte_datos.= '<td align=""> '.$row['elestado'].'</td>';
                         $reporte_datos.= '<td align=""> '.$row['elrevision'].'</td>';
