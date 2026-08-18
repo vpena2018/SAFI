@@ -920,9 +920,9 @@ if ($accion=="PC") {
 
 //variables
 $numero_traslado="";
-$fecha_implementacion="2026-08-17";
+$fecha_implementacion="2026-08-19";
 //$fecha_busqueda_inspecciones="2024-04-24";
-$fecha_busqueda_inspecciones="2026-08-17";
+$fecha_busqueda_inspecciones="2026-08-19";
 
 // Leer Datos    ############################  
 if ($accion=="L") {
