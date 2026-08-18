@@ -494,10 +494,25 @@ if ($accion=="P") {
     $combustible_entrada_sql = "'".$conn->real_escape_string($combustible_bitacora_req)."'";
     $kilometraje_entrada_sql = floatval($kilometraje_bitacora_req);
 
+        $ubicacion_dispositivo_sql = "NULL";
+
+        $resultTablet = sql_select("
+            SELECT ubicacion
+            FROM tablet_ip_ubicacion
+            WHERE ip = '{$ip_cliente_sql}'
+            AND activo = 1
+            LIMIT 1
+        ");
+
+        if ($resultTablet && $resultTablet->num_rows > 0) {
+            $row = $resultTablet->fetch_assoc();
+            $ubicacion_dispositivo_sql = "'" . $conn->real_escape_string($row["ubicacion"]) . "'";
+        }
+
     $sql = "INSERT INTO traslado_bitacora
-            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible, kilometraje, codigo_alterno)
+            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible, kilometraje, codigo_alterno,ubicacion_dispositivo)
             VALUES
-            ('{$numero_traslado_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}', '{$firma_sql}', '{$tipo_traslado_sql}', '{$tipo_movimiento_sql}', {$combustible_entrada_sql}, {$kilometraje_entrada_sql}, '{$codigo_alterno_sql}')";
+            ('{$numero_traslado_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}', '{$firma_sql}', '{$tipo_traslado_sql}', '{$tipo_movimiento_sql}', {$combustible_entrada_sql}, {$kilometraje_entrada_sql}, '{$codigo_alterno_sql}', {$ubicacion_dispositivo_sql})";
 
     $insert_id = sql_insert($sql);
 
@@ -672,10 +687,25 @@ if ($accion=="PR") {
     $combustible_entrada_sql = "'".$conn->real_escape_string($combustible_bitacora_req)."'";
     $kilometraje_entrada_sql = floatval($kilometraje_bitacora_req);
 
+        $ubicacion_dispositivo_sql = "NULL";
+
+        $resultTablet = sql_select("
+            SELECT ubicacion
+            FROM tablet_ip_ubicacion
+            WHERE ip = '{$ip_cliente_sql}'
+            AND activo = 1
+            LIMIT 1
+        ");
+
+        if ($resultTablet && $resultTablet->num_rows > 0) {
+            $row = $resultTablet->fetch_assoc();
+            $ubicacion_dispositivo_sql = "'" . $conn->real_escape_string($row["ubicacion"]) . "'";
+        }
+
     $sql = "INSERT INTO traslado_bitacora
-            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible, kilometraje, codigo_alterno)
+            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible, kilometraje, codigo_alterno,ubicacion_dispositivo)
             VALUES
-            ('{$numero_inspeccion_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}', '{$firma_sql}', '{$TIPO_TRASLADO_RENTA}', '{$tipo_movimiento_sql}', {$combustible_entrada_sql}, {$kilometraje_entrada_sql}, '{$codigo_alterno_sql}')";
+            ('{$numero_inspeccion_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}', '{$firma_sql}', '{$TIPO_TRASLADO_RENTA}', '{$tipo_movimiento_sql}', {$combustible_entrada_sql}, {$kilometraje_entrada_sql}, '{$codigo_alterno_sql}', {$ubicacion_dispositivo_sql})";
 
     $insert_id = sql_insert($sql);
 
@@ -849,10 +879,25 @@ if ($accion=="PC") {
     $combustible_sql = "'".$conn->real_escape_string($combustible_guardar)."'";
     $kilometraje_sql = floatval($kilometraje_guardar);
 
+        $ubicacion_dispositivo_sql = "NULL";
+
+        $resultTablet = sql_select("
+            SELECT ubicacion
+            FROM tablet_ip_ubicacion
+            WHERE ip = '{$ip_cliente_sql}'
+            AND activo = 1
+            LIMIT 1
+        ");
+
+        if ($resultTablet && $resultTablet->num_rows > 0) {
+            $row = $resultTablet->fetch_assoc();
+            $ubicacion_dispositivo_sql = "'" . $conn->real_escape_string($row["ubicacion"]) . "'";
+        }
+
     $sql = "INSERT INTO traslado_bitacora
-            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible, kilometraje, codigo_alterno)
+            (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible, kilometraje, codigo_alterno,ubicacion_dispositivo)
             VALUES
-            ('{$numero_cita_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}', '{$firma_sql}', '{$TIPO_TRASLADO_CITA}', '{$tipo_movimiento_sql}', {$combustible_sql}, {$kilometraje_sql}, '{$codigo_alterno_sql}')";
+            ('{$numero_cita_sql}', NOW(), '{$dispositivo_sql}', '{$ip_cliente_sql}', '{$user_agent_sql}', '{$firma_sql}', '{$TIPO_TRASLADO_CITA}', '{$tipo_movimiento_sql}', {$combustible_sql}, {$kilometraje_sql}, '{$codigo_alterno_sql}', {$ubicacion_dispositivo_sql})";
 
     $insert_id = sql_insert($sql);
 
