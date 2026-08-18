@@ -32,6 +32,13 @@ if ($accion=="1") {
 		}
 	}
 
+	if (isset($_REQUEST['ubicacion_dispositivo'])) {
+		$tmpval = strtoupper(sanear_string(trim($_REQUEST['ubicacion_dispositivo'])));
+		if (!es_nulo($tmpval) && $tmpval!="TODOS") {
+			$filtros .= " and traslado_bitacora.ubicacion_dispositivo = ".GetSQLValue($tmpval,'text');
+		}
+	}
+
 	if (isset($_REQUEST['numero_traslado'])) {
 		$tmpval = sanear_int($_REQUEST['numero_traslado']);
 		if (!es_nulo($tmpval)) {
@@ -72,6 +79,7 @@ if ($accion=="1") {
 					<th>Vehiculo</th>
 					<th>Combustible</th>
 					<th style="width: 120px;">Kilometraje</th>
+					<th>Mov. Ubicacion</th>
 					<th>Tipo Traslado</th>
 					<th>Tipo Movimiento</th>
 				</tr>
@@ -98,6 +106,7 @@ if ($accion=="1") {
 				<td>'.($row["codigo_alterno"] ).' - '.($row["nombre_producto"]).'</td>
 				<td>'.($row["combustible"]).'</td>
 				<td align="center" style="white-space: nowrap;">'.($row["kilometraje"]).'</td>
+				<td>'.($row["ubicacion_dispositivo"]).'</td>
 				<td>'.($row["tipo_traslado"]).'</td>
 				<td style="'.$estilo_movimiento.'">'.($row["tipo_movimiento"]).'</td>
 				</tr>';
@@ -156,6 +165,26 @@ if ($accion=="1") {
 					array(
 						array('valor' => 'ENTRADA', 'texto' => 'ENTRADA'),
 						array('valor' => 'SALIDA', 'texto' => 'SALIDA')
+					),
+					'',
+					'Todos'
+				),
+				' ',
+				' onkeypress="buscarfiltro(event,\'btn-filtro\');"'
+			);
+			?>
+		</div>
+
+		<div class="col-sm">
+			<?php
+			echo campo(
+				"ubicacion_dispositivo",
+				"Ubicacion",
+				'select',
+				valores_combobox_array(
+					array(
+						array('valor' => 'TGU', 'texto' => 'TGU'),
+						array('valor' => 'SPS', 'texto' => 'SPS')
 					),
 					'',
 					'Todos'
