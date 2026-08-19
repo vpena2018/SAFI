@@ -203,7 +203,7 @@ if ($accion=="g") {
 								$fecha_traslado = $row_fecha['fecha'];
 							}
 
-				if ($fecha_traslado >= '2026-07-01') {
+				if ($fecha_traslado >= '2026-08-19') {
 					if ($result!=false){
 						if ($result -> num_rows > 0) { 
 							$row = $result -> fetch_assoc(); 
