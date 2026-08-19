@@ -1214,7 +1214,7 @@ if ($accion=="L") {
                     LEFT OUTER JOIN producto ON (cita.id_producto=producto.id)
                     LEFT OUTER JOIN entidad ON (cita.cliente_id=entidad.id)
                     WHERE producto.codigo_alterno LIKE '%$codigo'
-                    AND cita.id_estado = 1
+                    AND cita.id_estado <=4
                     AND DATE(cita.fecha_cita) = CURDATE()
                     AND NOT EXISTS (
                         SELECT 1
@@ -1265,7 +1265,7 @@ if ($accion=="L") {
                     LEFT OUTER JOIN producto ON (cita.id_producto=producto.id)
                     LEFT OUTER JOIN entidad ON (cita.cliente_id=entidad.id)
                     WHERE producto.codigo_alterno LIKE '%$codigo'
-                    AND cita.id_estado = 1
+                    AND cita.id_estado <= 4
                     AND DATE(cita.fecha_cita) = CURDATE()
                     AND EXISTS (
                         SELECT 1
