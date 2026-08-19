@@ -146,7 +146,7 @@ if ($accion=="g") {
 		if (isset($_REQUEST['at'])){
 			$mov_asignar="Atender ";
 			$sqlcampos.=", domicilio_inicio = NOW()";
-			if($autorizar_traslado_salida==1) {
+			if($autorizar_traslado_salida==1 && $tipo_desplazamiento_req!='INTERNO') {
 				$sqlcampos.=", id_estado = 2";
 			} else {
 				$sqlcampos.=", id_estado = 4";
