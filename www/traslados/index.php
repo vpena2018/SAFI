@@ -1080,11 +1080,8 @@ if ($accion=="L") {
         LEFT OUTER JOIN usuario l2
             ON orden_domicilio.id_usuario = l2.id
 
-        LEFT OUTER JOIN tienda_agencia t1
-            ON orden_domicilio.id_tienda = t1.id
-
         LEFT OUTER JOIN tienda t0
-            ON t1.tienda_id = t0.id
+            ON orden_domicilio.id_tienda = t0.id
 
         WHERE producto.codigo_alterno LIKE '%$codigo'
           AND NOT EXISTS (
@@ -1163,11 +1160,8 @@ if ($accion=="L") {
                 LEFT OUTER JOIN usuario l2
                     ON orden_domicilio.id_usuario = l2.id
 
-                LEFT OUTER JOIN tienda_agencia t1
-                    ON orden_domicilio.id_tienda = t1.id
-
                 LEFT OUTER JOIN tienda t0
-                    ON t1.tienda_id = t0.id
+                    ON orden_domicilio.id_tienda = t0.id
 
                 WHERE producto.codigo_alterno LIKE '%$codigo'
                 AND NOT EXISTS (
