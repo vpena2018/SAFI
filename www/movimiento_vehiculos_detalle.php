@@ -607,6 +607,11 @@ if ($parametros_validos) {
 
 			$final_domicilio = '';
 			if (isset($documento['domicilio_final']) && !es_nulo($documento['domicilio_final'])) { $final_domicilio = formato_fechahora_de_mysql($documento['domicilio_final']); }
+
+			$tipo_traslado_domicilio_mostrar = $tipo_traslado;
+			if ($tipo_movimiento === 'ENTRADA') {
+				$tipo_traslado_domicilio_mostrar = 'DOMICILIO/RENTA';
+			}
 		?>
 
 		<div class="card mb-3">
@@ -624,7 +629,7 @@ if ($parametros_validos) {
 					</div>
 					<div class="col-md-3">
 						<div style="background-color: #f0f0d7; padding: 8px; border-radius: 4px;">
-							<?php echo campo("tipo_traslado_domicilio_lbl","Tipo traslado",'labelb',$tipo_traslado,' ',' '); ?>
+							<?php echo campo("tipo_traslado_domicilio_lbl","Tipo traslado",'labelb',$tipo_traslado_domicilio_mostrar,' ',' '); ?>
 						</div>
 					</div>
 				</div>

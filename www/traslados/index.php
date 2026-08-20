@@ -2975,6 +2975,7 @@ $txt_mensaje="";
             success: function (resp) {
                 if (resp.ok) {
                     mytoast('success', 'Procesado correctamente', 3000);
+                    $('#ingreso_renta').prop('checked', false);
                     limpiarCamposResultado();
                     $('#num_inv').val('').focus();
                 } else {
@@ -3069,6 +3070,7 @@ $txt_mensaje="";
             success: function (resp) {
                 if (resp.ok) {
                     mytoast('success', 'Traslado procesado correctamente', 3000);
+                    $('#ingreso_renta').prop('checked', false);
                     LimpiarResultadoBusquedaRenta();
                     $('#num_inv').val('').focus();
                 } else {
@@ -3196,6 +3198,7 @@ $txt_mensaje="";
             success: function (resp) {
                 if (resp.ok) {
                     mytoast('success', 'Cita procesada correctamente', 3000);
+                    $('#ingreso_renta').prop('checked', false);
                     LimpiarResultadoBusquedaCita();
                     $('#num_inv').val('').focus();
                 } else {

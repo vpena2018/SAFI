@@ -18,10 +18,22 @@ if ($accion=="1") {
 	if (isset($_REQUEST['pg'])) { $pagina = sanear_int($_REQUEST['pg']); }
 	if ($pagina>=1) { $offset=$pagina*app_reg_por_pag; }
 
+	$filtro_tipo_traslado = '';
 	if (isset($_REQUEST['tipo_traslado'])) {
 		$tmpval = strtoupper(sanear_string(trim($_REQUEST['tipo_traslado'])));
+		$filtro_tipo_traslado = $tmpval;
 		if (!es_nulo($tmpval) && $tmpval!="TODOS") {
-			$filtros .= " and traslado_bitacora.tipo_traslado = ".GetSQLValue($tmpval,'text');
+			if ($tmpval === 'RENTA') {
+				$filtros .= " and (
+					traslado_bitacora.tipo_traslado = ".GetSQLValue($tmpval,'text')."
+					OR (
+						traslado_bitacora.tipo_traslado = ".GetSQLValue('DOMICILIO','text')."
+						AND UPPER(traslado_bitacora.tipo_movimiento) = ".GetSQLValue('ENTRADA','text')."
+					)
+				)";
+			} else {
+				$filtros .= " and traslado_bitacora.tipo_traslado = ".GetSQLValue($tmpval,'text');
+			}
 		}
 	}
 
@@ -93,6 +105,11 @@ if ($accion=="1") {
 				$tipo_movimiento_js = json_encode((string)$row["tipo_movimiento"]);
 				$onclick = "movimiento_vehiculo_abrir($numero_js,$tipo_js,$tipo_movimiento_js); return false;";
 				$tipo_movimiento = strtoupper(trim((string)$row["tipo_movimiento"]));
+				$tipo_traslado_real = trim((string)$row["tipo_traslado"]);
+				$tipo_traslado_visual = $tipo_traslado_real;
+				if ($filtro_tipo_traslado === 'RENTA' && strtoupper($tipo_traslado_real) === 'DOMICILIO' && $tipo_movimiento === 'ENTRADA') {
+					$tipo_traslado_visual = 'RENTA';
+				}
 				$estilo_movimiento = 'background-color:#f8f9fa; color:#495057;';
 				if ($tipo_movimiento === 'ENTRADA') {
 					$estilo_movimiento = 'background-color:#d4edda; color:#155724; font-weight:700;';
@@ -107,7 +124,7 @@ if ($accion=="1") {
 				<td>'.($row["combustible"]).'</td>
 				<td align="center" style="white-space: nowrap;">'.($row["kilometraje"]).'</td>
 				<td>'.($row["ubicacion_dispositivo"]).'</td>
-				<td>'.($row["tipo_traslado"]).'</td>
+				<td>'.$tipo_traslado_visual.'</td>
 				<td style="'.$estilo_movimiento.'">'.($row["tipo_movimiento"]).'</td>
 				</tr>';
 			}
