@@ -923,6 +923,7 @@ $numero_traslado="";
 $fecha_implementacion="2026-08-19";
 //$fecha_busqueda_inspecciones="2024-04-24";
 $fecha_busqueda_inspecciones="2026-08-19";
+$ingreso_renta = filter_var($_REQUEST['ingreso_renta'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
 // Leer Datos    ############################  
 if ($accion=="L") {
@@ -1284,7 +1285,7 @@ if ($accion=="L") {
         //RENTA
         //salida renta
         $salida_antes_de_implementacion=false;
-        
+
 
         //estado completado inspeccion.id_estado = 2, tipo mov salida inspeccion.tipo_doc=2,tipo inspeccion renta o taller inspeccion.tipo_inspeccion=1
         $ultimaInspeccion = sql_select("
@@ -1397,6 +1398,59 @@ if ($accion=="L") {
         }
         }
 
+        $ultimaInspeccionEntrada = sql_select("
+                                    SELECT
+                                        inspeccion.numero
+                                    FROM inspeccion
+                                    LEFT JOIN producto
+                                        ON inspeccion.id_producto = producto.id
+                                    WHERE producto.codigo_alterno LIKE '%$codigo'
+                                    AND inspeccion.id_estado = 2
+                                    AND inspeccion.tipo_inspeccion = 1
+                                    ORDER BY inspeccion.fecha DESC,
+                                            inspeccion.hora DESC
+                                    LIMIT 1");
+
+
+        if(!$result || $result->num_rows == 0 && $ingreso_renta && $ultimaInspeccionEntrada && $ultimaInspeccionEntrada->num_rows > 0)
+        {
+            $row = $ultimaInspeccionEntrada->fetch_assoc();
+            $numeroInspeccion = $row['numero'];
+
+            $result = sql_select("SELECT 
+                '{$TIPO_TRASLADO_RENTA}' AS tipo_traslado,
+                '{$TIPO_MOVIMIENTO_ENTRADA}' AS tipo_movimiento,
+                inspeccion.id,
+                inspeccion.numero AS numero_inspeccion,
+                inspeccion.hora AS fecha_inspeccion,
+                t1.nombre AS tienda_nombre,
+                inspeccion.placa,
+                producto.codigo_alterno,
+                producto.nombre AS producto_nombre,
+                inspeccion.combustible_entrada AS combustible,
+                inspeccion.cliente_contacto,
+                inspeccion.kilometraje_entrada AS kilometraje,
+                entidad.nombre AS cliente_nombre,
+                entidad.codigo_alterno AS cliente_codigo
+            FROM inspeccion
+            LEFT JOIN entidad
+                ON inspeccion.cliente_id = entidad.id
+            LEFT JOIN producto
+                ON inspeccion.id_producto = producto.id
+            LEFT OUTER JOIN tienda t1
+                ON inspeccion.id_tienda = t1.id
+            WHERE inspeccion.numero = '{$numeroInspeccion}'
+            AND NOT EXISTS (
+                SELECT 1
+                FROM traslado_bitacora b
+                WHERE b.numero_traslado = inspeccion.numero
+                AND b.tipo_traslado = '{$TIPO_TRASLADO_RENTA}'
+                AND b.tipo_movimiento = '{$TIPO_MOVIMIENTO_ENTRADA}'
+                AND b.fecha >= '{$fecha_implementacion}'
+            )
+            LIMIT 1");
+        }
+
 
        
      
@@ -1494,7 +1548,7 @@ $txt_mensaje="";
 
                 <div class="row align-items-end">
 
-                    <div class="col-md-6">
+                    <div class="col-md-4">
 
                         <label for="num_inv"
                                class="form-label">
@@ -1514,17 +1568,34 @@ $txt_mensaje="";
                     </div>
 
                     <div class="col-md-3">
+                          <button type="button"
+                                    id="btnBuscar"
+                                    class="btn btn-primary w-100"
+                                    style="margin-bottom:0px;"
+                                    >
 
-                        <button type="button"
-                                id="btnBuscar"
-                                class="btn btn-primary w-100"
-                                style="margin-bottom:0px;"
-                                >
+                                BUSCAR
 
-                            BUSCAR
+                            </button>
 
-                        </button>
 
+
+                    </div>
+                    <div class="col-md-3">
+                     <div class="">
+                            <div class="custom-control custom-checkbox mr-2 mb-0">
+                                <input type="checkbox"
+                                       id="ingreso_renta"
+                                       name="ingreso_renta"
+                                       class="custom-control-input"
+                                       value="1">
+                                <label class="custom-control-label" for="ingreso_renta">
+                                    Ingreso por Renta
+                                </label>
+                            </div>
+
+
+                        </div>
                     </div>
 
                 </div>
@@ -2564,7 +2635,8 @@ $txt_mensaje="";
         dataType: 'json',
         data: {
             a: 'L',
-            codigo: codigo
+            codigo: codigo,
+            ingreso_renta: $('#ingreso_renta').is(':checked')
         },
         success: function (resp) {
 
