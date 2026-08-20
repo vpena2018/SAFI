@@ -75,25 +75,57 @@ function traslado_historial_guardar($id_maestro, $id_estado, $nombre, $observaci
 	sql_insert($sqlhist);
 }
 
-function campo_combustible($nombre,$valor,$adicional=""){
-    $salida='';
-    $lineas  = array('E','1/16','1/8','3/16','1/4','5/16','3/8','7/16','1/2','9/16','5/8','11/16','3/4','13/16','7/8','15/16','F');
-    
-    $salida.=' <div class="btn-group btn-group-toggle mb-2 flex-wrap" data-toggle="buttons" >';
-       
-    $i=0;
-    foreach ($lineas as  $value) {
-        $i++;
-        if ($value==$valor) {$selected=" checked"; $active=" active";} else {$selected=""; $active="";}
-        $salida.=' <label class=" btn btn-outline-secondary btn-sm '.$active.'">
-        <input type="radio" class="" name="'.$nombre.'"   value="'.$value.'"  '.$selected.' '.$adicional.' > 
-        '.fraccion($value).'</label>'; //id="'.$nombre.$i.'"
-        // $salida.='<input class="form-check-input" type="radio" name="'.$nombre.'" id="'.$nombre.$i.'" value="'.$value.'" '.$selected.' required>
-        // <label class="form-check-label btn btn-outline-primary btn-sm" for="'.$nombre.$i.'" '.$active.'>'.fraccion($value).'</label>';
-        
+function campo_combustible($nombre, $valor, $adicional = "")
+{
+    $salida = '';
 
+    $lineas = array(
+        'E','1/16','1/8','3/16','1/4','5/16','3/8','7/16',
+        '1/2','9/16','5/8','11/16','3/4','13/16','7/8','15/16','F'
+    );
+
+    $salida .= '
+    <div class="btn-group btn-group-toggle mb-2 flex-wrap"
+         data-toggle="buttons"
+         style="gap:2px;">';
+
+    $i = 0;
+
+    foreach ($lineas as $value) {
+
+        $i++;
+
+        if ($value == $valor) {
+            $selected = "checked";
+            $active   = "active";
+        } else {
+            $selected = "";
+            $active   = "";
+        }
+
+        $salida .= '
+        <label class="btn btn-outline-secondary btn-sm '.$active.'"
+            style="
+                min-width:42px;
+                padding:.30rem .45rem;
+                font-size:.95rem;
+                font-weight:700;
+                line-height:1.1;
+                margin:1px;
+            ">
+            <input
+                type="radio"
+                name="'.$nombre.'"
+                value="'.$value.'"
+                '.$selected.'
+                '.$adicional.'>
+
+            <strong>'.fraccion($value).'</strong>
+        </label>';
     }
-    $salida.='</div>';
+
+    $salida .= '</div>';
+
     return $salida;
 }
 
