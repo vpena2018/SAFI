@@ -1569,7 +1569,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
 }
 
 // VALIDAR (AJAX)
-    if ($_GET['a'] === 'print_check') {
+    if (isset($_GET['a']) && $_GET['a'] === 'print_check') {
 
         $id=0;
         $id_venta = isset($_GET['id']) ? intval($_GET['id']) : 0;
@@ -1615,7 +1615,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
     }
 
     // DESCARGAR (NAVEGADOR)
-    if ($_GET['a'] === 'print') {
+    if (isset($_GET['a']) && $_GET['a'] === 'print') {
         //$id = intval($_GET['id']);
 
         $id=0;
@@ -1678,6 +1678,7 @@ function registrar_historial_ventas($cid, $id_estado, $nombre, $observaciones=''
 }
 
 // Leer Datos    ############################  
+$row = []; // inicializar para cuando no hay registro cargado (ej. registro nuevo)
 if ($accion=="v") {
 	$cid=0;
 	if (isset($_REQUEST['cid'])) { $cid = sanear_int($_REQUEST['cid']); }
@@ -2199,32 +2200,24 @@ if ($accion =="d") {
 
     if (isset($_REQUEST['cod'])) { $cod = "and id=".GetSQLValue(urldecode($_REQUEST["cod"]),"text"); } else	{$cod ="" ;}
 
-    if (isset($_REQUEST['cod'])) { $cid =GetSQLValue(urldecode($_REQUEST["cod"]),"text"); } else	{$cid ="" ;}
+    if (isset($_REQUEST['cod'])) { $cid = intval($_REQUEST["cod"]); } else	{$cid = 0 ;}
     if (isset($_REQUEST['tipo_foto'])) { $tipo_foto = trim($_REQUEST["tipo_foto"]); } else {$tipo_foto = "foto";}
-    
 
-    if ($cid<>'') {
+    if ($cid > 0) {
         if ($tipo_foto==='foto_televentas') {
-            $sql="UPDATE ventas SET foto_televentas=null where id=".$cid." limit 1";
             BORRAR_FOTO_DIRECTORIO($cid, $arch, $tipo_foto, "vehiculos_reparacion_televentas");
+            $result = sql_update("UPDATE ventas SET foto_televentas=null WHERE id=".intval($cid)." LIMIT 1");
         } else {
-            $sql="UPDATE ventas SET foto=null where id=".$cid." limit 1";
             BORRAR_FOTO_DIRECTORIO($cid, $arch, $tipo_foto, "vehiculos_reparacion");
-        }        
-        $result = sql_update($sql);
-
-    } else {
-        $result==false;
-            $stud_arr[0]["pcode"] = 0;
-            $stud_arr[0]["pmsg"] ="Error al borrar el archivo";
-    }
-
-    if ($result!=false){
-
+            $result = sql_update("UPDATE ventas SET foto=null WHERE id=".intval($cid)." LIMIT 1");
+        }
+        
         $stud_arr[0]["pcode"] = 1;
-
-        $stud_arr[0]["pmsg"] ="Borrado";
-
+        $stud_arr[0]["pmsg"] = "Archivo Borrado";
+ 
+    } else {
+        $stud_arr[0]["pcode"] = 0;
+        $stud_arr[0]["pmsg"] = "Error al borrar el archivo";
     }
     salida_json($stud_arr);
     exit;
@@ -3330,7 +3323,7 @@ function borrar_fotodb(codid, tipoFoto) {
     if (result.value) {
 
 
-$.post( 'vehiculos_reparacion_mant.php',datos, function(response) {
+$.post( 'vehiculos_reparacion_mant.php', datos, function(response) {
 
                 if (response.length > 0) {
                     if (response[0].pcode == 0) {
@@ -3338,15 +3331,18 @@ $.post( 'vehiculos_reparacion_mant.php',datos, function(response) {
                     }
 
                     if (response[0].pcode == 1) {
-                        //$(".foto_br"+codid).hide();
+                        // limpiar el contenedor correcto según el tipo de foto borrada
+                        if (tipoFoto === 'foto_televentas') {
+                            $('#insp_fotos_thumbs_televentas').remove();
+                        } else {
+                            $('#insp_fotos_thumbs').remove();
+                        }
                         procesar_tabla_datatable('tablaver','tabla','vehiculos_reparacion_ver.php?a=1','Ventas de Vehiculos')
                         mytoast('success',response[0].pmsg,3000) ;
-                        abrir_ventas(codid);
-
                     }
 
                 } else {mytoast('error',response[0].pmsg,3000) ; }
-            })
+            }, 'json')
 
             .done(function() {	  
                 
