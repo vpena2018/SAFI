@@ -2300,8 +2300,19 @@ if ($accion =="d") {
     if (isset($row["nacionalidad_venta"])) {$nacionalidad_venta= $row["nacionalidad_venta"]; } else {$nacionalidad_venta= "";}
     if(isset($row['valor_descuento'])) {$valor_descuento = $row['valor_descuento']; } else {$valor_descuento = 0;}
     if(isset($row['valor_extras'])) {$valor_extras = $row['valor_extras']; } else {$valor_extras = 0;}
-    
+    if (isset($row["fecha_promesa"])) {$fecha_promesa= $row["fecha_promesa"]; } else {$fecha_promesa= "";}
+    if (isset($row["fecha_negociacion"])) {$fecha_negociacion= $row["fecha_negociacion"]; } else {$fecha_negociacion= "";}
+
     //$observaciones_reparacion= "";
+    // calcular la diferencia de días entre la fecha de negociación y hoy
+    $diff=0;
+    if (!es_nulo($fecha_negociacion)){
+            $neg = date_create($fecha_negociacion);
+            $hoy = date_create("now"); 
+            $diff = date_diff($hoy,$neg);          
+    }
+ 
+    //habilitar o deshabilitar secciones según el permiso del usuario
     if ($id_estado=='' || $id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion){        
           $disable_sec1_lista= !tiene_permiso(190) ? ' disabled="disabled" ' : ' ';  //169=editar campos de operaciones        
           $disable_sec1= !tiene_permiso(190) ? ' readonly ' : ' ';  //169=editar campos de operaciones          
@@ -2345,7 +2356,14 @@ if ($accion =="d") {
         <?php echo campo("numero","Numero",'label',$id_estado,' ',' '); ?>        
     </div>    
 
-
+    <?php if(!es_nulo($diff)) { ?>
+        <div class="col-md">
+            <?php echo campo("dias","Dias en Negociacion",'label',$diff->days,' ',' '); ?>      
+        </div>                
+        <div class="col-md">    
+            <?php echo campo("fecha_neg","Fecha en Negociacion",'label',formato_fechahora_de_mysql($fecha_negociacion),' ',' '); ?>    
+        </div>        
+    <?php } ?>   
 </div>
 
 <div class="row">
