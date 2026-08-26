@@ -2157,12 +2157,23 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
                         CURLOPT_POSTFIELDS     => json_encode(['phone' => $tel]),
                         CURLOPT_HTTPHEADER     => [
                             'Content-Type: application/json',
-                            'Authorization: Bearer ' .app_webhook_carshop_token       
+                            'Authorization: Bearer ' . app_webhook_carshop_token       
                         ],
                         CURLOPT_TIMEOUT        => 10,
                     ]);
-                curl_exec($ch);             
-            }
+
+                    $response = curl_exec($ch);
+                    $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    $curlError = curl_errno($ch) ? curl_error($ch) : '';
+
+                    // guarda resultado en log para diagnóstico
+                    $logLine = '[' . date('Y-m-d H:i:s') . '] venta=' . $cid
+                        . ' tel=' . $tel
+                        . ' http=' . $httpCode
+                        . ' error=' . $curlError
+                        . ' resp=' . $response . PHP_EOL;
+                    file_put_contents(app_logs_folder  . date('Y-m-d') . 'webhook_inglosa.log', $logLine, FILE_APPEND | LOCK_EX);            
+             }
 
         } else 
         {
