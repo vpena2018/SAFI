@@ -1640,24 +1640,32 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
 /*     if (!es_nulo($cid) && ($id_estado!=20 && $id_estado!=11)){
        if (!es_nulo($precio_venta)||!es_nulo($prima_venta)) { $verror.='Precio de venta y prima solo se ingresan, estado de vendido entregado'; }    
     } */
+    $VendedorTele="";
+    $VendedorTele=get_dato_sql("ventas_estado","foto"," where foto=2 and id=".$id_estado);
 
     if ($carShopPerfil=='18'){
         $verror.=validar("Estado",$_REQUEST['id_estado'], "int", true);
         $id_vendedor=intval(get_dato_sql("ventas","id_vendedor"," where id=".$cid)); 
+        $id_televentas_ant=intval(get_dato_sql("ventas","id_televentas"," where id=".$cid));
+        $id_estado_ant=intval(get_dato_sql("ventas","id_estado"," where id=".$cid));          
         if (!es_nulo($id_vendedor) && $id_vendedor!=intval($_REQUEST['id_vendedor']) && $id_estado==11){ 
             $verror.='No es posible realizar el cambio de vendedor';
         }        
-        $id_estado_ant=intval(get_dato_sql("ventas","id_estado"," where id=".$cid));          
-        if (!es_nulo($id_estado_ant) && $id_estado_ant!==11){
+        if ($id_televentas_ant!=intval($_REQUEST['id_televentas']) && $id_estado==11){ 
+            $verror.='No es posible realizar el cambio del vendedor de Televentas';
+        }         
+        if (!es_nulo($id_estado_ant) && ($id_estado_ant==11 || $id_estado_ant==17)  && ($id_estado!==11 && $id_estado!==20)){
             $verror.='No es posible realizar el cambio de estado';
         }
+        if (!es_nulo($id_estado_ant) && $id_estado_ant==17){
+            $VendedorTele=1;
+        }
+     
     }
 
     $envioCorreo="";
     $enviar_correo_sin_fotos = "";
-    $VendedorTele="";
     $fotoRegistro=get_dato_sql("ventas_estado","foto"," where foto>=1 and id=".$id_estado);    
-    $VendedorTele=get_dato_sql("ventas_estado","foto"," where foto=2 and id=".$id_estado);
     $envioCorreo=get_dato_sql("ventas_estado","envio_correo"," where envio_correo=1 and id=".$id_estado);
     if (!es_nulo($fotoRegistro)){
         if (isset($_REQUEST['foto'])) {
@@ -2129,6 +2137,32 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
 
             $sql="update ventas set ".$sqlcampos." where id=".$cid." limit 1";
             $result = sql_update($sql);
+            // envia notificación a Inglosa si el estado cambia a 20
+            if ($id_estado == 20) {
+                $resPhone = sql_select("
+                       SELECT entidad.telefono
+                       FROM ventas
+                       LEFT JOIN entidad ON ventas.cliente_id = entidad.id
+                       WHERE ventas.id = $cid
+                       LIMIT 1
+                   ");
+                $tel = '';
+                if ($resPhone && $resPhone->num_rows > 0) {
+                    $tel = $resPhone->fetch_assoc()['telefono'] ?? '';
+                }
+                $ch = curl_init('https://inglosa-dashboard-backend.onrender.com/api/ingest/carshop/sale');
+                curl_setopt_array($ch, [
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_POST           => true,
+                        CURLOPT_POSTFIELDS     => json_encode(['phone' => $tel]),
+                        CURLOPT_HTTPHEADER     => [
+                            'Content-Type: application/json',
+                            'Authorization: Bearer ' .app_webhook_carshop_token       
+                        ],
+                        CURLOPT_TIMEOUT        => 10,
+                    ]);
+                curl_exec($ch);             
+            }
 
         } else 
         {
@@ -2467,14 +2501,14 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
 
 
 <div class="row">
-    <div class="col-md">
+    <div class="col-md-3">
         <?php echo campo("genera_contrato","",'hidden',$genera_contrato,'','',''); ?>
          <?php echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where ventas_reparacion=2 ",'','...'),' ',' required '.$disable_sec2)  ?> 
          <?php /*echo campo("id_estado_name","Estado",'label',$elestado,'','','');*/ ?>
     </div>
 
     <div class="col-md">            
-         <?php echo campo("valor_descuento","Valor Descuento",'number',$valor_descuento,' ',$disable_sec1); ?>                 
+         <?php echo campo("valor_descuento","Valor Descuento",'number',$valor_descuento,' ',$disable_sec1); ?>                
      </div>   
      
      <div class="col-md">            
@@ -2487,7 +2521,8 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
         <div class="col-md">            
          <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec2); ?>                 
     </div> 
-    <div id="clientediv" style="display:none;" class="col-md-12">
+
+     <div id="clientediv" style="display:none;" class="col-md-12">
 
         <?php
         $nombre_cliente='';
