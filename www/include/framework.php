@@ -190,9 +190,8 @@ define("app_tipo_vehiculo", "producto.tipo= 0");
 define("app_tipo_inventariables", "producto.tipo= 2");
 define("app_tipo_no_inventariables", "producto.tipo= 3");
 define("app_tipo_cobrables", "producto.tipo_sap= 4 ");
-
 define("app_tipo_venta", "(producto.item_compra= 0	and producto.item_venta= 1 and producto.item_inventario= 0	and producto.tipo= 3)");
-
+define("app_webhook_carshop_token", "lk_LLCr_QRgi2rRdImlR4E7xzTU24ByY4WO");
 
 
 require_once ('config.php' );
