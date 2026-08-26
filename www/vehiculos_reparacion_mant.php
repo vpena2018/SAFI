@@ -1943,7 +1943,8 @@ if ($accion=="g") {
         if (isset($_REQUEST["trasmision"])) { $sqlcampos.= " , trasmision =".GetSQLValue($_REQUEST["trasmision"],"text"); } 
         if (isset($_REQUEST["fecha_promesa_taller"])) { $sqlcampos.= " , fecha_promesa_taller =".GetSQLValue($_REQUEST["fecha_promesa_taller"],"date"); }                            
         if (isset($_REQUEST["id_vendedor"])) { $sqlcampos.= " , id_vendedor =".GetSQLValue($_REQUEST["id_vendedor"],"int"); } 
-
+        if (isset($_REQUEST["valor_descuento"])) { $sqlcampos.= " , valor_descuento =".GetSQLValue($_REQUEST["valor_descuento"],"int"); } 
+        if (isset($_REQUEST["valor_extras"])) { $sqlcampos.= " , valor_extras =".GetSQLValue($_REQUEST["valor_extras"],"int"); } 
         //info de contrato
         if($id_estado==$estado_global_negociacion || $id_estado==20){
             $rep_profesion   = trim($_REQUEST['representante_legal_profesion'] ?? '');
@@ -2297,7 +2298,8 @@ if ($accion =="d") {
     if (isset($row["representante_legal_direccion"])) {$representante_legal_direccion= $row["representante_legal_direccion"]; } else {$representante_legal_direccion= "";}
     if (isset($row["tipo_documento_ident_venta"])) {$tipo_documento_ident_venta= $row["tipo_documento_ident_venta"]; } else {$tipo_documento_ident_venta= "";}
     if (isset($row["nacionalidad_venta"])) {$nacionalidad_venta= $row["nacionalidad_venta"]; } else {$nacionalidad_venta= "";}
-
+    if(isset($row['valor_descuento'])) {$valor_descuento = $row['valor_descuento']; } else {$valor_descuento = 0;}
+    if(isset($row['valor_extras'])) {$valor_extras = $row['valor_extras']; } else {$valor_extras = 0;}
     
     //$observaciones_reparacion= "";
     if ($id_estado=='' || $id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion){        
@@ -2441,17 +2443,14 @@ if ($accion =="d") {
     </div>
 </div>  
 <div class="row">
-    <!-- <div class="col-md"> -->
-        <div class="col-md" <?= strpos($disable_sec2_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>
-         <?php
-            if($id_estado_pintura==32){ 
-               //echo campo("id_vendedor","Vendedorrr",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2_lista); 
-               echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required'); 
-            }else{
-               echo campo("id_vendedor","Vendedor",'hidden',$id_vendedor,'','',''); 
-            }              
-         ?> 
-    </div>
+    <div class="col-md">            
+         <?php echo campo("valor_descuento","Valor Descuento",'number',$valor_descuento,' ',$disable_sec3); ?>                 
+    </div>   
+     
+    <div class="col-md">            
+         <?php echo campo("valor_extras","Valor Extras",'number',$valor_extras,' ',$disable_sec3); ?>                
+    </div>   
+     
    <div class="col-md">
         <?php echo campo("precio_minimo","Precio Minimo",'number',$precio_minimo,' ',$disable_sec3); ?>        
     </div>
@@ -2462,6 +2461,17 @@ if ($accion =="d") {
 </div>
 
 <div class="row">
+
+    <div class="col-md" <?= strpos($disable_sec2_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>
+         <?php
+            if($id_estado_pintura==32){ 
+               //echo campo("id_vendedor","Vendedorrr",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2_lista); 
+               echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required'); 
+            }else{
+               echo campo("id_vendedor","Vendedor",'hidden',$id_vendedor,'','',''); 
+            }              
+         ?> 
+    </div>
     <!-- <div class="col-md"> -->
         <div class="col-md" <?= strpos($disable_sec2_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>
          <?php
@@ -2777,6 +2787,22 @@ if ($accion =="d") {
 
 
 $(function () {
+
+// Precio base = precio actual + descuento ya aplicado - extras ya aplicados
+var _precioVentaInit = parseFloat($('#precio_minimo').val()) || 0;
+var _descuentoInit   = parseFloat($('#valor_descuento').val()) || 0;
+var _extrasInit      = parseFloat($('#valor_extras').val()) || 0;
+$('#precio_minimo').data('precio-original', _precioVentaInit + _descuentoInit - _extrasInit);
+
+// Recalcula precio_minimo al cambiar descuento o extras
+function calcularPrecioConDescuento() {
+    var precioOriginal = parseFloat($('#precio_minimo').data('precio-original')) || 0;
+    var descuento      = parseFloat($('#valor_descuento').val()) || 0;
+    var extras         = parseFloat($('#valor_extras').val()) || 0;
+    $('#precio_minimo').val(precioOriginal - descuento + extras);
+}
+
+$('#valor_descuento, #valor_extras').on('input change', calcularPrecioConDescuento);
 
     $('#btnContrato').on('click', function (e) {
     e.preventDefault();
