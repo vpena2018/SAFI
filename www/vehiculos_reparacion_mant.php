@@ -2017,7 +2017,7 @@ if ($accion=="g") {
                 $sqlcampos.=" ,id_estado=".$estado_global_nuevo;
             }
 
-        if (!es_nulo($estadocompletar) && $estadocompletar=='cmp'){             
+        if (!es_nulo($estadocompletar) && $estadocompletar=='cmp' && intval($_REQUEST['id_estado_pintura'])===32 && intval($_REQUEST['id_estado_interior'])===32 && intval($_REQUEST['id_estado_mecanica'])===32 ){             
              if (isset($_REQUEST["id_estado_anterior_reproceso"])) {
                 $id_estado_anterior_reproceso = intval($_REQUEST["id_estado_anterior_reproceso"]); 
              }else{
