@@ -2137,7 +2137,8 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
 
             $sql="update ventas set ".$sqlcampos." where id=".$cid." limit 1";
             $result = sql_update($sql);
-            // envia notificación a Inglosa si el estado cambia a 20
+            
+            // envia notificación a la plataforma de Leadit si el estado cambia a 20
             if ($estado_nuevo == 20) {
                 $resPhone = sql_select("
                        SELECT entidad.telefono
@@ -2154,8 +2155,8 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
                 curl_setopt_array($ch, [
                         CURLOPT_RETURNTRANSFER => true,
                         CURLOPT_POST           => true,
-                        CURLOPT_SSL_VERIFYHOST => false,
-                        CURLOPT_SSL_VERIFYPEER  => false,
+                        //CURLOPT_SSL_VERIFYHOST => false,
+                        CURLOPT_SSL_VERIFYPEER  => true,
                         CURLOPT_POSTFIELDS     => json_encode(['phone' => $tel]),
                         CURLOPT_HTTPHEADER     => [
                             'Content-Type: application/json',
