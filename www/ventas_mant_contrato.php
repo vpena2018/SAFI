@@ -2138,7 +2138,7 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
             $sql="update ventas set ".$sqlcampos." where id=".$cid." limit 1";
             $result = sql_update($sql);
             // envia notificación a Inglosa si el estado cambia a 20
-            if ($id_estado == 20) {
+            if ($estado_nuevo == 20) {
                 $resPhone = sql_select("
                        SELECT entidad.telefono
                        FROM ventas
@@ -2154,6 +2154,8 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
                 curl_setopt_array($ch, [
                         CURLOPT_RETURNTRANSFER => true,
                         CURLOPT_POST           => true,
+                        CURLOPT_SSL_VERIFYHOST => false,
+                        CURLOPT_SSL_VERIFYPEER  => false,
                         CURLOPT_POSTFIELDS     => json_encode(['phone' => $tel]),
                         CURLOPT_HTTPHEADER     => [
                             'Content-Type: application/json',
@@ -2172,7 +2174,8 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
                         . ' http=' . $httpCode
                         . ' error=' . $curlError
                         . ' resp=' . $response . PHP_EOL;
-                    file_put_contents(app_logs_folder  . date('Y-m-d') . 'webhook_inglosa.log', $logLine, FILE_APPEND | LOCK_EX);            
+                    file_put_contents(app_logs_folder  . date('Y-m-d') . '_webhook_inglosa.log', $logLine, FILE_APPEND | LOCK_EX);
+                                
              }
 
         } else 
