@@ -1363,7 +1363,7 @@ if ($accion=="L") {
                 ON inspeccion.id_producto = producto.id
             LEFT OUTER JOIN tienda t1 ON (inspeccion.id_tienda=t1.id)
             /*WHERE producto.codigo_alterno LIKE '%$codigo'*/
-            WHERE inspeccion.numero = '$numeroInspeccion'
+            WHERE inspeccion.numero = '$numeroInspeccion' and inspeccion.id_empresa!=4 
             AND NOT EXISTS (
                 SELECT 1
                 FROM traslado_bitacora b
@@ -1415,7 +1415,7 @@ if ($accion=="L") {
                 ON inspeccion.id_producto = producto.id
             LEFT OUTER JOIN tienda t1 ON (inspeccion.id_tienda=t1.id)
             /*WHERE producto.codigo_alterno LIKE '%$codigo'*/
-            WHERE inspeccion.numero = '$numeroInspeccion'
+            WHERE inspeccion.numero = '$numeroInspeccion' and inspeccion.id_empresa!=4 
             AND NOT EXISTS (
                 SELECT 1
                 FROM traslado_bitacora b
