@@ -25,7 +25,7 @@ if ($accion=="1") {
     if (isset($_REQUEST['estado'])) { $tmpval=sanear_int($_REQUEST['estado']); if (!es_nulo($tmpval)){$filtros.=" and orden_traslado.id_estado = ".GetSQLValue($tmpval,'int') ;}   }
     if (isset($_REQUEST['tienda'])) { $tmpval=sanear_int($_REQUEST['tienda']); if (!es_nulo($tmpval)){$filtros.=" and orden_traslado.id_tienda = ".GetSQLValue($tmpval,'int') ;}   }      
     if (isset($_REQUEST['motorista'])) { $tmpval=sanear_int($_REQUEST['motorista']); if (!es_nulo($tmpval)){$filtros.=" and orden_traslado.id_motorista = ".GetSQLValue($tmpval,'int') ;}   }       
-    
+    if (isset($_REQUEST['nombre'])) { $tmpval=sanear_string(trim($_REQUEST['nombre'])); if (!es_nulo($tmpval)){ $filtros.=" and (producto.nombre like ".GetSQLValue($tmpval,'like')." or producto.codigo_alterno like ".GetSQLValue($tmpval,'like').")";} }
     if (isset($_REQUEST['tipoest'])) { $tmpval=sanear_int($_REQUEST['tipoest']); 
     
         
@@ -37,12 +37,14 @@ if ($accion=="1") {
          }
     }
 
-    if (!tiene_permiso(146)) { //ver todos usuarios
-        $filtros.=" AND ( orden_traslado.id_usuario=".$_SESSION['usuario_id']." or orden_traslado.id_motorista=".$_SESSION['usuario_id'].")"; 
+    if (!tiene_permiso(146)) { //ver todos usuarios      
+        if (isset($_REQUEST['nombre']) && !es_nulo($_REQUEST['nombre'])){
+        }else{
+            $filtros.=" AND ( orden_traslado.id_usuario=".$_SESSION['usuario_id']." or orden_traslado.id_motorista=".$_SESSION['usuario_id'].")"; 
+        }
     }
 
-    if (isset($_REQUEST['placa'])) { $tmpval=sanear_string($_REQUEST['placa']); if (!es_nulo($tmpval)){$filtros.=" and producto.placa like ".GetSQLValue($tmpval,'like') ;}   }
-    if (isset($_REQUEST['nombre'])) { $tmpval=sanear_string(trim($_REQUEST['nombre'])); if (!es_nulo($tmpval)){ $filtros.=" and (producto.nombre like ".GetSQLValue($tmpval,'like')." or producto.codigo_alterno like ".GetSQLValue($tmpval,'like').")";} }
+    if (isset($_REQUEST['placa'])) { $tmpval=sanear_string($_REQUEST['placa']); if (!es_nulo($tmpval)){$filtros.=" and producto.placa like ".GetSQLValue($tmpval,'like') ;}   }    
     if (isset($_REQUEST['vin'])) { $tmpval=sanear_string(trim($_REQUEST['vin'])); if (!es_nulo($tmpval)){ $filtros.=" and producto.chasis like ".GetSQLValue($tmpval,'like');} }
     if ($pagina>=1) { $offset=$pagina*app_reg_por_pag;   }
 
