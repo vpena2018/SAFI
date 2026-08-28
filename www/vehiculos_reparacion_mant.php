@@ -1569,7 +1569,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
 }
 
 // VALIDAR (AJAX)
-    if ($_GET['a'] === 'print_check') {
+    if (isset($_GET['a']) && $_GET['a'] === 'print_check') {
 
         $id=0;
         $id_venta = isset($_GET['id']) ? intval($_GET['id']) : 0;
@@ -1615,7 +1615,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
     }
 
     // DESCARGAR (NAVEGADOR)
-    if ($_GET['a'] === 'print') {
+    if (isset($_GET['a']) && $_GET['a'] === 'print') {
         //$id = intval($_GET['id']);
 
         $id=0;
@@ -1678,6 +1678,7 @@ function registrar_historial_ventas($cid, $id_estado, $nombre, $observaciones=''
 }
 
 // Leer Datos    ############################  
+$row = []; // inicializar para cuando no hay registro cargado (ej. registro nuevo)
 if ($accion=="v") {
 	$cid=0;
 	if (isset($_REQUEST['cid'])) { $cid = sanear_int($_REQUEST['cid']); }
@@ -1942,7 +1943,8 @@ if ($accion=="g") {
         if (isset($_REQUEST["trasmision"])) { $sqlcampos.= " , trasmision =".GetSQLValue($_REQUEST["trasmision"],"text"); } 
         if (isset($_REQUEST["fecha_promesa_taller"])) { $sqlcampos.= " , fecha_promesa_taller =".GetSQLValue($_REQUEST["fecha_promesa_taller"],"date"); }                            
         if (isset($_REQUEST["id_vendedor"])) { $sqlcampos.= " , id_vendedor =".GetSQLValue($_REQUEST["id_vendedor"],"int"); } 
-
+        if (isset($_REQUEST["valor_descuento"])) { $sqlcampos.= " , valor_descuento =".GetSQLValue($_REQUEST["valor_descuento"],"int"); } 
+        if (isset($_REQUEST["valor_extras"])) { $sqlcampos.= " , valor_extras =".GetSQLValue($_REQUEST["valor_extras"],"int"); } 
         //info de contrato
         if($id_estado==$estado_global_negociacion || $id_estado==20){
             $rep_profesion   = trim($_REQUEST['representante_legal_profesion'] ?? '');
@@ -2015,7 +2017,7 @@ if ($accion=="g") {
                 $sqlcampos.=" ,id_estado=".$estado_global_nuevo;
             }
 
-        if (!es_nulo($estadocompletar) && $estadocompletar=='cmp'){             
+        if (!es_nulo($estadocompletar) && $estadocompletar=='cmp' && intval($_REQUEST['id_estado_pintura'])===32 && intval($_REQUEST['id_estado_interior'])===32 && intval($_REQUEST['id_estado_mecanica'])===32 ){             
              if (isset($_REQUEST["id_estado_anterior_reproceso"])) {
                 $id_estado_anterior_reproceso = intval($_REQUEST["id_estado_anterior_reproceso"]); 
              }else{
@@ -2199,32 +2201,24 @@ if ($accion =="d") {
 
     if (isset($_REQUEST['cod'])) { $cod = "and id=".GetSQLValue(urldecode($_REQUEST["cod"]),"text"); } else	{$cod ="" ;}
 
-    if (isset($_REQUEST['cod'])) { $cid =GetSQLValue(urldecode($_REQUEST["cod"]),"text"); } else	{$cid ="" ;}
+    if (isset($_REQUEST['cod'])) { $cid = intval($_REQUEST["cod"]); } else	{$cid = 0 ;}
     if (isset($_REQUEST['tipo_foto'])) { $tipo_foto = trim($_REQUEST["tipo_foto"]); } else {$tipo_foto = "foto";}
-    
 
-    if ($cid<>'') {
+    if ($cid > 0) {
         if ($tipo_foto==='foto_televentas') {
-            $sql="UPDATE ventas SET foto_televentas=null where id=".$cid." limit 1";
             BORRAR_FOTO_DIRECTORIO($cid, $arch, $tipo_foto, "vehiculos_reparacion_televentas");
+            $result = sql_update("UPDATE ventas SET foto_televentas=null WHERE id=".intval($cid)." LIMIT 1");
         } else {
-            $sql="UPDATE ventas SET foto=null where id=".$cid." limit 1";
             BORRAR_FOTO_DIRECTORIO($cid, $arch, $tipo_foto, "vehiculos_reparacion");
-        }        
-        $result = sql_update($sql);
-
-    } else {
-        $result==false;
-            $stud_arr[0]["pcode"] = 0;
-            $stud_arr[0]["pmsg"] ="Error al borrar el archivo";
-    }
-
-    if ($result!=false){
-
+            $result = sql_update("UPDATE ventas SET foto=null WHERE id=".intval($cid)." LIMIT 1");
+        }
+        
         $stud_arr[0]["pcode"] = 1;
-
-        $stud_arr[0]["pmsg"] ="Borrado";
-
+        $stud_arr[0]["pmsg"] = "Archivo Borrado";
+ 
+    } else {
+        $stud_arr[0]["pcode"] = 0;
+        $stud_arr[0]["pmsg"] = "Error al borrar el archivo";
     }
     salida_json($stud_arr);
     exit;
@@ -2304,9 +2298,21 @@ if ($accion =="d") {
     if (isset($row["representante_legal_direccion"])) {$representante_legal_direccion= $row["representante_legal_direccion"]; } else {$representante_legal_direccion= "";}
     if (isset($row["tipo_documento_ident_venta"])) {$tipo_documento_ident_venta= $row["tipo_documento_ident_venta"]; } else {$tipo_documento_ident_venta= "";}
     if (isset($row["nacionalidad_venta"])) {$nacionalidad_venta= $row["nacionalidad_venta"]; } else {$nacionalidad_venta= "";}
+    if(isset($row['valor_descuento'])) {$valor_descuento = $row['valor_descuento']; } else {$valor_descuento = 0;}
+    if(isset($row['valor_extras'])) {$valor_extras = $row['valor_extras']; } else {$valor_extras = 0;}
+    if (isset($row["fecha_promesa"])) {$fecha_promesa= $row["fecha_promesa"]; } else {$fecha_promesa= "";}
+    if (isset($row["fecha_negociacion"])) {$fecha_negociacion= $row["fecha_negociacion"]; } else {$fecha_negociacion= "";}
 
-    
     //$observaciones_reparacion= "";
+    // calcular la diferencia de días entre la fecha de negociación y hoy
+    $diff=0;
+    if (!es_nulo($fecha_negociacion)){
+            $neg = date_create($fecha_negociacion);
+            $hoy = date_create("now"); 
+            $diff = date_diff($hoy,$neg);          
+    }
+ 
+    //habilitar o deshabilitar secciones según el permiso del usuario
     if ($id_estado=='' || $id_estado==$estado_global_nuevo || $id_estado==$estado_global_negociacion){        
           $disable_sec1_lista= !tiene_permiso(190) ? ' disabled="disabled" ' : ' ';  //169=editar campos de operaciones        
           $disable_sec1= !tiene_permiso(190) ? ' readonly ' : ' ';  //169=editar campos de operaciones          
@@ -2350,7 +2356,14 @@ if ($accion =="d") {
         <?php echo campo("numero","Numero",'label',$id_estado,' ',' '); ?>        
     </div>    
 
-
+    <?php if(!es_nulo($diff)) { ?>
+        <div class="col-md">
+            <?php echo campo("dias","Dias en Negociacion",'label',$diff->days,' ',' '); ?>      
+        </div>                
+        <div class="col-md">    
+            <?php echo campo("fecha_neg","Fecha en Negociacion",'label',formato_fechahora_de_mysql($fecha_negociacion),' ',' '); ?>    
+        </div>        
+    <?php } ?>   
 </div>
 
 <div class="row">
@@ -2448,17 +2461,14 @@ if ($accion =="d") {
     </div>
 </div>  
 <div class="row">
-    <!-- <div class="col-md"> -->
-        <div class="col-md" <?= strpos($disable_sec2_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>
-         <?php
-            if($id_estado_pintura==32){ 
-               //echo campo("id_vendedor","Vendedorrr",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2_lista); 
-               echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required'); 
-            }else{
-               echo campo("id_vendedor","Vendedor",'hidden',$id_vendedor,'','',''); 
-            }              
-         ?> 
-    </div>
+    <div class="col-md">            
+         <?php echo campo("valor_descuento","Valor Descuento",'number',$valor_descuento,' ',$disable_sec3); ?>                 
+    </div>   
+     
+    <div class="col-md">            
+         <?php echo campo("valor_extras","Valor Extras",'number',$valor_extras,' ',$disable_sec3); ?>                
+    </div>   
+     
    <div class="col-md">
         <?php echo campo("precio_minimo","Precio Minimo",'number',$precio_minimo,' ',$disable_sec3); ?>        
     </div>
@@ -2469,6 +2479,17 @@ if ($accion =="d") {
 </div>
 
 <div class="row">
+
+    <div class="col-md" <?= strpos($disable_sec2_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>
+         <?php
+            if($id_estado_pintura==32){ 
+               //echo campo("id_vendedor","Vendedorrr",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2_lista); 
+               echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required'); 
+            }else{
+               echo campo("id_vendedor","Vendedor",'hidden',$id_vendedor,'','',''); 
+            }              
+         ?> 
+    </div>
     <!-- <div class="col-md"> -->
         <div class="col-md" <?= strpos($disable_sec2_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>
          <?php
@@ -2784,6 +2805,22 @@ if ($accion =="d") {
 
 
 $(function () {
+
+// Precio base = precio actual + descuento ya aplicado - extras ya aplicados
+var _precioVentaInit = parseFloat($('#precio_minimo').val()) || 0;
+var _descuentoInit   = parseFloat($('#valor_descuento').val()) || 0;
+var _extrasInit      = parseFloat($('#valor_extras').val()) || 0;
+$('#precio_minimo').data('precio-original', _precioVentaInit + _descuentoInit - _extrasInit);
+
+// Recalcula precio_minimo al cambiar descuento o extras
+function calcularPrecioConDescuento() {
+    var precioOriginal = parseFloat($('#precio_minimo').data('precio-original')) || 0;
+    var descuento      = parseFloat($('#valor_descuento').val()) || 0;
+    var extras         = parseFloat($('#valor_extras').val()) || 0;
+    $('#precio_minimo').val(precioOriginal - descuento + extras);
+}
+
+$('#valor_descuento, #valor_extras').on('input change', calcularPrecioConDescuento);
 
     $('#btnContrato').on('click', function (e) {
     e.preventDefault();
@@ -3330,7 +3367,7 @@ function borrar_fotodb(codid, tipoFoto) {
     if (result.value) {
 
 
-$.post( 'vehiculos_reparacion_mant.php',datos, function(response) {
+$.post( 'vehiculos_reparacion_mant.php', datos, function(response) {
 
                 if (response.length > 0) {
                     if (response[0].pcode == 0) {
@@ -3338,15 +3375,18 @@ $.post( 'vehiculos_reparacion_mant.php',datos, function(response) {
                     }
 
                     if (response[0].pcode == 1) {
-                        //$(".foto_br"+codid).hide();
+                        // limpiar el contenedor correcto según el tipo de foto borrada
+                        if (tipoFoto === 'foto_televentas') {
+                            $('#insp_fotos_thumbs_televentas').remove();
+                        } else {
+                            $('#insp_fotos_thumbs').remove();
+                        }
                         procesar_tabla_datatable('tablaver','tabla','vehiculos_reparacion_ver.php?a=1','Ventas de Vehiculos')
                         mytoast('success',response[0].pmsg,3000) ;
-                        abrir_ventas(codid);
-
                     }
 
                 } else {mytoast('error',response[0].pmsg,3000) ; }
-            })
+            }, 'json')
 
             .done(function() {	  
                 

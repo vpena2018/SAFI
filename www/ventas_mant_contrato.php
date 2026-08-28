@@ -1492,14 +1492,15 @@ if (!tiene_permiso(168)) {
 //Elimina Foto
 if ($accion=="dfoto") {
    $cid=0;
+   $dfoto=0;
    if (isset($_REQUEST['id'])) { $cid = intval($_REQUEST["id"]); }   
-   if (isset($_GET['foto'])){ $dfoto = intval($_GET['foto']);} 
+   if (isset($_REQUEST['foto'])){ $dfoto = intval($_REQUEST['foto']);} 
    $id_estado_hist = intval(get_dato_sql("ventas", "id_estado", " where id=$cid"));
-   if ($dfoto==1){
-      sql_update("UPDATE ventas set foto=null where id=$cid limit 1");   
+   if ($dfoto===1){
+      //sql_update("UPDATE ventas set foto=null where id=$cid limit 1");   
       registrar_historial_ventas($cid, $id_estado_hist, 'Eliminacion foto comprobante de pago', 'Comprobante de pago eliminado');
    }else{
-      sql_update("UPDATE ventas set foto_televentas=null where id=$cid limit 1");
+      //sql_update("UPDATE ventas set foto_televentas=null where id=$cid limit 1");
       registrar_historial_ventas($cid, $id_estado_hist, 'Eliminacion foto recibo de pago', 'Recibo de pago eliminado');
    }
    $stud_arr[0]["pcode"] = 1;
@@ -1556,6 +1557,7 @@ if ($accion=="g") {
 
     $persona_juridica=intval($_REQUEST['persona_juridica']);
     $id_vendedor=intval($_REQUEST['id_vendedor']);
+    $id_televentas=intval($_REQUEST['id_televentas']);
 
     //$id_vendedor=intval(get_dato_sql("ventas","id_vendedor"," where id=".$cid)); 
 
@@ -1638,22 +1640,32 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
 /*     if (!es_nulo($cid) && ($id_estado!=20 && $id_estado!=11)){
        if (!es_nulo($precio_venta)||!es_nulo($prima_venta)) { $verror.='Precio de venta y prima solo se ingresan, estado de vendido entregado'; }    
     } */
+    $VendedorTele="";
+    $VendedorTele=get_dato_sql("ventas_estado","foto"," where foto=2 and id=".$id_estado);
 
     if ($carShopPerfil=='18'){
         $verror.=validar("Estado",$_REQUEST['id_estado'], "int", true);
         $id_vendedor=intval(get_dato_sql("ventas","id_vendedor"," where id=".$cid)); 
+        $id_televentas_ant=intval(get_dato_sql("ventas","id_televentas"," where id=".$cid));
+        $id_estado_ant=intval(get_dato_sql("ventas","id_estado"," where id=".$cid));          
         if (!es_nulo($id_vendedor) && $id_vendedor!=intval($_REQUEST['id_vendedor']) && $id_estado==11){ 
             $verror.='No es posible realizar el cambio de vendedor';
         }        
-        $id_estado_ant=intval(get_dato_sql("ventas","id_estado"," where id=".$cid));          
-        if (!es_nulo($id_estado_ant) && $id_estado_ant!==11){
+        if ($id_televentas_ant!=intval($_REQUEST['id_televentas']) && $id_estado==11){ 
+            $verror.='No es posible realizar el cambio del vendedor de Televentas';
+        }         
+        if (!es_nulo($id_estado_ant) && ($id_estado_ant==11 || $id_estado_ant==17)  && ($id_estado!==11 && $id_estado!==20)){
             $verror.='No es posible realizar el cambio de estado';
         }
+        if (!es_nulo($id_estado_ant) && $id_estado_ant==17){
+            $VendedorTele=1;
+        }
+     
     }
 
     $envioCorreo="";
     $enviar_correo_sin_fotos = "";
-    $fotoRegistro=get_dato_sql("ventas_estado","foto"," where foto=1 and id=".$id_estado);
+    $fotoRegistro=get_dato_sql("ventas_estado","foto"," where foto>=1 and id=".$id_estado);    
     $envioCorreo=get_dato_sql("ventas_estado","envio_correo"," where envio_correo=1 and id=".$id_estado);
     if (!es_nulo($fotoRegistro)){
         if (isset($_REQUEST['foto'])) {
@@ -1661,6 +1673,11 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
         }                        
     }
 
+    if (!es_nulo($VendedorTele)){
+        if (es_nulo($id_televentas) || $id_televentas<=0){
+            $verror.='Seleccione un vendedor de televentas';           
+        }                        
+    }
 
     if ($verror=="") {
         //Campos
@@ -1678,47 +1695,47 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
 
 
 
-// FOTO NORMAL
-if ($foto_original_comp !== '') {
+        // FOTO NORMAL
+        if ($foto_original_comp !== '') {
 
-    $foto_original_comp = urldecode($foto_original_comp);
-    $foto = str_replace(' ', '_', $foto_original_comp);
+            $foto_original_comp = urldecode($foto_original_comp);
+            $foto = str_replace(' ', '_', $foto_original_comp);
 
-    $ruta1  = 'uploa_d/' . $foto_original_comp;
-    $ruta2  = 'uploa_d/thumbnail/' . $foto_original_comp;
-    $nueva1 = 'uploa_d/' . $foto;
-    $nueva2 = 'uploa_d/thumbnail/' . $foto;
+            $ruta1  = 'uploa_d/' . $foto_original_comp;
+            $ruta2  = 'uploa_d/thumbnail/' . $foto_original_comp;
+            $nueva1 = 'uploa_d/' . $foto;
+            $nueva2 = 'uploa_d/thumbnail/' . $foto;
 
-    if (file_exists($ruta1)) {
-        @rename($ruta1, $nueva1);
-    }
-    if (file_exists($ruta2)) {
-        @rename($ruta2, $nueva2);
-    }
+            if (file_exists($ruta1)) {
+                @rename($ruta1, $nueva1);
+            }
+            if (file_exists($ruta2)) {
+                @rename($ruta2, $nueva2);
+            }
 
-} 
+        } 
 
-// FOTO TELEVENTAS
-if ($foto_original_tele !== '') {
+        // FOTO TELEVENTAS
+        if ($foto_original_tele !== '') {
 
-    $foto_original_tele = urldecode($foto_original_tele);
-    $foto_televentas = str_replace(' ', '_', $foto_original_tele);
+            $foto_original_tele = urldecode($foto_original_tele);
+            $foto_televentas = str_replace(' ', '_', $foto_original_tele);
 
-    $ruta3  = 'uploa_d/' . $foto_original_tele;
-    $ruta4  = 'uploa_d/thumbnail/' . $foto_original_tele;
-    $nueva3 = 'uploa_d/' . $foto_televentas;
-    $nueva4 = 'uploa_d/thumbnail/' . $foto_televentas;
+            $ruta3  = 'uploa_d/' . $foto_original_tele;
+            $ruta4  = 'uploa_d/thumbnail/' . $foto_original_tele;
+            $nueva3 = 'uploa_d/' . $foto_televentas;
+            $nueva4 = 'uploa_d/thumbnail/' . $foto_televentas;
 
-    if (file_exists($ruta3)) {
-        @rename($ruta3, $nueva3);
-    }
-    if (file_exists($ruta4)) {
-        @rename($ruta4, $nueva4);
-    }
+            if (file_exists($ruta3)) {
+                @rename($ruta3, $nueva3);
+            }
+            if (file_exists($ruta4)) {
+                @rename($ruta4, $nueva4);
+            }
 
-}
+        }
 
-             
+                    
 
         /* if ($foto_original_comp !== '' || $foto_original_tele !== ''){
             $foto_original_comp = urldecode($_REQUEST['foto']);
@@ -1795,7 +1812,7 @@ if ($foto_original_tele !== '') {
             $sqlcampos .= " , representante_legal_identidad = "
                         . GetSQLValue($rep_id, "text");
 
-             $sqlcampos .= " , representante_legal_direccion = "
+            $sqlcampos .= " , representante_legal_direccion = "
             . GetSQLValue($rep_direccion, "text");
 
 
@@ -1828,12 +1845,15 @@ if ($foto_original_tele !== '') {
         //if (isset($_REQUEST["foto_televentas"])) { $sqlcampos.= " , foto_televentas = '$foto_televentas'"; } 
 
         if (!empty($_REQUEST["foto"])) {
-            $sqlcampos .= " , foto = " . GetSQLValue($foto, "text");
-
+           $sqlcampos .= " , foto = " . GetSQLValue($_REQUEST["foto"], "text");
+        } else {
+            $sqlcampos .= " , foto = NULL";
         }
 
         if (!empty($_REQUEST["foto_televentas"])) {
-            $sqlcampos .= " , foto_televentas = " . GetSQLValue($foto_televentas, "text");
+            $sqlcampos .= " , foto_televentas = " . GetSQLValue($_REQUEST["foto_televentas"], "text");
+        } else {
+            $sqlcampos .= " , foto_televentas = NULL";
         }
 
         if (isset($_REQUEST["reproceso"])) { $sqlcampos.= " , reproceso =".GetSQLValue($_REQUEST["reproceso"],"text"); } 
@@ -1853,12 +1873,13 @@ if ($foto_original_tele !== '') {
 
         if($genera_contrato==1){
             $rep_profesion   = trim($_REQUEST['representante_legal_profesion'] ?? '');
-
             $sqlcampos .= " , representante_legal_profesion = ". GetSQLValue($rep_profesion, "text");
-
             if (isset($_REQUEST["cliente_id"])) { $sqlcampos.= " , cliente_id =".GetSQLValue($_REQUEST["cliente_id"],"int"); }  
         }else{
             $sqlcampos.= " , cliente_id =null, representante_legal_profesion = null, ciudad_venta=null,departamento_venta=null";
+            if ($id_estado==5){
+               $sqlcampos.= " , id_vendedor =null, id_televentas = null, id_financiera=null, id_financiera_estado=null, asesor_financiera=null, venta_cont_cred=null, foto=null, foto_televentas=null, observaciones=null";    
+            }            
         }
 
 
@@ -2073,13 +2094,15 @@ if ($foto_original_tele !== '') {
              }
 
              $foto_actual_bd = (string)($venta_actual['foto'] ?? '');
-             if (!empty($_REQUEST["foto"]) && $foto !== $foto_actual_bd) {
-                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Subida foto comprobante de pago', $foto);
+             $foto1=isset($_REQUEST['foto']) && $_REQUEST['foto'] !== '' ? trim($_REQUEST['foto']) : '';
+             if (!empty($foto1) && $foto1 !== $foto_actual_bd) {
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Subida foto comprobante de pago', $foto1);
              }
 
              $foto_tele_actual_bd = (string)($venta_actual['foto_televentas'] ?? '');
-             if (!empty($_REQUEST["foto_televentas"]) && $foto_televentas !== $foto_tele_actual_bd) {
-                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Subida foto recibo de pago', $foto_televentas);
+             $foto2=isset($_REQUEST['foto_televentas']) && $_REQUEST['foto_televentas'] !== '' ? trim($_REQUEST['foto_televentas']) : '';
+             if (!empty($foto2) && $foto2 !== $foto_tele_actual_bd) {
+                 registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Subida foto recibo de pago', $foto2);
              }
 
              $venta_cont_cred_bd = isset($venta_actual['venta_cont_cred']) ? intval($venta_actual['venta_cont_cred']) : 0;
@@ -2114,6 +2137,47 @@ if ($foto_original_tele !== '') {
 
             $sql="update ventas set ".$sqlcampos." where id=".$cid." limit 1";
             $result = sql_update($sql);
+            
+            // envia notificación a la plataforma de Leadit si el estado cambia a 20
+            if ($estado_nuevo == 20) {
+                $resPhone = sql_select("
+                       SELECT entidad.telefono
+                       FROM ventas
+                       LEFT JOIN entidad ON ventas.cliente_id = entidad.id
+                       WHERE ventas.id = $cid
+                       LIMIT 1
+                   ");
+                $tel = '';
+                if ($resPhone && $resPhone->num_rows > 0) {
+                    $tel = $resPhone->fetch_assoc()['telefono'] ?? '';
+                }
+                $ch = curl_init('https://inglosa-dashboard-backend.onrender.com/api/ingest/carshop/sale');
+                curl_setopt_array($ch, [
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_POST           => true,
+                        //CURLOPT_SSL_VERIFYHOST => false,
+                        CURLOPT_SSL_VERIFYPEER  => true,
+                        CURLOPT_POSTFIELDS     => json_encode(['phone' => $tel]),
+                        CURLOPT_HTTPHEADER     => [
+                            'Content-Type: application/json',
+                            'Authorization: Bearer ' . app_webhook_carshop_token       
+                        ],
+                        CURLOPT_TIMEOUT        => 10,
+                    ]);
+
+                    $response = curl_exec($ch);
+                    $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    $curlError = curl_errno($ch) ? curl_error($ch) : '';
+
+                    // guarda resultado en log para diagnóstico
+                    $logLine = '[' . date('Y-m-d H:i:s') . '] venta=' . $cid
+                        . ' tel=' . $tel
+                        . ' http=' . $httpCode
+                        . ' error=' . $curlError
+                        . ' resp=' . $response . PHP_EOL;
+                    file_put_contents(app_logs_folder  . date('Y-m-d') . '_webhook_inglosa.log', $logLine, FILE_APPEND | LOCK_EX);
+                                
+             }
 
         } else 
         {
@@ -2452,14 +2516,14 @@ if ($foto_original_tele !== '') {
 
 
 <div class="row">
-    <div class="col-md">
+    <div class="col-md-3">
         <?php echo campo("genera_contrato","",'hidden',$genera_contrato,'','',''); ?>
          <?php echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where ventas_reparacion=2 ",'','...'),' ',' required '.$disable_sec2)  ?> 
          <?php /*echo campo("id_estado_name","Estado",'label',$elestado,'','','');*/ ?>
     </div>
 
     <div class="col-md">            
-         <?php echo campo("valor_descuento","Valor Descuento",'number',$valor_descuento,' ',$disable_sec1); ?>                 
+         <?php echo campo("valor_descuento","Valor Descuento",'number',$valor_descuento,' ',$disable_sec1); ?>                
      </div>   
      
      <div class="col-md">            
@@ -2472,7 +2536,8 @@ if ($foto_original_tele !== '') {
         <div class="col-md">            
          <?php echo campo("prima_venta","Precio de Reserva",'number',$prima_venta,' ',$disable_sec2); ?>                 
     </div> 
-    <div id="clientediv" style="display:none;" class="col-md-12">
+
+     <div id="clientediv" style="display:none;" class="col-md-12">
 
         <?php
         $nombre_cliente='';
@@ -2767,22 +2832,26 @@ if ($foto_original_tele !== '') {
   if ($foto<>'') {
      $fext = substr($foto, -3);
      $fext = strtolower($fext);
+     echo '<div id="thumb_foto_1">';
             if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {    
                 echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$id.'"></a> ';
             } else {                
                 echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
             }
             if(tiene_permiso(168))  { echo '  <a href="#" class="mr-5 foto_br'.$id.'" onclick="ventas_dfoto(1); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';}
+     echo '</div>';
   }
   if ($foto_televentas<>'') {
      $fext = substr($foto_televentas, -3);
      $fext = strtolower($fext);
+     echo '<div id="thumb_foto_2">';
             if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {   
                 echo '  <a href="#" onclick="mostrar_foto(\''.$foto_televentas.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto_televentas.'" data-cod="'.$id.'"></a> ';
             } else {                
                 echo '  <a href="uploa_d/'.$foto_televentas.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto_televentas.'</a> ';
             }
             if(tiene_permiso(168))  { echo '  <a href="#" class="mr-5 foto_br'.$id.'" onclick="ventas_dfoto(2); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';}
+     echo '</div>';
   }
   ?>
 </div>
@@ -3273,7 +3342,32 @@ function ventas_dfoto(foto){
 	  cancelButtonText:  'Cancelar'
 	}).then((result) => {
 	  if (result.value) {
-	     ventas_procesar('ventas_mant_contrato.php?a=dfoto&foto='+encodeURI(foto),'forma_ventas','dfoto');        
+	      var cid = $('#id').val();
+	      cargando(true);
+	      $.ajax({
+	          url: 'ventas_mant_contrato.php?a=dfoto&foto=' + foto,
+	          type: 'POST',
+	          dataType: 'json',
+	          data: { id: cid },
+	          success: function(json) {
+	              cargando(false);
+	              if (json && json[0] && json[0].pcode == 1) {
+	                  mytoast('success', json[0].pmsg, 3000);
+	                  $('#thumb_foto_' + foto).remove();
+                      if (foto === 1) {
+                          $('#foto_comprobante_in').val('');
+                      } else { 
+                          $('#foto_televentas_comprobante_in').val('');
+                      }                      
+	              } else {
+	                  mytoast('error', json && json[0] ? json[0].pmsg : 'Error', 3000);
+	              }
+	          },
+	          error: function() {
+	              cargando(false);
+	              mytoast('error', 'Error de comunicación', 3000);
+	          }
+	      });
 	  }
 	})
 
@@ -3305,10 +3399,13 @@ function ventas_procesar(url,forma,adicional){
                         $('#ModalWindow2').modal('hide');
                         $( "#btn-filtro" ).click();
                     }
-                    if (adicional=="dfoto") {     
-                       $('#insp_fotos_thumbs').remove();                                                                 
+                    /*
+                    if (adicional=="dfoto1") {     
+                       $('#thumb_foto_1').remove();                                                                 
                     }
-                    
+                    if (adicional=="dfoto2") {     
+                       $('#thumb_foto_2').remove();                                                                 
+                    }*/                   
 			
 			}
 		} else {cargando(false);  mymodal('error',"Error","Se produjo un error. Favor vuelva a intentar");}
