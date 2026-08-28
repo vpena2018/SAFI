@@ -1293,7 +1293,7 @@ if ($accion=="L") {
                     LEFT OUTER JOIN entidad ON (cita.cliente_id=entidad.id)
                     WHERE producto.codigo_alterno LIKE '%$codigo'
                     AND cita.id_estado <= 4
-                    AND DATE(cita.fecha_cita) = CURDATE()
+                    /*AND DATE(cita.fecha_cita) = CURDATE()*/
                     AND EXISTS (
                         SELECT 1
                         FROM traslado_bitacora b
