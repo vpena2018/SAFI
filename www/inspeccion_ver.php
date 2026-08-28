@@ -37,7 +37,10 @@ if ($accion=="1") {
     if (isset($_REQUEST['tipo_doc'])) { $tmpval=sanear_int(trim($_REQUEST['tipo_doc'])); if (!es_nulo($tmpval)){ $filtros.=" and inspeccion.tipo_doc = ".GetSQLValue($tmpval,'int') ;}   }
     if (isset($_REQUEST['id_estado'])) { $tmpval=sanear_int(trim($_REQUEST['id_estado'])); if (!es_nulo($tmpval)){ $filtros.=" and inspeccion.id_estado = ".GetSQLValue($tmpval,'int') ;}   }
        
-    if (isset($_REQUEST['id_usuario'])) { $tmpval=sanear_int($_REQUEST['id_usuario']); if (!es_nulo($tmpval)){$filtros.=' AND (inspeccion.id_usuario='.GetSQLValue($tmpval,'int').')' ;}   }
+    if (isset($_REQUEST['id_usuario'])) { $tmpval=sanear_int($_REQUEST['id_usuario']); if (!es_nulo($tmpval)){$filtros.=" AND (inspeccion.id_usuario=".GetSQLValue($tmpval,'int').')' ;}   }
+    if (isset($_REQUEST['id_empresa'])) { $tmpval=sanear_int($_REQUEST['id_empresa']); if (!es_nulo($tmpval)){$filtros.=" AND (inspeccion.id_empresa=".GetSQLValue($tmpval,'int').')' ;}   }
+    
+
 
     if ($pagina>=1) { $offset=$pagina*app_reg_por_pag;   }
 
@@ -221,6 +224,12 @@ if ($accion=="1") {
    
 
     <div class="row"> 
+        <div class="col-sm">
+            <?php 
+           echo campo("id_empresa","Marca",'select',valores_combobox_texto(app_id_empresa,'','Todos'),' ',' onkeypress="buscarfiltro(event,\'btn-filtro\');"');
+            ?>
+         </div>
+
             <div class="col-sm text-right">
                 <div class="dropdown">
                     <a class="btn btn-light dropdown-toggle" href="#" role="button" id="rango_fechas" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
