@@ -245,9 +245,9 @@ $totalrepuestos=0;
         $totlinea=floatval($detalle['cantidad'])*floatval($monto);
         $totalrepuestos+= $totlinea ;    
         $pdf->Ln();
-        //$pdf->Cell(18, 5, $detalle['producto_codigoalterno'] , 'LTRB', 0, 'L', false );
-        //$pdf->Cell(117, 5, $detalle['producto_nombre'] , 'LTRB', 0, 'L', false );
-        $pdf->Cell(135, 5, $detalle['producto_nombre'] , 'LTRB', 0, 'L', false );
+        $pdf->Cell(18, 5, $detalle['producto_codigoalterno'] , 'LTRB', 0, 'L', false );
+        $pdf->Cell(117, 5, $detalle['producto_nombre'] , 'LTRB', 0, 'L', false );
+        //$pdf->Cell(135, 5, $detalle['producto_nombre'] , 'LTRB', 0, 'L', false );
         $pdf->Cell(15, 5, $detalle['cantidad'] , 'LTRB', 0, 'C', false );
         if ($alcosto<>"") {
             $pdf->Cell(25, 5, formato_numero($monto,2) , 'LTRB', 0, 'R', false );
