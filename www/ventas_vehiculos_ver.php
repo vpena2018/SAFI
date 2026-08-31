@@ -85,8 +85,8 @@ if ($accion=="1") {
                     <th>Numero</th>
                     <th>Fecha</th>
                     <th>Vehiculo</th>                    
-                    <th>Dias Negociacion</th>   
-                    <th>Adjuntos</th>   
+                    <th>Dias Negociacion</th>  
+                    <th>Adjuntos</th>
                     <th>Precio Minimo</th>
                     <th>Precio Maximo</th>
                     <th>Estado</th>
@@ -100,10 +100,12 @@ if ($accion=="1") {
             ';
 
             if ($result -> num_rows>=app_reg_por_pag) {$haymas=1;  }
-            while ($row = $result -> fetch_assoc()) {
+            while ($row = $result -> fetch_assoc()) {               
                 
-                $comprobantes = $row["foto"] ? 1 : 0;
-                $recibos = $row["foto_televentas"] ? 1 : 0;
+                $comprobantes = $row["foto"]!= '' ? 1 : 0;
+                $recibos = $row["foto_televentas"]!= '' ? 1 : 0;
+                $total = $comprobantes+$recibos;
+                $adjunto= ($total>0) ? '<td>'.$total.'</td>' : '<td>Sin adjunto</td>';
                 $fotos = $row["fotos"];
 
                 // Definir color según el valor
@@ -113,8 +115,10 @@ if ($accion=="1") {
                 <td><a  href="#" onclick="abrir_ventas(\''.$row["id"].'\'); return false;" class="btn btn-sm btn-secondary">'.$row["numero"].'</a></td>
                 <td>'.formato_fecha_de_mysql($row["fecha"]).'</td>
                 <td>'.$row["codvehiculo"]. ' ' .$row["vehiculo"].'</td>
-                <td>'.$row["dias_negociacion"].'</td>
-                <td>'.$comprobantes+$recibos.'</td>
+                <td>'.$row["dias_negociacion"].'</td>   
+                '.$adjunto.'
+
+
                 <td>'.$row["pminimo"].'</td>
                 <td>'.$row["pmaximo"].'</td>
                 <td>'.$row["elestado"].'</td>
