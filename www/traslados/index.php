@@ -389,6 +389,16 @@ $TIPO_TRASLADO_TRASLADO = 'TRASLADO';
 $TIPO_MOVIMIENTO_ENTRADA = 'ENTRADA';
 $TIPO_MOVIMIENTO_SALIDA = 'SALIDA';
 
+
+session_start();
+// Si llega una nueva ubicación, la guardamos
+if (isset($_GET['ubicacion']) && $_GET['ubicacion'] !== '') {
+    $_SESSION['ubicacion'] = $_GET['ubicacion'];
+}
+// Obtenemos la ubicación de la sesión
+$ubicacion = $_SESSION['ubicacion'] ?? '';
+
+
 if (isset($_REQUEST['a'])) { $accion = $_REQUEST['a']; } else   {$accion ="";}
 
 $accion = $_REQUEST['a'] ?? '';
@@ -539,6 +549,12 @@ if ($accion=="P") {
         if ($resultTablet && $resultTablet->num_rows > 0) {
             $row = $resultTablet->fetch_assoc();
             $ubicacion_dispositivo_sql = "'" . $conn->real_escape_string($row["ubicacion"]) . "'";
+        }
+
+        
+
+        if (!empty($ubicacion) && $ubicacion_dispositivo_sql === "NULL") {
+            $ubicacion_dispositivo_sql = "'" . $conn->real_escape_string($ubicacion) . "'";
         }
 
     $sql = "INSERT INTO traslado_bitacora
@@ -734,6 +750,10 @@ if ($accion=="PR") {
             $ubicacion_dispositivo_sql = "'" . $conn->real_escape_string($row["ubicacion"]) . "'";
         }
 
+        if (!empty($ubicacion)&& $ubicacion_dispositivo_sql === "NULL") {
+            $ubicacion_dispositivo_sql = "'" . $conn->real_escape_string($ubicacion) . "'";
+        }
+
     $sql = "INSERT INTO traslado_bitacora
             (numero_traslado, fecha, dispositivo, ip_cliente, user_agent, firma, tipo_traslado, tipo_movimiento, combustible, kilometraje, codigo_alterno,ubicacion_dispositivo)
             VALUES
@@ -924,6 +944,11 @@ if ($accion=="PC") {
         if ($resultTablet && $resultTablet->num_rows > 0) {
             $row = $resultTablet->fetch_assoc();
             $ubicacion_dispositivo_sql = "'" . $conn->real_escape_string($row["ubicacion"]) . "'";
+        }
+
+
+        if (!empty($ubicacion)&& $ubicacion_dispositivo_sql === "NULL") {
+            $ubicacion_dispositivo_sql = "'" . $conn->real_escape_string($ubicacion) . "'";
         }
 
     $sql = "INSERT INTO traslado_bitacora
