@@ -102,9 +102,9 @@ if ($accion=="1") {
             if ($result -> num_rows>=app_reg_por_pag) {$haymas=1;  }
             while ($row = $result -> fetch_assoc()) {               
                 
-                $comprobantes = $row["foto"]!= '' ? 1 : 0;
-                $recibos = $row["foto_televentas"]!= '' ? 1 : 0;
-                $total = $comprobantes+$recibos;
+                $comprobante = $row["foto"]!= '' ? 1 : 0;
+                $recibo = $row["foto_televentas"]!= '' ? 1 : 0;
+                $total = $comprobante+$recibo;
                 $adjunto= ($total>0) ? '<td>'.$total.'</td>' : '<td>Sin adjunto</td>';
                 $fotos = $row["fotos"];
 
