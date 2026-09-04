@@ -54,6 +54,17 @@ define("db_gmt_offset", -6 ); // offset de Hora local segun la Hora GMT
 define("app_Seed", "zr50V29Xy03H7vq18fW4l");  // Semilla para operaciondes en criptografia
 define("app_Seed_ancho", 8);  // Cantidad de caracteres de la segunda semilla aleatoria
 
+
+// #########################################
+// #### IA para lectura de comprobantes ###
+// #########################################
+// Usada para leer banco/fecha/referencia/monto de los comprobantes de pago
+// (ver include/ia_comprobantes.php). Se obtiene en https://platform.openai.com/api-keys
+// Mientras quede vacia, la lectura automatica se desactiva sola y el usuario
+// llena los datos a mano (el guardado y la validacion de duplicados si funcionan).
+define("app_openai_api_key", "");
+define("app_openai_model", "gpt-4.1-mini");  // Modelo usado para leer el comprobante
+
 //Control de errores
 // error_reporting(0); //***** Activar EN PRODUCCION ******
 
