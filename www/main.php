@@ -468,7 +468,16 @@ $forzar_cambio_clave = (isset($_SESSION['force_pwd_change']) && intval($_SESSION
 <script type="text/javascript" src="plugins/fileupload/jquery.fileupload.js"></script>
 
 
-<script type="text/javascript" src="js/app5.js"></script>
+<?php
+// Cache-buster: app5.js se sirve como archivo estatico y el navegador lo guarda en cache con
+// las cabeceras que le pone Apache (Last-Modified/ETag) -sin un parametro de version en la URL,
+// un cambio en este archivo puede quedar invisible para el usuario (sigue viendo la version
+// vieja) aunque haga F5 normal, hasta que haga un hard-refresh o se le venza la cache solo. Se
+// agrega "?v=<fecha de modificacion del archivo>" para que cada vez que se edite app5.js la URL
+// cambie sola y el navegador este obligado a pedir la version nueva.
+$app5_js_v = file_exists(__DIR__ . '/js/app5.js') ? filemtime(__DIR__ . '/js/app5.js') : time();
+?>
+<script type="text/javascript" src="js/app5.js?v=<?php echo $app5_js_v; ?>"></script>
 
 <script src="plugins/chart/Chart.min.js"></script>
 
