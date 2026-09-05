@@ -103,17 +103,25 @@ function extraer_datos_comprobante_ia($ruta_archivo) {
 /**
  * Le pide a la IA que lea un "recibo" (recibo de caja / recibo oficial de la empresa, en PDF o
  * imagen) y devuelva fecha, monto y empresa emisora -los datos objetivos que se pueden cruzar
- * contra el comprobante ya registrado y contra el nombre de la empresa esperada-. No se pide
- * "referencia": el numero de recibo de caja NO es el mismo dato que la referencia bancaria del
- * comprobante (son numeros distintos por diseño), asi que compararlos daria siempre un falso
- * error. El banco se devuelve solo como referencia informativa (puede aparecer mezclado en una
- * linea contable, no siempre es confiable).
+ * contra el comprobante ya registrado y contra el nombre de la empresa esperada-.
  *
- * @return array{success:bool, banco:?string, fecha:?string, monto:?float, empresa:?string, error:?string, raw:string}
+ * El numero de recibo de caja del recibo NO es el mismo dato que la referencia bancaria del
+ * comprobante (son numeros distintos por diseño), asi que no se le pide a la IA "el numero de
+ * este recibo" para compararlo directo. En cambio, cuando se conoce la referencia del
+ * comprobante ($referencia_comprobante), se le da como CONTEXTO a la IA y se le pide que
+ * revise si ese numero especifico aparece mencionado en algun lado del recibo (por ejemplo en
+ * el campo "Documento", en una descripcion o memo) -algunas empresas si anotan ahi el numero de
+ * la transaccion bancaria original, otras no-. El banco se devuelve solo como referencia
+ * informativa (puede aparecer mezclado en una linea contable, no siempre es confiable).
+ *
+ * @param string      $ruta_archivo
+ * @param string|null $referencia_comprobante Numero de referencia del comprobante ya registrado,
+ *                                             para darselo de contexto a la IA (opcional).
+ * @return array{success:bool, banco:?string, fecha:?string, monto:?float, empresa:?string, referencia_encontrada:?string, error:?string, raw:string}
  */
-function extraer_datos_recibo_ia($ruta_archivo) {
+function extraer_datos_recibo_ia($ruta_archivo, $referencia_comprobante = null) {
 
-    $vacio = ['success' => false, 'banco' => null, 'fecha' => null, 'monto' => null, 'empresa' => null, 'error' => '', 'raw' => ''];
+    $vacio = ['success' => false, 'banco' => null, 'fecha' => null, 'monto' => null, 'empresa' => null, 'referencia_encontrada' => null, 'error' => '', 'raw' => ''];
 
     $prompt = "Este archivo es un RECIBO DE CAJA / recibo oficial de pago emitido por una empresa en Honduras "
         . "(distinto de un comprobante bancario: es el recibo que la empresa le entrega al cliente). Lee el "
@@ -123,7 +131,8 @@ function extraer_datos_recibo_ia($ruta_archivo) {
         . "  \"monto\": monto total del recibo, solo numero con punto decimal, sin simbolo de moneda ni comas (numero, o null si no se lee),\n"
         . "  \"banco\": banco o cuenta bancaria mencionada en el recibo, si aparece (string, o null si no aparece),\n"
         . "  \"empresa\": nombre de la empresa que emite el recibo, tal como aparece en el encabezado/membrete del "
-        . "documento (string, o null si no se lee claramente)\n"
+        . "documento (string, o null si no se lee claramente),\n"
+        . "  \"referencia_encontrada\": ver instruccion especial abajo (string, o null)\n"
         . "}\n"
         . "IMPORTANTE sobre la fecha: este tipo de recibo casi siempre trae DOS fechas distintas: (1) una fecha "
         . "de impresion, generalmente arriba del todo junto a un nombre de usuario (ej. \"KMEJIA 04/09/2026 "
@@ -132,6 +141,17 @@ function extraer_datos_recibo_ia($ruta_archivo) {
         . "impresion, aunque la de impresion aparezca primero o mas grande.\n"
         . "Si el documento muestra dia y mes pero NO muestra el año en ningun lado, no inventes el año: devuelve "
         . "\"fecha\": null. Si algun otro dato no aparece claramente, usa null en esa clave en vez de adivinar.";
+
+    if ($referencia_comprobante !== null && trim((string) $referencia_comprobante) !== '') {
+        $prompt .= "\n\nCONTEXTO ADICIONAL: el comprobante de pago bancario relacionado con este recibo tiene el "
+            . "numero de referencia/transaccion \"" . trim((string) $referencia_comprobante) . "\". Revisa con "
+            . "cuidado todo el documento (por ejemplo el campo \"Documento\", alguna descripcion, memo o nota) "
+            . "para ver si ese numero de referencia aparece mencionado en algun lado del recibo. Si lo encontras, "
+            . "devuelve en \"referencia_encontrada\" exactamente el numero que aparece en el recibo. Si NO "
+            . "aparece ese numero (ni ningun otro numero de referencia) en ninguna parte del recibo, devuelve "
+            . "\"referencia_encontrada\": null -no es raro que el recibo no mencione la referencia bancaria, "
+            . "muchas empresas no la anotan ahi-.";
+    }
 
     $r = ia_leer_documento_con_ia($ruta_archivo, $prompt);
 
@@ -149,6 +169,7 @@ function extraer_datos_recibo_ia($ruta_archivo) {
         'fecha' => isset($datos['fecha']) ? trim((string) $datos['fecha']) : null,
         'monto' => (isset($datos['monto']) && $datos['monto'] !== null && $datos['monto'] !== '') ? floatval($datos['monto']) : null,
         'empresa' => isset($datos['empresa']) ? trim((string) $datos['empresa']) : null,
+        'referencia_encontrada' => (isset($datos['referencia_encontrada']) && trim((string) $datos['referencia_encontrada']) !== '') ? trim((string) $datos['referencia_encontrada']) : null,
         'error' => null,
         'raw' => $r['raw'],
     ];
@@ -253,17 +274,20 @@ define('RECIBO_EMPRESA_ESPERADA', 'INVERSIONES GLOBALES');
 /**
  * Compara los datos de un recibo (leidos con IA) contra los del comprobante ya registrado al
  * que pertenece, para confirmar que sean del mismo pago, y contra el nombre de empresa esperado
- * (RECIBO_EMPRESA_ESPERADA). Solo se comparan fecha y monto contra el comprobante -el numero de
- * recibo de caja y la referencia bancaria son datos distintos por diseño, no se comparan entre
- * si-. Si el comprobante no tiene fecha/monto guardados, o la IA no logra leer algun dato
- * (fecha/monto/empresa null), ese dato en particular simplemente no se puede verificar y se deja
- * pasar.
+ * (RECIBO_EMPRESA_ESPERADA). Se comparan fecha y monto directo contra el comprobante. La
+ * referencia se le pasa a la IA como contexto (ver extraer_datos_recibo_ia) para que revise si
+ * aparece mencionada en el recibo; si el recibo SI menciona una referencia y es distinta a la
+ * del comprobante, se rechaza -pero si el recibo simplemente no menciona ninguna referencia (lo
+ * mas comun), eso no bloquea nada, porque el numero de recibo de caja y la referencia bancaria
+ * son datos distintos por diseño. Si el comprobante no tiene fecha/monto/referencia guardados,
+ * o la IA no logra leer algun dato, ese dato en particular simplemente no se puede verificar y
+ * se deja pasar.
  *
  * @return array{ok: bool, motivo: string}
  */
-function verificar_recibo_coincide_comprobante($ruta_recibo, $fecha_comprobante_mysql, $monto_comprobante) {
+function verificar_recibo_coincide_comprobante($ruta_recibo, $fecha_comprobante_mysql, $monto_comprobante, $referencia_comprobante = null) {
 
-    $recibo = extraer_datos_recibo_ia($ruta_recibo);
+    $recibo = extraer_datos_recibo_ia($ruta_recibo, $referencia_comprobante);
 
     if (!$recibo['success']) {
         // Si la IA no esta disponible o no pudo leer el recibo, no hay con que comparar; se deja
@@ -277,6 +301,11 @@ function verificar_recibo_coincide_comprobante($ruta_recibo, $fecha_comprobante_
 
     if ($fecha_comprobante_mysql && $recibo['fecha'] !== null && $recibo['fecha'] !== $fecha_comprobante_mysql) {
         return ['ok' => false, 'motivo' => 'La fecha del recibo (' . $recibo['fecha'] . ') no coincide con la fecha del comprobante (' . $fecha_comprobante_mysql . ').'];
+    }
+
+    if ($referencia_comprobante !== null && trim((string) $referencia_comprobante) !== '' && $recibo['referencia_encontrada'] !== null
+        && strtolower(trim($recibo['referencia_encontrada'])) !== strtolower(trim((string) $referencia_comprobante))) {
+        return ['ok' => false, 'motivo' => 'El recibo menciona una referencia distinta (' . $recibo['referencia_encontrada'] . ') a la del comprobante (' . $referencia_comprobante . ').'];
     }
 
     if ($monto_comprobante !== null && $monto_comprobante !== '' && $recibo['monto'] !== null
