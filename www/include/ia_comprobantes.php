@@ -69,14 +69,22 @@ function extraer_datos_comprobante_ia($ruta_archivo) {
         . "(lista de referencia, NO es una lista cerrada — pueden existir otros que no esten aqui): "
         . $lista_bancos . ". Si el nombre que aparece en el comprobante corresponde a uno de estos, devuelve el "
         . "texto EXACTO de la lista, letra por letra tal como esta escrito arriba (por ejemplo, si el comprobante "
-        . "solo dice \"BAC\" o \"Credomatic\", devuelve exactamente \"BAC Credomatic\"; esto es importante porque "
+        . "solo dice \"BAC\", devuelve exactamente \"BAC Honduras\"; esto es importante porque "
         . "ese texto se usa para comparar y evitar comprobantes duplicados, asi que debe quedar siempre identico). "
         . "Si el comprobante muestra un banco/financiera/cooperativa que NO esta en esta lista, transcribe el "
         . "nombre tal como aparece en el documento; nunca inventes un nombre que no este escrito en el comprobante.\n"
         . "Si algun dato no aparece claramente en el documento, usa null en esa clave en vez de adivinar. "
         . "Esto es MUY importante para la fecha: si el documento muestra dia y mes pero NO muestra el año en "
         . "ningun lado, no inventes ni asumas el año (ni el actual ni ningun otro) — en ese caso devuelve "
-        . "\"fecha\": null. Nunca conviene un año inventado a que quede en null: el usuario lo completa a mano.";
+        . "\"fecha\": null. Nunca conviene un año inventado a que quede en null: el usuario lo completa a mano.\n"
+        . "IMPORTANTE sobre el \"monto\" (y el resto de los datos) cuando la imagen contiene MAS DE UN "
+        . "monto o parece tener mas de un comprobante/notificacion mezclados (por ejemplo, un renglon suelto "
+        . "de una lista de movimientos o una notificacion, ADEMAS de un recibo formal con campos etiquetados "
+        . "como \"Monto:\", \"Fecha:\", \"ID Transaccion:\", \"Detalle de Transaccion\", etc.): usa SIEMPRE los "
+        . "datos del recibo formal con campos etiquetados, y OMITE cualquier renglon suelto, notificacion o "
+        . "vista previa que no tenga ese formato de recibo, aunque aparezca primero o mas grande en la imagen. "
+        . "Un recibo formal casi siempre trae MAS datos (ID de transaccion, cuenta destino, titular, etc.) que "
+        . "un simple renglon de movimiento, y es el que se debe usar como fuente de los 4 campos.";
 
     $r = ia_leer_documento_con_ia($ruta_archivo, $prompt);
 
