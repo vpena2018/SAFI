@@ -1,10 +1,10 @@
 www/include/config_inglosa_produccion.php
 www/include/config.php
-www/logs/2025-08-06_logins.log
 www/include/config_inglosa_produccion.php
 www/include/config.php
 
 # Dependencias
 /vendor/
+/logs/
 /www/uploa_d
 /www/uploa_d_ventas
