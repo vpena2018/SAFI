@@ -78,12 +78,12 @@ if ($accion=="1") {
     inner join producto on producto.codigo_alterno=traslado_bitacora.codigo_alterno
 	WHERE 1=1
 	$filtros
-	ORDER BY traslado_bitacora.fecha DESC, traslado_bitacora.id_bitacora DESC limit 100");
+	ORDER BY traslado_bitacora.fecha DESC, traslado_bitacora.id_bitacora DESC");
 
 	if ($result!=false){
 		if ($result -> num_rows > 0) {
 
-			$datos.='<table id="tabla_movimientos_vehiculos" class="table table-striped table-hover table-sm" style="width:100%">
+			$datos.='<table id="tabla" class="table table-striped table-hover table-sm" style="width:100%">
 			<thead class="thead-dark">
 				<tr>
 					<th>Numero Traslado</th>
@@ -249,7 +249,7 @@ if ($accion=="1") {
 			<script>rf_fechas('hoy');</script>
 
 			<div class="col-sm">
-			<a id="btn-filtro" href="#" onclick="procesar_tabla_datatable('tablaver','tabla','movimientos_vehiculos_ver.php?a=1','Movimientos de Vehiculos'); return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i>  <?php echo "Buscar"; ?></a>
+			<a id="btn-filtro" href="#" onclick="procesar_tabla_datatable('tablaver','tabla','movimientos_vehiculos_ver.php?a=1','Movimientos de Vehiculos','forma'); return false;" class="btn btn-info mr-2 mb-2"><i class="fa fa-search"></i>  <?php echo "Buscar"; ?></a>
 
 		</div>
 
