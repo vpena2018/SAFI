@@ -1493,12 +1493,19 @@ if (!tiene_permiso(168)) {
 if ($accion=="dfoto") {
    $cid=0;
    $dfoto=0;
-   if (isset($_REQUEST['id'])) { $cid = intval($_REQUEST["id"]); }   
-   if (isset($_REQUEST['foto'])){ $dfoto = intval($_REQUEST['foto']);} 
+   if (isset($_REQUEST['id'])) { $cid = intval($_REQUEST["id"]); }
+   if (isset($_REQUEST['foto'])){ $dfoto = intval($_REQUEST['foto']);}
    $id_estado_hist = intval(get_dato_sql("ventas", "id_estado", " where id=$cid"));
    if ($dfoto===1){
-      //sql_update("UPDATE ventas set foto=null where id=$cid limit 1");   
+      //sql_update("UPDATE ventas set foto=null where id=$cid limit 1");
       registrar_historial_ventas($cid, $id_estado_hist, 'Eliminacion foto comprobante de pago', 'Comprobante de pago eliminado');
+      // Si el comprobante eliminado tenia datos guardados en ventas_comprobantes_pago (banco/fecha/referencia/monto),
+      // se dan de baja logica para que dejen de contar en la validacion de duplicados y el usuario pueda volver a subirlo.
+      $archivo_borrado = get_dato_sql("ventas", "foto", " where id=$cid");
+      if ($archivo_borrado != '') {
+          sql_update("UPDATE ventas_comprobantes_pago SET activo=0
+                      WHERE id_venta=$cid AND archivo=" . GetSQLValue($archivo_borrado, "text") . " AND activo=1");
+      }
    }else{
       //sql_update("UPDATE ventas set foto_televentas=null where id=$cid limit 1");
       registrar_historial_ventas($cid, $id_estado_hist, 'Eliminacion foto recibo de pago', 'Recibo de pago eliminado');
@@ -1506,11 +1513,14 @@ if ($accion=="dfoto") {
    $stud_arr[0]["pcode"] = 1;
    $stud_arr[0]["pmsg"] ="Foto eliminada";
    $stud_arr[0]["pcid"] = $cid;
-   salida_json($stud_arr);  
-   exit;  
+   salida_json($stud_arr);
+   exit;
 }
 
-// guardar Datos    ############################  
+// La lectura con IA y el guardado del comprobante de pago (banco/fecha/referencia/monto)
+// se manejan en ventas_comprobantes_pago.php (programa aparte, igual que ventas_fotos_web.php).
+
+// guardar Datos    ############################
 if ($accion=="g") {
  //sleep(3);
 	$stud_arr[0]["pcode"] = 0;
@@ -1668,9 +1678,14 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
     $fotoRegistro=get_dato_sql("ventas_estado","foto"," where foto>=1 and id=".$id_estado);    
     $envioCorreo=get_dato_sql("ventas_estado","envio_correo"," where envio_correo=1 and id=".$id_estado);
     if (!es_nulo($fotoRegistro)){
-        if (isset($_REQUEST['foto'])) {
-           $verror.=validar("Foto de comprobante de pago",$_REQUEST['foto'], "text", true);
-        }                        
+        // Antes se validaba que el campo antiguo "foto" (un solo archivo) viniera con valor.
+        // Ahora "foto" quedo de solo lectura (los comprobantes nuevos se registran en la tabla
+        // ventas_comprobantes_pago, ver ventas_comprobantes_pago.php), asi que se valida que la
+        // venta ya tenga al menos un comprobante de pago activo registrado en esa tabla.
+        $total_comprobantes = get_dato_sql("ventas_comprobantes_pago", "COUNT(*)", " where id_venta=".$cid." and activo=1");
+        if (intval($total_comprobantes) <= 0) {
+            $verror.="Debe registrar al menos un comprobante de pago antes de continuar.<br>";
+        }
     }
 
     if (!es_nulo($VendedorTele)){
@@ -2323,7 +2338,7 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
         </li> 
 
         <li class="nav-item">
-            <a class="nav-link " id="insp_tabFotosPago" data-toggle="tab" href="#" onclick="ventas_cambiartab('nav_fotos_pago');"   role="tab"  >Fotos de Comprobante de Pago</a>
+            <a class="nav-link " id="insp_tabComprobantesPago" data-toggle="tab" href="#" onclick="ventas_cambiartab('nav_comprobantes_pago');"   role="tab"  >Comprobantes de Pago</a>
         </li>
 
                 <li class="nav-item">
@@ -2817,52 +2832,21 @@ if (!es_nulo($cid) && $genera_contrato == 1) {
 <div class="tab-pane fade " id="nav_contratos" role="tabpanel" ></div>
 
 
-<!-- fotos de pago -->
-<div class="tab-pane fade " id="nav_fotos_pago" role="tabpanel" >
-<div class="row mt-3">
-<div class="col-md" id="archivofoto">
-<?php  
-    if ($foto=='') {  echo campo_upload("foto","Adjuntar comprobante de pago",'upload','', '  ','',4,8,'NO',false ); }                   
-    if ($foto_televentas=='') {  echo campo_upload("foto_televentas","Adjuntar recibo de pago",'upload','', '  ','',4,8,'NO',false ); }                   
-?>
+<!-- La pestaña "Fotos de Comprobante de Pago" se elimino: el comprobante ("foto") y el recibo
+     de televentas ("foto_televentas") se movieron a la pestaña "Comprobantes de Pago"
+     (ventas_comprobantes_pago.php). -->
+
 </div>
-<div class="col-md">
-<div class="" id="insp_fotos_thumbs">
-  <?php
-  if ($foto<>'') {
-     $fext = substr($foto, -3);
-     $fext = strtolower($fext);
-     echo '<div id="thumb_foto_1">';
-            if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {    
-                echo '  <a href="#" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$id.'"></a> ';
-            } else {                
-                echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
-            }
-            if(tiene_permiso(168))  { echo '  <a href="#" class="mr-5 foto_br'.$id.'" onclick="ventas_dfoto(1); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';}
-     echo '</div>';
-  }
-  if ($foto_televentas<>'') {
-     $fext = substr($foto_televentas, -3);
-     $fext = strtolower($fext);
-     echo '<div id="thumb_foto_2">';
-            if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {   
-                echo '  <a href="#" onclick="mostrar_foto(\''.$foto_televentas.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/'.$foto_televentas.'" data-cod="'.$id.'"></a> ';
-            } else {                
-                echo '  <a href="uploa_d/'.$foto_televentas.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto_televentas.'</a> ';
-            }
-            if(tiene_permiso(168))  { echo '  <a href="#" class="mr-5 foto_br'.$id.'" onclick="ventas_dfoto(2); return false;" ><i class="fa fa-eraser"></i> Borrar</a> ';}
-     echo '</div>';
-  }
-  ?>
-</div>
-</div>
-</div>
-</div>
+
+
+<!-- Comprobantes de Pago (banco/fecha/referencia/monto leidos con IA): se carga por AJAX
+     desde ventas_comprobantes_pago.php (programa aparte, igual que nav_Fotos_venta /
+     ventas_fotos_web.php) para no cargar de codigo esta pantalla principal. -->
+<div class="tab-pane fade " id="nav_comprobantes_pago" role="tabpanel" ></div>
 
 
 <!-- errores -->
 <div class="tab-pane fade mt-5 mb-5" id="nav_deshabilitado" role="tabpanel" ><div class="alert alert-warning" role="alert">Debe Guardar el documento para poder continuar con esta sección</div></div>
-
 
 
 <script>
@@ -3271,10 +3255,14 @@ function abrir_hoja(){
 
 function insp_guardar_foto(arch,campo){
 
-           $('#'+campo).val(arch);                
+           $('#'+campo).val(arch);
            $('#files_'+campo).text('Guardado');
            $('#lk'+campo).html(arch);
-           thumb_agregar(arch);
+           // thumb_agregar() agrega la miniatura dentro de #insp_fotos_thumbs, que vive en la
+           // pestaña "Fotos de Comprobante de Pago": solo aplica al campo "foto" (comprobante),
+           // que sigue ahi. "foto_televentas" ahora se sube desde la pestaña "Comprobantes de
+           // Pago" y ya tiene su propia miniatura (ver ventas_comprobantes_pago.php).
+           if (campo === 'foto') { thumb_agregar(arch); }
            // Actualizar hidden inputs dentro del formulario para que se guarden al hacer submit
            if (campo === 'foto') { $('#foto_comprobante_in').val(arch); }
            if (campo === 'foto_televentas') { $('#foto_televentas_comprobante_in').val(arch); }
@@ -3452,6 +3440,13 @@ function ventas_cambiartab(eltab) {
     var cid = $('#id').val();
     if (cid > 0) {
       $('#nav_Fotos_venta').load('ventas_fotos_web.php?cid=' + cid);
+    }
+  }
+
+  if (eltab=='nav_comprobantes_pago') {
+    var cid = $('#id').val();
+    if (cid > 0) {
+      $('#nav_comprobantes_pago').load('ventas_comprobantes_pago.php?cid=' + cid);
     }
   }
 
