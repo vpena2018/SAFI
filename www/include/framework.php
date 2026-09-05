@@ -653,11 +653,13 @@ function validar($campo,$input, $type, $requerido) {
 
         switch($type) {
             case 'alpha':
-                if(!ctype_alpha($input)) {
+                // (string) por delante: ctype_alpha() trata un int fuera de rango como codigo
+                // ASCII en vez de como digitos (ver nota en case 'int' mas abajo).
+                if(!ctype_alpha((string)$input)) {
                     return "El campo $campo debe ser alfabetico sin numeros"."<br>";
                 }
             break;
-            
+
             case 'date':
                 if(!checkfecha($input)) {
                     return "El campo $campo no es una fecha valida, el formato correcto es: ".$_SESSION['formato_fecha']."<br>";
@@ -665,11 +667,16 @@ function validar($campo,$input, $type, $requerido) {
             break;
 
             case 'int':
-                if(!ctype_digit($input)) {
+                // (string) por delante: ctype_digit() con un int (no string) entre -128 y 255 lo
+                // interpreta como codigo ASCII de un caracter en vez de como digitos decimales
+                // (ej. ctype_digit(2) es false porque ASCII 2 no es un digito), asi que un id
+                // pequeño (como el id de un registro recien creado) fallaba la validacion aunque
+                // fuera un numero valido. Forzando a string se evita ese comportamiento.
+                if(!ctype_digit((string)$input)) {
                     return "El campo $campo debe ser numerico"."<br>";
                 }
             break;
-            
+
           case 'double':
                 if(!is_numeric($input)) {
                     return "El campo $campo debe ser numerico"."<br>";
@@ -677,7 +684,7 @@ function validar($campo,$input, $type, $requerido) {
             break;
 
             case 'alnum':
-                if(!ctype_alnum($input)) {
+                if(!ctype_alnum((string)$input)) {
                     return "El campo $campo debe contener unicamene letras y numeros"."<br>";
                 }
             break;
