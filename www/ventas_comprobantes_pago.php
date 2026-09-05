@@ -100,6 +100,18 @@ if ($accion == 'tabla') {
 }
 
 
+// ---- Cupos disponibles para subir mas comprobantes (MAX_COMPROBANTES_POR_VENTA - los ya
+// registrados). Se consulta despues de cada guardado para actualizar el limite del boton
+// "Subir Comprobante" (widget de jQuery File Upload) sin tener que recargar toda la pestaña. ----
+if ($accion == 'cupos') {
+    header('Content-Type: application/json; charset=utf-8');
+    if ($cid <= 0) { echo json_encode(['cupos_disponibles' => 0]); exit; }
+    $disponibles = max(0, MAX_COMPROBANTES_POR_VENTA - count(listar_comprobantes_pago_venta($cid)));
+    echo json_encode(['cupos_disponibles' => $disponibles]);
+    exit;
+}
+
+
 // ---- Lee el comprobante con IA y avisa si ya fue registrado antes. No guarda nada todavia. ----
 if ($accion == 'extraer_comprobante') {
     header('Content-Type: application/json; charset=utf-8');
@@ -422,8 +434,12 @@ $foto = get_dato_sql('ventas', 'foto', ' where id=' . $cid);
     </div>
 <?php } else {
     $fext = strtolower(substr($foto_televentas, -3));
+    // Solo se muestra como <img> si la miniatura realmente existe en el servidor -si no, ese
+    // <img src> siempre da 404 (se vio en el navegador: la peticion queda pendiente/tapando
+    // la pantalla)-. Sin miniatura, se cae al mismo link de texto que usan los no-imagen.
+    $tiene_thumb = in_array($fext, ['jpg', 'peg', 'png', 'gif']) && file_exists(__DIR__ . '/uploa_d/thumbnail/' . $foto_televentas);
     echo '<div id="thumb_foto_2">';
-    if (in_array($fext, ['jpg', 'peg', 'png', 'gif'])) {
+    if ($tiene_thumb) {
         echo '<a href="#" onclick="mostrar_foto(\'' . $foto_televentas . '\'); return false;"><img class="img img-thumbnail mb-2 mr-3" src="uploa_d/thumbnail/' . $foto_televentas . '"></a> ';
     } else {
         echo '<a href="uploa_d/' . $foto_televentas . '" target="_blank" class="img-thumbnail mb-2 mr-3">' . $foto_televentas . '</a> ';
@@ -441,8 +457,11 @@ $foto = get_dato_sql('ventas', 'foto', ' where id=' . $cid);
     <label class="font-weight-bold d-block">Comprobante Original</label>
     <?php
     $fext = strtolower(substr($foto, -3));
+    // Misma proteccion que en "Recibo de Pago (Televentas)": solo <img> si la miniatura existe
+    // de verdad, si no, cae al link de texto (evita la peticion 404 que se veia en el navegador).
+    $tiene_thumb = in_array($fext, ['jpg', 'peg', 'png', 'gif']) && file_exists(__DIR__ . '/uploa_d/thumbnail/' . $foto);
     echo '<div id="thumb_foto_1">';
-    if (in_array($fext, ['jpg', 'peg', 'png', 'gif'])) {
+    if ($tiene_thumb) {
         echo '<a href="#" onclick="mostrar_foto(\'' . $foto . '\'); return false;"><img class="img img-thumbnail mb-2 mr-3" src="uploa_d/thumbnail/' . $foto . '"></a> ';
     } else {
         echo '<a href="uploa_d/' . $foto . '" target="_blank" class="img-thumbnail mb-2 mr-3">' . $foto . '</a> ';
@@ -469,114 +488,177 @@ $foto = get_dato_sql('ventas', 'foto', ' where id=' . $cid);
 
 
 <!-- ============================================================================
-     Modal: confirmar datos del comprobante de pago (banco/fecha/referencia/monto)
+     Plantilla (NO es un modal de Bootstrap): formulario para confirmar los datos
+     del comprobante de pago (banco/fecha/referencia/monto). Su HTML se clona
+     dentro de un dialogo de SweetAlert2 (ver comprobante_mostrar_dialogo() en el
+     <script> de abajo) en vez de usar un <div class="modal"> de Bootstrap.
+     Motivo: esta pantalla completa ("Editar Venta") ya es en si misma un modal
+     de Bootstrap (#ModalWindow2); abrir OTRO modal de Bootstrap anidado encima
+     resulto ser un problema real y persistente (Bootstrap 4 no soporta modales
+     apilados de forma confiable: se probaron y fallaron parches sucesivos para
+     el scroll bloqueado, el z-index, y el foco de teclado que quedaba "atrapado"
+     detras de la pantalla -ver bitacora de cambios-). SweetAlert2 usa su propio
+     mecanismo de overlay, independiente del de Bootstrap, y ya se probo que
+     convive sin problemas con #ModalWindow2 en el resto de este mismo archivo
+     (cargando_ia(), comprobante_borrar()), asi que se elimina la fuente del
+     problema en vez de seguir parchandolo.
      Los campos vienen precargados por la IA (cuando esta disponible) y el
      usuario los revisa, corrige si hace falta, y guarda. Si el servidor detecta
      que ya existe un comprobante igual, se muestra la alerta de duplicado y no
      deja continuar. Cuando se suben varios archivos de una vez, se procesan uno
-     por uno (cola) para no abrir el modal encimado con datos de otro archivo.
+     por uno (cola) para no mezclar datos de distintos archivos.
      ============================================================================ -->
-<div class="modal fade" id="ModalComprobanteIA" data-keyboard="false" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="ModalComprobanteIA" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Datos del Comprobante de Pago</h5>
-      </div>
-      <form id="forma_comprobante_ia" onsubmit="return false;">
-        <div class="modal-body">
+<template id="tpl_comprobante_ia">
+  <form id="forma_comprobante_ia" onsubmit="return false;" class="text-left">
 
-          <p class="text-muted small" id="comprobante_archivo_label"></p>
-          <p class="text-muted small"><i class="fa fa-lock"></i> Los campos que la IA logro leer del comprobante quedan bloqueados (no editables), para que no se puedan alterar los datos reales del documento. Solo quedan editables los campos que no se pudieron leer.</p>
+    <p class="text-muted small" id="comprobante_archivo_label"></p>
+    <p class="text-muted small"><i class="fa fa-lock"></i> Los campos que la IA logro leer del comprobante quedan bloqueados (no editables), para que no se puedan alterar los datos reales del documento. Solo quedan editables los campos que no se pudieron leer.</p>
 
-          <div class="alert alert-danger d-none" id="comprobante_aviso_duplicado" role="alert"></div>
+    <div class="alert alert-danger d-none" id="comprobante_aviso_duplicado" role="alert"></div>
 
-          <input type="hidden" id="comprobante_archivo"   name="archivo">
-          <input type="hidden" id="comprobante_id_venta"  name="id_venta">
-          <input type="hidden" id="comprobante_ia_raw"    name="ia_raw">
-          <input type="hidden" id="comprobante_origen"    name="origen" value="manual">
+    <input type="hidden" id="comprobante_archivo"   name="archivo">
+    <input type="hidden" id="comprobante_id_venta"  name="id_venta">
+    <input type="hidden" id="comprobante_ia_raw"    name="ia_raw">
+    <input type="hidden" id="comprobante_origen"    name="origen" value="manual">
 
-          <div class="form-group">
-            <label for="comprobante_banco_select">Banco / Financiera / Cooperativa</label>
-            <select class="form-control" id="comprobante_banco_select" onchange="comprobante_banco_cambio()">
-                <option value="">Seleccione...</option>
-                <?php foreach (ia_comprobantes_lista_bancos_hn() as $b) { ?>
-                    <option value="<?php echo htmlspecialchars($b, ENT_QUOTES); ?>"><?php echo htmlspecialchars($b); ?></option>
-                <?php } ?>
-                <option value="__otro__">Otro (especificar)...</option>
-            </select>
-            <!-- Solo aparece cuando el banco no esta en el catalogo de arriba. El valor que
-                 realmente se guarda siempre es el de #comprobante_banco (hidden), nunca este
-                 select/input directamente: asi el banco queda siempre escrito exactamente igual
-                 (mismo texto letra por letra) cada vez que se elige de la lista, y la validacion
-                 de duplicados no falla por diferencias de formato (ej. "BANPAIS" vs "Banco del Pais"). -->
-            <input type="text" class="form-control mt-2 d-none" id="comprobante_banco_otro"
-                   placeholder="Escriba el nombre del banco/financiera/cooperativa" maxlength="150"
-                   oninput="comprobante_banco_cambio()">
-            <input type="hidden" id="comprobante_banco" name="banco">
-          </div>
-
-          <div class="form-group">
-            <label for="comprobante_fecha">Fecha del Comprobante</label>
-            <input type="text" class="form-control" id="comprobante_fecha" name="fecha" required
-                   placeholder="<?php echo ($_SESSION['formato_fecha'] ?? 'dd/mm/yyyy'); ?>">
-          </div>
-
-          <div class="form-group">
-            <label for="comprobante_referencia">No. de Referencia / Transacción</label>
-            <input type="text" class="form-control" id="comprobante_referencia" name="referencia" required maxlength="100">
-          </div>
-
-          <div class="form-group">
-            <label for="comprobante_monto">Monto</label>
-            <input type="number" step="0.01" min="0" class="form-control" id="comprobante_monto" name="monto" required>
-          </div>
-
-        </div>
-        <div class="modal-footer">
-          <a href="#" class="btn btn-light" onclick="$('#ModalComprobanteIA').modal('hide'); return false;">Cancelar</a>
-          <a href="#" class="btn btn-primary" onclick="comprobante_guardar(); return false;">Guardar Comprobante</a>
-        </div>
-      </form>
+    <div class="form-group">
+      <label for="comprobante_banco_select">Banco / Financiera / Cooperativa</label>
+      <select class="form-control" id="comprobante_banco_select" onchange="comprobante_banco_cambio()">
+          <option value="">Seleccione...</option>
+          <?php foreach (ia_comprobantes_lista_bancos_hn() as $b) { ?>
+              <option value="<?php echo htmlspecialchars($b, ENT_QUOTES); ?>"><?php echo htmlspecialchars($b); ?></option>
+          <?php } ?>
+          <option value="__otro__">Otro (especificar)...</option>
+      </select>
+      <!-- Solo aparece cuando el banco no esta en el catalogo de arriba. El valor que
+           realmente se guarda siempre es el de #comprobante_banco (hidden), nunca este
+           select/input directamente: asi el banco queda siempre escrito exactamente igual
+           (mismo texto letra por letra) cada vez que se elige de la lista, y la validacion
+           de duplicados no falla por diferencias de formato (ej. "BANPAIS" vs "Banco del Pais"). -->
+      <input type="text" class="form-control mt-2 d-none" id="comprobante_banco_otro"
+             placeholder="Escriba el nombre del banco/financiera/cooperativa" maxlength="150"
+             oninput="comprobante_banco_cambio()">
+      <input type="hidden" id="comprobante_banco" name="banco">
     </div>
-  </div>
-</div>
+
+    <div class="form-group">
+      <label for="comprobante_fecha">Fecha del Comprobante</label>
+      <input type="text" class="form-control" id="comprobante_fecha" name="fecha" required
+             placeholder="<?php echo ($_SESSION['formato_fecha'] ?? 'dd/mm/yyyy'); ?>">
+    </div>
+
+    <div class="form-group">
+      <label for="comprobante_referencia">No. de Referencia / Transacción</label>
+      <input type="text" class="form-control" id="comprobante_referencia" name="referencia" required maxlength="100">
+    </div>
+
+    <div class="form-group mb-0">
+      <label for="comprobante_monto">Monto</label>
+      <input type="number" step="0.01" min="0" class="form-control" id="comprobante_monto" name="monto" required>
+    </div>
+
+  </form>
+</template>
 
 
 <script>
 
-// Refresca solo el contador + tabla de comprobantes ya registrados (accion "tabla"), sin tocar
-// el widget de subida ni el modal. Se usa asi (en vez de recargar toda la pestaña) para no perder
-// la cola de archivos (comprobante_cola) cuando se suben varios comprobantes de una sola vez.
-// Nota: el widget de subida mantiene el limite de archivos que tenia al abrir la pestaña; el
-// tope real de <?php echo MAX_COMPROBANTES_POR_VENTA; ?> siempre se valida de nuevo en el servidor al guardar.
+// Este fragmento se recarga por AJAX (.load()) cada vez que se entra a la pestaña "Comprobantes
+// de Pago" (ver ventas_cambiartab() en ventas_mant_contrato.php). Si una carga anterior habia
+// dejado el modal #ModalComprobanteIA abierto y se cambio de pestaña sin pasar por ese arreglo
+// (por ejemplo, en una version de la pagina que el usuario todavia tiene cargada en el
+// navegador), Bootstrap deja un "modal-backdrop" pegado como hermano de <body> -no se borra al
+// reemplazar este HTML, porque no vive dentro de este contenedor- y la clase "modal-open" en
+// <body> (bloquea el scroll de toda la pagina). Se limpia por las dudas antes de seguir, para
+// que la pantalla se recupere sola sin necesidad de recargar la pagina completa.
+if ($('.modal.show').length === 0) {
+    $('.modal-backdrop').remove();
+    $('body').removeClass('modal-open').css({ overflow: '', paddingRight: '' });
+}
+
+// Como comprobante_pedir_datos/comprobante_guardar/recibo_guardar hacen que el servidor llame a
+// la IA (a veces 2 veces: una para leer, otra para verificar que no se hayan alterado los datos),
+// pueden tardar varios segundos. Se usa este spinner en vez del generico cargando() para avisar
+// que puede demorar, y las llamadas llevan un "timeout" (ver mas abajo) para que, si la conexion
+// se cuelga, se libere solo en vez de quedar la pantalla tapada indefinidamente.
+function cargando_ia(mostrar, mensaje){
+    if (mostrar) {
+        Swal.fire({
+            title: 'Leyendo con IA...',
+            html: mensaje || 'Esto puede tardar unos segundos, por favor espere.',
+            allowOutsideClick: false,
+            onBeforeOpen: () => { Swal.showLoading(); }
+        });
+    } else {
+        Swal.close();
+    }
+}
+
+// Refresca el contador + tabla de comprobantes ya registrados (accion "tabla"), sin recargar
+// toda la pestaña -para no perder la cola de archivos (comprobante_cola) cuando se suben varios
+// comprobantes de una sola vez-, y de paso actualiza el limite del boton "Subir Comprobante"
+// (ver comprobante_actualizar_cupos()) para que refleje los cupos que quedan.
 function comprobantes_pago_refrescar(){
     var cid = $('#id').val();
     if (!cid || cid <= 0) { return; }
     $.get('ventas_comprobantes_pago.php?a=tabla&cid=' + cid, function (html) {
         $('#tabla_comprobantes_pago').html(html);
     });
+    comprobante_actualizar_cupos();
+}
+
+// Actualiza el limite de archivos del boton "Subir Comprobante" (widget de jQuery File Upload)
+// sin recargar toda la pestaña. El widget se inicializa una sola vez, al abrir la pestaña, con
+// el limite de ese momento (maxNumberOfFiles); si no se actualiza despues de cada guardado,
+// seguiria dejando seleccionar mas archivos de los que en realidad caben (el servidor los
+// terminaria rechazando igual -ver MAX_COMPROBANTES_POR_VENTA-, pero es confuso para el
+// usuario). Si los cupos se agotan, se reemplaza el boton por el mismo aviso que se muestra
+// cuando la pestaña se abre sin cupos disponibles.
+function comprobante_actualizar_cupos(){
+    var cid = $('#id').val();
+    if (!cid || cid <= 0) { return; }
+    $.get('ventas_comprobantes_pago.php?a=cupos&cid=' + cid, function (json) {
+        if (!json) { return; }
+        var cupos = parseInt(json.cupos_disponibles, 10) || 0;
+        var $widget = $('#fileupload_comprobante');
+        if (cupos <= 0) {
+            $('#archivocomprobante').html(
+                '<label class="font-weight-bold d-block">Comprobante de Pago</label>'
+                + '<div class="alert alert-secondary">Ya se registraron los <?php echo MAX_COMPROBANTES_POR_VENTA; ?> comprobantes permitidos para esta venta.</div>'
+            );
+        } else if ($widget.length > 0) {
+            $widget.fileupload('option', 'maxNumberOfFiles', cupos);
+        }
+    }, 'json');
 }
 
 // ----------------------------------------------------------------------------
 // Cola de archivos pendientes de registrar: si el usuario selecciona/sube
-// varios comprobantes a la vez, se abre el modal de a uno (al cerrar uno,
+// varios comprobantes a la vez, se abre el dialogo de a uno (al cerrar uno,
 // sea guardando o cancelando, se abre el siguiente) para no mezclar datos.
+//
+// Se usa una bandera propia (comprobante_procesando), no el estado de un
+// modal, para decidir si ya hay uno en curso: queda en true desde que arranca
+// comprobante_pedir_datos() hasta que el dialogo de SweetAlert2 realmente se
+// cierra (su promesa se resuelve, ver comprobante_mostrar_dialogo()). Asi, si
+// terminan de subirse varios archivos casi al mismo tiempo, el segundo (y
+// siguientes) se quedan en la cola en vez de disparar otra lectura con IA en
+// paralelo, que pisaria los datos del primero.
 // ----------------------------------------------------------------------------
 var comprobante_cola = [];
+var comprobante_procesando = false;
 
 function comprobante_encolar(archivo){
     comprobante_cola.push(archivo);
-    if (!$('#ModalComprobanteIA').hasClass('show')) { comprobante_procesar_cola(); }
+    comprobante_procesar_cola();
 }
 
 function comprobante_procesar_cola(){
+    if (comprobante_procesando) { return; }
     if (comprobante_cola.length === 0) { return; }
+    comprobante_procesando = true;
     comprobante_pedir_datos(comprobante_cola.shift());
 }
-
-$('#ModalComprobanteIA').on('hidden.bs.modal', function(){
-    comprobante_procesar_cola();
-});
 
 // Sincroniza el select/input de banco hacia el hidden #comprobante_banco, que es el unico
 // valor que realmente se envia al servidor. Si el select tiene "Otro", usa el texto escrito;
@@ -647,103 +729,162 @@ function comprobante_bloquear_extraidos(json){
     $('#comprobante_monto').prop('readonly', montoLeido);
 }
 
-// Le pide al servidor que lea el comprobante con IA (banco/fecha/referencia/monto) y abre el modal
-// de confirmacion con esos datos ya precargados (o vacios si la IA no esta disponible/no pudo
-// leerlo, para que el usuario los escriba a mano).
+// Le pide al servidor que lea el comprobante con IA (banco/fecha/referencia/monto) y abre el
+// dialogo de confirmacion con esos datos ya precargados (o vacios si la IA no esta disponible/no
+// pudo leerlo, para que el usuario los escriba a mano).
 function comprobante_pedir_datos(archivo){
 
     var cid = $('#id').val();
 
-    $('#comprobante_archivo').val(archivo);
-    $('#comprobante_id_venta').val(cid);
-    $('#comprobante_archivo_label').text('Archivo: ' + archivo);
-    comprobante_desbloquear_todo();
-    comprobante_set_banco('');
-    $('#comprobante_fecha, #comprobante_referencia, #comprobante_monto').val('');
-    $('#comprobante_ia_raw').val('');
-    $('#comprobante_origen').val('manual');
-    $('#comprobante_aviso_duplicado').addClass('d-none').text('');
-
-    cargando(true);
+    cargando_ia(true, 'Leyendo el comprobante con inteligencia artificial...');
     $.ajax({
         url: 'ventas_comprobantes_pago.php?a=extraer_comprobante',
         type: 'POST',
         dataType: 'json',
         data: { archivo: archivo },
+        timeout: 60000, // 60s: dos intentos de red (uno interno del servidor a la IA) pueden tardar
         success: function (json) {
-            cargando(false);
+            cargando_ia(false);
 
             if (!json || json.pcode != 1) {
                 mytoast('error', (json && json.pmsg) ? json.pmsg : 'No se pudo leer el comprobante', 4000);
-            } else {
-                if (!json.ia_disponible) {
-                    mytoast('warning', 'Lectura automatica no configurada. Complete los datos del comprobante manualmente.', 5000);
-                } else if (json.ia_error) {
-                    mytoast('warning', 'La IA no pudo leer todo el comprobante. Revise/complete los datos manualmente.', 5000);
-                }
-
-                comprobante_set_banco(json.banco || '');
-                $('#comprobante_fecha').val(json.fecha || '');
-                $('#comprobante_referencia').val(json.referencia || '');
-                $('#comprobante_monto').val(json.monto || '');
-                $('#comprobante_ia_raw').val(json.ia_raw || '');
-                $('#comprobante_origen').val(json.ia_disponible && !json.ia_error ? 'ia' : 'manual');
-                comprobante_bloquear_extraidos(json);
-
-                if (json.duplicado) {
-                    $('#comprobante_aviso_duplicado').removeClass('d-none').text(json.pmsg);
-                }
+                comprobante_terminar_actual();
+                return;
             }
 
-            $('#ModalComprobanteIA').modal('show');
+            if (!json.ia_disponible) {
+                mytoast('warning', 'Lectura automatica no configurada. Complete los datos del comprobante manualmente.', 5000);
+            } else if (json.ia_error) {
+                mytoast('warning', 'La IA no pudo leer todo el comprobante. Revise/complete los datos manualmente.', 5000);
+            }
+
+            comprobante_mostrar_dialogo(archivo, cid, json);
         },
-        error: function () {
-            cargando(false);
-            mytoast('error', 'Error de comunicación al leer el comprobante', 3000);
-            // Aun con error de comunicacion se deja abierto el modal para que el usuario
+        error: function (jqXHR, textStatus) {
+            cargando_ia(false);
+            mytoast('error', textStatus === 'timeout'
+                ? 'La IA tardo demasiado en responder. Complete los datos manualmente.'
+                : 'Error de comunicación al leer el comprobante', 4000);
+            // Aun con error de comunicacion se abre el dialogo en blanco para que el usuario
             // pueda llenar los datos manualmente y no se pierda el comprobante ya subido.
-            $('#ModalComprobanteIA').modal('show');
+            comprobante_mostrar_dialogo(archivo, cid, {});
         }
     });
 }
 
-// Guarda en ventas_comprobantes_pago los datos confirmados/corregidos por el usuario.
-// El servidor vuelve a validar el duplicado (y el tope de 5) antes de guardar.
+// Termina el turno del archivo actual en la cola (sin haber llegado a mostrar el dialogo) y
+// pasa al siguiente, si hay alguno.
+function comprobante_terminar_actual(){
+    comprobante_procesando = false;
+    comprobante_procesar_cola();
+}
+
+// Arma el dialogo de SweetAlert2 con el formulario (clonado de la <template> de mas arriba),
+// precarga los datos que trajo la IA (o los deja vacios si no hubo/fallo la lectura) y bloquea
+// los campos que la IA si pudo leer. Al guardar (boton de confirmar) corre comprobante_guardar();
+// si devuelve una promesa que se resuelve en "false", SweetAlert2 deja el dialogo abierto
+// mostrando el mensaje de error (Swal.showValidationMessage) en vez de cerrarlo.
+function comprobante_mostrar_dialogo(archivo, cid, json){
+    var htmlForm = document.getElementById('tpl_comprobante_ia').innerHTML;
+
+    Swal.fire({
+        title: 'Datos del Comprobante de Pago',
+        html: htmlForm,
+        width: 600,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Guardar Comprobante',
+        cancelButtonText: 'Cancelar',
+        showLoaderOnConfirm: true,
+        // OJO: la version de SweetAlert2 que tiene este proyecto (9.10.8, ver
+        // plugins/sweetalert2/sweetalert2.min.js) es anterior al cambio de nombres de
+        // callbacks ("onOpen" -> "didOpen" llego en una version posterior). Con "didOpen"
+        // el callback se ignoraba en silencio (SweetAlert2 no tira error por una opcion que
+        // no reconoce) y el formulario se quedaba siempre en blanco, sin precargar lo que
+        // habia leido la IA -aunque la lectura en si funcionaba bien-.
+        onOpen: function () {
+            $('#comprobante_archivo').val(archivo);
+            $('#comprobante_id_venta').val(cid);
+            $('#comprobante_archivo_label').text('Archivo: ' + archivo);
+            comprobante_desbloquear_todo();
+            comprobante_set_banco(json.banco || '');
+            $('#comprobante_fecha').val(json.fecha || '');
+            $('#comprobante_referencia').val(json.referencia || '');
+            $('#comprobante_monto').val(json.monto || '');
+            $('#comprobante_ia_raw').val(json.ia_raw || '');
+            $('#comprobante_origen').val(json.ia_disponible && !json.ia_error ? 'ia' : 'manual');
+            comprobante_bloquear_extraidos(json);
+
+            if (json.duplicado) {
+                $('#comprobante_aviso_duplicado').removeClass('d-none').text(json.pmsg);
+            }
+        },
+        preConfirm: function () {
+            return comprobante_guardar();
+        }
+    }).then(function (result) {
+        comprobante_terminar_actual();
+        // OJO: esta version de SweetAlert2 (9.10.8) es anterior a "result.isConfirmed"; en
+        // esta version el resultado trae "value" (lo que devolvio/resolvio preConfirm, en
+        // este caso "true" cuando el guardado tuvo exito) y "dismiss" (motivo de cierre sin
+        // confirmar, ej. "cancel"). Con "isConfirmed" (undefined en esta version) el refresco
+        // de la tabla nunca se hubiera disparado despues de guardar.
+        if (result.value) {
+            comprobantes_pago_refrescar();
+        }
+    });
+}
+
+// Guarda en ventas_comprobantes_pago los datos confirmados/corregidos por el usuario. Se usa
+// como preConfirm del dialogo de SweetAlert2 (ver comprobante_mostrar_dialogo()): devolver
+// "false" (sea directo o resolviendo la promesa en false) deja el dialogo abierto mostrando el
+// mensaje puesto con Swal.showValidationMessage(); devolver cualquier otra cosa lo cierra.
+// El servidor vuelve a validar el duplicado (y el tope de comprobantes) antes de guardar.
 function comprobante_guardar(){
 
     comprobante_banco_cambio(); // asegura que el hidden #comprobante_banco quede actualizado
 
     if ($('#comprobante_banco').val().trim() === '') {
-        mytoast('error', 'Seleccione el banco/financiera/cooperativa (o "Otro" y escriba el nombre)', 4000);
-        return;
+        Swal.showValidationMessage('Seleccione el banco/financiera/cooperativa (o "Otro" y escriba el nombre)');
+        return false;
     }
 
-    if (!$('#forma_comprobante_ia')[0].reportValidity()) { return; }
+    if (!$('#forma_comprobante_ia')[0].reportValidity()) { return false; }
 
-    cargando(true);
-    $.ajax({
-        url: 'ventas_comprobantes_pago.php?a=guardar_comprobante',
-        type: 'POST',
-        dataType: 'json',
-        data: $('#forma_comprobante_ia').serialize(),
-        success: function (json_arr) {
-            cargando(false);
-            var json = json_arr && json_arr[0] ? json_arr[0] : null;
+    // El servidor vuelve a leer el archivo con la IA para verificar que no se haya alterado
+    // nada (ver verificar_comprobante_no_modificado en include/ia_comprobantes.php), asi que
+    // esta llamada puede tardar unos segundos -showLoaderOnConfirm ya deja ver un spinner en
+    // el boton de Guardar mientras tanto, no hace falta el overlay de cargando_ia() aca-.
+    return new Promise(function (resolve) {
+        $.ajax({
+            url: 'ventas_comprobantes_pago.php?a=guardar_comprobante',
+            type: 'POST',
+            dataType: 'json',
+            data: $('#forma_comprobante_ia').serialize(),
+            timeout: 60000,
+            success: function (json_arr) {
+                var json = json_arr && json_arr[0] ? json_arr[0] : null;
 
-            if (json && json.pcode == 1) {
-                mytoast('success', json.pmsg, 3000);
-                $('#ModalComprobanteIA').modal('hide');
-                comprobantes_pago_refrescar();
-            } else if (json && json.pduplicado) {
-                $('#comprobante_aviso_duplicado').removeClass('d-none').text(json.pmsg);
-            } else {
-                mytoast('error', json ? json.pmsg : 'Error al guardar el comprobante', 4000);
+                if (json && json.pcode == 1) {
+                    mytoast('success', json.pmsg, 3000);
+                    resolve(true);
+                } else {
+                    if (json && json.pduplicado) {
+                        $('#comprobante_aviso_duplicado').removeClass('d-none').text(json.pmsg);
+                    }
+                    Swal.showValidationMessage(json ? json.pmsg : 'Error al guardar el comprobante');
+                    resolve(false);
+                }
+            },
+            error: function (jqXHR, textStatus) {
+                Swal.showValidationMessage(textStatus === 'timeout'
+                    ? 'La verificacion con IA tardo demasiado. Intente guardar de nuevo.'
+                    : 'Error de comunicación al guardar el comprobante');
+                resolve(false);
             }
-        },
-        error: function () {
-            cargando(false);
-            mytoast('error', 'Error de comunicación al guardar el comprobante', 3000);
-        }
+        });
     });
 }
 
@@ -791,20 +932,30 @@ function recibo_elegir_archivo(idComprobante){
 }
 
 // Guarda en ventas_comprobantes_pago el nombre del archivo ya subido como recibo.
+// El servidor lee el recibo con IA para cruzarlo contra el comprobante (ver
+// verificar_recibo_coincide_comprobante), asi que puede tardar unos segundos.
 function recibo_guardar(idComprobante, archivo){
     var cid = $('#id').val();
-    cargando(true);
-    $.post('ventas_comprobantes_pago.php', { a: 'guardar_recibo', cid: cid, id_comprobante: idComprobante, archivo: archivo }, function(json){
-        cargando(false);
+    cargando_ia(true, 'Verificando el recibo con inteligencia artificial...');
+    $.ajax({
+        url: 'ventas_comprobantes_pago.php',
+        type: 'POST',
+        dataType: 'json',
+        data: { a: 'guardar_recibo', cid: cid, id_comprobante: idComprobante, archivo: archivo },
+        timeout: 60000
+    }).done(function(json){
+        cargando_ia(false);
         if (json && json[0] && json[0].pcode == 1) {
             mytoast('success', json[0].pmsg, 3000);
             comprobantes_pago_refrescar();
         } else {
-            mytoast('error', (json && json[0]) ? json[0].pmsg : 'Error al guardar el recibo', 3000);
+            mytoast('error', (json && json[0]) ? json[0].pmsg : 'Error al guardar el recibo', 4000);
         }
-    }, 'json').fail(function(){
-        cargando(false);
-        mytoast('error', 'Error de comunicación al guardar el recibo', 3000);
+    }).fail(function(jqXHR, textStatus){
+        cargando_ia(false);
+        mytoast('error', textStatus === 'timeout'
+            ? 'La verificacion con IA tardo demasiado. Intente subir el recibo de nuevo.'
+            : 'Error de comunicación al guardar el recibo', 4000);
     });
 }
 
