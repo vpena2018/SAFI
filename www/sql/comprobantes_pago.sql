@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS `ventas_comprobantes_pago` (
   `id`                INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `id_venta`          INT NOT NULL COMMENT 'Venta a la que pertenece el comprobante (ventas.id)',
   `archivo`           VARCHAR(255) NOT NULL COMMENT 'Nombre del archivo dentro de uploa_d_ventas/',
+  `archivo_recibo`    VARCHAR(255) DEFAULT NULL COMMENT 'Nombre del recibo (dentro de uploa_d_ventas/) asociado a este comprobante. Se puede agregar despues, no hace falta tenerlo al registrar el comprobante.',
 
   -- Datos extraidos del comprobante (por IA o digitados por el usuario)
   `banco`             VARCHAR(150) DEFAULT NULL COMMENT 'Banco / financiera / cooperativa que emitio el comprobante',
