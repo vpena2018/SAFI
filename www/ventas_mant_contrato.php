@@ -3416,6 +3416,25 @@ function ventas_cambiartab(eltab) {
 
   var codigo= $('#id').val();
   var continuar=true;
+
+  // Si hay un modal de Bootstrap abierto DENTRO de alguna pestaña (ej. el de confirmar los
+  // datos de un comprobante de pago, en la pestaña "Comprobantes de Pago"), hay que cerrarlo
+  // ANTES de esconder los tab-pane. $('.tab-pane').hide() esconde el modal de un solo golpe
+  // (es descendiente del tab-pane), pero Bootstrap nunca se entera de que se cerro: su
+  // backdrop se agrega aparte, como hermano de <body> (no dentro del tab-pane), y la clase
+  // "modal-open" que le pone a <body> (bloquea el scroll de toda la pagina mientras el modal
+  // esta abierto) nunca se quita. Resultado: al cambiar de pestaña con el modal abierto, la
+  // pagina quedaba con el scroll bloqueado para siempre (no se podian ver los botones de
+  // Guardar de la pestaña "Detalle"). Cerrandolo aqui, Bootstrap hace su limpieza normal.
+  //
+  // IMPORTANTE: el selector es ".tab-pane .modal.show" (solo modales DENTRO de una pestaña),
+  // NUNCA ".modal.show" a secas -toda esta pantalla (con todos sus tabs) se carga adentro del
+  // modal contenedor #ModalWindow2 (ver modalwindow2() en js/app5.js), que TAMBIEN tiene la
+  // clase "modal show" mientras esta abierto. Con ".modal.show" a secas se estaba cerrando ESE
+  // modal completo (osea, toda la pantalla con todas las pestañas) cada vez que se cambiaba de
+  // tab, en vez de cerrar solo el modal interno del comprobante.
+  $('.tab-pane .modal.show').modal('hide');
+
   $('.tab-pane').hide();
 
 
