@@ -11,6 +11,13 @@
 //      ACTIVO con esos mismos 4 datos, para avisar que es un duplicado.
 //   3) Guarda el comprobante (con sus datos) en esa tabla.
 //
+// Tambien lee el "recibo" (recibo de caja/oficial, un PDF aparte que se puede
+// adjuntar despues) con IA (fecha, monto, y banco como referencia informativa)
+// y valida que fecha y monto coincidan con los del comprobante ya registrado
+// -no se compara referencia: el numero de recibo de caja y la referencia
+// bancaria son datos distintos por diseño-. Ver extraer_datos_recibo_ia() y
+// verificar_recibo_coincide_comprobante() mas abajo.
+//
 // Requiere la tabla creada por sql/comprobantes_pago.sql y la constante
 // app_openai_api_key definida en include/config.php (mientras este vacia,
 // la lectura automatica queda deshabilitada y el usuario llena los datos a
@@ -47,25 +54,6 @@ function extraer_datos_comprobante_ia($ruta_archivo) {
 
     $vacio = ['success' => false, 'banco' => null, 'fecha' => null, 'referencia' => null, 'monto' => null, 'error' => '', 'raw' => ''];
 
-    if (!ia_comprobantes_disponible()) {
-        $vacio['error'] = 'No hay una API key de OpenAI configurada (app_openai_api_key).';
-        return $vacio;
-    }
-
-    if (!file_exists($ruta_archivo)) {
-        $vacio['error'] = 'El archivo del comprobante no existe en el servidor.';
-        return $vacio;
-    }
-
-    // La IA solo puede "ver" imagenes y PDF. Word/Excel no se pueden leer asi.
-    $media_type = ia_comprobantes_media_type($ruta_archivo);
-    if ($media_type === null) {
-        $vacio['error'] = 'Tipo de archivo no soportado para lectura automatica (solo imagenes y PDF). Complete los datos manualmente.';
-        return $vacio;
-    }
-
-    $contenido_base64 = base64_encode(file_get_contents($ruta_archivo));
-
     $lista_bancos = implode(', ', ia_comprobantes_lista_bancos_hn());
 
     $prompt = "Este archivo es un comprobante de pago (deposito, transferencia o pago) emitido por un banco, "
@@ -89,6 +77,111 @@ function extraer_datos_comprobante_ia($ruta_archivo) {
         . "Esto es MUY importante para la fecha: si el documento muestra dia y mes pero NO muestra el año en "
         . "ningun lado, no inventes ni asumas el año (ni el actual ni ningun otro) — en ese caso devuelve "
         . "\"fecha\": null. Nunca conviene un año inventado a que quede en null: el usuario lo completa a mano.";
+
+    $r = ia_leer_documento_con_ia($ruta_archivo, $prompt);
+
+    if (!$r['success']) {
+        $vacio['error'] = $r['error'];
+        $vacio['raw'] = $r['raw'];
+        return $vacio;
+    }
+
+    $datos = $r['datos'];
+
+    return [
+        'success' => true,
+        'banco' => isset($datos['banco']) ? trim((string) $datos['banco']) : null,
+        'fecha' => isset($datos['fecha']) ? trim((string) $datos['fecha']) : null,
+        'referencia' => isset($datos['referencia']) ? trim((string) $datos['referencia']) : null,
+        'monto' => (isset($datos['monto']) && $datos['monto'] !== null && $datos['monto'] !== '') ? floatval($datos['monto']) : null,
+        'error' => null,
+        'raw' => $r['raw'],
+    ];
+}
+
+
+/**
+ * Le pide a la IA que lea un "recibo" (recibo de caja / recibo oficial de la empresa, en PDF o
+ * imagen) y devuelva fecha, monto y empresa emisora -los datos objetivos que se pueden cruzar
+ * contra el comprobante ya registrado y contra el nombre de la empresa esperada-. No se pide
+ * "referencia": el numero de recibo de caja NO es el mismo dato que la referencia bancaria del
+ * comprobante (son numeros distintos por diseño), asi que compararlos daria siempre un falso
+ * error. El banco se devuelve solo como referencia informativa (puede aparecer mezclado en una
+ * linea contable, no siempre es confiable).
+ *
+ * @return array{success:bool, banco:?string, fecha:?string, monto:?float, empresa:?string, error:?string, raw:string}
+ */
+function extraer_datos_recibo_ia($ruta_archivo) {
+
+    $vacio = ['success' => false, 'banco' => null, 'fecha' => null, 'monto' => null, 'empresa' => null, 'error' => '', 'raw' => ''];
+
+    $prompt = "Este archivo es un RECIBO DE CAJA / recibo oficial de pago emitido por una empresa en Honduras "
+        . "(distinto de un comprobante bancario: es el recibo que la empresa le entrega al cliente). Lee el "
+        . "documento y devuelve UNICAMENTE un JSON con exactamente estas claves:\n"
+        . "{\n"
+        . "  \"fecha\": fecha del recibo en formato YYYY-MM-DD (string, o null si no se lee),\n"
+        . "  \"monto\": monto total del recibo, solo numero con punto decimal, sin simbolo de moneda ni comas (numero, o null si no se lee),\n"
+        . "  \"banco\": banco o cuenta bancaria mencionada en el recibo, si aparece (string, o null si no aparece),\n"
+        . "  \"empresa\": nombre de la empresa que emite el recibo, tal como aparece en el encabezado/membrete del "
+        . "documento (string, o null si no se lee claramente)\n"
+        . "}\n"
+        . "IMPORTANTE sobre la fecha: este tipo de recibo casi siempre trae DOS fechas distintas: (1) una fecha "
+        . "de impresion, generalmente arriba del todo junto a un nombre de usuario (ej. \"KMEJIA 04/09/2026 "
+        . "15:12:49\"), y (2) la fecha real del recibo, marcada con la etiqueta \"Fecha:\" en el encabezado del "
+        . "documento. Usa SIEMPRE la fecha etiquetada \"Fecha:\" (la fecha del recibo), NUNCA la fecha/hora de "
+        . "impresion, aunque la de impresion aparezca primero o mas grande.\n"
+        . "Si el documento muestra dia y mes pero NO muestra el año en ningun lado, no inventes el año: devuelve "
+        . "\"fecha\": null. Si algun otro dato no aparece claramente, usa null en esa clave en vez de adivinar.";
+
+    $r = ia_leer_documento_con_ia($ruta_archivo, $prompt);
+
+    if (!$r['success']) {
+        $vacio['error'] = $r['error'];
+        $vacio['raw'] = $r['raw'];
+        return $vacio;
+    }
+
+    $datos = $r['datos'];
+
+    return [
+        'success' => true,
+        'banco' => isset($datos['banco']) ? trim((string) $datos['banco']) : null,
+        'fecha' => isset($datos['fecha']) ? trim((string) $datos['fecha']) : null,
+        'monto' => (isset($datos['monto']) && $datos['monto'] !== null && $datos['monto'] !== '') ? floatval($datos['monto']) : null,
+        'empresa' => isset($datos['empresa']) ? trim((string) $datos['empresa']) : null,
+        'error' => null,
+        'raw' => $r['raw'],
+    ];
+}
+
+
+/**
+ * Helper interno compartido: le manda un archivo (imagen o PDF) a la IA junto con un prompt ya
+ * armado, y devuelve el JSON de respuesta ya parseado (sin todavia interpretar sus claves -eso
+ * lo hace cada funcion que llama a este helper, segun lo que le pidio a la IA-).
+ */
+function ia_leer_documento_con_ia($ruta_archivo, $prompt) {
+
+    $vacio = ['success' => false, 'datos' => null, 'error' => '', 'raw' => ''];
+
+    if (!ia_comprobantes_disponible()) {
+        $vacio['error'] = 'No hay una API key de OpenAI configurada (app_openai_api_key).';
+        return $vacio;
+    }
+
+    if (!file_exists($ruta_archivo)) {
+        $vacio['error'] = 'El archivo no existe en el servidor.';
+        return $vacio;
+    }
+
+    // La IA solo puede "ver" imagenes y PDF. Word/Excel no se pueden leer asi.
+    $media_type = ia_comprobantes_media_type($ruta_archivo);
+    if ($media_type === null) {
+        $vacio['error'] = 'Tipo de archivo no soportado para lectura automatica (solo imagenes y PDF). Complete los datos manualmente.';
+        return $vacio;
+    }
+
+    $contenido_base64 = base64_encode(file_get_contents($ruta_archivo));
 
     // Un PDF se manda como bloque "file"; una imagen (jpg/png/gif) como "image_url" en base64.
     // (API de OpenAI, Chat Completions: https://platform.openai.com/docs/guides/pdf-files)
@@ -146,15 +239,52 @@ function extraer_datos_comprobante_ia($ruta_archivo) {
         return $vacio;
     }
 
-    return [
-        'success' => true,
-        'banco' => isset($datos['banco']) ? trim((string) $datos['banco']) : null,
-        'fecha' => isset($datos['fecha']) ? trim((string) $datos['fecha']) : null,
-        'referencia' => isset($datos['referencia']) ? trim((string) $datos['referencia']) : null,
-        'monto' => (isset($datos['monto']) && $datos['monto'] !== null && $datos['monto'] !== '') ? floatval($datos['monto']) : null,
-        'error' => null,
-        'raw' => $respuesta['texto'],
-    ];
+    return ['success' => true, 'datos' => $datos, 'error' => null, 'raw' => $respuesta['texto']];
+}
+
+
+// Nombre de la empresa que debe aparecer en el encabezado/membrete del recibo. Si la IA lee un
+// nombre de empresa distinto, se rechaza el recibo (evita que se suba el recibo de otra
+// empresa). Comparacion sin importar mayus/minus, y solo verifica que el texto CONTENGA este
+// nombre (para tolerar variaciones como "S.A. DE C.V." al final).
+define('RECIBO_EMPRESA_ESPERADA', 'INVERSIONES GLOBALES');
+
+
+/**
+ * Compara los datos de un recibo (leidos con IA) contra los del comprobante ya registrado al
+ * que pertenece, para confirmar que sean del mismo pago, y contra el nombre de empresa esperado
+ * (RECIBO_EMPRESA_ESPERADA). Solo se comparan fecha y monto contra el comprobante -el numero de
+ * recibo de caja y la referencia bancaria son datos distintos por diseño, no se comparan entre
+ * si-. Si el comprobante no tiene fecha/monto guardados, o la IA no logra leer algun dato
+ * (fecha/monto/empresa null), ese dato en particular simplemente no se puede verificar y se deja
+ * pasar.
+ *
+ * @return array{ok: bool, motivo: string}
+ */
+function verificar_recibo_coincide_comprobante($ruta_recibo, $fecha_comprobante_mysql, $monto_comprobante) {
+
+    $recibo = extraer_datos_recibo_ia($ruta_recibo);
+
+    if (!$recibo['success']) {
+        // Si la IA no esta disponible o no pudo leer el recibo, no hay con que comparar; se deja
+        // pasar (el recibo es un adjunto de referencia, no bloquea el flujo si no se puede leer).
+        return ['ok' => true, 'motivo' => ''];
+    }
+
+    if ($recibo['empresa'] !== null && stripos($recibo['empresa'], RECIBO_EMPRESA_ESPERADA) === false) {
+        return ['ok' => false, 'motivo' => 'El recibo no parece ser de ' . RECIBO_EMPRESA_ESPERADA . ' (el encabezado dice "' . $recibo['empresa'] . '").'];
+    }
+
+    if ($fecha_comprobante_mysql && $recibo['fecha'] !== null && $recibo['fecha'] !== $fecha_comprobante_mysql) {
+        return ['ok' => false, 'motivo' => 'La fecha del recibo (' . $recibo['fecha'] . ') no coincide con la fecha del comprobante (' . $fecha_comprobante_mysql . ').'];
+    }
+
+    if ($monto_comprobante !== null && $monto_comprobante !== '' && $recibo['monto'] !== null
+        && round((float) $recibo['monto'], 2) !== round((float) $monto_comprobante, 2)) {
+        return ['ok' => false, 'motivo' => 'El monto del recibo (' . $recibo['monto'] . ') no coincide con el monto del comprobante (' . $monto_comprobante . ').'];
+    }
+
+    return ['ok' => true, 'motivo' => ''];
 }
 
 
@@ -211,7 +341,7 @@ function ia_comprobantes_lista_bancos_hn() {
     return [
         // Bancos
         'Banco Atlantida',
-        'BAC Credomatic',
+        'BAC Honduras',
         'Banco de Occidente',
         'Banco Ficohsa',
         'Banpais',
@@ -222,16 +352,13 @@ function ia_comprobantes_lista_bancos_hn() {
         // Financieras
         'Financiera Solidaria (Finsol)',
         'Financiera Comercial Hondureña (Ficensa)',
-        'Financiera Credi Q',
-        'Financiera Mercantil',
+        'Financiera Credi Q',        
         'Financiera COFISA',
         // Cooperativas
-        'Cooperativa Sagrapos',
-        'Cooperativa Elga',
-        'Cooperativa Taulabe (Cootrafa)',
-        'Cooperativa Chorotega',
-        'Cooperativa Codimarena',
-        'Cooperativa Guaymuras',
+        'Cooperativa Sagrada Familia',
+        'Cooperativa Elga',        
+        'Cooperativa Caceenp',
+        'Cooperativa Chortega',        
         'Cooperativa Apaguiz',
         'Cooperativa Tocoa',
     ];
@@ -396,6 +523,25 @@ function guardar_comprobante_pago($id_venta, $archivo, $banco, $fecha_mysql, $re
             )";
 
     return sql_insert($sql);
+}
+
+
+/**
+ * Guarda (o reemplaza) el archivo de "recibo" de un comprobante ya registrado.
+ * A diferencia del comprobante en si (obligatorio desde el inicio), el recibo
+ * se puede agregar en cualquier momento despues, desde la fila del comprobante
+ * en la tabla de "Comprobantes de Pago Registrados".
+ *
+ * @return bool true si se actualizo el registro.
+ */
+function guardar_archivo_recibo($id_comprobante, $id_venta, $archivo_recibo) {
+    $sql = "UPDATE ventas_comprobantes_pago
+            SET archivo_recibo = " . GetSQLValue($archivo_recibo, 'text') . "
+            WHERE id = " . intval($id_comprobante) . "
+              AND id_venta = " . intval($id_venta) . "
+            LIMIT 1";
+
+    return sql_update($sql);
 }
 
 
