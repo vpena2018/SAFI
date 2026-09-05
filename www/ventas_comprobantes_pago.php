@@ -321,15 +321,16 @@ if ($accion == 'guardar_recibo') {
     }
 
     // El recibo debe corresponder al mismo pago que el comprobante ya registrado: se lee el
-    // recibo con IA y se compara fecha/monto contra lo guardado en ventas_comprobantes_pago
-    // (no se compara "referencia": el numero de recibo de caja y la referencia bancaria son
-    // datos distintos por diseño). Si el comprobante no tiene fecha/monto guardados, o la IA
-    // no esta disponible/no logra leer el recibo, esos datos simplemente no se pueden verificar
-    // y se dejan pasar (ver verificar_recibo_coincide_comprobante).
-    $comp_actual = sql_select("SELECT fecha_comprobante, monto FROM ventas_comprobantes_pago WHERE id=$id_comprobante AND id_venta=$cid LIMIT 1");
+    // recibo con IA y se compara fecha/monto contra lo guardado en ventas_comprobantes_pago. La
+    // referencia se le pasa a la IA como contexto para que revise si el recibo la menciona en
+    // algun lado (campo "Documento", descripcion, etc.); si el recibo no menciona ninguna
+    // referencia (lo mas comun) no bloquea nada. Si el comprobante no tiene fecha/monto
+    // guardados, o la IA no esta disponible/no logra leer el recibo, esos datos simplemente no
+    // se pueden verificar y se dejan pasar (ver verificar_recibo_coincide_comprobante).
+    $comp_actual = sql_select("SELECT fecha_comprobante, referencia, monto FROM ventas_comprobantes_pago WHERE id=$id_comprobante AND id_venta=$cid LIMIT 1");
     if ($comp_actual !== false && $comp_actual->num_rows > 0) {
         $comp_row = $comp_actual->fetch_assoc();
-        $verif_recibo = verificar_recibo_coincide_comprobante($ruta_recibo, $comp_row['fecha_comprobante'], $comp_row['monto']);
+        $verif_recibo = verificar_recibo_coincide_comprobante($ruta_recibo, $comp_row['fecha_comprobante'], $comp_row['monto'], $comp_row['referencia']);
         if (!$verif_recibo['ok']) {
             $stud_arr[0]["pmsg"] = $verif_recibo['motivo'] . ' Verifique que sea el recibo correcto para este comprobante.';
             salida_json($stud_arr);
