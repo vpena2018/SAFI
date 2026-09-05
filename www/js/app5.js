@@ -2,6 +2,31 @@
 var mnu_opening=false;
 
 
+// ------------------------------------------------------------------------------------------
+// Soporte para modales de Bootstrap "apilados" (uno abierto encima de otro), como pasa cuando
+// dentro de una pantalla que ya esta en un modal (ej. #ModalWindow2, la ventana de "Editar
+// Venta") se abre OTRO modal (ej. #ModalComprobanteIA, para confirmar los datos de un
+// comprobante de pago). Bootstrap 4 no soporta esto de fabrica: TODOS los modales usan el
+// mismo z-index fijo (1050 por CSS) y cada "modal-backdrop" nuevo se agrega siempre al final
+// de <body> con el mismo z-index fijo (1040) -asi que el ultimo modal que se abre puede
+// terminar pintandose DETRAS del anterior (o su fondo oscuro quedar tapado), dejando la
+// pantalla como "trabada" sin poder interactuar con el modal de encima-. Con este codigo, cada
+// vez que se abre un modal se le sube el z-index segun cuantos modales ya estan abiertos, y el
+// backdrop que le corresponde queda siempre justo debajo de el (nunca debajo de un modal
+// anterior), asi el ultimo modal abierto siempre queda visible y usable por encima de los demas.
+$(document).on('show.bs.modal', '.modal', function () {
+    var zIndiceModal = 1050 + (10 * $('.modal.show').length);
+    $(this).css('z-index', zIndiceModal);
+});
+$(document).on('shown.bs.modal', '.modal', function () {
+    var zIndiceBackdrop = parseInt($(this).css('z-index'), 10) - 1;
+    // Solo se ajusta el backdrop que todavia no tiene el z-index puesto (el ultimo que
+    // Bootstrap agrego al final de <body> al abrir este modal); los de otros modales ya
+    // abiertos, marcados antes, no se tocan.
+    $('.modal-backdrop').not('.zindice-ajustado').css('z-index', zIndiceBackdrop).addClass('zindice-ajustado');
+});
+
+
 
 
 function system_online(activo){
