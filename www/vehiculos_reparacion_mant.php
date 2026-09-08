@@ -1826,14 +1826,12 @@ if ($accion=="g") {
                 }
             }
 
-    // Ricardo Lagos NUEVA VALIDACIÓN: Si hay foto, no permitir cambiar id_vendedor, pero permitir si estaba vacío
+        // Ricardo Lagos NUEVA VALIDACIÓN: Si hay foto, no permitir cambiar id_vendedor, pero permitir si estaba vacío        
         if (!es_nulo($cid) ) {
-            $foto_actual = get_dato_sql("ventas", "foto", " where id=".$cid);
+            $foto_actual = get_dato_sql("ventas_comprobantes_pago", "COUNT(*)", " where id_venta=".$cid." and activo=1");    
             $foto_actual_recibod = get_dato_sql("ventas", "foto_televentas", " where id=".$cid);
-            $id_vendedor = get_dato_sql("ventas", "id_vendedor", " where id=".$cid);
-
-            $vendetmp=intval($_REQUEST['id_vendedor'] ?? 0);
-            
+            $id_vendedor = get_dato_sql("ventas", "id_vendedor", " where id=".$cid);       
+            $vendetmp=intval($_REQUEST['id_vendedor'] ?? 0);            
             // Si hay foto y se está intentando cambiar el vendedor (solo si ya tenía un vendedor asignado)
             if (!es_nulo($foto_actual) && !es_nulo($id_vendedor) && $id_vendedor != intval($_REQUEST['id_vendedor'] ?? 0)) {
                 $verror .= 'No puede cambiar el vendedor cuando ya existe una foto/documento adjunto.<br>';
@@ -1842,8 +1840,7 @@ if ($accion=="g") {
 
     $id_estado = intval($_REQUEST['id_estado'] ?? 0);
     $foto_comprobante=isset($_REQUEST['foto'])? (bool) $_REQUEST['foto']: false;
-    $foto_recibo=isset($_REQUEST['foto_televentas'])? (bool) $_REQUEST['foto_televentas']: false;
-    $foto_actual = get_dato_sql("ventas", "foto", " where id=".$cid);
+    $foto_recibo=isset($_REQUEST['foto_televentas'])? (bool) $_REQUEST['foto_televentas']: false;    
     $foto_actual_recibo = get_dato_sql("ventas", "foto_televentas", " where id=".$cid);
     $id_estado_pintura = get_dato_sql("ventas", "id_estado_pintura", " where id=".$cid);
 
@@ -1904,12 +1901,10 @@ if ($accion=="g") {
             else if ($persona_juridica == 1 && empty(trim($_REQUEST['representante_legal_direccion'] ?? ''))) {
                 $verror = 'La direccion del Representante Legal es obligatoria.';
             }
-            else if (empty($foto_actual) && !$foto_comprobante)  {
+            else if (empty($foto_actual))  {
                 $verror = 'Debe adjuntar comprobante cuando el estado es negociación.';
             }
-            else if(empty($foto_actual_recibo) && !$foto_recibo && $id_estado_pintura==32) {
-                $verror = 'Debe adjuntar recibo de pago cuando el estado es negociación.';
-            }    
+
             
         }
 }
@@ -2236,8 +2231,21 @@ if ($accion =="d") {
       </li>
       <li class="nav-item">
         <a class="nav-link " id="insp_tabhistorial" data-toggle="tab" href="#" onclick="ventas_cambiartab('nav_historial');"   role="tab"  >Historial</a>
-      </li> 
-    </ul>   
+      </li>
+      <li class="nav-item">
+        <a class="nav-link " id="insp_tabComprobantesPago" data-toggle="tab" href="#" onclick="ventas_cambiartab('nav_comprobantes_pago');"   role="tab"  >Comprobantes de Pago</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link"
+           id="insp_tabContratos"
+           data-toggle="tab"
+           href="#"
+           onclick="ventas_cambiartab('nav_contratos');"
+           role="tab">
+           Historial de contratos
+        </a>
+      </li>
+    </ul>
  </div>
 
 <div class="maxancho800 mx-auto">
@@ -2480,16 +2488,6 @@ if ($accion =="d") {
 
 <div class="row">
 
-    <div class="col-md" <?= strpos($disable_sec2_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>
-         <?php
-            if($id_estado_pintura==32){ 
-               //echo campo("id_vendedor","Vendedorrr",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2_lista); 
-               echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required'); 
-            }else{
-               echo campo("id_vendedor","Vendedor",'hidden',$id_vendedor,'','',''); 
-            }              
-         ?> 
-    </div>
     <!-- <div class="col-md"> -->
         <div class="col-md" <?= strpos($disable_sec2_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>
          <?php
@@ -2500,7 +2498,18 @@ if ($accion =="d") {
               echo campo("id_estado","Estado",'hidden',$id_estado,'','','') ;    
           }
          ?> 
+      </div>
+    <div class="col-md" <?= strpos($disable_sec2_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>
+         <?php
+            if($id_estado_pintura==32){ 
+               //echo campo("id_vendedor","Vendedorrr",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2_lista); 
+               echo campo("id_vendedor","Vendedor",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required'); 
+            }else{
+               echo campo("id_vendedor","Vendedor",'hidden',$id_vendedor,'','',''); 
+            }              
+         ?> 
     </div>
+
     <div class="col-md">            
          <?php 
          if ($id_estado_pintura==32){ 
@@ -2640,59 +2649,12 @@ if ($accion =="d") {
 
 
 
-<div class="row">
-    <div class="col-md-6" id="bloque_foto_pago">
-        <h6>Foto Comprobante de Pago</h6>
-        <?php
-        if ($foto=='' && $id_estado_pintura==32) {
-            echo '<div id="archivofoto">';
-            echo campo_upload("foto","Adjuntar Comprobante de Pago",'upload','', $disable_sec2,'',4,8,'NO',false );
-            echo '</div>';
-        }
-        ?>
-        <div id="insp_fotos_thumbs">
-            <?php
-            if ($foto<>'') {
-                $fext = substr($foto, -3);
-                if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
-                    echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$foto.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3 float-left" src="uploa_d/thumbnail/'.$foto.'" data-cod="'.$row["id"].'"></a> ';                    
-                } else {
-                    echo '  <a href="uploa_d/'.$foto.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto.'</a> ';
-                }
-                if (tiene_permiso(183))  {
-                   echo '<a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].',\'foto\'); return false;" ><i class="fa fa-eraser"></i> Borrar</a>';
-                }
-            }
-            ?>
-        </div>
-    </div>
-
-    <div class="col-md-6" id="bloque_foto_televentas">
-        <h6>Foto de Recibo de Pago</h6>
-        <?php
-        if ($foto_televentas=='' && $id_estado_pintura==32) {
-            echo '<div id="archivofoto_televentas">';
-            echo campo_upload("foto_televentas","Adjuntar Recibo de Pago",'upload','', $disable_sec2,'',4,8,'NO',false );
-            echo '</div>';
-        }
-        ?>
-        <div id="insp_fotos_thumbs_televentas">
-        <?php
-            if ($foto_televentas<>'') {
-                $fext = substr($foto_televentas, -3);
-                if ($fext=='jpg' or $fext=='peg' or $fext=='png' or $fext=='gif') {
-                    echo '  <a href="#" class="foto_br'.$row["id"].'" onclick="mostrar_foto(\''.$foto_televentas.'\'); return false;" ><img class="img  img-thumbnail mb-3 mr-3 float-left" src="uploa_d/thumbnail/'.$foto_televentas.'" data-cod="'.$row["id"].'"></a> ';                    
-                } else {
-                    echo '  <a href="uploa_d/'.$foto_televentas.'" target="_blank" class="img-thumbnail mb-3 mr-3" >'.$foto_televentas.'</a> ';
-                }
-                if (tiene_permiso(183))  {
-                    echo '<a href="#" class="mr-5 foto_br'.$row["id"].'" onclick="borrar_fotodb('.$row["id"].',\'foto_televentas\'); return false;" ><i class="fa fa-eraser"></i> Borrar </a>';
-                }
-            }
-        ?>
-        </div>
-    </div>
-</div>
+<!-- Los bloques "Foto Comprobante de Pago" / "Foto de Recibo de Pago" (campos viejos foto/
+     foto_televentas) se quitaron de aqui: esa funcionalidad ahora vive en la pestaña
+     "Comprobantes de Pago" (ver ventas_comprobantes_pago.php). OJO: la validacion de guardado
+     mas arriba (busca "Debe adjuntar comprobante"/"Debe adjuntar recibo de pago") todavia
+     revisa los campos viejos $_REQUEST['foto']/$_REQUEST['foto_televentas'] -a proposito no se
+     toco todavia, pendiente de decidir como actualizarla-. -->
 
    <div class="botones_accion d-print-none bg-light px-3 py-2 mt-4 border-top ">
     <div class="row">
@@ -2781,6 +2743,16 @@ if ($accion =="d") {
 
 <!-- HISTORIAL -->
 <div class="tab-pane fade " id="nav_historial" role="tabpanel" ></div>
+
+<!-- Comprobantes de Pago (banco/fecha/referencia/monto leidos con IA): se carga por AJAX desde
+     ventas_comprobantes_pago.php (programa aparte, el mismo que usa ventas_mant_contrato.php)
+     para no duplicar codigo. Esta pantalla edita registros de la misma tabla "ventas", asi que
+     el "cid" (id de la venta) es el mismo parametro que ese programa ya espera. -->
+<div class="tab-pane fade " id="nav_comprobantes_pago" role="tabpanel" ></div>
+
+<!-- Historial de contratos: mismo programa compartido ventas_contrato_historial.php que usa
+     ventas_mant_contrato.php (solo necesita "cid", el id de la venta). -->
+<div class="tab-pane fade " id="nav_contratos" role="tabpanel" ></div>
 
 <!-- errores -->
 <div class="tab-pane fade mt-5 mb-5" id="nav_deshabilitado" role="tabpanel" ><div class="alert alert-warning" role="alert">Debe Guardar el documento para poder continuar con esta sección</div></div>
@@ -3285,6 +3257,16 @@ function ventas_procesar(url,forma,adicional){
 function ventas_cambiartab(eltab) {
   var codigo= $('#id').val();
   var continuar=true;
+
+  // Si hay un modal de Bootstrap abierto DENTRO de alguna pestaña (ej. el que arma
+  // ventas_comprobantes_pago.php al confirmar los datos de un comprobante), hay que cerrarlo
+  // ANTES de esconder los tab-pane -si no, Bootstrap nunca se entera de que se cerro y la
+  // pagina queda con el scroll bloqueado-. Mismo arreglo que en ventas_mant_contrato.php; ver
+  // BITACORA_CAMBIOS.md. El selector es ".tab-pane .modal.show" (solo modales DENTRO de una
+  // pestaña), nunca ".modal.show" a secas, para no cerrar el modal contenedor de toda esta
+  // pantalla si en algun momento esta pantalla tambien se abre dentro de uno.
+  $('.tab-pane .modal.show').modal('hide');
+
   $('.tab-pane').hide();
 
 
@@ -3293,14 +3275,25 @@ function ventas_cambiartab(eltab) {
       continuar=false;
       $('#nav_deshabilitado').show();
       $('#nav_deshabilitado').tab('show');
-    } 
+    }
   }
 
 
   if (eltab=='nav_historial') {
      procesar_ventas_historial('nav_historial');
   }
-  
+
+  if (eltab=='nav_comprobantes_pago') {
+    var cid = $('#id').val();
+    if (cid > 0) {
+      $('#nav_comprobantes_pago').load('ventas_comprobantes_pago.php?cid=' + cid);
+    }
+  }
+
+  if (eltab=='nav_contratos') {
+     procesar_ventas_contrato_historial('nav_contratos');
+  }
+
   if (continuar==true){
     $('#'+eltab).show();
     $('#'+eltab).tab('show');
@@ -3308,7 +3301,7 @@ function ventas_cambiartab(eltab) {
 
 //   nav_detalle
 // nav_fotos
-// nav_doctos 
+// nav_doctos
 
 }
 
@@ -3321,9 +3314,9 @@ var url='ventas_historial.php?cid='+cid+'&pid='+pid ;
 $(window).scrollTop(0);
 $("#"+campo).html('<div class="text-center mt-5 mb-5"><i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><br><span class="">'+'Cargando'+'</span></div>');			
 
-$("#"+campo).load(url, function(response, status, xhr) {	
-   
-  if (status == "error") { 
+$("#"+campo).load(url, function(response, status, xhr) {
+
+  if (status == "error") {
 
     //$("#"+campo).html("Error"; // xhr.status + " " + xhr.statusText
     $("#"+campo).html('<p>&nbsp;</p>');
@@ -3331,7 +3324,87 @@ $("#"+campo).load(url, function(response, status, xhr) {
   }
 
 });
-  
+
+}
+
+// Historial de contratos: mismo programa compartido ventas_contrato_historial.php que usa
+// ventas_mant_contrato.php (solo necesita "cid"/"pid", igual que procesar_ventas_historial() de
+// arriba).
+function procesar_ventas_contrato_historial(campo){
+
+var cid=$("#id").val();
+var pid=$('#id_producto').val();
+var url='ventas_contrato_historial.php?cid='+cid+'&pid='+pid ;
+
+$(window).scrollTop(0);
+$("#"+campo).html('<div class="text-center mt-5 mb-5"><i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><br><span class="">'+'Cargando'+'</span></div>');
+
+$("#"+campo).load(url, function(response, status, xhr) {
+
+  if (status == "error") {
+
+    $("#"+campo).html('<p>&nbsp;</p>');
+    mytoast('error','Error al cargar la pagina...',6000) ;
+  }
+
+});
+
+}
+
+// Boton "Descargar" de la tabla de ventas_contrato_historial.php (mismo partial que usa
+// ventas_mant_contrato.php). Apunta a las acciones "print_check"/"print" de ESTE archivo
+// (vehiculos_reparacion_mant.php ya tiene sus propias copias de descargarVentaPDF()/
+// descargarVentaPDFReimpresion(), ver mas arriba), no a ventas_mant_contrato.php.
+function descargar_contrato(id_venta, id_contrato, persona_juridica, reimpresion)
+{
+    if (!id_venta) {
+        mytoast('error', 'No hay ID', 3000);
+        return;
+    }
+
+    popupconfirmar(
+        'Confirmación',
+        '¿Deseas descargar el contrato?',
+        function () {
+
+            $.ajax({
+                url: 'vehiculos_reparacion_mant.php',
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    a: 'print_check',
+                    id: id_venta,
+                    persona_juridica: persona_juridica,
+                    id_contrato: id_contrato,
+                    reimpresion: reimpresion ? 1 : 0
+                },
+                success: function (resp) {
+
+                    if (resp.ok) {
+
+                        mytoast('success', 'Contrato listo: ' + resp.numero_contrato, 3000);
+
+                        window.onbeforeunload = null;
+                        $(window).off('beforeunload');
+
+                        window.location.href =
+                            'vehiculos_reparacion_mant.php?a=print' +
+                            '&id=' + encodeURIComponent(id_venta) +
+                            '&persona_juridica=' + encodeURIComponent(persona_juridica) +
+                            '&id_contrato=' + encodeURIComponent(id_contrato) +
+                            '&reimpresion=' + encodeURIComponent(reimpresion ? 1 : 0);
+
+                    } else {
+                        mytoast('error', resp.error || 'Error al generar contrato', 3000);
+                    }
+                },
+                error: function () {
+                    mytoast('error', 'Error de comunicación con el servidor', 3000);
+                }
+            });
+
+        }
+    );
 }
 
 
