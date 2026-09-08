@@ -20,6 +20,23 @@ require_once ('include/ia_comprobantes.php');
 
 define('MAX_COMPROBANTES_POR_VENTA', 10);
 
+// Estado de venta "Vendido entregado" (tabla ventas_estado): una vez que la venta llega a este
+// estado, ya no se pueden registrar nuevos comprobantes de pago (el proceso de pago/entrega ya
+// se cerro). Ver venta_comprobante_bloqueada_por_estado().
+define('ESTADO_VENTA_VENDIDO_ENTREGADO', 20);
+
+// Devuelve un mensaje (no vacio) si la venta ya esta en un estado que no permite registrar mas
+// comprobantes de pago, o cadena vacia si se puede seguir subiendo. Se usa tanto en la vista
+// (para no mostrar el boton de subir) como en el servidor, al leer/guardar un comprobante (el
+// boton oculto es solo ayuda visual, se puede saltar mandando la peticion directo).
+function venta_comprobante_pago_bloqueada($cid) {
+    $id_estado = intval(get_dato_sql('ventas', 'id_estado', ' where id=' . intval($cid)));
+    if ($id_estado === ESTADO_VENTA_VENDIDO_ENTREGADO) {
+        return 'No se pueden registrar comprobantes de pago: la venta ya esta en estado "Vendido entregado".';
+    }
+    return '';
+}
+
 if (!isset($_REQUEST['a'])) { $accion = 'v'; } else { $accion = $_REQUEST['a']; }
 $cid = 0;
 if (isset($_REQUEST['cid'])) { $cid = intval($_REQUEST['cid']); }
@@ -131,6 +148,13 @@ if ($accion == 'extraer_comprobante') {
         'pmsg'          => '',
     ];
 
+    $motivo_bloqueo = venta_comprobante_pago_bloqueada($cid);
+    if ($motivo_bloqueo != '') {
+        $salida['pmsg'] = $motivo_bloqueo;
+        echo json_encode($salida);
+        exit;
+    }
+
     if ($archivo == '') {
         $salida['pmsg'] = 'No se recibio el nombre del archivo';
         echo json_encode($salida);
@@ -194,6 +218,16 @@ if ($accion == 'guardar_comprobante') {
     $monto      = trim($_REQUEST['monto'] ?? '');
     $origen     = ($_REQUEST['origen'] ?? '') === 'ia' ? 'ia' : 'manual';
     $ia_raw     = $_REQUEST['ia_raw'] ?? '';
+
+    // El boton de subir esta oculto en pantalla cuando la venta ya no admite comprobantes, pero
+    // eso es solo ayuda visual -se puede saltar mandando la peticion directo-, asi que se vuelve
+    // a validar aqui.
+    $motivo_bloqueo = venta_comprobante_pago_bloqueada($cid);
+    if ($motivo_bloqueo != '') {
+        $stud_arr[0]["pmsg"] = $motivo_bloqueo;
+        salida_json($stud_arr);
+        exit;
+    }
 
     $verror  = "";
     $verror .= validar("Venta", $cid, "int", true);
@@ -371,6 +405,73 @@ if ($accion == 'guardar_recibo') {
 }
 
 
+// ---- Guarda (o reemplaza) la "Factura Proforma" de la venta y lo que la IA logro leer de ella
+// (empresa, fecha, motor, valor a financiar). A diferencia del comprobante, esta lectura es solo
+// informativa: no se compara contra ningun otro dato del sistema, solo se guarda para consulta. ----
+if ($accion == 'guardar_factura_proforma') {
+    $stud_arr[0]["pcode"] = 0;
+    $stud_arr[0]["pmsg"]  = "ERROR";
+
+    $archivo = sanear_string($_REQUEST['archivo'] ?? '');
+
+    $verror  = "";
+    $verror .= validar("Venta", $cid, "int", true);
+    $verror .= validar("Archivo", $archivo, "text", true);
+
+    if ($verror != "") {
+        $stud_arr[0]["pmsg"] = $verror;
+        salida_json($stud_arr);
+        exit;
+    }
+
+    // Si ya tenia una factura proforma cargada, esto es un reemplazo -tan sensible como Borrar-,
+    // asi que exige el mismo permiso (168). La primera subida no lo requiere.
+    $archivo_actual = get_dato_sql('ventas', 'archivo_factura_proforma', ' where id=' . $cid);
+    if ($archivo_actual != '' && !tiene_permiso(168)) {
+        $stud_arr[0]["pmsg"] = "No tiene privilegios para reemplazar la factura proforma";
+        salida_json($stud_arr);
+        exit;
+    }
+
+    $ruta_archivo = __DIR__ . '/uploa_d_ventas/' . basename($archivo);
+    $ia = extraer_datos_factura_proforma_ia($ruta_archivo);
+
+    // Mismo chequeo de empresa esperada que el recibo (RECIBO_EMPRESA_ESPERADA), para evitar que
+    // se suba por error la factura proforma de otra empresa/documento distinto.
+    if ($ia['success'] && $ia['empresa'] !== null && stripos($ia['empresa'], RECIBO_EMPRESA_ESPERADA) === false) {
+        $stud_arr[0]["pmsg"] = 'La factura proforma no parece ser de ' . RECIBO_EMPRESA_ESPERADA . ' (el encabezado dice "' . $ia['empresa'] . '").';
+        salida_json($stud_arr);
+        exit;
+    }
+
+    $guardado = guardar_factura_proforma($cid, $archivo, $ia['fecha'], $ia['motor'], $ia['valor_financiar'], $ia['empresa'], $ia['raw']);
+
+    if ($guardado) {
+        $stud_arr[0]["pcode"] = 1;
+
+        // Mensaje de exito que resume lo que se pudo leer (para que el usuario vea de una vez si
+        // quedo algo en blanco y necesite revisar el archivo).
+        $partes = [];
+        if ($ia['motor'])                   { $partes[] = 'motor ' . $ia['motor']; }
+        if ($ia['fecha'])                   { $partes[] = 'fecha ' . ia_fecha_iso_a_formato_sesion($ia['fecha']); }
+        if ($ia['valor_financiar'] !== null) { $partes[] = 'valor a financiar L ' . number_format($ia['valor_financiar'], 2); }
+
+        if (!$ia['success']) {
+            $stud_arr[0]["pmsg"] = 'Factura proforma guardada. No se pudo leer con IA (' . $ia['error'] . '); complete los datos manualmente si hace falta.';
+        } elseif (count($partes) === 0) {
+            $stud_arr[0]["pmsg"] = 'Factura proforma guardada. La IA no logro leer ningun dato del documento.';
+        } else {
+            $stud_arr[0]["pmsg"] = 'Factura proforma guardada: ' . implode(', ', $partes) . '.';
+        }
+    } else {
+        $stud_arr[0]["pmsg"] = "No se pudo guardar la factura proforma";
+    }
+
+    salida_json($stud_arr);
+    exit;
+}
+
+
 // ---- Vista (fragmento HTML que se inserta dentro de la pestaña "Comprobantes de Pago") ----
 
 if ($cid <= 0) {
@@ -380,12 +481,14 @@ if ($cid <= 0) {
 
 $total_comprobantes = count(listar_comprobantes_pago_venta($cid));
 $cupos_disponibles  = max(0, MAX_COMPROBANTES_POR_VENTA - $total_comprobantes);
+$motivo_bloqueo_comprobante = venta_comprobante_pago_bloqueada($cid);
 
 // Recibo de pago (televentas): campo propio de "ventas" (no de ventas_comprobantes_pago), movido
 // aqui desde la pestaña "Fotos de Comprobante de Pago" para que quede a la par de "Subir
 // Comprobante". Reutiliza el mismo campo_upload() y las funciones JS globales de la pagina
 // principal (insp_guardar_foto, ventas_dfoto, mostrar_foto) -no se duplica logica-.
 $foto_televentas = get_dato_sql('ventas', 'foto_televentas', ' where id=' . $cid);
+$tipo_ventas_reparacion = get_dato_sql('ventas', 'tipo_ventas_reparacion', ' where id=' . $cid);
 
 // Comprobante original ("foto"): tambien se movio aqui, pero solo como referencia de solo
 // lectura -sin widget de subida-. Las subidas nuevas van por "Subir Comprobante" (arriba),
@@ -400,7 +503,9 @@ $foto = get_dato_sql('ventas', 'foto', ' where id=' . $cid);
 <div class="row mb-3">
 <div class="col-md" id="archivocomprobante">
     <label class="font-weight-bold d-block">Comprobante de Pago</label>
-<?php if ($cupos_disponibles > 0) { ?>
+<?php if ($motivo_bloqueo_comprobante != '') { ?>
+    <div class="alert alert-secondary"><?php echo htmlspecialchars($motivo_bloqueo_comprobante); ?></div>
+<?php } elseif ($cupos_disponibles > 0) { ?>
     <div id="colbtn_comprobante">
         <span class="btn btn-secondary fileinput-button">
             <i class="fa fa-cloud-upload-alt"></i>
@@ -419,7 +524,7 @@ $foto = get_dato_sql('ventas', 'foto', ' where id=' . $cid);
 
 <div class="col-md">
     <label class="font-weight-bold d-block">Recibo de Pago (Televentas)</label>
-<?php if ($foto_televentas == '') { ?>
+<?php if ($foto_televentas == '' && $tipo_ventas_reparacion==2 && $motivo_bloqueo_comprobante == '') { ?>
     <?php // Etiqueta vacia ("") a proposito: el encabezado de arriba ya cumple ese rol,
           // asi queda a la misma altura que "Subir Comprobante" en la columna vecina.
           // campo_upload() pone boton+barra de progreso lado a lado (col-sm-4 + col-sm-4);
@@ -432,7 +537,7 @@ $foto = get_dato_sql('ventas', 'foto', ' where id=' . $cid);
     <div id="upload_recibo_apilado">
         <?php echo campo_upload("foto_televentas", "", 'upload', '', '  ', '', 4, 8, 'NO', false); ?>
     </div>
-<?php } else {
+<?php } elseif ($foto_televentas != '') {
     $fext = strtolower(substr($foto_televentas, -3));
     // Solo se muestra como <img> si la miniatura realmente existe en el servidor -si no, ese
     // <img src> siempre da 404 (se vio en el navegador: la peticion queda pendiente/tapando
@@ -736,7 +841,7 @@ function comprobante_pedir_datos(archivo){
 
     var cid = $('#id').val();
 
-    cargando_ia(true, 'Leyendo el comprobante con inteligencia artificial...');
+    cargando_ia(true, 'Leyendo el comprobante de pago...');
     $.ajax({
         url: 'ventas_comprobantes_pago.php?a=extraer_comprobante',
         type: 'POST',
@@ -936,7 +1041,7 @@ function recibo_elegir_archivo(idComprobante){
 // verificar_recibo_coincide_comprobante), asi que puede tardar unos segundos.
 function recibo_guardar(idComprobante, archivo){
     var cid = $('#id').val();
-    cargando_ia(true, 'Verificando el recibo con inteligencia artificial...');
+    cargando_ia(true, 'Verificando el recibo de pago...');
     $.ajax({
         url: 'ventas_comprobantes_pago.php',
         type: 'POST',
