@@ -71,10 +71,17 @@ define("app_Seed_ancho", 8);  // Cantidad de caracteres de la segunda semilla al
 // #### IA para lectura de comprobantes ###
 // #########################################
 // Usada para leer banco/fecha/referencia/monto de los comprobantes de pago
-// (ver include/ia_comprobantes.php). Se obtiene en https://platform.openai.com/api-keys
-// Mientras quede vacia, la lectura automatica se desactiva sola y el usuario
-// llena los datos a mano (el guardado y la validacion de duplicados si funcionan).
-define("app_openai_api_key", "");  // TODO: pegar aqui la API key cuando este disponible
+// (ver include/ia_comprobantes.php). Mientras quede vacia, la lectura automatica
+// se desactiva sola y el usuario llena los datos a mano (el guardado y la
+// validacion de duplicados si funcionan).
+//
+// La clave en si vive en su propio archivo (include/openai_key.php, copialo de
+// include/openai_key.example.php); si no existe, queda vacia sin romper nada.
+if (file_exists(__DIR__ . '/openai_key.php')) {
+    require_once(__DIR__ . '/openai_key.php');
+} else {
+    define("app_openai_api_key", "");
+}
 define("app_openai_model", "gpt-4.1-mini");  // Modelo usado para leer el comprobante
 
 //Control de errores

@@ -1,7 +1,6 @@
 www/include/config_inglosa_produccion.php
 www/include/config.php
-www/include/config_inglosa_produccion.php
-www/include/config.php
+www/include/openai_key.php
 
 # Dependencias
 /vendor/
