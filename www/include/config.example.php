@@ -20,9 +20,9 @@ define("app_dir", "c:/DEV-git/www/reportes/");
 $ip_scan="http://localhost:8082/"; 
   
 // base de datos local
-define("db_user", "root");  // Usuario de la Base de datos
-define("db_pw", "inglosalocal");  // Clave
-//define("db_pw", "inglosalocal");  // Clave
+define("db_user", "CHANGE_ME");  // Usuario de la Base de datos
+define("db_pw", "CHANGE_ME");  // Clave
+//define("db_pw", "CHANGE_ME");  // Clave
 
 define("db_ip", "10.10.1.31");  // Ip o host donde se encuentra la base de datos
 define("db_name", "inglosa"); //Nombre de base de datos
@@ -31,8 +31,8 @@ define("db_name", "inglosa"); //Nombre de base de datos
 define("app_email", "xxx@xxx.con");
 define("app_email_name", "Flota");
 define("app_email_host", "smtp.xxx.con");
-define("app_email_user", "xxx@xxx.con");
-define("app_email_pass", "xxx");
+define("app_email_user", "CHANGE_ME");
+define("app_email_pass", "CHANGE_ME");
 define("app_email_port", "587");
 define("app_enviar_email", false);
 

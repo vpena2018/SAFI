@@ -20,8 +20,8 @@ define("app_dir", "/var/www/html/");
 $ip_scan="http://localhost:8082/"; 
   
 
-define("db_user", "ing_user");  // Usuario de la Base de datos
-define("db_pw", "K0peis03mzG93f");  // Clave
+define("db_user", "CHANGE_ME");  // Usuario de la Base de datos
+define("db_pw", "CHANGE_ME");  // Clave
 define("db_ip", "localhost");  // Ip o host donde se encuentra la base de datos
 define("db_name", "inglosa"); //Nombre de base de datos
 
@@ -29,8 +29,8 @@ define("db_name", "inglosa"); //Nombre de base de datos
 define("app_email", "copiadora59@inglosa.hn");
 define("app_email_name", "Flota");
 define("app_email_host", "smtp.office365.com");
-define("app_email_user", "copiadora59@inglosa.hn");
-define("app_email_pass", "Eacopy2018*");
+define("app_email_user", "CHANGE_ME");
+define("app_email_pass", "CHANGE_ME");
 define("app_email_port", "587");
 // Requiere SSL: Sí
 // Requiere TLS: Sí
