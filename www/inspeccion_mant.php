@@ -470,18 +470,7 @@ if ($accion=="g") {
                     exit;
                   }
                 }
-
-                //Valido si estado del vehiculo en modulo de ventas es Vendido Entregado
-                $id_producto_completar = isset($_REQUEST["id_producto"]) ? intval($_REQUEST["id_producto"]) : 0;
-                if ($id_producto_completar > 0 && $clienteCvu=="CVU-" && $tipo_insp_especial==1) {
-                    $estado_vehiculo_ventas = get_dato_sql("ventas","id_estado"," WHERE id=".$id_producto_completar);
-                    if ($estado_vehiculo_ventas < 20) { // 3 = Vendido Entregado
-                        $stud_arr[0]["pmsg"] ="No se puede completar la Hoja de Inspeccion porque estado el vehículo tiene que ser Vendido Entregado en el módulo de Ventas";
-                        salida_json($stud_arr);
-                        exit;
-                    }
-                }
-
+              
               $lbl_estado="Completado";
               // enviar email a cliente 
               $enviar_orden_email=true;
