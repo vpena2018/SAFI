@@ -5,5 +5,5 @@ www/include/openai_key.php
 # Dependencias
 /vendor/
 /logs/
-/www/uploa_d
-/www/uploa_d_ventas
+/www/uploa_d/
+/www/uploa_d_ventas/
