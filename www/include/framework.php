@@ -7,6 +7,8 @@
 // # Se prohibe la copia o distribucion del codigo sin autorizacion por escrito #
 // ##############################################################################
 
+//FECHA                 DEVELOPER                  INCIDENTE
+// 2026-10-28            Moises Gamez              INC-20261028 Se creo log bitacora de errores de base de datos
 
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
@@ -549,13 +551,14 @@ if (!mysqli_connect_errno()) {
 
 function sql_select($sql,$param="",$sql2="") {
 	global $conn;
-	$salida=false;
- // echo $sql;//exit;
-	$salida = $conn->query($sql) ;
-
-
+	$salida=false; 
+   try{
+    $salida = $conn->query($sql) ;
+   } catch (Exception $e) {
+    logDatabaseError($e, $sql);
+    $salida = false;
+   }
 	return $salida;
-
 } 
 
 function sql_update($sql) {
@@ -2489,6 +2492,25 @@ function dia_de_semana($dia){
         
     }
     return $salida;
+}
+//Nueva funcion logDatabaseError para registrar errores de base de datos en un archivo de log
+//INC-20261028
+function logDatabaseError(Throwable $e, string $text): void {
+    $filename = 'database_errors.txt';
+    $timestamp = date('Y-m-d H:i:s');
+    
+    // Format the log entry with details
+    $logEntry = sprintf(
+        "[%s] Exception: %s in %s on line %d\n",
+        $timestamp,
+        $e->getMessage(),
+        $e->getFile(),
+        $e->getLine(),
+        "Try to execute: $text\n"
+    );
+    
+    // Append to the file (FILE_APPEND adds to the end, LOCK_EX prevents concurrent write issues)
+    file_put_contents($filename, $logEntry, FILE_APPEND | LOCK_EX);
 }
 
 
