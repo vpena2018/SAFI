@@ -37,13 +37,15 @@ if (!is_dir(__DIR__ . '/logs')) {
     mkdir(__DIR__ . '/logs', 0755, true);
 }
 
-function escribir_log($mensaje) {
+function escribir_log($mensaje)
+{
     global $log_file;
     $linea = '[' . date('Y-m-d H:i:s') . '] ' . $mensaje . PHP_EOL;
     file_put_contents($log_file, $linea, FILE_APPEND);
 }
 
-function leer_png_como_dataurl($rutaArchivo) {
+function leer_png_como_dataurl($rutaArchivo)
+{
     if (!is_file($rutaArchivo)) {
         return '';
     }
@@ -54,7 +56,8 @@ function leer_png_como_dataurl($rutaArchivo) {
     return 'data:image/png;base64,' . base64_encode($bin);
 }
 
-function limpiar_tmp_inspeccion($idInspeccion) {
+function limpiar_tmp_inspeccion($idInspeccion)
+{
     $tmpDir = app_dir . 'reportes/tmp_inspeccion/' . intval($idInspeccion) . '/';
     if (!is_dir($tmpDir)) {
         return;
@@ -87,11 +90,19 @@ if ($pendientes == false || $pendientes->num_rows == 0) {
 escribir_log('Correos a procesar: ' . $pendientes->num_rows);
 
 require_once(__DIR__ . '/include/correo.php');
+/*require_once(__DIR__ . '/include/encuestas_lib.php'); // enc_enlace_para_inspeccion()*/
 
 while ($item = $pendientes->fetch_assoc()) {
 
-    $cola_id      = $item['id'];
-    $elcodigo     = $item['id_inspeccion']; // nombre de variable que usa inspeccion_pdf.php
+    $cola_id = $item['id'];
+    $elcodigo = intval($item['id_inspeccion']); // nombre de variable que usa inspeccion_pdf.php
+
+    // Un id vacío/0 generaba "WHERE inspeccion.id = LIMIT 1" (error de sintaxis SQL)
+    if ($elcodigo <= 0) {
+        escribir_log("cola_id=$cola_id sin id_inspeccion válido. Se omite.");
+        sql_update("UPDATE cola_correo_inspeccion SET intentos = 3 WHERE id = " . intval($cola_id));
+        continue;
+    }
 
     escribir_log("Procesando cola_id=$cola_id | id_inspeccion=$elcodigo");
 
@@ -131,7 +142,7 @@ while ($item = $pendientes->fetch_assoc()) {
                     array_push($email_enviar_adicional, trim($correo_row['cliente_email']));
                 }
             }
-        }        
+        }
 
         if (es_nulo($email_enviar)) {
             throw new Exception("La inspección id=$elcodigo no tiene email configurado. Se omite.");
@@ -144,7 +155,7 @@ while ($item = $pendientes->fetch_assoc()) {
         $_REQUEST['pdffirma2'] = leer_png_como_dataurl($tmpDir . 'Inspeccion_' . $correo_row["numero"] . '_pdffirma2.png');
 
         // Generar el PDF
-        
+
         /*
         $contrato = trim($correo_row["renta_contrato"])=="" ? "" : trim($correo_row["renta_contrato"]);
         $guardar_archivo_pag1 = ""; // ruta del PDF con solo la primera página (para adjuntar al correo)            
@@ -156,9 +167,21 @@ while ($item = $pendientes->fetch_assoc()) {
             include(__DIR__ . '/inspeccion_pdf1.php'); // genera el PDF en $guardar_archivo_pag1 con solo la primera página y acta recepcio
         } 
          */
-            
+
         $guardar_archivo = app_dir . 'reportes/' . 'Inspeccion_' . $correo_row["numero"] . '.pdf';
         include(__DIR__ . '/inspeccion_pdf.php'); // genera el PDF en $guardar_archivo
+
+        /*
+        // Encuesta de satisfaccion: solo aplica a hojas de RENTA (entrada/salida) y si hay una plantilla
+        // asignada. Si no aplica o algo falla devuelve '' y el correo sale igual que siempre.
+        $enlace_encuesta = enc_enlace_para_inspeccion($elcodigo);
+        $bloque_encuesta = '';
+        if ($enlace_encuesta !== '') {
+            $bloque_encuesta = '<br><br>Nos interesa su opinión. Por favor tómese un minuto para contestar esta breve encuesta:<br>
+                <a href="' . htmlspecialchars($enlace_encuesta, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($enlace_encuesta, ENT_QUOTES, 'UTF-8') . '</a>';
+            escribir_log("Enlace de encuesta agregado para inspección #" . $correo_row['numero']);
+        }
+        */
 
         // Armar el correo
         $subject = 'HOJA DE INSPECCION # ' . $correo_row['numero'];
@@ -166,7 +189,7 @@ while ($item = $pendientes->fetch_assoc()) {
         $cuerpo_html = 'Estimado Cliente, <br><br>
             Se le notifica que la hoja de inspeccion # ' . $correo_row['numero'] . ' fue completada.<br>
             <br><br>
-            La hoja ha sido adjuntada a este correo.<br><br>
+            La hoja ha sido adjuntada a este correo.' . $bloque_encuesta . '<br><br>
             Gracias';
 
         $cuerpo_sinhtml = strip_tags($cuerpo_html);

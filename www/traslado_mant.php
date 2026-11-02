@@ -31,7 +31,8 @@ function traslado_historial_guardar($id_maestro, $id_estado, $nombre, $observaci
 // Leer Datos    ############################  
 if ($accion=="v") {
 	$cid=0;
-	if (isset($_REQUEST['cid'])) { $cid = sanear_int($_REQUEST['cid']); }
+	//if (isset($_REQUEST['cid'])) { $cid = sanear_int($_REQUEST['cid']); }
+	if (isset($_REQUEST['cid']) && trim($_REQUEST['cid']) !== '') { $cid = sanear_int($_REQUEST['cid']); } else {$cid=0;}
 
 	if (es_nulo($cid)) {
 	 	pagina_permiso(141); //crear nueva orden
@@ -83,7 +84,8 @@ if ($accion=="g") {
     $stud_arr[0]["pmsg"] ="ERROR";
 
     $cid=0;
-	if (isset($_REQUEST['cid'])) { $cid = sanear_int($_REQUEST['cid']); }
+	//if (isset($_REQUEST['cid'])) { $cid = sanear_int($_REQUEST['cid']); }
+	if (isset($_REQUEST['cid']) && trim($_REQUEST['cid']) !== '') { $cid = sanear_int($_REQUEST['cid']); } else {$cid=0;}
 
 	$elcodigo= $cid;
     if (es_nulo($elcodigo)) {$nuevoreg=true;} else {$nuevoreg=false;}

@@ -8,6 +8,7 @@ require_once('phpcorreo/src/PHPMailer.php');
 require_once('phpcorreo/src/SMTP.php');
 
 
+
 function enviar_correo($email_a,$subject,$cuerpo_html,$cuerpo_sinhtml,$correos_enviar= array(),$adjuntar_archivo=""){
 	$salida=false;
 	
