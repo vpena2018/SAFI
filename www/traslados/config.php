@@ -10,6 +10,7 @@
 // #########################################
 
 
+
 // Aplicacion
 define("app_empresa", "INGLOSA");
 
