@@ -1,6 +1,12 @@
 www/include/config_inglosa_produccion.php
+<<<<<<< HEAD
 www/include/config.php
 www/include/openai_key.php
+=======
+www/logs/2025-08-06_logins.log
+www/include/config_inglosa_produccion.php
+
+>>>>>>> dav-inglosa
 
 # Dependencias
 /vendor/
