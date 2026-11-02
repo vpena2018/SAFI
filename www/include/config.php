@@ -9,7 +9,6 @@
 // ######### Configuracion Basica ##########
 // #########################################
 
-
 // Aplicacion
 define("app_empresa", "INGLOSA");
 
