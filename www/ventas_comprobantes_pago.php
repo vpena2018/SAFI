@@ -17,6 +17,7 @@
 
 //Fecha             Usuario                   Descripcion
 // 2024-06-10       J. Armando Sánchez M.     Se agrego la IA para leer los comprobantes de pago y validar duplicados
+// 2026-11-05       Moise Gamez(Update).      Se agrego la validacion de recibo de pago (televentas) y el comprobante original (foto) para que se muestren en la misma pestaña de comprobantes de pago
 require_once('include/framework.php');
 require_once('include/ia_comprobantes.php');
 
@@ -452,7 +453,9 @@ $foto = get_dato_sql('ventas', 'foto', ' where id=' . $cid);
     <div class="col-md" id="archivocomprobante">
         <label class="font-weight-bold d-block">Comprobante de Pago</label>
         <?php if ($motivo_bloqueo_comprobante != '') { ?>
-            <div class="alert alert-secondary"><?php echo htmlspecialchars($motivo_bloqueo_comprobante); ?></div>
+            <div class="alert alert-secondary">
+                <?php echo htmlspecialchars($motivo_bloqueo_comprobante); ?>
+            </div>
         <?php } elseif ($cupos_disponibles > 0) { ?>
             <div id="colbtn_comprobante">
                 <span class="btn btn-secondary fileinput-button">
@@ -466,8 +469,10 @@ $foto = get_dato_sql('ventas', 'foto', ' where id=' . $cid);
             </div>
             <div id="files_comprobante"></div>
         <?php } else { ?>
-            <div class="alert alert-secondary">Ya se registraron los <?php echo MAX_COMPROBANTES_POR_VENTA; ?> comprobantes
-                permitidos para esta venta.</div>
+            <div class="alert alert-secondary">Ya se registraron los
+                <?php echo MAX_COMPROBANTES_POR_VENTA; ?> comprobantes
+                permitidos para esta venta.
+            </div>
         <?php } ?>
     </div>
 
@@ -538,7 +543,9 @@ $foto = get_dato_sql('ventas', 'foto', ' where id=' . $cid);
 
 <!-- Contador + tabla: se refrescan solos (accion "tabla") despues de guardar/borrar, sin
      recargar el widget de subida ni el modal, para no perder una cola de archivos en curso. -->
-<div id="tabla_comprobantes_pago"><?php echo html_tabla_comprobantes($cid); ?></div>
+<div id="tabla_comprobantes_pago">
+    <?php echo html_tabla_comprobantes($cid); ?>
+</div>
 
 <!-- Input de archivo compartido para subir/reemplazar el "recibo" de cualquier fila de la
      tabla (se deja FUERA de #tabla_comprobantes_pago para que sobreviva a sus refrescos
@@ -588,7 +595,8 @@ $foto = get_dato_sql('ventas', 'foto', ' where id=' . $cid);
             <select class="form-control" id="comprobante_banco_select" onchange="comprobante_banco_cambio()">
                 <option value="">Seleccione...</option>
                 <?php foreach (ia_comprobantes_lista_bancos_hn() as $b) { ?>
-                    <option value="<?php echo htmlspecialchars($b, ENT_QUOTES); ?>"><?php echo htmlspecialchars($b); ?>
+                    <option value="<?php echo htmlspecialchars($b, ENT_QUOTES); ?>">
+                        <?php echo htmlspecialchars($b); ?>
                     </option>
                 <?php } ?>
                 <option value="__otro__">Otro (especificar)...</option>
