@@ -31,7 +31,8 @@ function traslado_historial_guardar($id_maestro, $id_estado, $nombre, $observaci
 // Leer Datos    ############################  
 if ($accion=="v") {
 	$cid=0;
-	if (isset($_REQUEST['cid'])) { $cid = sanear_int($_REQUEST['cid']); }
+	//if (isset($_REQUEST['cid'])) { $cid = sanear_int($_REQUEST['cid']); }
+	if (isset($_REQUEST['cid']) && trim($_REQUEST['cid']) !== '') { $cid = sanear_int($_REQUEST['cid']); } else {$cid=0;}
 
 	if (es_nulo($cid)) {
 	 	pagina_permiso(141); //crear nueva orden
@@ -83,7 +84,8 @@ if ($accion=="g") {
     $stud_arr[0]["pmsg"] ="ERROR";
 
     $cid=0;
-	if (isset($_REQUEST['cid'])) { $cid = sanear_int($_REQUEST['cid']); }
+	//if (isset($_REQUEST['cid'])) { $cid = sanear_int($_REQUEST['cid']); }
+	if (isset($_REQUEST['cid']) && trim($_REQUEST['cid']) !== '') { $cid = sanear_int($_REQUEST['cid']); } else {$cid=0;}
 
 	$elcodigo= $cid;
     if (es_nulo($elcodigo)) {$nuevoreg=true;} else {$nuevoreg=false;}
@@ -268,13 +270,19 @@ if ($accion=="g") {
 					}
 			    }
 				*/
-				
+				///Revisa el vehiculo esta en el modulo de ventas
 				if ($_REQUEST['id_tienda_salida']==8 and $_REQUEST['id_tienda_destino']==1){
-					$VehiculoReproceso=get_dato_sql("ventas","COUNT(*)"," WHERE tipo_ventas_reparacion=1 and reproceso='R' and id_producto=".intval($_REQUEST['id_producto']));  
-					if (es_nulo($VehiculoReproceso)){
-						$verror.=" Solicite el cambio del estado del vehiculo a reproceso";
+					$vehiculoVentas=0;
+					$vehiculoReproceso=0;
+				    $vehiculoVentas=get_dato_sql("ventas","COUNT(*)"," WHERE id_producto=".intval($_REQUEST['id_producto']));  
+					if (!es_nulo($vehiculoVentas)){
+					$vehiculoReproceso=get_dato_sql("ventas","COUNT(*)"," WHERE tipo_ventas_reparacion=1 and reproceso='R' and id_producto=".intval($_REQUEST['id_producto']));  
+						if (es_nulo($vehiculoReproceso)){
+							$verror.=" Solicite el cambio del estado del vehiculo a reproceso";
+						}
 					}
 				}
+				///validaque no tenga ordenes de traslado en borrador
 				if (es_nulo($Codigo_Alterno)){
 					$ordenesborrador=get_dato_sql("orden_traslado","COUNT(*)"," WHERE id_estado in (1,2,4) AND id_producto=".intval($_REQUEST['id_producto']));
 					if ($ordenesborrador>0) {

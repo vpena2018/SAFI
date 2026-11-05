@@ -19,7 +19,8 @@ $autorizacion_traslado=0;
 // Leer Datos    ############################  
 if ($accion=="v") {
 	$cid=0;
-	if (isset($_REQUEST['cid'])) { $cid = sanear_int($_REQUEST['cid']); }
+	//if (isset($_REQUEST['cid'])) { $cid = sanear_int($_REQUEST['cid']); }
+	if (isset($_REQUEST['cid']) && trim($_REQUEST['cid']) !== '') { $cid = sanear_int($_REQUEST['cid']); } else {$cid=0;}
 
 	if (es_nulo($cid)) {
 	 	pagina_permiso(124); //crear nueva orden
@@ -60,7 +61,8 @@ if ($accion=="g") {
     $stud_arr[0]["pmsg"] ="ERROR";
 
     $cid=0;
-	if (isset($_REQUEST['cid'])) { $cid = sanear_int($_REQUEST['cid']); }
+	//if (isset($_REQUEST['cid'])) { $cid = sanear_int($_REQUEST['cid']); }
+	if (isset($_REQUEST['cid']) && trim($_REQUEST['cid']) !== '') { $cid = sanear_int($_REQUEST['cid']); } else {$cid=0;}
 
 	$tipo_desplazamiento_req='';
 	if (isset($_REQUEST['tipo_desplazamiento'])) { $tipo_desplazamiento_req = $_REQUEST['tipo_desplazamiento']; }
@@ -99,6 +101,15 @@ if ($accion=="g") {
 		if($tipo_desplazamiento_req=='') {
 			$verror.="el campo tipo de desplazamiento es obligatorio<br>";
 		}
+        
+		//Valida que le carro este en estado vendido entregado si es venta carshop
+		if($tipo_desplazamiento_req=='VENTA_CARSHOP'){
+            $vehiculo_venta_carshop=get_dato_sql("ventas","id_estado"," WHERE id_estado<20 and id_producto=".GetSQLValue($_REQUEST['id_producto'],"int"));     
+			if (!es_nulo($vehiculo_venta_carshop)){
+			   $verror.="El vehiculo debe estar en estado Vendido Entregado en el módulo de Ventas<br>";
+			}
+		}
+
 
 	}
     

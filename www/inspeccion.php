@@ -89,6 +89,7 @@ if ($accion=="1") { // mostrar vehiculos
         where $habilitado and $tipo_producto";     
     }
  
+    file_put_contents("log_test.txt", $sql . "" . $filtros . $orderby . " limit $offset,".app_reg_por_pag, FILE_APPEND | LOCK_EX);
     $result = sql_select($sql." 
         $filtros
         $orderby
@@ -117,7 +118,7 @@ if ($accion=="1") { // mostrar vehiculos
         }
 
     } 
-
+    $stud_arr[0]["pmsg"] =$sql." ".$filtros." ".$orderby." limit $offset,".app_reg_por_pag;
     salida_json($stud_arr);
     exit;
 
@@ -300,7 +301,8 @@ if ($accion=="1") { // mostrar vehiculos
                                 
                                 </table>
                                 <div class="botones_accion d-print-none " >
-                                <div id="cargando" class="oculto"  align="center" > <img src="img/load.gif"/></div>
+                                <div id="cargando" class="oculto"  align="center" > <img src="img/load.gif"/></div> 
+                                 
                                 <a id="cargando_mas" href="#" onclick="procesar_tabla('tabla'); return false;" class="btn btn-sm btn-info mr-2 mb-2"><i class="fa fa-angle-double-down"></i>  <?php echo "Cargar ".app_reg_por_pag." Mas"; ?></a>
                                 </div>
                             </div>
