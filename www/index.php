@@ -150,12 +150,12 @@ if (isset($_REQUEST["a"])) {
                 $stud_arr[0]["pmsg"] =
                     "Su cuenta se encuentra temporalmente deshabilitada, por favor contacte a su proveedor para que active la cuenta";
             } else {
-                if (!password_verify($password,$row_login['clave'])) {
-                //if (!isset($row_login["clave"])) {
+                if (!password_verify($password, $row_login['clave'])) {
+                    //if (!isset($row_login["clave"])) {
                     $conn->query(
                         "update usuario set acceso_intentos=acceso_intentos+1 where id=" .
-                            $row_login["id"] .
-                            " limit 1"
+                        $row_login["id"] .
+                        " limit 1"
                     );
                 } else {
                     $primer_login = false;
@@ -165,8 +165,8 @@ if (isset($_REQUEST["a"])) {
                     // registro de acceso
                     $conn->query(
                         "update usuario set acceso_ultimo=now(), acceso_intentos=0 where id=" .
-                            $row_login["id"] .
-                            " limit 1"
+                        $row_login["id"] .
+                        " limit 1"
                     );
 
                     //######## definir Variables de sesion ##########
@@ -241,14 +241,14 @@ if (isset($_REQUEST["a"])) {
                         file_put_contents(
                             app_logs_folder . date("Y-m-d") . "_logins.log",
                             "$username , " .
-                                date("Y-m-d g:i a") .
-                                ", " .
-                                $_SERVER["REMOTE_ADDR"] .
-                                " " .
-                                $proxyip .
-                                ", " .
-                                $_SERVER["HTTP_USER_AGENT"] .
-                                " \r\n",
+                            date("Y-m-d g:i a") .
+                            ", " .
+                            $_SERVER["REMOTE_ADDR"] .
+                            " " .
+                            $proxyip .
+                            ", " .
+                            $_SERVER["HTTP_USER_AGENT"] .
+                            " \r\n",
                             FILE_APPEND
                         );
                     }
@@ -288,7 +288,7 @@ if (isset($_REQUEST["a"])) {
                 $new_token_link = app_host . "?a=302&t=" . $new_token;
                 $conn->query(
                     "insert into usuario_recover set fecha=NOW() , token='$new_token', usuario_id=" .
-                        $row_login["id"]
+                    $row_login["id"]
                 );
 
                 if (app_enviar_email == true) {
@@ -341,13 +341,13 @@ if (isset($_REQUEST["a"])) {
                 $newpassenc = password_hash($newpass, PASSWORD_BCRYPT);
                 $conn->query(
                     "update usuario set clave='$newpassenc' where id=" .
-                        $row["usuario_id"] .
-                        "  limit 1"
+                    $row["usuario_id"] .
+                    "  limit 1"
                 );
                 $conn->query(
                     "update usuario_recover set fecha_usado=now() where id=" .
-                        $row["id"] .
-                        "  limit 1"
+                    $row["id"] .
+                    "  limit 1"
                 );
 
                 if (app_enviar_email == true) {
@@ -375,127 +375,132 @@ if (isset($_REQUEST["a"])) {
 ?>
 <!doctype html>
 <html lang="es">
-  <head>
+
+<head>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0,, maximum-scale=1.0, user-scalable=0 shrink-to-fit=no">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0,, maximum-scale=1.0, user-scalable=0 shrink-to-fit=no">
     <meta name="description" content="Online System">
     <meta name="author" content="">
     <meta name="robots" content="none" />
     <title>INGLOSA</title>
- 
-       
+
+
     <link rel="icon" href="img/favicon.ico">
-    
-	<link href="plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-	<link href="plugins/sweetalert2/sweetalert2.min.css" rel="stylesheet">
-	<link href="css/app2.css" rel="stylesheet">
-	<link href="css/index.css" rel="stylesheet">
-  </head>
-  <body>
+
+    <link href="plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="plugins/sweetalert2/sweetalert2.min.css" rel="stylesheet">
+    <link href="css/app2.css" rel="stylesheet">
+    <link href="css/index.css" rel="stylesheet">
+</head>
+
+<body>
 
 
-  <form class="form-signin">
+    <form class="form-signin">
+
+        <div id="login1" class="card">
+            <div class="card-body login-card-body">
+                <div class="text-center mb-4 login-titulo">
+                    <img src="img/logo.png" alt="" class="   mb-2 mt-2" width="200">
+                    <hr>
+                </div>
+
+                <p class="login-box-msg">Ingrese sus datos</p>
+
+                <div class="form-label-group">
+                    <input type="text" id="user" name="user" class="form-control" placeholder="" autocomplete="off"
+                        required autofocus>
+                    <label for="user">Usuario</label>
+                </div>
+
+                <div class="form-label-group">
+                    <input type="password" id="password" name="password" class="form-control" placeholder=""
+                        autocomplete="off" required>
+                    <label for="password">Contraseña</label>
+                </div>
 
 
+                <a href="#" id="login-btn" class="btn btn-primary btn-block"
+                    onclick="login();  return false;">Ingresar</a>
 
-  
-<div id="login1" class="card">
-  <div class="card-body login-card-body">	
-  	 <div class="text-center mb-4 login-titulo">
-    	<img src="img/logo.png" alt="" class="   mb-2 mt-2"  width="200" >
-    	<hr>
-  	 </div>
-  
-	<p class="login-box-msg">Ingrese sus datos</p>
-
-  <div class="form-label-group">
-    <input type="text" id="user" name="user" class="form-control" placeholder="" autocomplete="off" required autofocus>
-    <label for="user">Usuario</label>
-  </div>
-
-  <div class="form-label-group">
-    <input type="password" id="password" name="password" class="form-control" placeholder="" autocomplete="off" required>
-    <label for="password">Contraseña</label>
-  </div>
-
-
-  <a href="#" id="login-btn" class="btn btn-primary btn-block" onclick="login();  return false;">Ingresar</a>
-
-	<p>&nbsp;</p>
-
-	
-	
-<footer class=""> <a href="#" class="" onclick="recover_show();  return false;">Recuperar contraseña</a></footer>
- </div> 
-</div> 
+                <p>&nbsp;</p>
 
 
 
-<div id="login2" class="card oculto">
-  <div class="card-body login-card-body">	
-  
-	<p class="login-box-msg">Ingrese su correo electronico</p>
-
-  <div class="form-label-group">
-    <input type="email" id="email" name="email" class="form-control" placeholder="" required >
-    <label for="email">Email</label>
-  </div>
+                <footer class=""> <a href="#" class="" onclick="recover_show();  return false;">Recuperar contraseña</a>
+                </footer>
+            </div>
+        </div>
 
 
 
-  <a href="#" id="email-btn" class="btn btn-primary btn-block" onclick="recover();  return false;">Recuperar Contraseña</a>
+        <div id="login2" class="card oculto">
+            <div class="card-body login-card-body">
 
- 
-	<p>&nbsp;</p>
-	<p>&nbsp;</p>
-	 <a href="#" class="" onclick="login_show(); return false; ">Regresar</a>
+                <p class="login-box-msg">Ingrese su correo electronico</p>
 
- </div> 
-</div>
-
-
+                <div class="form-label-group">
+                    <input type="email" id="email" name="email" class="form-control" placeholder="" required>
+                    <label for="email">Email</label>
+                </div>
 
 
 
-<p class="mt-5 mb-3 text-muted text-center">&copy; 2024</p>
-
-</form>
-
-<script src="plugins/jquery/jquery-3.5.1.min.js"></script>
-<script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="plugins/sweetalert2/sweetalert2.min.js"></script>
-<script src="js/index.js"></script>
+                <a href="#" id="email-btn" class="btn btn-primary btn-block"
+                    onclick="recover();  return false;">Recuperar Contraseña</a>
 
 
-<script type="text/javascript">
-		
-	$(document).ready(function() {
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <a href="#" class="" onclick="login_show(); return false; ">Regresar</a>
 
-		$.ajaxSetup({
-			cache: false
-		});
-
-	 
-		<?php if ($txt_mensaje != "") {
-      echo "mytoast('info','$txt_mensaje',0);";
-  } ?>
+            </div>
+        </div>
 
 
-		$('#password').keypress(function (e) {
-		 var key = e.which;
-		 if(key == 13)  
-		  {
-		  	if ( $("#login-btn").hasClass("disabled")==false) { login(); }
-		     
-		  }
-		});
 
 
-	});
 
-</script>
-	
+        <p class="mt-5 mb-3 text-muted text-center">&copy; 2024</p>
+
+    </form>
+
+    <script src="plugins/jquery/jquery-3.5.1.min.js"></script>
+    <script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="plugins/sweetalert2/sweetalert2.min.js"></script>
+    <script src="js/index.js"></script>
+
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+            $.ajaxSetup({
+                cache: false
+            });
+
+
+            <?php if ($txt_mensaje != "") {
+                echo "mytoast('info','$txt_mensaje',0);";
+            } ?>
+
+
+            $('#password').keypress(function (e) {
+                var key = e.which;
+                if (key == 13) {
+                    if ($("#login-btn").hasClass("disabled") == false) { login(); }
+
+                }
+            });
+
+
+        });
+
+    </script>
+
 
 </body>
+
 </html>

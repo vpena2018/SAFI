@@ -1152,7 +1152,7 @@ if ($accion=="L") {
                 AND b.tipo_movimiento = '{$TIPO_MOVIMIENTO_SALIDA}'
                 and b.tipo_traslado='{$TIPO_TRASLADO_DOMICILIO}'
             )
-          AND orden_domicilio.id_estado = 4
+          AND orden_domicilio.id_estado in (3,4)
           AND (orden_domicilio.desplazamiento = 'EXTERNO' or orden_domicilio.desplazamiento = 'VENTA_CARSHOP')
           AND t0.autorizacion_traslado=1
           AND orden_domicilio.fecha >= '{$fecha_implementacion}'
@@ -1351,7 +1351,7 @@ if ($accion=="L") {
         LEFT JOIN producto
             ON inspeccion.id_producto = producto.id
         WHERE producto.codigo_alterno LIKE '%$codigo'
-        AND inspeccion.id_estado = 2
+        AND inspeccion.id_estado  IN (2,3)
         AND inspeccion.tipo_doc=2
         AND inspeccion.tipo_inspeccion=1
         AND inspeccion.fecha >= '{$fecha_busqueda_inspecciones}'
