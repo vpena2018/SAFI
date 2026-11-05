@@ -9,6 +9,7 @@
 
 //FECHA                 DEVELOPER                  INCIDENTE
 // 2026-10-28            Moises Gamez              INC-20261028 Se creo log bitacora de errores de base de datos
+// 2026-11-04            Moises Gamez              INC-20261104 Se corrigio deprecated function trim with null values
 
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
@@ -284,17 +285,17 @@ function mensaje($texto, $tipo)
 
 function sanear_int($campo)
 {
-    return filter_var(trim($campo), FILTER_SANITIZE_NUMBER_INT);
+    return filter_var(trim((string) $campo), FILTER_SANITIZE_NUMBER_INT);
 }
 
 function sanear_decimal($campo)
 {
-    return filter_var(trim($campo), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+    return filter_var(trim((string) $campo), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
 }
 
 function sanear_string($campo)
 {
-    return filter_var(trim($campo), FILTER_SANITIZE_STRING);
+    return filter_var(trim((string) $campo), FILTER_SANITIZE_STRING);
 }
 
 function sanear_date($campo)
@@ -680,7 +681,7 @@ function get_dato_sql($tabla, $campo, $where)
 
     if ($result != false && $result->num_rows > 0) {
         $row = $result->fetch_assoc();
-        $salida = trim($row["salida"]);
+        $salida = trim((string) $row["salida"]);
     } elseif ($result === false) {
         global $conn;
         error_log("[get_dato_sql] SQL error: " . $conn->error . " | Query: " . $sql);
@@ -731,7 +732,7 @@ function GetSQLValue($theValue, $theType)
 
 function validar($campo, $input, $type, $requerido)
 {
-    $tmp = trim($input);
+    $tmp = trim((string) $input);
     if (!empty($tmp)) {
 
         switch ($type) {
@@ -996,7 +997,7 @@ function numeroALetras($numero)
         $letras = convertirNumero($entero);
     }
 
-    return trim($letras) . " LEMPIRAS CON " . str_pad($decimal, 2, '0', STR_PAD_LEFT) . "/100";
+    return trim((string) $letras) . " LEMPIRAS CON " . str_pad($decimal, 2, '0', STR_PAD_LEFT) . "/100";
 }
 
 function convertirNumero($num)
@@ -1020,7 +1021,7 @@ function convertirNumero($num)
             $texto .= ' ' . convertirCentenas($resto);
         }
 
-        return trim($texto);
+        return trim((string) $texto);
     }
 
     // MILLONES
@@ -1037,7 +1038,7 @@ function convertirNumero($num)
         $texto .= ' ' . convertirNumero($resto);
     }
 
-    return trim($texto);
+    return trim((string) $texto);
 }
 
 
@@ -1108,7 +1109,7 @@ function convertirCentenas($num)
 
     // ESPECIALES 10–19
     if ($num >= 10 && $num <= 19) {
-        return trim($texto . $especiales[$num]);
+        return trim((string) $texto . $especiales[$num]);
     }
 
     // DECENAS
@@ -1125,7 +1126,7 @@ function convertirCentenas($num)
                 $texto .= ' Y ' . $unidades[$uni];
             }
         }
-        return trim($texto);
+        return trim((string) $texto);
     }
 
     // UNIDADES
@@ -1133,7 +1134,7 @@ function convertirCentenas($num)
         $texto .= $unidades[$num];
     }
 
-    return trim($texto);
+    return trim((string) $texto);
 }
 
 
@@ -1434,7 +1435,7 @@ function campo($nombre, $etiqueta, $tipo, $valor, $class = "", $adicional = "", 
             $lg = ',language: "es"';
             $salida = '<div class="form-group"><label class="outside-label">' . $etiqueta . '</label>';
             $salida .= '<select id="' . $nombre_id . '" name="' . $nombre . '" class="form-control select2 ' . $class . '" style="width: 100%;" ' . $adicional . '>';
-            if (trim($valor_etiqueta) <> "") {
+            if (trim((string) $valor_etiqueta) <> "") {
                 $salida .= '<option value="' . $valor . '" selected="selected">' . $valor_etiqueta . '</option>';
             }
             $salida .= '</select>';
@@ -2109,7 +2110,7 @@ function campo_old($nombre, $etiqueta, $tipo, $valor, $adicional, $valor2 = "", 
 
         case "select2ajax":
             $salida .= '<select id="' . $nombre . '" name="' . $nombre . '" ' . $adicional . '>';
-            if (trim($valor) <> "") {
+            if (trim((string) $valor) <> "") {
                 $salida .= '<option value="' . $valor . '" selected="selected">' . $valor_etiqueta . '</option>';
             }
             $salida .= '          </select>';
@@ -2388,13 +2389,13 @@ function get_porcentajes_sistema()
         } catch (\Throwable $th) {
         }
         try {
-            if (trim($row["productos_exentos_ganancia"]) <> '') {
+            if (trim((string) $row["productos_exentos_ganancia"]) <> '') {
                 $exento_ganancia = array_map('trim', explode(',', $row["productos_exentos_ganancia"]));
             }
         } catch (\Throwable $th) {
         }
         try {
-            if (trim($row["productos_exentos_isv"]) <> '') {
+            if (trim((string) $row["productos_exentos_isv"]) <> '') {
                 $exento_isv = array_map('trim', explode(',', $row["productos_exentos_isv"]));
             }
         } catch (\Throwable $th) {
