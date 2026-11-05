@@ -18,7 +18,7 @@
 require_once ('include/framework.php');
 require_once ('include/ia_comprobantes.php');
 
-define('MAX_COMPROBANTES_POR_VENTA', 10);
+define('MAX_COMPROBANTES_POR_VENTA', 15);
 
 // Estado de venta "Vendido entregado" (tabla ventas_estado): una vez que la venta llega a este
 // estado, ya no se pueden registrar nuevos comprobantes de pago (el proceso de pago/entrega ya
