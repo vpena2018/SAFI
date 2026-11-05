@@ -1,4 +1,5 @@
 <?php
+//// se modifico para pruebas 05/11/2026
 require_once ('include/framework.php');
 require __DIR__ . '/../vendor/autoload.php';
 use PhpOffice\PhpWord\TemplateProcessor;
