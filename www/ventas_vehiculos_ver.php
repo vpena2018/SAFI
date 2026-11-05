@@ -62,8 +62,18 @@ if ($accion=="1") {
     ,ventas_impuestos.nombre as elimpuesto 
 	 ,(SELECT COUNT(*) FROM ventas_fotos WHERE id_venta=ventas.id) fotos  
      ,DATEDIFF(NOW(), ventas.fecha_negociacion) AS dias_negociacion
+     ,ventas.id_estado AS id_estado
      ,ventas.foto as foto
      ,ventas.foto_televentas as foto_televentas
+     ,(SELECT COUNT(*) FROM ventas_comprobantes_pago cp
+        WHERE cp.id_venta=ventas.id AND cp.activo=1
+          AND (cp.archivo_recibo IS NULL OR cp.archivo_recibo='')
+          AND DATEDIFF(NOW(), cp.fecha_registro) > 3) AS comprobantes_sin_recibo
+     ,(SELECT COUNT(*) FROM ventas_comprobantes_pago cp
+        WHERE cp.id_venta=ventas.id AND cp.activo=1) AS comprobantes               
+     ,(SELECT COUNT(*) FROM ventas_comprobantes_pago cp
+        WHERE cp.id_venta=ventas.id AND cp.activo=1 
+              AND (cp.archivo_recibo IS not NULL OR cp.archivo_recibo!='')) AS recibos                       
         FROM ventas
         LEFT OUTER JOIN producto ON (ventas.id_producto=producto.id)        
         LEFT OUTER JOIN ventas_estado ON (ventas.id_estado=ventas_estado.id)
@@ -86,7 +96,7 @@ if ($accion=="1") {
                     <th>Fecha</th>
                     <th>Vehiculo</th>                    
                     <th>Dias Negociacion</th>  
-                    <th>Adjuntos</th>
+                    <th>Comprobantes-Recibos</th>
                     <th>Precio Minimo</th>
                     <th>Precio Maximo</th>
                     <th>Estado</th>
@@ -102,16 +112,18 @@ if ($accion=="1") {
             if ($result -> num_rows>=app_reg_por_pag) {$haymas=1;  }
             while ($row = $result -> fetch_assoc()) {               
                 
-                $comprobante = $row["foto"]!= '' ? 1 : 0;
-                $recibo = $row["foto_televentas"]!= '' ? 1 : 0;
-                $total = $comprobante+$recibo;
-                $adjunto= ($total>0) ? '<td>'.$total.'</td>' : '<td>Sin adjunto</td>';
+                $comprobantes = $row["comprobantes"];   
+                $recibos = $row["recibos"];                             
+                $adjunto= ($comprobantes>0) ? '<td>'.$comprobantes.' - '.$recibos.'</td>' : '<td>Sin adjunto</td>';
                 $fotos = $row["fotos"];
 
                 // Definir color según el valor
                 $btnClass = ($fotos > 0) ? 'btn-success text-white' : 'btn-secondary';
 
-                $datos.='<tr>
+                // Rojo: venta en estado 11 (Negociacion) con comprobante de pago cargado hace mas de 3 dias y aun sin recibo de pago
+                $clase_fila = ($row["id_estado"] == 11 && $row["comprobantes_sin_recibo"] > 0) ? ' class="table-danger"' : '';
+
+                $datos.='<tr'.$clase_fila.'>
                 <td><a  href="#" onclick="abrir_ventas(\''.$row["id"].'\'); return false;" class="btn btn-sm btn-secondary">'.$row["numero"].'</a></td>
                 <td>'.formato_fecha_de_mysql($row["fecha"]).'</td>
                 <td>'.$row["codvehiculo"]. ' ' .$row["vehiculo"].'</td>
