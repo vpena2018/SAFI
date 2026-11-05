@@ -1,3 +1,5 @@
+//FECHA                 DEVELOPER                  INCIDENTE
+//2026-11-04           Moises Gamez              Se creo libreria de funciones para el sistema de ventas, reparaciones y otras.
 var mnu_opening = false;
 
 // ------------------------------------------------------------------------------------------

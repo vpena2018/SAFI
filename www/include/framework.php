@@ -9,7 +9,7 @@
 
 //FECHA                 DEVELOPER                  INCIDENTE
 // 2026-10-28            Moises Gamez              INC-20261028 Se creo log bitacora de errores de base de datos
-// 2026-11-04            Moises Gamez              INC-20261104 Se corrigio deprecated function trim with null values
+// 2026-11-04            Moises Gamez              INC-20261104 Se corrigio deprecated function trim with null values, (string)
 
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);

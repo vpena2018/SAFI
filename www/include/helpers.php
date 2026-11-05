@@ -235,5 +235,4 @@ function getDataVenta($cid)
     where ventas.id = $cid limit 1");
 }
 
-
 ?>

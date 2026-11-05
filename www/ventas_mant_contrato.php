@@ -27,7 +27,6 @@ function validar_campos_obligatorios($data, $campos, $titulo = 'Faltan campos ob
     }
 }
 
-
 function registrar_historial_ventas($cid, $id_estado, $nombre, $observaciones = '')
 {
     $cid = intval($cid);

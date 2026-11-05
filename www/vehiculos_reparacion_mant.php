@@ -1325,9 +1325,7 @@ function descargarVentaPDFReimpresion($id_contrato, $reimpresion, $juridico, $so
 }
 
 
-
 pagina_permiso(178);
-
 
 //contratos
 
