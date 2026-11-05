@@ -19,19 +19,66 @@
 // verificar_recibo_coincide_comprobante() mas abajo.
 //
 // Requiere la tabla creada por sql/comprobantes_pago.sql y la constante
-// app_openai_api_key definida en include/config.php (mientras este vacia,
-// la lectura automatica queda deshabilitada y el usuario llena los datos a
-// mano; el resto de la funcionalidad -guardar y validar duplicados- funciona
-// igual).
+// app_openai_api_key, definida en include/openai_key.php (archivo aparte,
+// gitignorado; ver ese archivo). Este modulo la carga el mismo (ver abajo),
+// sin depender de que config.php la requiera -asi no hace falta editar
+// config.php en cada servidor, solo crear/actualizar openai_key.php-.
+// Mientras openai_key.php no exista o la key quede vacia, la lectura
+// automatica queda deshabilitada y el usuario llena los datos a mano; el
+// resto de la funcionalidad -guardar y validar duplicados- funciona igual.
 // ==============================================================================
+
+if (!defined('app_openai_api_key')) {
+    if (file_exists(__DIR__ . '/openai_key.php')) {
+        require_once(__DIR__ . '/openai_key.php');
+    } else {
+        define('app_openai_api_key', '');
+        define('app_openai_model', 'gpt-4.1-mini');
+    }
+}
+
+// Un comprobante de pago de venta de vehiculo no deberia superar este monto; por arriba de
+// esto es casi siempre un error de lectura de la IA (por ejemplo, confundir separador de miles
+// con decimal). Se descarta el monto leido en vez de guardarlo tal cual -ver
+// extraer_datos_comprobante_ia()-, dejando el campo para que el usuario lo complete a mano.
+define('IA_COMPROBANTES_MONTO_MAXIMO', 3000000.00);
+
+
+/**
+ * Escribe una linea de diagnostico en logs/<fecha>_IA_Comprobantes.log (mismo patron que
+ * framework.php, app_logs_folder). Solo para diagnosticar en produccion por que la lectura
+ * automatica queda deshabilitada o falla, sin depender de tener acceso al servidor por otro
+ * medio para revisarlo.
+ */
+function ia_comprobantes_log($mensaje)
+{
+    if (!defined('app_logs_folder')) {
+        return;
+    }
+    @file_put_contents(
+        app_logs_folder . date('Y-m-d') . '_IA_Comprobantes.log',
+        '[' . date('H:i:s') . '] ' . $mensaje . PHP_EOL,
+        FILE_APPEND
+    );
+}
 
 
 /**
  * Indica si hay una API key de OpenAI configurada, es decir, si la
  * extraccion automatica con IA esta disponible.
  */
-function ia_comprobantes_disponible() {
-    return defined('app_openai_api_key') && trim(app_openai_api_key) != '';
+function ia_comprobantes_disponible()
+{
+    $disponible = defined('app_openai_api_key') && trim(app_openai_api_key) != '';
+
+    if (!$disponible) {
+        ia_comprobantes_log(
+            'No disponible: app_openai_api_key ' . (defined('app_openai_api_key') ? 'definida pero vacia' : 'NO definida (config.php no la creo)')
+            . ' | include/openai_key.php ' . (file_exists(__DIR__ . '/openai_key.php') ? 'SI existe en este servidor' : 'NO existe en este servidor')
+        );
+    }
+
+    return $disponible;
 }
 
 
@@ -50,7 +97,8 @@ function ia_comprobantes_disponible() {
  *     raw: string             texto crudo devuelto por la IA (para auditoria),
  * }
  */
-function extraer_datos_comprobante_ia($ruta_archivo) {
+function extraer_datos_comprobante_ia($ruta_archivo)
+{
 
     $vacio = ['success' => false, 'banco' => null, 'fecha' => null, 'referencia' => null, 'monto' => null, 'error' => '', 'raw' => ''];
 
@@ -74,9 +122,24 @@ function extraer_datos_comprobante_ia($ruta_archivo) {
         . "Si el comprobante muestra un banco/financiera/cooperativa que NO esta en esta lista, transcribe el "
         . "nombre tal como aparece en el documento; nunca inventes un nombre que no este escrito en el comprobante.\n"
         . "Si algun dato no aparece claramente en el documento, usa null en esa clave en vez de adivinar. "
-        . "Esto es MUY importante para la fecha: si el documento muestra dia y mes pero NO muestra el año en "
+        . "IMPORTANTE sobre la fecha: este tipo de comprobante casi siempre trae DOS fechas distintas: (1) una "
+        . "fecha/hora de generacion o impresion del comprobante, que suele aparecer junto a la palabra \"Hora:\" "
+        . "(ej. \"Hora:13:19:20 (GMT-0600) | Fecha: 22/09/2026\"), normalmente en el encabezado o pie del "
+        . "documento, y (2) la fecha real de la transaccion, marcada con la etiqueta \"Fecha:\" dentro del "
+        . "detalle/cuerpo del comprobante, junto a los demas datos de la transaccion (Referencia, Monto, Cuenta "
+        . "bancaria, Concepto, etc.). Usa SIEMPRE la fecha del detalle de la transaccion, NUNCA la fecha de "
+        . "generacion/impresion del comprobante, aunque esta ultima aparezca primero, mas grande, o tambien "
+        . "etiquetada como \"Fecha:\".\n"
+        . "Esto es MUY importante tambien para la fecha: si el documento muestra dia y mes pero NO muestra el año en "
         . "ningun lado, no inventes ni asumas el año (ni el actual ni ningun otro) — en ese caso devuelve "
         . "\"fecha\": null. Nunca conviene un año inventado a que quede en null: el usuario lo completa a mano.\n"
+        . "MUY IMPORTANTE sobre el AÑO de la fecha: estos comprobantes son recientes, y el año en curso es " . date('Y')
+        . ". Lo normal es que el año de la fecha de la transaccion sea " . date('Y') . ". Lee el año con mucho "
+        . "cuidado, digito por digito, tal como esta impreso en la imagen (es comun confundir 6 con 5, 8 con 0 o 3 "
+        . "con 8, o leer un año anterior por error). Si lo que leiste da un año distinto a " . date('Y')
+        . ", vuelve a mirar la imagen y confirma que realmente dice ese año; solo si la imagen claramente muestra "
+        . "otro año, devuelvelo. La fecha SIEMPRE debe ser la que esta escrita en la imagen: nunca la reemplaces por "
+        . "la fecha de hoy ni inventes dia, mes o año que no se vean en el documento.\n"
         . "IMPORTANTE sobre el \"monto\" (y el resto de los datos) cuando la imagen contiene MAS DE UN "
         . "monto o parece tener mas de un comprobante/notificacion mezclados (por ejemplo, un renglon suelto "
         . "de una lista de movimientos o una notificacion, ADEMAS de un recibo formal con campos etiquetados "
@@ -84,7 +147,14 @@ function extraer_datos_comprobante_ia($ruta_archivo) {
         . "datos del recibo formal con campos etiquetados, y OMITE cualquier renglon suelto, notificacion o "
         . "vista previa que no tenga ese formato de recibo, aunque aparezca primero o mas grande en la imagen. "
         . "Un recibo formal casi siempre trae MAS datos (ID de transaccion, cuenta destino, titular, etc.) que "
-        . "un simple renglon de movimiento, y es el que se debe usar como fuente de los 4 campos.";
+        . "un simple renglon de movimiento, y es el que se debe usar como fuente de los 4 campos.\n"
+        . "IMPORTANTE sobre el limite del \"monto\": estos comprobantes son de venta de vehiculos y el monto "
+        . "NUNCA deberia superar " . number_format(IA_COMPROBANTES_MONTO_MAXIMO, 2) . ". Si el numero que "
+        . "transcribiste supera ese limite, es casi seguro un error de lectura (por ejemplo, leer el separador "
+        . "de miles como si fuera decimal, o viceversa); en ese caso vuelve a revisar el documento con cuidado "
+        . "y, si de verdad no logras un monto por debajo del limite, devuelve \"monto\": null en vez de un "
+        . "numero que no confias."
+        . "si es Fertica o Cadelga le titulo tiene que decir orden de compra y la Fecha O/C para la fecha del comprobante y numero de documento para la referencia";
 
     $r = ia_leer_documento_con_ia($ruta_archivo, $prompt);
 
@@ -96,13 +166,25 @@ function extraer_datos_comprobante_ia($ruta_archivo) {
 
     $datos = $r['datos'];
 
+    $monto = (isset($datos['monto']) && $datos['monto'] !== null && $datos['monto'] !== '') ? floatval($datos['monto']) : null;
+
+    $error_monto = null;
+    // Defensa adicional a la instruccion del prompt: si a pesar de todo la IA devuelve un monto
+    // por encima del limite, se descarta aqui en vez de confiar en el numero (nunca se guarda ni
+    // se usa para el chequeo de duplicados; el usuario lo revisa y lo completa a mano).
+    if ($monto !== null && $monto > IA_COMPROBANTES_MONTO_MAXIMO) {
+        ia_comprobantes_log('Monto leido (' . $monto . ') supera el maximo permitido (' . IA_COMPROBANTES_MONTO_MAXIMO . '); se descarta.');
+        $monto = null;
+        $error_monto = 'El monto leido por la IA supera el maximo permitido (L ' . number_format(IA_COMPROBANTES_MONTO_MAXIMO, 2) . '). Verifique e ingrese el monto manualmente.';
+    }
+
     return [
         'success' => true,
         'banco' => isset($datos['banco']) ? trim((string) $datos['banco']) : null,
         'fecha' => isset($datos['fecha']) ? trim((string) $datos['fecha']) : null,
         'referencia' => isset($datos['referencia']) ? trim((string) $datos['referencia']) : null,
-        'monto' => (isset($datos['monto']) && $datos['monto'] !== null && $datos['monto'] !== '') ? floatval($datos['monto']) : null,
-        'error' => null,
+        'monto' => $monto,
+        'error' => $error_monto,
         'raw' => $r['raw'],
     ];
 }
@@ -127,7 +209,8 @@ function extraer_datos_comprobante_ia($ruta_archivo) {
  *                                             para darselo de contexto a la IA (opcional).
  * @return array{success:bool, banco:?string, fecha:?string, monto:?float, empresa:?string, referencia_encontrada:?string, error:?string, raw:string}
  */
-function extraer_datos_recibo_ia($ruta_archivo, $referencia_comprobante = null) {
+function extraer_datos_recibo_ia($ruta_archivo, $referencia_comprobante = null)
+{
 
     $vacio = ['success' => false, 'banco' => null, 'fecha' => null, 'monto' => null, 'empresa' => null, 'referencia_encontrada' => null, 'error' => '', 'raw' => ''];
 
@@ -189,7 +272,8 @@ function extraer_datos_recibo_ia($ruta_archivo, $referencia_comprobante = null) 
  * armado, y devuelve el JSON de respuesta ya parseado (sin todavia interpretar sus claves -eso
  * lo hace cada funcion que llama a este helper, segun lo que le pidio a la IA-).
  */
-function ia_leer_documento_con_ia($ruta_archivo, $prompt) {
+function ia_leer_documento_con_ia($ruta_archivo, $prompt)
+{
 
     $vacio = ['success' => false, 'datos' => null, 'error' => '', 'raw' => ''];
 
@@ -240,16 +324,18 @@ function ia_leer_documento_con_ia($ruta_archivo, $prompt) {
         'temperature' => 0,
         // Fuerza que la respuesta sea un JSON valido (sin bloques ```json ni texto extra).
         'response_format' => ['type' => 'json_object'],
-        'messages' => [[
-            'role' => 'user',
-            'content' => [
-                $bloque_archivo,
-                [
-                    'type' => 'text',
-                    'text' => $prompt,
+        'messages' => [
+            [
+                'role' => 'user',
+                'content' => [
+                    $bloque_archivo,
+                    [
+                        'type' => 'text',
+                        'text' => $prompt,
+                    ],
                 ],
-            ],
-        ]],
+            ]
+        ],
     ];
 
     $respuesta = ia_comprobantes_llamar_api($payload);
@@ -275,8 +361,20 @@ function ia_leer_documento_con_ia($ruta_archivo, $prompt) {
 // Nombre de la empresa que debe aparecer en el encabezado/membrete del recibo. Si la IA lee un
 // nombre de empresa distinto, se rechaza el recibo (evita que se suba el recibo de otra
 // empresa). Comparacion sin importar mayus/minus, y solo verifica que el texto CONTENGA este
-// nombre (para tolerar variaciones como "S.A. DE C.V." al final).
+// nombre (para tolerar variaciones como "S.A. DE C.V." al final). Se acepta cualquiera de los
+// nombres de la lista (razon social o nombre comercial).
 define('RECIBO_EMPRESA_ESPERADA', 'INVERSIONES GLOBALES');
+define('RECIBO_EMPRESAS_VALIDAS', ['INVERSIONES GLOBALES', 'INGLOSA']);
+
+function recibo_empresa_es_valida($empresa)
+{
+    foreach (RECIBO_EMPRESAS_VALIDAS as $nombre) {
+        if (stripos($empresa, $nombre) !== false) {
+            return true;
+        }
+    }
+    return false;
+}
 
 
 /**
@@ -293,7 +391,8 @@ define('RECIBO_EMPRESA_ESPERADA', 'INVERSIONES GLOBALES');
  *
  * @return array{ok: bool, motivo: string}
  */
-function verificar_recibo_coincide_comprobante($ruta_recibo, $fecha_comprobante_mysql, $monto_comprobante, $referencia_comprobante = null) {
+function verificar_recibo_coincide_comprobante($ruta_recibo, $fecha_comprobante_mysql, $monto_comprobante, $referencia_comprobante = null)
+{
 
     $recibo = extraer_datos_recibo_ia($ruta_recibo, $referencia_comprobante);
 
@@ -303,21 +402,25 @@ function verificar_recibo_coincide_comprobante($ruta_recibo, $fecha_comprobante_
         return ['ok' => true, 'motivo' => ''];
     }
 
-    if ($recibo['empresa'] !== null && stripos($recibo['empresa'], RECIBO_EMPRESA_ESPERADA) === false) {
-        return ['ok' => false, 'motivo' => 'El recibo no parece ser de ' . RECIBO_EMPRESA_ESPERADA . ' (el encabezado dice "' . $recibo['empresa'] . '").'];
+    if ($recibo['empresa'] !== null && !recibo_empresa_es_valida($recibo['empresa'])) {
+        return ['ok' => false, 'motivo' => 'El recibo no parece ser de ' . implode(' / ', RECIBO_EMPRESAS_VALIDAS) . ' (el encabezado dice "' . $recibo['empresa'] . '").'];
     }
 
     if ($fecha_comprobante_mysql && $recibo['fecha'] !== null && $recibo['fecha'] !== $fecha_comprobante_mysql) {
         return ['ok' => false, 'motivo' => 'La fecha del recibo (' . $recibo['fecha'] . ') no coincide con la fecha del comprobante (' . $fecha_comprobante_mysql . ').'];
     }
 
-    if ($referencia_comprobante !== null && trim((string) $referencia_comprobante) !== '' && $recibo['referencia_encontrada'] !== null
-        && strtolower(trim($recibo['referencia_encontrada'])) !== strtolower(trim((string) $referencia_comprobante))) {
+    if (
+        $referencia_comprobante !== null && trim((string) $referencia_comprobante) !== '' && $recibo['referencia_encontrada'] !== null
+        && strtolower(trim($recibo['referencia_encontrada'])) !== strtolower(trim((string) $referencia_comprobante))
+    ) {
         return ['ok' => false, 'motivo' => 'El recibo menciona una referencia distinta (' . $recibo['referencia_encontrada'] . ') a la del comprobante (' . $referencia_comprobante . ').'];
     }
 
-    if ($monto_comprobante !== null && $monto_comprobante !== '' && $recibo['monto'] !== null
-        && round((float) $recibo['monto'], 2) !== round((float) $monto_comprobante, 2)) {
+    if (
+        $monto_comprobante !== null && $monto_comprobante !== '' && $recibo['monto'] !== null
+        && round((float) $recibo['monto'], 2) !== round((float) $monto_comprobante, 2)
+    ) {
         return ['ok' => false, 'motivo' => 'El monto del recibo (' . $recibo['monto'] . ') no coincide con el monto del comprobante (' . $monto_comprobante . ').'];
     }
 
@@ -337,7 +440,8 @@ function verificar_recibo_coincide_comprobante($ruta_recibo, $fecha_comprobante_
  *
  * @return array{ok: bool, motivo: string} ok=false cuando algun dato no coincide con la relectura.
  */
-function verificar_comprobante_no_modificado($ruta_archivo, $banco, $fecha_mysql, $referencia, $monto) {
+function verificar_comprobante_no_modificado($ruta_archivo, $banco, $fecha_mysql, $referencia, $monto)
+{
 
     $verif = extraer_datos_comprobante_ia($ruta_archivo);
 
@@ -374,7 +478,8 @@ function verificar_comprobante_no_modificado($ruta_archivo, $banco, $fecha_mysql
  * el prompt le indica a la IA que igual transcriba cualquier otro nombre que no
  * este aqui. Se puede ajustar esta lista sin tocar el resto del codigo.
  */
-function ia_comprobantes_lista_bancos_hn() {
+function ia_comprobantes_lista_bancos_hn()
+{
     return [
         // Bancos
         'Banco Atlantida',
@@ -389,15 +494,17 @@ function ia_comprobantes_lista_bancos_hn() {
         // Financieras
         'Financiera Solidaria (Finsol)',
         'Financiera Comercial Hondureña (Ficensa)',
-        'Financiera Credi Q',        
+        'Financiera Credi Q',
         'Financiera COFISA',
         // Cooperativas
         'Cooperativa Sagrada Familia',
-        'Cooperativa Elga',        
+        'Cooperativa Elga',
         'Cooperativa Caceenp',
-        'Cooperativa Chortega',        
+        'Cooperativa Chortega',
         'Cooperativa Apaguiz',
         'Cooperativa Tocoa',
+        'Cadelga',
+        'Fertica'
     ];
 }
 
@@ -407,7 +514,8 @@ function ia_comprobantes_lista_bancos_hn() {
  * archivo. Devuelve null cuando el tipo de archivo no se puede "leer"
  * (Word, Excel, txt, etc.) y por lo tanto la extraccion automatica no aplica.
  */
-function ia_comprobantes_media_type($ruta_archivo) {
+function ia_comprobantes_media_type($ruta_archivo)
+{
     $ext = strtolower(pathinfo($ruta_archivo, PATHINFO_EXTENSION));
     switch ($ext) {
         case 'jpg':
@@ -430,7 +538,8 @@ function ia_comprobantes_media_type($ruta_archivo) {
  * Aislada en su propia funcion para que extraer_datos_comprobante_ia() no se
  * mezcle con el detalle de HTTP/cURL.
  */
-function ia_comprobantes_llamar_api($payload) {
+function ia_comprobantes_llamar_api($payload)
+{
 
     $ch = curl_init('https://api.openai.com/v1/chat/completions');
 
@@ -462,6 +571,7 @@ function ia_comprobantes_llamar_api($payload) {
     curl_close($ch);
 
     if ($body === false) {
+        ia_comprobantes_log('Error de conexion (cURL) a la API de OpenAI: ' . $curl_error);
         return ['success' => false, 'error' => 'No se pudo conectar con la API de IA: ' . $curl_error, 'raw' => ''];
     }
 
@@ -469,6 +579,7 @@ function ia_comprobantes_llamar_api($payload) {
 
     if ($http_code !== 200 || !is_array($json)) {
         $msg = is_array($json) && isset($json['error']['message']) ? $json['error']['message'] : ('HTTP ' . $http_code);
+        ia_comprobantes_log('La API de OpenAI respondio con error, HTTP ' . $http_code . ': ' . $msg);
         return ['success' => false, 'error' => 'La API de IA respondio con error: ' . $msg, 'raw' => $body];
     }
 
@@ -487,7 +598,8 @@ function ia_comprobantes_llamar_api($payload) {
  * Convierte el texto que devuelve la IA en un arreglo. Tolera que venga
  * envuelto en un bloque ```json ... ``` aunque se le pidio que no lo haga.
  */
-function ia_comprobantes_parsear_json($texto) {
+function ia_comprobantes_parsear_json($texto)
+{
     $texto = trim($texto);
     $texto = preg_replace('/^```(json)?/i', '', $texto);
     $texto = preg_replace('/```$/', '', $texto);
@@ -515,7 +627,8 @@ function ia_comprobantes_parsear_json($texto) {
  * @param mixed  $monto       Numero (se compara con 2 decimales).
  * @return array|false Fila del duplicado encontrado (con id_venta, fecha_registro, etc.) o false si no hay.
  */
-function buscar_comprobante_pago_duplicado($banco, $fecha_mysql, $referencia, $monto) {
+function buscar_comprobante_pago_duplicado($banco, $fecha_mysql, $referencia, $monto)
+{
 
     $sql = "SELECT * FROM ventas_comprobantes_pago
             WHERE activo = 1
@@ -541,7 +654,8 @@ function buscar_comprobante_pago_duplicado($banco, $fecha_mysql, $referencia, $m
  *
  * @return int|false Id del nuevo registro, o false si fallo el insert.
  */
-function guardar_comprobante_pago($id_venta, $archivo, $banco, $fecha_mysql, $referencia, $monto, $origen_datos, $ia_raw, $id_usuario) {
+function guardar_comprobante_pago($id_venta, $archivo, $banco, $fecha_mysql, $referencia, $monto, $origen_datos, $ia_raw, $id_usuario)
+{
 
     $sql = "INSERT INTO ventas_comprobantes_pago
                 (id_venta, archivo, banco, fecha_comprobante, referencia, monto, origen_datos, ia_respuesta_raw, id_usuario, fecha_registro, activo)
@@ -571,7 +685,8 @@ function guardar_comprobante_pago($id_venta, $archivo, $banco, $fecha_mysql, $re
  *
  * @return bool true si se actualizo el registro.
  */
-function guardar_archivo_recibo($id_comprobante, $id_venta, $archivo_recibo) {
+function guardar_archivo_recibo($id_comprobante, $id_venta, $archivo_recibo)
+{
     $sql = "UPDATE ventas_comprobantes_pago
             SET archivo_recibo = " . GetSQLValue($archivo_recibo, 'text') . "
             WHERE id = " . intval($id_comprobante) . "
@@ -586,9 +701,10 @@ function guardar_archivo_recibo($id_comprobante, $id_venta, $archivo_recibo) {
  * Lista los comprobantes activos ya registrados para una venta (para
  * mostrarlos en pantalla como historial de control).
  */
-function listar_comprobantes_pago_venta($id_venta) {
+function listar_comprobantes_pago_venta($id_venta)
+{
     $filas = [];
-    $result = sql_select("SELECT ventas_comprobantes_pago.*, usuario.nombre AS usuario_nombre
+    $result = sql_select("SELECT ventas_comprobantes_pago.*, usuario.usuario AS usuario_nombre
                            FROM ventas_comprobantes_pago
                            LEFT OUTER JOIN usuario ON (ventas_comprobantes_pago.id_usuario = usuario.id)
                            WHERE ventas_comprobantes_pago.id_venta = " . intval($id_venta) . "
@@ -611,7 +727,8 @@ function listar_comprobantes_pago_venta($id_venta) {
  * que esperan validar() y formato_fecha_a_mysql() en el resto del sistema.
  * Si la fecha no viene en formato ISO valido, se devuelve vacia.
  */
-function ia_fecha_iso_a_formato_sesion($fecha_iso) {
+function ia_fecha_iso_a_formato_sesion($fecha_iso)
+{
     if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', trim((string) $fecha_iso), $m)) {
         return '';
     }
