@@ -15,6 +15,8 @@
 // Pago" (esa sigue funcionando exactamente igual que antes).
 // ==============================================================================
 
+//Fecha             Usuario                   Descripcion
+// 2024-06-10       J. Armando Sánchez M.     Se agrego la IA para leer los comprobantes de pago y validar duplicados
 require_once('include/framework.php');
 require_once('include/ia_comprobantes.php');
 
