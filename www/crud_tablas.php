@@ -1,4 +1,5 @@
 <?php
+// 2026-11-04           Moises Gamez              INC-20261104 Se agrego opcion de menu
 require_once('include/framework.php');
 
 
