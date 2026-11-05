@@ -1,12 +1,22 @@
 <?php
-
-if (isset($_REQUEST['cid'])) { $cid = intval($_REQUEST['cid']); } else { exit; }
-if (isset($_REQUEST['pid'])) { $pid = intval($_REQUEST['pid']); } else { exit; }
+//Fecha                Usuario            Descripcion
+// 2024-06-10          VPENA              Se agrego la IA para leer los comprobantes de pago y validar duplicados
+if (isset($_REQUEST['cid'])) {
+    $cid = intval($_REQUEST['cid']);
+} else {
+    exit;
+}
+if (isset($_REQUEST['pid'])) {
+    $pid = intval($_REQUEST['pid']);
+} else {
+    exit;
+}
 $accion = isset($_REQUEST['a']) && in_array($_REQUEST['a'], ['g', 'd']) ? $_REQUEST['a'] : '';
 
-require_once ('include/framework.php');
+require_once('include/framework.php');
 
-function render_foto_thumbnail_averia($row, $mostrar_borrar = false, $puede_borrar_por_permiso = false) {
+function render_foto_thumbnail_averia($row, $mostrar_borrar = false, $puede_borrar_por_permiso = false)
+{
     $archivo = htmlspecialchars($row['archivo'], ENT_QUOTES, 'UTF-8');
     $id = intval($row['id']);
     $fext = strtolower(pathinfo($row['archivo'], PATHINFO_EXTENSION));
@@ -89,8 +99,16 @@ if ($accion == "d") {
     $stud_arr[0]["pcode"] = 0;
     $stud_arr[0]["pmsg"] = "ERROR DB101";
 
-    if (isset($_REQUEST['arch'])) { $arch = "and archivo=" . GetSQLValue(urldecode($_REQUEST["arch"]), "text"); } else { $arch = ""; }
-    if (isset($_REQUEST['cod'])) { $cod = "and id=" . GetSQLValue(urldecode($_REQUEST["cod"]), "text"); } else { $cod = ""; }
+    if (isset($_REQUEST['arch'])) {
+        $arch = "and archivo=" . GetSQLValue(urldecode($_REQUEST["arch"]), "text");
+    } else {
+        $arch = "";
+    }
+    if (isset($_REQUEST['cod'])) {
+        $cod = "and id=" . GetSQLValue(urldecode($_REQUEST["cod"]), "text");
+    } else {
+        $cod = "";
+    }
 
     if ($cod != '' or $arch != '') {
         $borrado_directorio = borrar_foto_directorio2($cid, $cod, $arch, "averia");
@@ -119,7 +137,11 @@ if ($accion == "d") {
     exit;
 }
 
-if (isset($_REQUEST['insp'])) { $insp = intval($_REQUEST['insp']); } else { $insp = 0; }
+if (isset($_REQUEST['insp'])) {
+    $insp = intval($_REQUEST['insp']);
+} else {
+    $insp = 0;
+}
 $tiene_insp = !es_nulo($insp);
 
 $sql_fotos_averia = "SELECT averia_foto.id, averia_foto.archivo, averia_foto.fecha, averia.id_estado, 'actual' as origen
@@ -218,196 +240,196 @@ if ($puede_agregar == true) {
 ?>
 
 <script>
-window.cantidadFotosSubidasGlobal = 0;
+    window.cantidadFotosSubidasGlobal = 0;
 
-function comprimirSiEsImagen(file, opts) {
-    opts = opts || {};
-    var maxLado = opts.maxLado || 1600;
-    var calidad = opts.calidad || 0.82;
-    var tamanoMinimo = opts.tamanoMinimo || (400 * 1024);
+    function comprimirSiEsImagen(file, opts) {
+        opts = opts || {};
+        var maxLado = opts.maxLado || 1600;
+        var calidad = opts.calidad || 0.82;
+        var tamanoMinimo = opts.tamanoMinimo || (400 * 1024);
 
-    if (!file || !file.type || file.type.indexOf('image/') !== 0) {
-        return Promise.resolve(file);
-    }
+        if (!file || !file.type || file.type.indexOf('image/') !== 0) {
+            return Promise.resolve(file);
+        }
 
-    if (file.size < tamanoMinimo) {
-        return Promise.resolve(file);
-    }
+        if (file.size < tamanoMinimo) {
+            return Promise.resolve(file);
+        }
 
-    return new Promise(function(resolve) {
-        var img = new Image();
-        var objectUrl = URL.createObjectURL(file);
+        return new Promise(function (resolve) {
+            var img = new Image();
+            var objectUrl = URL.createObjectURL(file);
 
-        img.onload = function() {
-            var w = img.naturalWidth || img.width;
-            var h = img.naturalHeight || img.height;
-            var ratio = 1;
+            img.onload = function () {
+                var w = img.naturalWidth || img.width;
+                var h = img.naturalHeight || img.height;
+                var ratio = 1;
 
-            if (w > h && w > maxLado) {
-                ratio = maxLado / w;
-            } else if (h >= w && h > maxLado) {
-                ratio = maxLado / h;
-            }
+                if (w > h && w > maxLado) {
+                    ratio = maxLado / w;
+                } else if (h >= w && h > maxLado) {
+                    ratio = maxLado / h;
+                }
 
-            var newW = Math.max(1, Math.round(w * ratio));
-            var newH = Math.max(1, Math.round(h * ratio));
+                var newW = Math.max(1, Math.round(w * ratio));
+                var newH = Math.max(1, Math.round(h * ratio));
 
-            var canvas = document.createElement('canvas');
-            canvas.width = newW;
-            canvas.height = newH;
-            var ctx = canvas.getContext('2d', { alpha: false });
-            ctx.drawImage(img, 0, 0, newW, newH);
+                var canvas = document.createElement('canvas');
+                canvas.width = newW;
+                canvas.height = newH;
+                var ctx = canvas.getContext('2d', { alpha: false });
+                ctx.drawImage(img, 0, 0, newW, newH);
 
-            var mimeOut = (file.type === 'image/png') ? 'image/png' : 'image/jpeg';
-            canvas.toBlob(function(blob) {
+                var mimeOut = (file.type === 'image/png') ? 'image/png' : 'image/jpeg';
+                canvas.toBlob(function (blob) {
+                    URL.revokeObjectURL(objectUrl);
+                    if (!blob || blob.size >= file.size) {
+                        resolve(file);
+                        return;
+                    }
+
+                    var nuevoNombre = file.name;
+                    if (mimeOut === 'image/jpeg') {
+                        nuevoNombre = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+                    }
+
+                    try {
+                        resolve(new File([blob], nuevoNombre, { type: mimeOut, lastModified: Date.now() }));
+                    } catch (e) {
+                        blob.name = nuevoNombre;
+                        resolve(blob);
+                    }
+                }, mimeOut, calidad);
+            };
+
+            img.onerror = function () {
                 URL.revokeObjectURL(objectUrl);
-                if (!blob || blob.size >= file.size) {
-                    resolve(file);
-                    return;
-                }
+                resolve(file);
+            };
 
-                var nuevoNombre = file.name;
-                if (mimeOut === 'image/jpeg') {
-                    nuevoNombre = file.name.replace(/\.[^.]+$/, '') + '.jpg';
-                }
+            img.src = objectUrl;
+        });
+    }
 
-                try {
-                    resolve(new File([blob], nuevoNombre, { type: mimeOut, lastModified: Date.now() }));
-                } catch (e) {
-                    blob.name = nuevoNombre;
-                    resolve(blob);
-                }
-            }, mimeOut, calidad);
-        };
+    function esImagen(archivo) {
+        var ext = archivo.split('.').pop().toLowerCase();
+        return ['jpg', 'jpeg', 'png', 'gif', 'webp'].indexOf(ext) !== -1;
+    }
 
-        img.onerror = function() {
-            URL.revokeObjectURL(objectUrl);
-            resolve(file);
-        };
+    function mostrar_foto(imagen) {
+        var prefijo = 'uploa_d/';
+        $('#ModalWindowTitle').html('');
+        $('#ModalWindowBody').html('<img class="img-fluid" src="' + prefijo + encodeURI(imagen) + '">');
+        $('#ModalWindow').modal('show');
+    }
 
-        img.src = objectUrl;
-    });
-}
-
-function esImagen(archivo) {
-    var ext = archivo.split('.').pop().toLowerCase();
-    return ['jpg', 'jpeg', 'png', 'gif', 'webp'].indexOf(ext) !== -1;
-}
-
-function mostrar_foto(imagen) {
-    var prefijo = 'uploa_d/';
-    $('#ModalWindowTitle').html('');
-    $('#ModalWindowBody').html('<img class="img-fluid" src="' + prefijo + encodeURI(imagen) + '">');
-    $('#ModalWindow').modal('show');
-}
-
-function confirmar_borrar_foto(datos, onSuccess) {
-    Swal.fire({
-        title: 'Borrar Foto',
-        text: 'Desea Borrar la Foto o Documento adjunto?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Si',
-        cancelButtonText: 'No'
-    }).then(function(result) {
-        if (result.value) {
-            $.post('averia_fotos.php', datos, function(json) {
-                if (json.length > 0) {
-                    if (json[0].pcode == 0) {
-                        mytoast('error', json[0].pmsg, 3000);
+    function confirmar_borrar_foto(datos, onSuccess) {
+        Swal.fire({
+            title: 'Borrar Foto',
+            text: 'Desea Borrar la Foto o Documento adjunto?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Si',
+            cancelButtonText: 'No'
+        }).then(function (result) {
+            if (result.value) {
+                $.post('averia_fotos.php', datos, function (json) {
+                    if (json.length > 0) {
+                        if (json[0].pcode == 0) {
+                            mytoast('error', json[0].pmsg, 3000);
+                        }
+                        if (json[0].pcode == 1) {
+                            onSuccess(json);
+                        }
+                    } else {
+                        mytoast('error', 'Error inesperado', 3000);
                     }
-                    if (json[0].pcode == 1) {
-                        onSuccess(json);
+                }).fail(function () {
+                    mytoast('error', 'Error al procesar la solicitud', 3000);
+                });
+            }
+        });
+    }
+
+    function insp_guardar_foto(arch, campo, cantidadFotos) {
+        var puede_agregar_varias = <?= $puede_agregar_varias ? 'true' : 'false' ?>;
+        var datos = { a: "g", cid: $("#cid").val(), pid: $("#pid").val(), arch: encodeURI(arch) };
+
+        $.post('averia_fotos.php', datos, function (json) {
+            if (json.length > 0) {
+                if (json[0].pcode == 0) {
+                    mytoast('error', json[0].pmsg, 3000);
+                }
+                if (json[0].pcode == 1) {
+                    var archivoFinal = (json[0].parch && json[0].parch !== '') ? json[0].parch : arch;
+                    if (puede_agregar_varias) {
+                        window.cantidadFotosSubidasGlobal++;
+                        thumb_agregar2(archivoFinal, campo, puede_agregar_varias);
+                    } else {
+                        $('#' + campo).val(archivoFinal);
+                        $('#files_' + campo).text('Guardado');
+                        $('#lk' + campo).html(archivoFinal);
+                        thumb_agregar2(archivoFinal, campo, puede_agregar_varias);
                     }
-                } else {
-                    mytoast('error', 'Error inesperado', 3000);
                 }
-            }).fail(function() {
-                mytoast('error', 'Error al procesar la solicitud', 3000);
-            });
-        }
-    });
-}
-
-function insp_guardar_foto(arch, campo, cantidadFotos) {
-    var puede_agregar_varias = <?= $puede_agregar_varias ? 'true' : 'false' ?>;
-    var datos = { a: "g", cid: $("#cid").val(), pid: $("#pid").val(), arch: encodeURI(arch) };
-
-    $.post('averia_fotos.php', datos, function(json) {
-        if (json.length > 0) {
-            if (json[0].pcode == 0) {
-                mytoast('error', json[0].pmsg, 3000);
+            } else {
+                mytoast('error', 'Error inesperado', 3000);
             }
-            if (json[0].pcode == 1) {
-                var archivoFinal = (json[0].parch && json[0].parch !== '') ? json[0].parch : arch;
-                if (puede_agregar_varias) {
-                    window.cantidadFotosSubidasGlobal++;
-                    thumb_agregar2(archivoFinal, campo, puede_agregar_varias);
-                } else {
-                    $('#' + campo).val(archivoFinal);
-                    $('#files_' + campo).text('Guardado');
-                    $('#lk' + campo).html(archivoFinal);
-                    thumb_agregar2(archivoFinal, campo, puede_agregar_varias);
+        }).done(function () {
+            if (window.cantidadFotosSubidasGlobal == cantidadFotos && puede_agregar_varias) {
+                var div = document.getElementById('variasfotosdiv');
+                if (div && div.parentNode) {
+                    div.parentNode.removeChild(div);
+                    var nuevoBloque = <?php echo json_encode($nuevoBloqueParaVarias); ?>;
+                    $('.ins_foto_div_nuevo').append(nuevoBloque);
+                    window.cantidadFotosSubidasGlobal = 0;
                 }
             }
-        } else {
-            mytoast('error', 'Error inesperado', 3000);
-        }
-    }).done(function() {
-        if (window.cantidadFotosSubidasGlobal == cantidadFotos && puede_agregar_varias) {
-            var div = document.getElementById('variasfotosdiv');
-            if (div && div.parentNode) {
-                div.parentNode.removeChild(div);
-                var nuevoBloque = <?php echo json_encode($nuevoBloqueParaVarias); ?>;
-                $('.ins_foto_div_nuevo').append(nuevoBloque);
-                window.cantidadFotosSubidasGlobal = 0;
+        }).fail(function () {
+            mytoast('error', 'Error al procesar la solicitud', 3000);
+        });
+    }
+
+    function thumb_agregar2(archivo, campo, puede_agregar_varias) {
+        if (archivo != '' && archivo != undefined) {
+            var fotoId = "foto_" + campo + "_" + archivo.replace(/\W/g, "");
+            var salida = '<div class="foto_item mb-2 mr-2" id="' + fotoId + '">';
+
+            if (esImagen(archivo)) {
+                salida += '<a href="#" onclick="mostrar_foto(\'' + archivo + '\'); return false;"><img class="img img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/' + archivo + '"></a> ';
+            } else {
+                salida += '<a href="uploa_d/' + archivo + '" target="_blank" class="img-thumbnail mb-3 mr-3">' + archivo + '</a>';
             }
-        }
-    }).fail(function() {
-        mytoast('error', 'Error al procesar la solicitud', 3000);
-    });
-}
 
-function thumb_agregar2(archivo, campo, puede_agregar_varias) {
-    if (archivo != '' && archivo != undefined) {
-        var fotoId = "foto_" + campo + "_" + archivo.replace(/\W/g, "");
-        var salida = '<div class="foto_item mb-2 mr-2" id="' + fotoId + '">';
-
-        if (esImagen(archivo)) {
-            salida += '<a href="#" onclick="mostrar_foto(\'' + archivo + '\'); return false;"><img class="img img-thumbnail mb-3 mr-3" src="uploa_d/thumbnail/' + archivo + '"></a> ';
-        } else {
-            salida += '<a href="uploa_d/' + archivo + '" target="_blank" class="img-thumbnail mb-3 mr-3">' + archivo + '</a>';
-        }
-
-        if (puede_agregar_varias) {
-            $("#" + campo).closest('.ins_foto_div').append(salida + '<a id="del_' + campo + '" href="#" onclick="insp_borrar_foto(\'' + archivo + '\',\'del_' + campo + '\', \'' + fotoId + '\'); return false;" class="btn btn-outline-secondary ml-3"><i class="fa fa-eraser"></i> Borrar</a>');
-        } else {
-            $("#" + campo).closest('.ins_foto_div').html(salida + '<a id="del_' + campo + '" href="#" onclick="insp_borrar_foto(\'' + archivo + '\',\'del_' + campo + '\'); return false;" class="btn btn-outline-secondary ml-3"><i class="fa fa-eraser"></i> Borrar</a>');
+            if (puede_agregar_varias) {
+                $("#" + campo).closest('.ins_foto_div').append(salida + '<a id="del_' + campo + '" href="#" onclick="insp_borrar_foto(\'' + archivo + '\',\'del_' + campo + '\', \'' + fotoId + '\'); return false;" class="btn btn-outline-secondary ml-3"><i class="fa fa-eraser"></i> Borrar</a>');
+            } else {
+                $("#" + campo).closest('.ins_foto_div').html(salida + '<a id="del_' + campo + '" href="#" onclick="insp_borrar_foto(\'' + archivo + '\',\'del_' + campo + '\'); return false;" class="btn btn-outline-secondary ml-3"><i class="fa fa-eraser"></i> Borrar</a>');
+            }
         }
     }
-}
 
-function insp_borrar_foto(arch, campo, fotoId) {
-    var datos = { a: "d", cid: $("#cid").val(), pid: $("#pid").val(), arch: encodeURI(arch) };
-    var puede_agregar_varias = <?= $puede_agregar_varias ? 'true' : 'false' ?>;
+    function insp_borrar_foto(arch, campo, fotoId) {
+        var datos = { a: "d", cid: $("#cid").val(), pid: $("#pid").val(), arch: encodeURI(arch) };
+        var puede_agregar_varias = <?= $puede_agregar_varias ? 'true' : 'false' ?>;
 
-    confirmar_borrar_foto(datos, function() {
-        if (puede_agregar_varias) {
-            $("#" + fotoId).remove();
-        } else {
-            $("#" + campo).closest('.ins_foto_div').html('Eliminado');
-        }
-    });
-}
+        confirmar_borrar_foto(datos, function () {
+            if (puede_agregar_varias) {
+                $("#" + fotoId).remove();
+            } else {
+                $("#" + campo).closest('.ins_foto_div').html('Eliminado');
+            }
+        });
+    }
 
-function borrar_fotodb(codid) {
-    var datos = { a: "d", cid: $("#cid").val(), pid: $("#pid").val(), cod: codid };
+    function borrar_fotodb(codid) {
+        var datos = { a: "d", cid: $("#cid").val(), pid: $("#pid").val(), cod: codid };
 
-    confirmar_borrar_foto(datos, function(json) {
-        $(".foto_br" + codid).hide();
-        mytoast('success', json[0].pmsg, 3000);
-    });
-}
+        confirmar_borrar_foto(datos, function (json) {
+            $(".foto_br" + codid).hide();
+            mytoast('success', json[0].pmsg, 3000);
+        });
+    }
 </script>
