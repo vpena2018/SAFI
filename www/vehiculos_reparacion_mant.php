@@ -1,6 +1,9 @@
 <?php
 //FECHA                 DEVELOPER                 INCIDENTE
 // 2026-11-04           Moises Gamez              INC-20261104 Se agrego logica solicitada por Alejandra Barahona validar monto reserva.
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
 require_once('include/framework.php');
 require_once('include/helpers.php');
 require __DIR__ . '/../vendor/autoload.php';

@@ -1,8 +1,11 @@
 <?php
 //FECHA                 DEVELOPER                 INCIDENTE
 // 2026-11-04           Moises Gamez              INC-20261104 Se agrego logica solicitada por Alejandra Barahona validar monto reserva.
+// 2026-11-06           Moises Gamez              INC-20261106 Se agrego validacion de monto reserva contra recibo cargado con IA.
+
 require_once('include/framework.php');
 require_once('include/helpers.php');
+require('include/ventas/ventas_helpers.php');
 require __DIR__ . '/../vendor/autoload.php';
 use PhpOffice\PhpWord\TemplateProcessor;
 
@@ -11,43 +14,10 @@ $nacionalidades = getNacionalidades();
 $clase_car = "";
 $prima_venta_clase = 0;
 
-function validar_campos_obligatorios($data, $campos, $titulo = 'Faltan campos obligatorios')
-{
-    $faltantes = [];
-
-    foreach ($campos as $campo => $nombre) {
-        if (!isset($data[$campo]) || trim($data[$campo]) === '') {
-            $faltantes[] = "• " . $nombre;
-        }
-    }
-
-    if (!empty($faltantes)) {
-        $mensaje = $titulo . ":\n" . implode("\n", $faltantes);
-        throw new Exception($mensaje);
-    }
-}
-
-function registrar_historial_ventas($cid, $id_estado, $nombre, $observaciones = '')
-{
-    $cid = intval($cid);
-    $id_estado = intval($id_estado);
-    $uid = intval($_SESSION['usuario_id']);
-    $sql = "INSERT INTO ventas_historial_estado (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
-            VALUES (
-                $cid,
-                $uid,
-                $id_estado,
-                " . GetSQLValue($nombre, "text") . ",
-                NOW(),
-                " . GetSQLValue($observaciones, "text") . "
-            )";
-    return sql_insert($sql);
-}
-
 /**
  * @return bool|array
  */
-function generarContratoVenta(
+function generarContratoVenta_old(
     int $id_venta,
     string $nombreUsuario,
     string $apellidoUsuario,
@@ -418,7 +388,7 @@ function generarContratoVenta(
     }
 }
 
-function anularContratoVenta(
+function anularContratoVenta_old(
     int $id_venta,
     string $usuarioSistema
 ) {
@@ -483,8 +453,7 @@ function anularContratoVenta(
     }
 }
 
-
-function convertirDocxAPdf(string $docxPath): string
+function convertirDocxAPdf_old(string $docxPath): string
 {
     try {
 
@@ -505,11 +474,10 @@ function convertirDocxAPdf(string $docxPath): string
 
         appLog('SOFFICE: ' . $soffice);
 
-        $cmd = $soffice .
-            ' --headless --convert-to pdf --outdir ' .
+        // Construir comando para convertir DOCX a PDF y agrego nueva logica de entorno al comando para evitar problemas de permisos en /tmp
+        $cmd = $soffice . ' --headless --convert-to pdf --outdir ' .
             escapeshellarg($tmpDir) . ' ' .
             escapeshellarg($docxPath) . ' 2>&1';
-
 
         appLog('CMD: ' . $cmd);
 
@@ -549,7 +517,7 @@ function convertirDocxAPdf(string $docxPath): string
     }
 }
 
-function descargarVentaPDF($id_venta, $juridico, $soloValidar = false)
+function descargarVentaPDF_old($id_venta, $juridico, $soloValidar = false)
 {
     try {
         appLog('===== descargarVentaPDF INICIO =====');
@@ -791,7 +759,7 @@ function descargarVentaPDF($id_venta, $juridico, $soloValidar = false)
     }
 }
 
-function descargarVentaPDFReimpresion($id_contrato, $reimpresion, $juridico, $soloValidar = false)
+function descargarVentaPDFReimpresion_old($id_contrato, $reimpresion, $juridico, $soloValidar = false)
 {
     try {
         appLog('===== descargarVentaPDF INICIO =====');
@@ -1041,6 +1009,21 @@ function descargarVentaPDFReimpresion($id_contrato, $reimpresion, $juridico, $so
     }
 }
 
+function validar_campos_obligatorios($data, $campos, $titulo = 'Faltan campos obligatorios')
+{
+    $faltantes = [];
+
+    foreach ($campos as $campo => $nombre) {
+        if (!isset($data[$campo]) || trim($data[$campo]) === '') {
+            $faltantes[] = "• " . $nombre;
+        }
+    }
+
+    if (!empty($faltantes)) {
+        $mensaje = $titulo . ":\n" . implode("\n", $faltantes);
+        throw new Exception($mensaje);
+    }
+}
 
 
 if (isset($_REQUEST['r'])) {
@@ -1054,9 +1037,9 @@ if ($nuevo == 'N') {
     pagina_permiso(167);
 }
 
+//Condicion para anular contrato
 if (isset($_GET['a']) && $_GET['a'] === 'anularcontrato') {
     $id = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
-
 
     $id_venta = isset($_GET['id']) ? intval($_GET['id']) : 0;
     $numeroVenta = isset($_GET['numeroVenta']) ? intval($_GET['numeroVenta']) : 0;
@@ -1078,8 +1061,6 @@ if (isset($_GET['a']) && $_GET['a'] === 'anularcontrato') {
         $id = 0; // no vino nada
     }
 
-
-
     $id_usuario = intval($_SESSION['usuario_id']);
 
     $resUser = sql_select("
@@ -1094,18 +1075,15 @@ if (isset($_GET['a']) && $_GET['a'] === 'anularcontrato') {
 
     $usuarioSistema = $user['usuario'];
 
-
     $resp = anularContratoVenta($id, $usuarioSistema);
 
     header('Content-Type: application/json');
     echo json_encode($resp);
     exit;
-
-
 }
 
+//Condicion para contrato actual
 if (isset($_GET['a']) && $_GET['a'] === 'actcontrato') {
-
     //$id = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
     $id = 0;
     $id_venta = isset($_GET['id']) ? intval($_GET['id']) : 0;
@@ -1253,7 +1231,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'print_check') {
     exit;
 }
 
-// DESCARGAR (NAVEGADOR)
+// DESCARGAR CONTRATO DESDE (NAVEGADOR)
 if (isset($_GET['a']) && $_GET['a'] === 'print') {
     $id = intval($_GET['id']);
     $id_contrato = intval($_GET['id_contrato']);
@@ -1271,16 +1249,18 @@ if (isset($_GET['a']) && $_GET['a'] === 'print') {
     exit;
 }
 
+//Inicio seteo de accion del formulario
 if (isset($_REQUEST['a'])) {
     $accion = $_REQUEST['a'];
 } else {
     $accion = "v";
 }
 
+//variables para inactivar ciertos objetos solo readonly or disable
 $disable_sec1 = ' ';
 $disable_sec2 = ' ';
 
-// Leer Datos    ############################  
+//Para mostrar los datos registrados en la pantalla - ver datos
 if ($accion == "v") {
     $cid = 0;
     if (isset($_REQUEST['cid'])) {
@@ -1324,7 +1304,7 @@ if ($accion == "v") {
 
 } // fin leer datos
 
-// borrar     ############################  
+// Accion de Borrar datos desde el fomulario
 if ($accion == "del") {
 
     $stud_arr[0]["pcode"] = 0;
@@ -1357,12 +1337,11 @@ if ($accion == "del") {
 
     }
 
-
     salida_json($stud_arr);
     exit;
-
 }
-//Elimina Foto
+
+//Accion de Eliminar Fotos
 if ($accion == "dfoto") {
     $cid = 0;
     $dfoto = 0;
@@ -1375,7 +1354,7 @@ if ($accion == "dfoto") {
     $id_estado_hist = intval(get_dato_sql("ventas", "id_estado", " where id=$cid"));
     if ($dfoto === 1) {
         //sql_update("UPDATE ventas set foto=null where id=$cid limit 1");
-        registrar_historial_ventas($cid, $id_estado_hist, 'Eliminacion foto comprobante de pago', 'Comprobante de pago eliminado');
+        registrar_historial($cid, $id_estado_hist, 'Eliminacion foto comprobante de pago', 'Comprobante de pago eliminado');
         // Si el comprobante eliminado tenia datos guardados en ventas_comprobantes_pago (banco/fecha/referencia/monto),
         // se dan de baja logica para que dejen de contar en la validacion de duplicados y el usuario pueda volver a subirlo.
         $archivo_borrado = get_dato_sql("ventas", "foto", " where id=$cid");
@@ -1383,9 +1362,11 @@ if ($accion == "dfoto") {
             sql_update("UPDATE ventas_comprobantes_pago SET activo=0
                       WHERE id_venta=$cid AND archivo=" . GetSQLValue($archivo_borrado, "text") . " AND activo=1");
         }
+    } elseif ($dfoto === 3) {
+        registrar_historial($cid, $id_estado_hist, 'Eliminacion archivo expediente', 'Archivo de expediente eliminado');
     } else {
         //sql_update("UPDATE ventas set foto_televentas=null where id=$cid limit 1");
-        registrar_historial_ventas($cid, $id_estado_hist, 'Eliminacion foto recibo de pago', 'Recibo de pago eliminado');
+        registrar_historial($cid, $id_estado_hist, 'Eliminacion foto recibo de pago', 'Recibo de pago eliminado');
     }
     $stud_arr[0]["pcode"] = 1;
     $stud_arr[0]["pmsg"] = "Foto eliminada";
@@ -1397,7 +1378,7 @@ if ($accion == "dfoto") {
 // La lectura con IA y el guardado del comprobante de pago (banco/fecha/referencia/monto)
 // se manejan en ventas_comprobantes_pago.php (programa aparte, igual que ventas_fotos_web.php).
 
-// guardar Datos    ############################
+// Accion de guardar datos
 if ($accion == "g") {
     //sleep(3);
     $stud_arr[0]["pcode"] = 0;
@@ -1427,7 +1408,6 @@ if ($accion == "g") {
         //echo "Error al obtener los datos de la clase del vehículo: " . $e->getMessage();
         $verror .= $e->getMessage();
     }
-
 
     //$datos_clase = getDatosClase($row2['clase']);
     $carShopPerfil = "";
@@ -1560,6 +1540,13 @@ if ($accion == "g") {
         if (es_nulo($venta_cont_cred)) {
             $verror .= 'Seleccione el tipo de venta. <br>';
         }
+
+        if (getContarComprobantes($cid) > 0) {
+            if (getTotalComprobantes($cid) < $prima_venta_registrada) {
+                $verror .= 'El total de los comprobantes de pago no puede ser menor a la prima de venta. <br>';
+                (void)updateComprobantePago($cid);
+            }
+        }
     }
 
     /*     if (!es_nulo($cid) && ($id_estado!=20 && $id_estado!=11)){
@@ -1592,7 +1579,7 @@ if ($accion == "g") {
     $enviar_correo_sin_fotos = "";
     $fotoRegistro = get_dato_sql("ventas_estado", "foto", " where foto>=1 and id=" . $id_estado);
     $envioCorreo = get_dato_sql("ventas_estado", "envio_correo", " where envio_correo=1 and id=" . $id_estado);
-    if (!es_nulo($fotoRegistro)) {
+    if (!es_nulo($fotoRegistro) && $id_estado == 11) {
         // Antes se validaba que el campo antiguo "foto" (un solo archivo) viniera con valor.
         // Ahora "foto" quedo de solo lectura (los comprobantes nuevos se registran en la tabla
         // ventas_comprobantes_pago, ver ventas_comprobantes_pago.php), asi que se valida que la
@@ -1622,8 +1609,7 @@ if ($accion == "g") {
 
         $foto_original_comp = $_REQUEST['foto'] ?? '';
         $foto_original_tele = $_REQUEST['foto_televentas'] ?? '';
-
-
+        $archivo_original_expediente = $_REQUEST['archivo_expediente'] ?? '';
 
         // FOTO NORMAL
         if ($foto_original_comp !== '') {
@@ -1665,6 +1651,26 @@ if ($accion == "g") {
 
         }
 
+        // ARCHIVO EXPEDIENTE   
+        if ($archivo_original_expediente !== '') {
+
+            $archivo_original_expediente = urldecode($archivo_original_expediente);
+            $archivo_expediente = str_replace(' ', '_', $archivo_original_expediente);
+
+            $ruta5 = 'uploa_d/' . $archivo_original_expediente;
+            $ruta6 = 'uploa_d/thumbnail/' . $archivo_original_expediente;
+            $nueva5 = 'uploa_d/' . $archivo_expediente;
+            $nueva6 = 'uploa_d/thumbnail/' . $archivo_expediente;
+
+            if (file_exists($ruta5)) {
+                @rename($ruta5, $nueva5);
+            }
+            if (file_exists($ruta6)) {
+                @rename($ruta6, $nueva6);
+            }
+
+        }
+
 
 
         /* if ($foto_original_comp !== '' || $foto_original_tele !== ''){
@@ -1702,10 +1708,6 @@ if ($accion == "g") {
                 rename($ruta4, $nueva4);
             }        
         } */
-
-
-
-
 
         //$hola=$genera_contrato;
 
@@ -1826,6 +1828,12 @@ if ($accion == "g") {
             $sqlcampos .= " , foto_televentas = NULL";
         }
 
+        if (!empty($_REQUEST["archivo_expediente"])) {
+            $sqlcampos .= " , archivo_expediente = " . GetSQLValue($_REQUEST["archivo_expediente"], "text");
+        } else {
+            $sqlcampos .= " , archivo_expediente = NULL";
+        }
+
         if (isset($_REQUEST["reproceso"])) {
             $sqlcampos .= " , reproceso =" . GetSQLValue($_REQUEST["reproceso"], "text");
         }
@@ -1891,7 +1899,7 @@ if ($accion == "g") {
                     $sqlcampos .= " , tipo_ventas_reparacion = 1";
                     $sqlcampos .= " , id_estado = 99";
                     $sqlcampos .= " , reproceso = 'R'";
-                    registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Vehiculo a Reproceso', $nombreReproceso);
+                    registrar_historial($cid, $_REQUEST['id_estado'], 'Vehiculo a Reproceso', $nombreReproceso);
                 }
             }
             if (intval($_REQUEST['id_estado']) == 20) {
@@ -1914,42 +1922,42 @@ if ($accion == "g") {
             if ($id_tienda != intval($_REQUEST['id_tienda'])) {
                 $id_tienda_name_vieja = get_dato_sql("tienda", "nombre", " where id=" . $id_tienda);
                 $id_tienda_name = get_dato_sql("tienda", "nombre", " where id=" . intval($_REQUEST['id_tienda']));
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Tienda', "{$id_tienda_name_vieja} → {$id_tienda_name}");
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Tienda', "{$id_tienda_name_vieja} → {$id_tienda_name}");
             }
 
             $kilometraje = isset($venta_actual['kilometraje']) ? intval($venta_actual['kilometraje']) : 0;
             if ($kilometraje != intval($_REQUEST['kilometraje'])) {
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Kilometraje', "{$kilometraje} → {$_REQUEST['kilometraje']}");
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Kilometraje', "{$kilometraje} → {$_REQUEST['kilometraje']}");
             }
 
             $precio_minimo = isset($venta_actual['precio_minimo']) ? intval($venta_actual['precio_minimo']) : 0;
             if ($precio_minimo != intval($_REQUEST['precio_minimo'])) {
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Precio Minimo', "{$precio_minimo} → {$_REQUEST['precio_minimo']}");
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Precio Minimo', "{$precio_minimo} → {$_REQUEST['precio_minimo']}");
             }
 
             $precio_maximo = isset($venta_actual['precio_maximo']) ? intval($venta_actual['precio_maximo']) : 0;
             if ($precio_maximo != intval($_REQUEST['precio_maximo'])) {
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Precio Maximo', "{$precio_maximo} → {$_REQUEST['precio_maximo']}");
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Precio Maximo', "{$precio_maximo} → {$_REQUEST['precio_maximo']}");
             }
 
             $precio_venta = isset($venta_actual['precio_venta']) ? intval($venta_actual['precio_venta']) : 0;
             if (isset($_REQUEST['precio_venta']) && $precio_venta != intval($_REQUEST['precio_venta'])) {
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Precio de Venta', "{$precio_venta} → {$_REQUEST['precio_venta']}");
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Precio de Venta', "{$precio_venta} → {$_REQUEST['precio_venta']}");
             }
 
             $prima_venta = isset($venta_actual['prima_venta']) ? intval($venta_actual['prima_venta']) : 0;
             if (isset($_REQUEST['prima_venta']) && $prima_venta != intval($_REQUEST['prima_venta'])) {
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Prima de Venta', "{$prima_venta} → {$_REQUEST['prima_venta']}");
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Prima de Venta', "{$prima_venta} → {$_REQUEST['prima_venta']}");
             }
 
             $valor_descuento = isset($venta_actual['valor_descuento']) ? intval($venta_actual['valor_descuento']) : 0;
             if (isset($_REQUEST['valor_descuento']) && $valor_descuento != intval($_REQUEST['valor_descuento'])) {
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Descuento Aplicado', "{$valor_descuento} → {$_REQUEST['valor_descuento']}");
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Descuento Aplicado', "{$valor_descuento} → {$_REQUEST['valor_descuento']}");
             }
 
             $valor_extras = isset($venta_actual['valor_extras']) ? intval($venta_actual['valor_extras']) : 0;
             if (isset($_REQUEST['valor_extras']) && $valor_extras != intval($_REQUEST['valor_extras'])) {
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Extras Aplicados', "{$valor_extras} → {$_REQUEST['valor_extras']}");
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Extras Aplicados', "{$valor_extras} → {$_REQUEST['valor_extras']}");
             }
 
             // Normalizar cliente viejo
@@ -1977,7 +1985,7 @@ if ($accion == "g") {
                     : 'Vacío';
 
                 if ($nombre_viejo != $nombre_nuevo) {
-                    registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificación de cliente', "Cliente: {$nombre_viejo} → {$nombre_nuevo}");
+                    registrar_historial($cid, $_REQUEST['id_estado'], 'Modificación de cliente', "Cliente: {$nombre_viejo} → {$nombre_nuevo}");
                 }
             }
 
@@ -2020,10 +2028,10 @@ if ($accion == "g") {
                 $id_estado_viejo_name = get_dato_sql("ventas_estado", "nombre", " where id=" . $id_estado);
                 $id_estado_name = get_dato_sql("ventas_estado", "nombre", " where id=" . $_REQUEST['id_estado']);
 
-                registrar_historial_ventas($cid, $id_estado, 'Modificacion de Estado', "{$id_estado_viejo_name} → {$id_estado_name}");
+                registrar_historial($cid, $id_estado, 'Modificacion de Estado', "{$id_estado_viejo_name} → {$id_estado_name}");
 
                 if ($id_estado_name != 'en negociacion' && $id_estado_name != 'Vendido entregado') {
-                    registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificación de cliente', 'Cliente eliminado al quitar estado de en negociacion');
+                    registrar_historial($cid, $_REQUEST['id_estado'], 'Modificación de cliente', 'Cliente eliminado al quitar estado de en negociacion');
                 }
 
             }
@@ -2044,45 +2052,45 @@ if ($accion == "g") {
             if ($id_impuesto != intval($_REQUEST['id_impuesto'])) {
                 $id_impuesto_name_viejo = get_dato_sql("ventas_impuestos", "nombre", " where id=" . $id_impuesto);
                 $id_impuesto_name = get_dato_sql("ventas_impuestos", "nombre", " where id=" . intval($_REQUEST['id_impuesto']));
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Impuestos', "{$id_impuesto_name_viejo} → {$id_impuesto_name}");
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Impuestos', "{$id_impuesto_name_viejo} → {$id_impuesto_name}");
             }
 
             $id_factura = isset($venta_actual['id_factura']) ? intval($venta_actual['id_factura']) : 0;
             if ($id_factura != intval($_REQUEST['id_factura'])) {
                 $id_factura_name_vieja = get_dato_sql("ventas_factura", "nombre", " where id=" . $id_factura);
                 $id_factura_name = get_dato_sql("ventas_factura", "nombre", " where id=" . intval($_REQUEST['id_factura']));
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Factura', "{$id_factura_name_vieja} → {$id_factura_name}");
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Factura', "{$id_factura_name_vieja} → {$id_factura_name}");
             }
 
             $id_vendedor = isset($venta_actual['id_vendedor']) ? intval($venta_actual['id_vendedor']) : 0;
             if ($id_vendedor != intval($_REQUEST['id_vendedor'])) {
                 $id_vendedor_name_viejo = get_dato_sql("usuario", "nombre", " where id=" . $id_vendedor);
                 $id_vendedor_name = get_dato_sql("usuario", "nombre", " where id=" . intval($_REQUEST['id_vendedor']));
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Vendedor', "{$id_vendedor_name_viejo} → {$id_vendedor_name}");
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Vendedor', "{$id_vendedor_name_viejo} → {$id_vendedor_name}");
             }
 
             $id_televentas = isset($venta_actual['id_televentas']) ? intval($venta_actual['id_televentas']) : 0;
             if ($id_televentas != intval($_REQUEST['id_televentas'])) {
                 $id_televentas_name_viejo = get_dato_sql("usuario", "nombre", " where id=" . $id_televentas);
                 $id_televentas_name = get_dato_sql("usuario", "nombre", " where id=" . intval($_REQUEST['id_televentas']));
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Televentas', "{$id_televentas_name_viejo} → {$id_televentas_name}");
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Televentas', "{$id_televentas_name_viejo} → {$id_televentas_name}");
             }
 
             $observaciones_bd = trim((string) ($venta_actual['observaciones'] ?? ''));
             if ($observaciones_bd != trim($_REQUEST['observaciones'])) {
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Observaciones', $_REQUEST['observaciones']);
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Observaciones', $_REQUEST['observaciones']);
             }
 
             $foto_actual_bd = (string) ($venta_actual['foto'] ?? '');
             $foto1 = isset($_REQUEST['foto']) && $_REQUEST['foto'] !== '' ? trim($_REQUEST['foto']) : '';
             if (!empty($foto1) && $foto1 !== $foto_actual_bd) {
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Subida foto comprobante de pago', $foto1);
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Subida foto comprobante de pago', $foto1);
             }
 
             $foto_tele_actual_bd = (string) ($venta_actual['foto_televentas'] ?? '');
             $foto2 = isset($_REQUEST['foto_televentas']) && $_REQUEST['foto_televentas'] !== '' ? trim($_REQUEST['foto_televentas']) : '';
             if (!empty($foto2) && $foto2 !== $foto_tele_actual_bd) {
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Subida foto recibo de pago', $foto2);
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Subida foto recibo de pago', $foto2);
             }
 
             $venta_cont_cred_bd = isset($venta_actual['venta_cont_cred']) ? intval($venta_actual['venta_cont_cred']) : 0;
@@ -2090,7 +2098,7 @@ if ($accion == "g") {
                 $venta_cont_cred_labels = [1 => 'Contado', 2 => 'Crédito'];
                 $label_viejo = $venta_cont_cred_labels[$venta_cont_cred_bd] ?? $venta_cont_cred_bd;
                 $label_nuevo = $venta_cont_cred_labels[intval($_REQUEST['venta_cont_cred'])] ?? $_REQUEST['venta_cont_cred'];
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Tipo Contado/Crédito', "{$label_viejo} → {$label_nuevo}");
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Tipo Contado/Crédito', "{$label_viejo} → {$label_nuevo}");
             }
 
             $id_financiera_bd = isset($venta_actual['id_financiera']) ? intval($venta_actual['id_financiera']) : 0;
@@ -2098,7 +2106,7 @@ if ($accion == "g") {
                 $financiera_name = intval($_REQUEST['id_financiera']) > 0
                     ? get_dato_sql('financieras', 'nombre', ' where id=' . intval($_REQUEST['id_financiera']))
                     : 'Ninguna';
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Financiera', $financiera_name);
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Financiera', $financiera_name);
             }
 
             $id_financiera_estado_bd = isset($venta_actual['id_financiera_estado']) ? intval($venta_actual['id_financiera_estado']) : 0;
@@ -2106,12 +2114,12 @@ if ($accion == "g") {
                 $financiera_estado_name = intval($_REQUEST['id_financiera_estado']) > 0
                     ? get_dato_sql('financieras_estados', 'nombre', ' where id=' . intval($_REQUEST['id_financiera_estado']))
                     : 'Ninguno';
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Estado Financiera', $financiera_estado_name);
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Estado Financiera', $financiera_estado_name);
             }
 
             $asesor_financiera_bd = trim((string) ($venta_actual['asesor_financiera'] ?? ''));
             if (isset($_REQUEST['asesor_financiera']) && $asesor_financiera_bd !== trim($_REQUEST['asesor_financiera'])) {
-                registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Modificacion de Asesor Financiera', "{$asesor_financiera_bd} → {$_REQUEST['asesor_financiera']}");
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Asesor Financiera', "{$asesor_financiera_bd} → {$_REQUEST['asesor_financiera']}");
             }
 
 
@@ -2169,7 +2177,7 @@ if ($accion == "g") {
             $result = sql_insert($sql);
             $cid = $result; //last insert id 
 
-            registrar_historial_ventas($cid, $_REQUEST['id_estado'], 'Nuevo registro de vehiculo', 'Nuevo');
+            registrar_historial($cid, $_REQUEST['id_estado'], 'Nuevo registro de vehiculo', 'Nuevo');
 
             // RL. 20251121 - Para nuevo registro en estado 5, verificar fotos
             $id_estado = intval($_REQUEST['id_estado']);
@@ -2949,6 +2957,8 @@ if ($accion == "g") {
                                     value="<?php echo htmlspecialchars($foto ?? ''); ?>">
                                 <input type="hidden" id="foto_televentas_comprobante_in" name="foto_televentas"
                                     value="<?php echo htmlspecialchars($foto_televentas ?? ''); ?>">
+                                <input type="hidden" id="archivo_expediente_in" name="archivo_expediente"
+                                    value="<?php echo htmlspecialchars($archivo_expediente ?? ''); ?>">
 
                             </fieldset>
                         </form>
@@ -3030,6 +3040,7 @@ if ($accion == "g") {
             $('#valor_descuento, #valor_extras').on('input change', calcularPrecioConDescuento);
 
             $('#btnguardar').on('click', function (e) {
+                //debugger;
                 e.preventDefault();
 
                 popupconfirmar(
@@ -3410,6 +3421,7 @@ if ($accion == "g") {
             // Actualizar hidden inputs dentro del formulario para que se guarden al hacer submit
             if (campo === 'foto') { $('#foto_comprobante_in').val(arch); }
             if (campo === 'foto_televentas') { $('#foto_televentas_comprobante_in').val(arch); }
+            if (campo === 'archivo_expediente') { $('#archivo_expediente_in').val(arch); }
         }
 
 
@@ -3488,6 +3500,8 @@ if ($accion == "g") {
                                 $('#thumb_foto_' + foto).remove();
                                 if (foto === 1) {
                                     $('#foto_comprobante_in').val('');
+                                } else if (foto === 3) {
+                                    $('#archivo_expediente_in').val('');
                                 } else {
                                     $('#foto_televentas_comprobante_in').val('');
                                 }
@@ -3608,8 +3622,9 @@ if ($accion == "g") {
 
             if (eltab == 'nav_comprobantes_pago') {
                 var cid = $('#id').val();
+                var id_estado = $('#id_estado').val();
                 if (cid > 0) {
-                    $('#nav_comprobantes_pago').load('ventas_comprobantes_pago.php?cid=' + cid);
+                    $('#nav_comprobantes_pago').load('ventas_comprobantes_pago.php?cid=' + cid + '&id_estado=' + id_estado);
                 }
             }
 

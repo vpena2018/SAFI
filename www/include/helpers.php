@@ -235,4 +235,36 @@ function getDataVenta($cid)
     where ventas.id = $cid limit 1");
 }
 
+//Cuenta # de comprobantes de pago registrados en la negociacion de venta.
+function getContarComprobantes($cid)
+{
+    $sql = "SELECT COUNT(*) total FROM ventas_comprobantes_pago WHERE id_venta = $cid and activo = 1";
+    $res = sql_select($sql);
+    if ($res && $row = $res->fetch_assoc()) {
+        return (int) $row['total'];
+    }
+    return 0;
+}
+
+//Suma el monto de los comprobantes de pago registrados en la negociacion de venta.
+function getTotalComprobantes($cid)
+{
+    $sql = "SELECT ifnull(SUM(monto),0) total FROM ventas_comprobantes_pago WHERE id_venta = $cid and activo = 1";
+    $res = sql_select($sql);
+    if ($res && $row = $res->fetch_assoc()) {
+        return (int) $row['total'];
+    }
+    return 0;
+}
+#[\NoDiscard]
+function updateComprobantePago($cid): bool
+{
+
+    $sql = "UPDATE ventas_comprobantes_pago
+            SET activo = 0
+            WHERE id_venta = $cid and activo = 1";
+
+    return sql_update($sql);
+}
+
 ?>

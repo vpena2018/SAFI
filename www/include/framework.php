@@ -1661,8 +1661,10 @@ function campo_upload_foto_ventas($nombre, $etiqueta, $tipo, $valor, $adicional,
                                                               
                                     //    $('#files_$nombre').text('Guardado');
                                     //    $('#lk$nombre').html(file.name);
-                                    //console.log(file.name,'$nombre'); 
-                                    insp_guardar_foto_ventas(file.name,'$nombre',isMain);
+                                    //console.log(file.name, '$nombre'); 
+                                    
+                                    //insp_guardar_foto_ventas(file.name,'$nombre',isMain);
+                                    insp_guardar_foto(file.name,'$nombre',isMain);
          ";
 
 
@@ -1968,15 +1970,16 @@ function campo_upload($nombre, $etiqueta, $tipo, $valor, $adicional, $id_solicit
                                       
                                      
    
-                                    //    $('#$nombre').val(file.name);
+                                    //     $('#$nombre').val(file.name);
                                                               
-                                    //    $('#files_$nombre').text('Guardado');
+                                    //     $('#files_$nombre').text('Guardado');
                                     //    $('#lk$nombre').html(file.name);
-                                    //console.log(hola file.name,'$nombre'); 
+                                    //console.log('file.name ',$nombre); 
                                     if (file.error) {
                                         $('#files_$nombre').text(file.error);
                                         return;
                                     }
+                                    console.log('File ', '$nombre');
                                     insp_guardar_foto(file.name,'$nombre');
          ";
 

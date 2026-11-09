@@ -15,11 +15,9 @@
 // Pago" (esa sigue funcionando exactamente igual que antes).
 // ==============================================================================
 
-//Fecha             Usuario                   Descripcion
-// 2024-06-10       J. Armando Sánchez M.     Se agrego la IA para leer los comprobantes de pago y validar duplicados
-// 2026-11-05       Moise Gamez(Update).      Se agrego la validacion de recibo de pago (televentas) y el comprobante original (foto) para que se muestren en la misma pestaña de comprobantes de pago
 require_once('include/framework.php');
 require_once('include/ia_comprobantes.php');
+$cid = 0;
 
 define('MAX_COMPROBANTES_POR_VENTA', 15);  // tope de comprobantes por venta (no se puede subir mas)
 
@@ -41,16 +39,39 @@ function venta_comprobante_pago_bloqueada($cid)
     return '';
 }
 
+function updateArchivoExpediente($cid, $archivo)
+{
+    return sql_update("UPDATE ventas SET archivo_expediente = $cid WHERE id=$archivo");
+}
+
+// Modificar/borrar un comprobante ya registrado no se permite cuando la venta esta en estado
+// "Vendido entregado" (20). Igual que arriba: el boton oculto es solo ayuda visual, el servidor
+// tambien lo valida.
+function venta_comprobante_pago_modificacion_bloqueada($cid)
+{
+    $id_estado = intval(get_dato_sql('ventas', 'id_estado', ' where id=' . intval($cid)));
+    if ($id_estado === ESTADO_VENTA_VENDIDO_ENTREGADO) {
+        return 'No se pueden modificar ni borrar comprobantes de pago: la venta ya esta en estado "Vendido entregado".';
+    }
+    return '';
+}
+
 if (!isset($_REQUEST['a'])) {
     $accion = 'v';
 } else {
     $accion = $_REQUEST['a'];
 }
 $cid = 0;
+$id_estado = 0;
 if (isset($_REQUEST['cid'])) {
     $cid = intval($_REQUEST['cid']);
 }
-
+if (isset($_REQUEST['id_estado'])) {
+    $id_estado = intval($_REQUEST['id_estado']);
+} else {
+    //$id_estado = 0;
+    $id_estado = intval(get_dato_sql('ventas', 'id_estado', ' where id=' . intval($cid))) ?? 0;
+}
 
 // Arma el HTML del contador + tabla de comprobantes registrados. Se usa tanto en la
 // vista completa como en la accion "tabla" (refresco parcial, sin recargar el widget
@@ -60,10 +81,37 @@ function html_tabla_comprobantes($cid)
     $comprobantes = listar_comprobantes_pago_venta($cid);
     $total = count($comprobantes);
 
+    $monto_total = 0;
+    foreach ($comprobantes as $c) {
+        $monto_total += (float) $c['monto'];
+    }
+
+    // Precio de venta (tabla ventas) vs. lo ya recibido en comprobantes de pago, para que se
+    // vea de un vistazo cuanto falta por cobrar de esta venta.
+    $precio_venta = (float) get_dato_sql('ventas', 'precio_venta', ' where id=' . $cid);
+    $saldo_pendiente = $precio_venta - $monto_total;
+    $saldo_clase = ($saldo_pendiente > 0) ? 'text-danger' : 'text-success';
+    $puede_modificar = tiene_permiso(168) && venta_comprobante_pago_modificacion_bloqueada($cid) === '';
+
     $badge_clase = ($total >= MAX_COMPROBANTES_POR_VENTA) ? 'badge-secondary' : 'badge-info';
     $html = '<div class="d-flex justify-content-between align-items-center mb-2">'
         . '<h6 class="mb-0"><i class="fa fa-list-ul text-muted mr-2"></i>Comprobantes Registrados</h6>'
         . '<span class="badge ' . $badge_clase . ' badge-pill" style="font-size:.85rem;">' . $total . ' / ' . MAX_COMPROBANTES_POR_VENTA . '</span>'
+        . '</div>';
+
+    $html .= '<div class="row text-center mb-3">'
+        . '<div class="col-4"><div class="border rounded py-2 bg-white">'
+        . '<div class="text-muted small">Precio de Venta</div>'
+        . '<div class="font-weight-bold">L ' . number_format($precio_venta, 2) . '</div>'
+        . '</div></div>'
+        . '<div class="col-4"><div class="border rounded py-2 bg-white">'
+        . '<div class="text-muted small">Total Comprobantes</div>'
+        . '<div class="font-weight-bold">L ' . number_format($monto_total, 2) . '</div>'
+        . '</div></div>'
+        . '<div class="col-4"><div class="border rounded py-2 bg-white">'
+        . '<div class="text-muted small">Saldo Pendiente</div>'
+        . '<div class="font-weight-bold ' . $saldo_clase . '">L ' . number_format($saldo_pendiente, 2) . '</div>'
+        . '</div></div>'
         . '</div>';
 
     if ($total > 0) {
@@ -76,7 +124,7 @@ function html_tabla_comprobantes($cid)
                         <th>Referencia</th>
                         <th class="text-right">Monto</th>
                         <th>Creado por</th>
-                        <th class="text-center">Borrar</th>
+                        <th class="text-center">Acciones</th>
                     </tr></thead><tbody>';
         foreach ($comprobantes as $c) {
             // Columna "Recibo": si ya tiene archivo, un boton para verlo + (solo con permiso de
@@ -85,11 +133,13 @@ function html_tabla_comprobantes($cid)
             // primera subida no requiere permiso especial, es parte del registro normal).
             if (!empty($c['archivo_recibo'])) {
                 $recibo_html = '<a href="uploa_d_ventas/' . rawurlencode($c['archivo_recibo']) . '" target="_blank" class="btn btn-sm btn-outline-success" title="Ver recibo"><i class="fa fa-eye"></i> Ver</a> ';
-                if (tiene_permiso(168)) {
+                if ($puede_modificar) {
                     $recibo_html .= '<a href="#" onclick="recibo_elegir_archivo(' . (int) $c['id'] . '); return false;" class="btn btn-sm btn-outline-secondary" title="Reemplazar recibo"><i class="fa fa-sync-alt"></i></a>';
                 }
-            } else {
+            } elseif (venta_comprobante_pago_modificacion_bloqueada($cid) === '') {
                 $recibo_html = '<a href="#" onclick="recibo_elegir_archivo(' . (int) $c['id'] . '); return false;" class="btn btn-sm btn-outline-secondary"><i class="fa fa-upload"></i> Subir</a>';
+            } else {
+                $recibo_html = '<span class="text-muted">-</span>';
             }
 
             // Columna "Comprobante de Pago": mismo estilo de boton que "Recibo" (siempre tiene
@@ -105,10 +155,24 @@ function html_tabla_comprobantes($cid)
                 . '<td class="text-right font-weight-bold">L ' . number_format((float) $c['monto'], 2) . '</td>'
                 . '<td>' . htmlspecialchars($c['usuario_nombre'] ?? '') . '</td>'
                 // Mismo permiso (168) que se usa para "Borrar" en la pestaña "Fotos de Comprobante de Pago".
-                . '<td class="text-center">' . (tiene_permiso(168) ? '<a href="#" class="btn btn-sm btn-outline-danger" onclick="comprobante_borrar(' . (int) $c['id'] . '); return false;" title="Borrar"><i class="fa fa-trash-alt"></i></a>' : '') . '</td>'
+                // Editar banco/fecha/referencia/monto despues de guardado: mismo permiso (168) que Borrar.
+                . '<td class="text-center text-nowrap">' . ($puede_modificar
+                ? '<a href="#" class="btn btn-sm btn-outline-primary mr-1" title="Editar"'
+                . ' data-id="' . (int) $c['id'] . '"'
+                . ' data-banco="' . htmlspecialchars($c['banco'], ENT_QUOTES) . '"'
+                . ' data-fecha="' . htmlspecialchars(formato_fecha_de_mysql($c['fecha_comprobante']), ENT_QUOTES) . '"'
+                . ' data-referencia="' . htmlspecialchars($c['referencia'], ENT_QUOTES) . '"'
+                . ' data-monto="' . htmlspecialchars(number_format((float) $c['monto'], 2, '.', ''), ENT_QUOTES) . '"'
+                . ' onclick="comprobante_editar(this); return false;"><i class="fa fa-edit"></i></a>'
+                . '<a href="#" class="btn btn-sm btn-outline-danger" onclick="comprobante_borrar(' . (int) $c['id'] . '); return false;" title="Borrar"><i class="fa fa-trash-alt"></i></a>'
+                : '') . '</td>'
                 . '</tr>';
         }
-        $html .= '</tbody></table></div>';
+        $html .= '</tbody><tfoot><tr class="font-weight-bold bg-light">'
+            . '<td colspan="5" class="text-right">Total</td>'
+            . '<td class="text-right">L ' . number_format($monto_total, 2) . '</td>'
+            . '<td colspan="2"></td>'
+            . '</tr></tfoot></table></div>';
     } else {
         $html .= '<div class="text-center text-muted border rounded py-4 bg-white">'
             . '<i class="fa fa-folder-open fa-2x mb-2 d-block"></i>'
@@ -246,7 +310,7 @@ if ($accion == 'guardar_comprobante') {
     }
 
     $verror = "";
-    $verror .= validar("Venta", $cid, "int", true);
+    $verror .= validar("Venta", (string) $cid, "int", true);
     $verror .= validar("Archivo", $archivo, "text", true);
     $verror .= validar("Banco", $banco, "text", true);
     $verror .= validar("Fecha del comprobante", $fecha_form, "date", true);
@@ -330,6 +394,12 @@ if ($accion == 'borrar_comprobante') {
         salida_json($stud_arr);
         exit;
     }
+    $bloqueo = venta_comprobante_pago_modificacion_bloqueada($cid);
+    if ($bloqueo !== '') {
+        $stud_arr[0]["pmsg"] = $bloqueo;
+        salida_json($stud_arr);
+        exit;
+    }
 
     $id_comprobante = intval($_REQUEST['id_comprobante'] ?? 0);
 
@@ -346,6 +416,117 @@ if ($accion == 'borrar_comprobante') {
 }
 
 
+// ---- Modifica banco/fecha/referencia/monto de un comprobante ya registrado. ----
+// Exige el mismo permiso (168) que Borrar. No re-verifica contra la IA (el fin es justamente
+// corregir datos), pero si impide que quede igual a otro comprobante activo.
+if ($accion == 'editar_comprobante') {
+    $stud_arr[0]["pcode"] = 0;
+    $stud_arr[0]["pmsg"] = "ERROR";
+
+    if (!tiene_permiso(168)) {
+        $stud_arr[0]["pmsg"] = "No tiene privilegios para Modificar";
+        salida_json($stud_arr);
+        exit;
+    }
+    $bloqueo = venta_comprobante_pago_modificacion_bloqueada($cid);
+    if ($bloqueo !== '') {
+        $stud_arr[0]["pmsg"] = $bloqueo;
+        salida_json($stud_arr);
+        exit;
+    }
+
+    $id_comprobante = intval($_REQUEST['id_comprobante'] ?? 0);
+    $banco = trim($_REQUEST['banco'] ?? '');
+    $fecha_form = trim($_REQUEST['fecha'] ?? '');
+    $referencia = trim($_REQUEST['referencia'] ?? '');
+    $monto = trim($_REQUEST['monto'] ?? '');
+
+    $verror = "";
+    // (string): ctype_digit() con un int entre -128 y 255 lo toma como codigo ASCII y falla (ver
+    // validar() en framework.php); asi no depende de que el servidor tenga esa version.
+    // $id_comprobante no se valida con validar(): es el id autogenerado de un registro que ya
+    // existe (intval lo deja entero) y mas abajo se comprueba que exista en la tabla.
+    $verror .= validar("Venta", (string) $cid, "int", true);
+    $verror .= validar("Banco", $banco, "text", true);
+    $verror .= validar("Fecha del comprobante", $fecha_form, "date", true);
+    $verror .= validar("Referencia", $referencia, "text", true);
+    $verror .= validar("Monto", $monto, "double", true);
+
+    if ($verror != "") {
+        $stud_arr[0]["pmsg"] = $verror;
+        salida_json($stud_arr);
+        exit;
+    }
+
+    $motivo_bloqueo = venta_comprobante_pago_bloqueada($cid);
+    if ($motivo_bloqueo != '') {
+        $stud_arr[0]["pmsg"] = $motivo_bloqueo;
+        salida_json($stud_arr);
+        exit;
+    }
+
+    $fecha_mysql = formato_fecha_a_mysql($fecha_form);
+
+    $dup = buscar_comprobante_pago_duplicado($banco, $fecha_mysql, $referencia, $monto);
+    if ($dup && intval($dup['id']) !== $id_comprobante) {
+        $stud_arr[0]["pmsg"] = "Ya existe otro comprobante con esos mismos datos (Venta #" . $dup['id_venta']
+            . " el " . $dup['fecha_registro'] . ").";
+        salida_json($stud_arr);
+        exit;
+    }
+
+    $ant = sql_select("SELECT banco, fecha_comprobante, referencia, monto FROM ventas_comprobantes_pago WHERE id=$id_comprobante AND id_venta=$cid AND activo=1 LIMIT 1");
+    if ($ant === false || $ant->num_rows == 0) {
+        $stud_arr[0]["pmsg"] = "No se encontro el comprobante";
+        salida_json($stud_arr);
+        exit;
+    }
+    $a = $ant->fetch_assoc();
+
+    $ok = sql_update("UPDATE ventas_comprobantes_pago SET
+                        banco=" . GetSQLValue($banco, 'text') . ",
+                        fecha_comprobante=" . GetSQLValue($fecha_mysql, 'date') . ",
+                        referencia=" . GetSQLValue($referencia, 'text') . ",
+                        monto=" . GetSQLValue(round(floatval($monto), 2), 'double') . "
+                      WHERE id=$id_comprobante AND id_venta=$cid LIMIT 1");
+
+    if ($ok) {
+        $id_usuario = intval($_SESSION['usuario_id']);
+        $id_estado_hist = intval(get_dato_sql("ventas", "id_estado", " where id=$cid"));
+        // Solo se registran los campos que realmente cambiaron (valor anterior -> valor nuevo).
+        $cambios = [];
+        if (strtolower(trim($a['banco'])) !== strtolower($banco)) {
+            $cambios[] = "Banco: " . $a['banco'] . " -> " . $banco;
+        }
+        if ($a['fecha_comprobante'] !== $fecha_mysql) {
+            $cambios[] = "Fecha: " . formato_fecha_de_mysql($a['fecha_comprobante']) . " -> " . $fecha_form;
+        }
+        if (trim($a['referencia']) !== $referencia) {
+            $cambios[] = "Referencia: " . $a['referencia'] . " -> " . $referencia;
+        }
+        if (round((float) $a['monto'], 2) !== round((float) $monto, 2)) {
+            $cambios[] = "Monto: " . number_format((float) $a['monto'], 2, '.', '') . " -> " . number_format((float) $monto, 2, '.', '');
+        }
+        $obs = implode(" | ", $cambios);
+        if ($obs !== '') {
+            sql_insert("INSERT INTO ventas_historial_estado (id_maestro, id_usuario, id_estado, nombre, fecha, observaciones)
+                        VALUES ($cid, $id_usuario, $id_estado_hist,
+                            " . GetSQLValue('Modificacion de datos de comprobante de pago', 'text') . ",
+                            NOW(),
+                            " . GetSQLValue($obs, 'text') . ")");
+        }
+
+        $stud_arr[0]["pcode"] = 1;
+        $stud_arr[0]["pmsg"] = "Comprobante modificado";
+    } else {
+        $stud_arr[0]["pmsg"] = "No se pudo modificar el comprobante";
+    }
+
+    salida_json($stud_arr);
+    exit;
+}
+
+
 // ---- Guarda (o reemplaza) el archivo de "recibo" de un comprobante ya registrado. ----
 // A diferencia del comprobante, el recibo no hace falta tenerlo desde el inicio: se puede
 // subir en el momento o mas adelante, desde la fila correspondiente en la tabla.
@@ -353,16 +534,31 @@ if ($accion == 'guardar_recibo') {
     $stud_arr[0]["pcode"] = 0;
     $stud_arr[0]["pmsg"] = "ERROR";
 
+    $bloqueo = venta_comprobante_pago_modificacion_bloqueada($cid);
+    if ($bloqueo !== '') {
+        $stud_arr[0]["pmsg"] = 'No se pueden subir ni reemplazar recibos: la venta ya esta en estado "Vendido entregado".';
+        salida_json($stud_arr);
+        exit;
+    }
+
     $id_comprobante = intval($_REQUEST['id_comprobante'] ?? 0);
     $archivo = sanear_string($_REQUEST['archivo'] ?? '');
 
     $verror = "";
-    $verror .= validar("Venta", $cid, "int", true);
-    $verror .= validar("Comprobante", $id_comprobante, "int", true);
+    // (string): ver nota en editar_comprobante (ctype_digit con int pequeño).
+    $verror .= validar("Venta", (string) $cid, "int", true);
     $verror .= validar("Archivo", $archivo, "text", true);
 
     if ($verror != "") {
         $stud_arr[0]["pmsg"] = $verror;
+        salida_json($stud_arr);
+        exit;
+    }
+
+    // El id del comprobante es autogenerado, no se valida como dato de entrada; solo debe apuntar
+    // a un comprobante existente de esta venta (sin esto, id 0 dejaria "guardar" un recibo en nada).
+    if ($id_comprobante <= 0 || get_dato_sql('ventas_comprobantes_pago', 'id', ' where id=' . $id_comprobante . ' and id_venta=' . $cid . ' and activo=1') == '') {
+        $stud_arr[0]["pmsg"] = "No se encontro el comprobante";
         salida_json($stud_arr);
         exit;
     }
@@ -432,11 +628,18 @@ $total_comprobantes = count(listar_comprobantes_pago_venta($cid));
 $cupos_disponibles = max(0, MAX_COMPROBANTES_POR_VENTA - $total_comprobantes);
 $motivo_bloqueo_comprobante = venta_comprobante_pago_bloqueada($cid);
 
+//$id_estado = get_dato_sql('ventas', 'id_estado', ' where id=' . $cid);
+
 // Recibo de pago (televentas): campo propio de "ventas" (no de ventas_comprobantes_pago), movido
 // aqui desde la pestaña "Fotos de Comprobante de Pago" para que quede a la par de "Subir
 // Comprobante". Reutiliza el mismo campo_upload() y las funciones JS globales de la pagina
 // principal (insp_guardar_foto, ventas_dfoto, mostrar_foto) -no se duplica logica-.
 $foto_televentas = get_dato_sql('ventas', 'foto_televentas', ' where id=' . $cid);
+
+/// Se habilita en estado vendido entregado
+$archivo_expediente = get_dato_sql('ventas', 'archivo_expediente', ' where id=' . $cid);
+//file_put_contents('entregado.txt', "$id_estado : $cid -> archivo_expediente = " . $archivo_expediente);
+
 $tipo_ventas_reparacion = get_dato_sql('ventas', 'tipo_ventas_reparacion', ' where id=' . $cid);
 
 // Comprobante original ("foto"): tambien se movio aqui, pero solo como referencia de solo
@@ -456,7 +659,7 @@ $foto = get_dato_sql('ventas', 'foto', ' where id=' . $cid);
             <div class="alert alert-secondary">
                 <?php echo htmlspecialchars($motivo_bloqueo_comprobante); ?>
             </div>
-        <?php } elseif ($cupos_disponibles > 0) { ?>
+        <?php } elseif ($cupos_disponibles > 0 && $id_estado == 11) { ?>
             <div id="colbtn_comprobante">
                 <span class="btn btn-secondary fileinput-button">
                     <i class="fa fa-cloud-upload-alt"></i>
@@ -470,8 +673,7 @@ $foto = get_dato_sql('ventas', 'foto', ' where id=' . $cid);
             <div id="files_comprobante"></div>
         <?php } else { ?>
             <div class="alert alert-secondary">Ya se registraron los
-                <?php echo MAX_COMPROBANTES_POR_VENTA; ?> comprobantes
-                permitidos para esta venta.
+                <?php echo MAX_COMPROBANTES_POR_VENTA; ?> comprobantes permitidos para esta venta.
             </div>
         <?php } ?>
     </div>
@@ -539,6 +741,47 @@ $foto = get_dato_sql('ventas', 'foto', ' where id=' . $cid);
             ?>
         </div>
     <?php } ?>
+
+    <?php if ((string) trim($archivo_expediente) !== '') { ?>
+        <div class="col-md">
+            <label class="font-weight-bold d-block">Expediente</label>
+            <?php
+            $fext = strtolower(substr($archivo_expediente, -3));
+            // Misma proteccion que en "Recibo de Pago (Televentas)": solo <img> si la miniatura existe
+            // de verdad, si no, cae al link de texto (evita la peticion 404 que se veia en el navegador).
+            $tiene_thumb = in_array($fext, ['pdf']) && file_exists(__DIR__ . '/uploa_d/thumbnail/' . $archivo_expediente);
+            echo '<div id="thumb_foto_3">';
+            if ($tiene_thumb) {
+                echo '<a href="#" onclick="mostrar_foto(\'' . $archivo_expediente . '\'); return false;"><img class="img img-thumbnail mb-2 mr-3" src="uploa_d/thumbnail/' . $archivo_expediente . '"></a> ';
+            } else {
+                echo '<a href="uploa_d/' . $archivo_expediente . '" target="_blank" class="img-thumbnail mb-2 mr-3">' . $archivo_expediente . '</a> ';
+            }
+            // Mismo permiso (168) que "Borrar" en el resto de esta pantalla.
+            if (tiene_permiso(168)) {
+                echo '<a href="#" onclick="ventas_dfoto(3); return false;"><i class="fa fa-eraser"></i> Borrar</a>';
+            }
+            echo '</div>';
+            ?>
+        </div>
+    <?php } elseif (((string) trim($archivo_expediente) === '') && $id_estado == 20) { ?>
+        <div class="col-md">
+            <label class="font-weight-bold d-block">Archivo Expediente</label>
+            <style>
+                #upload_recibo_apilado .row>[class*="col-"] {
+                    flex: 0 0 100%;
+                    max-width: 100%;
+                }
+
+                #upload_recibo_apilado .progress {
+                    margin-top: .5rem;
+                }
+            </style>
+            <div id="upload_recibo_apilado">
+                <?php echo campo_upload("archivo_expediente", "", 'upload', '', '  ', '', 4, 8, 'NO', false); ?>
+            </div>
+        </div>
+    <?php } ?>
+
 </div>
 
 <!-- Contador + tabla: se refrescan solos (accion "tabla") despues de guardar/borrar, sin
@@ -957,6 +1200,81 @@ $foto = get_dato_sql('ventas', 'foto', ' where id=' . $cid);
                     resolve(false);
                 }
             });
+        });
+    }
+
+    // Edita banco/fecha/referencia/monto de un comprobante ya guardado (permiso 168, igual que Borrar;
+    // el servidor lo vuelve a validar). Reutiliza el formulario de la <template>, todo desbloqueado.
+    function comprobante_editar(el) {
+        var d = $(el).data();
+        var cid = $('#id').val();
+
+        Swal.fire({
+            title: 'Modificar Comprobante de Pago',
+            html: document.getElementById('tpl_comprobante_ia').innerHTML,
+            width: 600,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'Guardar Cambios',
+            cancelButtonText: 'Cancelar',
+            showLoaderOnConfirm: true,
+            onOpen: function () {
+                $('#forma_comprobante_ia > p').hide(); // textos de archivo/bloqueo IA no aplican aqui
+                // Esta pantalla vive dentro de #ModalWindow2 (modal de Bootstrap), cuyo "enforceFocus"
+                // devuelve el foco al modal cada vez que se enfoca algo fuera de el (como este Swal,
+                // que cuelga de <body>): los inputs de texto/numero no dejaban escribir.
+                $(document).off('focusin.bs.modal');
+                comprobante_desbloquear_todo();
+                $('#forma_comprobante_ia input:not([type=hidden]):not(.d-none)').prop('readonly', false).prop('disabled', false);
+                $('#comprobante_banco_select').prop('disabled', false);
+                setTimeout(function () { $('#comprobante_referencia').trigger('focus'); }, 50);
+                comprobante_set_banco(String(d.banco || ''));
+                $('#comprobante_fecha').val(d.fecha || '');
+                $('#comprobante_referencia').val(d.referencia || '');
+                $('#comprobante_monto').val(d.monto || '');
+            },
+            preConfirm: function () {
+                comprobante_banco_cambio();
+                if ($('#comprobante_banco').val().trim() === '') {
+                    Swal.showValidationMessage('Seleccione el banco/financiera/cooperativa');
+                    return false;
+                }
+                if (!$('#forma_comprobante_ia')[0].reportValidity()) { return false; }
+
+                return new Promise(function (resolve) {
+                    $.ajax({
+                        url: 'ventas_comprobantes_pago.php',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            a: 'editar_comprobante', cid: cid, id_comprobante: d.id,
+                            banco: $('#comprobante_banco').val(),
+                            fecha: $('#comprobante_fecha').val(),
+                            referencia: $('#comprobante_referencia').val(),
+                            monto: $('#comprobante_monto').val()
+                        },
+                        timeout: 30000,
+                        success: function (json_arr) {
+                            var json = json_arr && json_arr[0] ? json_arr[0] : null;
+                            if (json && json.pcode == 1) {
+                                mytoast('success', json.pmsg, 3000);
+                                resolve(true);
+                            } else {
+                                Swal.showValidationMessage(json ? json.pmsg : 'Error al modificar el comprobante');
+                                resolve(false);
+                            }
+                        },
+                        error: function () {
+                            Swal.showValidationMessage('Error de comunicación al modificar el comprobante');
+                            resolve(false);
+                        }
+                    });
+                });
+            }
+        }).then(function (result) {
+            if (result.value) { comprobantes_pago_refrescar(); }
         });
     }
 
