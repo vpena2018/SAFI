@@ -1,10 +1,9 @@
 <?php
-// ##############################################################################
-// # Infosistemas 2023                                                          #
-// # Modulo API para sistema rentworks                                          #
-// # Se prohibe la copia o distribucion del codigo sin autorizacion por escrito #
-// ##############################################################################
+//FECHA                   DEVELOPER                DESCRIPCION
+//2026-11-13              Moises Gamez             Crear funcion de notificacion API Caida, solicitada por VPENA
 
+require_once('include/correo.php');
+require_once('include/helpers.php');
 
 //****  activar Modulo
 define("rw_modulo_activo", true);
@@ -14,144 +13,207 @@ define("rw_modulo_debug", true);
 ini_set('max_execution_time', '300');
 
 
-function rw_api($rw_post,$suburl){
 
-    $comando_curl="curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/".$suburl."' \
+//Funcion que notificara por correo si hubo un error en la API
+function correo_alerta()
+{
+    // 1. Obtener listado de correos de IT, donde 1 es IT
+    $correos = getListaCorreosPerfil(1);
+
+    //2. Si hay correos disponibles entonces proceder a notificar
+    if (!empty($correos)) {
+        $subject = 'La API de RentWorks presenta un error o caida';
+
+        $cuerpo_html = "
+            <html>
+            <head><meta charset='UTF-8'></head>
+            <body>
+                <h3>Notificación de Alerta - Sistema RentWorks</h3>
+                <br/><hr/> 
+                <p>Revisar el funcionamiento de la API dado que existe una intermitencia o caída de la misma.</p>
+            </body>
+            </html>";
+
+        $cuerpo_sinhtml = strip_tags($cuerpo_html);
+        echo "Correos: " . $correos;
+        enviar_correo($correos, $subject, $cuerpo_html, $cuerpo_sinhtml);
+    }
+}
+
+//Funcion que revisa si la API esta alive
+function api_status()
+{
+    $status = false;
+    try {
+        $url_api = "https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/";
+
+        $ch = curl_init($url_api);
+
+        curl_setopt_array($ch, [
+            CURLOPT_NOBODY => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_TIMEOUT => 8,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_FOLLOWLOCATION => false
+        ]);
+
+        curl_exec($ch);
+
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_error = curl_errno($ch);
+        $status = ($curl_error === 0 && $http_code > 0);
+    } catch (Exception $e) {
+        file_put_contents(app_logs_folder . date("Y-m-d") . "_api_rentworks_error.log", "," . date("Y-m-d g:i a") . ", " . $e->getMessage() . " \r\n", FILE_APPEND);
+    }
+    return $status;
+}
+
+function rw_api($rw_post, $suburl)
+{
+    $rw_salida['pcode'] = 0;
+    $rw_salida['pid'] = "";
+    $rw_salida['pmsg'] = "Error";
+
+    if (!api_status()) {
+        correo_alerta();
+        $rw_salida['pmsg'] = "Error Caida en la api de RenWorks";
+        return $rw_salida;
+    }
+
+    $comando_curl = "curl -s --location --request POST 'https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/" . $suburl . "' \
     --header 'X-Api-Key: 123e3a22302c2137' \
     --header 'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ==' \
     --header 'Content-Type: application/json' \
     --data-raw '{";
 
-    $coma=""; 
-    $post_campos='{';  
+    $coma = "";
+    $post_campos = '{';
     foreach ($rw_post as $key => $value) {
-        $comando_curl.= $coma.'"'.$key.'":"'.$value.'"'; 
-        $post_campos.=$coma.'"'.$key.'":"'.$value.'"'; 
-        $coma=", ";
-       
+        $comando_curl .= $coma . '"' . $key . '":"' . $value . '"';
+        $post_campos .= $coma . '"' . $key . '":"' . $value . '"';
+        $coma = ", ";
+
     }
 
-    $post_campos.= ' }';
-    $comando_curl.="}'"; //$comando_curl.="}' 2>&1";
+    $post_campos .= ' }';
+    $comando_curl .= "}'"; //$comando_curl.="}' 2>&1";
 
-    if ( rw_modulo_activo ==false or rw_modulo_debug==true) {
-        file_put_contents(app_logs_folder.date("Y-m-d")."_api_rentworks_curl.log", "".date("Y-m-d g:i a")."\r\n".$comando_curl."\r\n \r\n", FILE_APPEND );
-   }
+    if (rw_modulo_activo == false or rw_modulo_debug == true) {
+        file_put_contents(app_logs_folder . date("Y-m-d") . "_api_rentworks_curl.log", "" . date("Y-m-d g:i a") . "\r\n" . $comando_curl . "\r\n \r\n", FILE_APPEND);
+    }
 
     //****phpcurl*****
 
-    $url_api="https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/".$suburl;
-    $header=array(
+    $url_api = "https://rwwebe.barscloud.com:8715/htzhonduras/web/RWMobileHandler/fleet/" . $suburl;
+    $header = array(
         'x-api-key: 123e3a22302c2137',
         'Content-Type: application/json',
         'Authorization: Basic VDIzNTg2OjhsZ2x0SVMrQVQyYQ=='
     );
-   
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url_api );
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER,true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER,false);
-    curl_setopt($ch, CURLOPT_POST, true );
 
-    curl_setopt($ch, CURLOPT_ENCODING, '' );
-    curl_setopt($ch, CURLOPT_MAXREDIRS, 10 );
-    curl_setopt($ch, CURLOPT_TIMEOUT, 0 );
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true );
-    curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
-    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST' );
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url_api);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_POST, true);
+
+    curl_setopt($ch, CURLOPT_ENCODING, '');
+    curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 0);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
 
     //        curl_setopt($ch, CURLOPT_HEADER, true); //quitar
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $header );
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $post_campos );
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $post_campos);
 
-    
-    $rw_json_respuesta="";
-    if ( rw_modulo_activo ==true) {
-       // $rw_json_respuesta = shell_exec($comando_curl);
-       $rw_json_respuesta = curl_exec( $ch );
-       //$returnCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    $rw_json_respuesta = "";
+    if (rw_modulo_activo == true) {
+        // $rw_json_respuesta = shell_exec($comando_curl);
+        $rw_json_respuesta = curl_exec($ch);
+        //$returnCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
         //echo var_dump($json_respuesta,$returnCode);
 
     }
-        
-     // echo "<pre>$rw_json_respuesta</pre>";
-  //  $rw_json_respuesta = '{"Result":"Successful","RepairOrderID":"32678","Message":"Fleet record odometer not updated.  Odometer reading sent, 117431, is less than current fleet record odometer."}';
 
-    $rw_respuesta ="";
+    // echo "<pre>$rw_json_respuesta</pre>";
+    //  $rw_json_respuesta = '{"Result":"Successful","RepairOrderID":"32678","Message":"Fleet record odometer not updated.  Odometer reading sent, 117431, is less than current fleet record odometer."}';
+
+    $rw_respuesta = "";
 
     try {
         $rw_respuesta = json_decode($rw_json_respuesta, true);
     } catch (\Throwable $th) {
         $rw_respuesta = "";
-        file_put_contents(app_logs_folder.date("Y-m-d")."_api_rentworks_error.log", ",".date("Y-m-d g:i a").", ".$th->getMessage().", ".$_SERVER['REMOTE_ADDR'].", ".$_SERVER['HTTP_USER_AGENT'].""." \r\n", FILE_APPEND );       
+        file_put_contents(app_logs_folder . date("Y-m-d") . "_api_rentworks_error.log", "," . date("Y-m-d g:i a") . ", " . $th->getMessage() . ", " . $_SERVER['REMOTE_ADDR'] . ", " . $_SERVER['HTTP_USER_AGENT'] . "" . " \r\n", FILE_APPEND);
     }
 
-    if (rw_modulo_debug==true ) {
+    if (rw_modulo_debug == true) {
         try {
-               file_put_contents(app_logs_folder.date("Y-m-d")."_api_rentworks_debug.log", ",".date("Y-m-d g:i a").", ".$rw_json_respuesta.", ".$_SERVER['REMOTE_ADDR'].", ".$_SERVER['HTTP_USER_AGENT'].""." \r\n", FILE_APPEND );       
+            file_put_contents(app_logs_folder . date("Y-m-d") . "_api_rentworks_debug.log", "," . date("Y-m-d g:i a") . ", " . $rw_json_respuesta . ", " . $_SERVER['REMOTE_ADDR'] . ", " . $_SERVER['HTTP_USER_AGENT'] . "" . " \r\n", FILE_APPEND);
         } catch (\Throwable $th) {
-           
+
         }
-        
+
     }
-
-    $rw_salida['pcode']=0;
-    $rw_salida['pid']="";
-    $rw_salida['pmsg']="Error";
-
+    /* La declare en el encabezado
+        $rw_salida['pcode'] = 0;
+        $rw_salida['pid'] = "";
+        $rw_salida['pmsg'] = "Error";
+    */
     if (is_array($rw_respuesta)) {
         try {
 
-          if ($suburl=="repairorder") { 
+            if ($suburl == "repairorder") {
 
                 if (isset($rw_respuesta['Result'])) {
-                    if ($rw_respuesta['Result']=="Successful") {
-                        $rw_salida['pcode']=1;
+                    if ($rw_respuesta['Result'] == "Successful") {
+                        $rw_salida['pcode'] = 1;
                     } else {
-                        file_put_contents(app_logs_folder.date("Y-m-d")."_api_rentworks_error.log", ",".date("Y-m-d g:i a").", ".$rw_respuesta['Message'].", ".$_SERVER['REMOTE_ADDR'].", ".$_SERVER['HTTP_USER_AGENT'].""." \r\n", FILE_APPEND );
+                        file_put_contents(app_logs_folder . date("Y-m-d") . "_api_rentworks_error.log", "," . date("Y-m-d g:i a") . ", " . $rw_respuesta['Message'] . ", " . $_SERVER['REMOTE_ADDR'] . ", " . $_SERVER['HTTP_USER_AGENT'] . "" . " \r\n", FILE_APPEND);
                     }
                 }
 
-                if (isset($rw_respuesta['Message'])) {            
-                        $rw_salida['pmsg']=$rw_respuesta['Message'];
+                if (isset($rw_respuesta['Message'])) {
+                    $rw_salida['pmsg'] = $rw_respuesta['Message'];
                 }
 
-                if (isset($rw_respuesta['RepairOrderID'])) {            
-                    $rw_salida['pid']=$rw_respuesta['RepairOrderID'];
+                if (isset($rw_respuesta['RepairOrderID'])) {
+                    $rw_salida['pid'] = $rw_respuesta['RepairOrderID'];
                 }
-          }  
+            }
 
-          if ($suburl=="NonRev") { //Traslados
-              //{"TicketNumber":"78963","TicketStatus":"Open","ReturnMsg":""}
-              $rw_return_msg = "";
-              if (isset($rw_respuesta['ReturnMsg'])) {
-                  $rw_return_msg = $rw_respuesta['ReturnMsg'];
-              } elseif (isset($rw_respuesta['Message'])) {
-                  $rw_return_msg = $rw_respuesta['Message'];
-              }
-              if (isset($rw_respuesta['TicketNumber'])) {                
-                    $rw_salida['pcode']=1;
-                    $rw_salida['pid']=$rw_respuesta['TicketNumber'];
-                    $rw_salida['pmsg']=$rw_return_msg;
+            if ($suburl == "NonRev") { //Traslados
+                //{"TicketNumber":"78963","TicketStatus":"Open","ReturnMsg":""}
+                $rw_return_msg = "";
+                if (isset($rw_respuesta['ReturnMsg'])) {
+                    $rw_return_msg = $rw_respuesta['ReturnMsg'];
+                } elseif (isset($rw_respuesta['Message'])) {
+                    $rw_return_msg = $rw_respuesta['Message'];
+                }
+                if (isset($rw_respuesta['TicketNumber'])) {
+                    $rw_salida['pcode'] = 1;
+                    $rw_salida['pid'] = $rw_respuesta['TicketNumber'];
+                    $rw_salida['pmsg'] = $rw_return_msg;
                 } else {
-                    file_put_contents(app_logs_folder.date("Y-m-d")."_api_rentworks_error.log", ",".date("Y-m-d g:i a").", ".$rw_return_msg.", ".$_SERVER['REMOTE_ADDR'].", ".$_SERVER['HTTP_USER_AGENT'].""." \r\n", FILE_APPEND );
+                    file_put_contents(app_logs_folder . date("Y-m-d") . "_api_rentworks_error.log", "," . date("Y-m-d g:i a") . ", " . $rw_return_msg . ", " . $_SERVER['REMOTE_ADDR'] . ", " . $_SERVER['HTTP_USER_AGENT'] . "" . " \r\n", FILE_APPEND);
                 }
-                
 
-          }
+            }
 
-          
-            
-        
-    
+
         } catch (\Throwable $th) {
-            file_put_contents(app_logs_folder.date("Y-m-d")."_api_rentworks_error.log", ",".date("Y-m-d g:i a").", ".$th->getMessage().", ".$_SERVER['REMOTE_ADDR'].", ".$_SERVER['HTTP_USER_AGENT'].""." \r\n", FILE_APPEND );       
+            file_put_contents(app_logs_folder . date("Y-m-d") . "_api_rentworks_error.log", "," . date("Y-m-d g:i a") . ", " . $th->getMessage() . ", " . $_SERVER['REMOTE_ADDR'] . ", " . $_SERVER['HTTP_USER_AGENT'] . "" . " \r\n", FILE_APPEND);
         }
-    
+
 
     } else {
-        file_put_contents(app_logs_folder.date("Y-m-d")."_api_rentworks_error.log", ",".date("Y-m-d g:i a").", ".$rw_respuesta.", ".$_SERVER['REMOTE_ADDR'].", ".$_SERVER['HTTP_USER_AGENT'].""." \r\n", FILE_APPEND );       
+        file_put_contents(app_logs_folder . date("Y-m-d") . "_api_rentworks_error.log", "," . date("Y-m-d g:i a") . ", " . $rw_respuesta . ", " . $_SERVER['REMOTE_ADDR'] . ", " . $_SERVER['HTTP_USER_AGENT'] . "" . " \r\n", FILE_APPEND);
     }
 
     return $rw_salida;
@@ -164,120 +226,143 @@ function rw_api($rw_post,$suburl){
 /** Crear orden repairorder*
  * tipo_doc:  1=servicio, 2=lavado , 3=combustible
  * $tipo_taller: propio, externo, pintura
- */ 
-function rw_crear_orden($tipo_doc,$id_doc,$notas,$odocampo=""){
-    
-    $rw_salida['pcode']=0;
-    $rw_salida['pid']="";
-    $rw_salida['pmsg']="Error";
+ */
+function rw_crear_orden($tipo_doc, $id_doc, $notas, $odocampo = "")
+{
+
+    $rw_salida['pcode'] = 0;
+    $rw_salida['pid'] = "";
+    $rw_salida['pmsg'] = "Error";
 
 
     //tipo_doc
     switch ($tipo_doc) {
         case 1:
-            $doctabla="servicio";            
-             break;
+            $doctabla = "servicio";
+            break;
         case 2:
-            $doctabla="orden_lavado";           
+            $doctabla = "orden_lavado";
             break;
         case 3:
-            $doctabla="orden_combustible";           
+            $doctabla = "orden_combustible";
             break;
     }
 
-    
-    $vehiculo="";
-    $odometro="";
-    $sqladd2="";
-    $id_tipo_mant="";
-    if ($tipo_doc==1) {
-        $sqladd2=",servicio.id_tipo_mant";
+
+    $vehiculo = "";
+    $odometro = "";
+    $sqladd2 = "";
+    $id_tipo_mant = "";
+    if ($tipo_doc == 1) {
+        $sqladd2 = ",servicio.id_tipo_mant";
     }
 
-    $result=sql_select("SELECT tienda.rentworks_almacen 
+    $result = sql_select("SELECT tienda.rentworks_almacen 
     ,producto.codigo_alterno
     ,producto.km
     $sqladd2
-    FROM ".$doctabla." 
-    LEFT OUTER JOIN tienda ON (".$doctabla.".id_tienda=tienda.id)
-    LEFT OUTER JOIN producto ON (".$doctabla.".id_producto=producto.id)
-    WHERE ".$doctabla.".id=".$id_doc);
+    FROM " . $doctabla . " 
+    LEFT OUTER JOIN tienda ON (" . $doctabla . ".id_tienda=tienda.id)
+    LEFT OUTER JOIN producto ON (" . $doctabla . ".id_producto=producto.id)
+    WHERE " . $doctabla . ".id=" . $id_doc);
 
-    if ($result!=false){
-        if ($result -> num_rows > 0) { 
-           $row = $result -> fetch_assoc() ; 
-           $locacion_tmp=$row['rentworks_almacen'];
-           $vehiculo=$row['codigo_alterno'];
-           $odometro=$row['km'];
-           if ($tipo_doc==1) {
-             $id_tipo_mant=$row['id_tipo_mant'];
-           }
+    if ($result != false) {
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $locacion_tmp = $row['rentworks_almacen'];
+            $vehiculo = $row['codigo_alterno'];
+            $odometro = $row['km'];
+            if ($tipo_doc == 1) {
+                $id_tipo_mant = $row['id_tipo_mant'];
+            }
         }
     }
 
-    if ($odocampo<>"") {
-        $odometro=$odocampo;
+    if ($odocampo <> "") {
+        $odometro = $odocampo;
     }
 
     //repairtype y fleetstatus
-    $repairtype="Mantenimiento Taller Interno";    
-    $fleetstatus="";
+    $repairtype = "Mantenimiento Taller Interno";
+    $fleetstatus = "";
 
     switch ($tipo_doc) {
-        case 1: if ($id_tipo_mant==1) {$repairtype="Mantenimiento Taller Interno"; $fleetstatus="Taller de mantenimiento"; }
-                if ($id_tipo_mant==2) {$repairtype="Mantenimiento Taller Externo";$fleetstatus="TALLERES EXTERNOS"; }
-                if ($id_tipo_mant==8) {$repairtype="Taller de Pintura";$fleetstatus="Taller de Pintura"; }
+        case 1:
+            if ($id_tipo_mant == 1) {
+                $repairtype = "Mantenimiento Taller Interno";
+                $fleetstatus = "Taller de mantenimiento";
+            }
+            if ($id_tipo_mant == 2) {
+                $repairtype = "Mantenimiento Taller Externo";
+                $fleetstatus = "TALLERES EXTERNOS";
+            }
+            if ($id_tipo_mant == 8) {
+                $repairtype = "Taller de Pintura";
+                $fleetstatus = "Taller de Pintura";
+            }
 
-                if ($id_tipo_mant==7) {$repairtype="Taller agencia";$fleetstatus="Taller agencia"; }
-                if ($id_tipo_mant==9) {$repairtype="Taller de AC";$fleetstatus="Taller de AC"; }
-              
-                break;//servicio
-        case 2: $repairtype="Lavado y Aspirado"; $fleetstatus="Necesita Limpieza"; break;//lavado
-        case 3: $repairtype="Repostar Combustible"; $fleetstatus="Refuel"; break;//combustible                               
+            if ($id_tipo_mant == 7) {
+                $repairtype = "Taller agencia";
+                $fleetstatus = "Taller agencia";
+            }
+            if ($id_tipo_mant == 9) {
+                $repairtype = "Taller de AC";
+                $fleetstatus = "Taller de AC";
+            }
+
+            break;//servicio
+        case 2:
+            $repairtype = "Lavado y Aspirado";
+            $fleetstatus = "Necesita Limpieza";
+            break;//lavado
+        case 3:
+            $repairtype = "Repostar Combustible";
+            $fleetstatus = "Refuel";
+            break;//combustible                               
     }
 
     //locacion    
-    if ($locacion_tmp<>'') {
-        $locacion=$locacion_tmp;
+    if ($locacion_tmp <> '') {
+        $locacion = $locacion_tmp;
     } else {
-        $locacion="OPSPS";
+        $locacion = "OPSPS";
     }
 
     //vehiculo
-    if ($vehiculo<>'') {
+    if ($vehiculo <> '') {
         //convertir codigo a formato de renworks, quitar un digito despues del EA-
-        $vehiculo=substr_replace($vehiculo,'',strpos($vehiculo, '-')+1,1);
+        $vehiculo = substr_replace($vehiculo, '', strpos($vehiculo, '-') + 1, 1);
     }
-    
+
     $rw_post = array();
-    $rw_post['RequestType'] ='CreateRepairOrder';
-    $rw_post['Product'] ='VEHICLES';
-    $rw_post['UnitNumber'] ="$vehiculo";//EA-2004
+    $rw_post['RequestType'] = 'CreateRepairOrder';
+    $rw_post['Product'] = 'VEHICLES';
+    $rw_post['UnitNumber'] = "$vehiculo";//EA-2004
     // $rw_post['VIN'] ='xxx';
     // $rw_post['LicenseNumber'] ='xxx';
-    $rw_post['CurrentOdometer'] ="$odometro";
-    $rw_post['CurrentLocation'] =""; //"$locacion";//ASPS
-    $rw_post['DateTimeOpened'] = date('Y-m-d')."T".date('H:i');
-    $rw_post['DateTimeDue'] = date('Y-m-d')."T".date('H:i'); //date('Y-m-d')."T".date('H:i', strtotime(date('Y-m-d H:i:s'). ' +10 minutes'));// date('Y-m-d')."T".date('H:i'); // ojo incrementar fecha hora
-    $rw_post['FleetStatus'] ="$fleetstatus";  //For Sale
-    $rw_post['RepairType'] ="$repairtype";//Problems Repair
-    $rw_post['RepairSummary'] ="";
-    $rw_post['RepairShopName'] ="";
+    $rw_post['CurrentOdometer'] = "$odometro";
+    $rw_post['CurrentLocation'] = ""; //"$locacion";//ASPS
+    $rw_post['DateTimeOpened'] = date('Y-m-d') . "T" . date('H:i');
+    $rw_post['DateTimeDue'] = date('Y-m-d') . "T" . date('H:i'); //date('Y-m-d')."T".date('H:i', strtotime(date('Y-m-d H:i:s'). ' +10 minutes'));// date('Y-m-d')."T".date('H:i'); // ojo incrementar fecha hora
+    $rw_post['FleetStatus'] = "$fleetstatus";  //For Sale
+    $rw_post['RepairType'] = "$repairtype";//Problems Repair
+    $rw_post['RepairSummary'] = "";
+    $rw_post['RepairShopName'] = "";
     // $rw_post['PartsCost'] ="125.88";
     // $rw_post['LaborCost'] ='1267.45';
-    $rw_post['Notes'] ="$notas";
+    $rw_post['Notes'] = "$notas";
 
 
-    $rw_salida=rw_api($rw_post,"repairorder");
-    if ($rw_salida['pcode']==1) {
+    $rw_salida = rw_api($rw_post, "repairorder");
+    if ($rw_salida['pcode'] == 1) {
 
-       if ($rw_salida['pid']<>"") {
-           sql_insert("INSERT INTO rw_numero_orden SET id_doc=$id_doc, id_rw=".$rw_salida['pid'].", tipo_doc=$tipo_doc");
-       }
+        if ($rw_salida['pid'] <> "") {
+            sql_insert("INSERT INTO rw_numero_orden SET id_doc=$id_doc, id_rw=" . $rw_salida['pid'] . ", tipo_doc=$tipo_doc");
+        }
 
     } else {
         // ojo quitar
-       // if ( rw_modulo_activo ==false) {sql_insert("INSERT INTO rw_numero_orden SET id_doc=$id_doc, id_rw=1234, tipo_doc=$tipo_doc");}           
+        // if ( rw_modulo_activo ==false) {sql_insert("INSERT INTO rw_numero_orden SET id_doc=$id_doc, id_rw=1234, tipo_doc=$tipo_doc");}           
     }
 
     return $rw_salida;
@@ -289,52 +374,53 @@ function rw_crear_orden($tipo_doc,$id_doc,$notas,$odocampo=""){
 /** Cerrar orden repairorder*
  * tipo_doc:  1=servicio, 2=lavado , 3=combustible
  * 
- */ 
-function rw_cerrar_orden($tipo_doc,$id_doc,$notas,$odocampo=""){
-    
-    $rw_salida['pcode']=0;
-    $rw_salida['pid']="";
-    $rw_salida['pmsg']="Error";
+ */
+function rw_cerrar_orden($tipo_doc, $id_doc, $notas, $odocampo = "")
+{
 
-    $campo_add="";
+    $rw_salida['pcode'] = 0;
+    $rw_salida['pid'] = "";
+    $rw_salida['pmsg'] = "Error";
+
+    $campo_add = "";
 
     //tipo_doc
     switch ($tipo_doc) {
         case 1:
-            $doctabla="servicio";
+            $doctabla = "servicio";
             // $campo_add=",".$doctabla.".disponibilidad";
-             break;
+            break;
         case 2:
-            $doctabla="orden_lavado";
+            $doctabla = "orden_lavado";
             break;
         case 3:
-            $doctabla="orden_combustible";
+            $doctabla = "orden_combustible";
             break;
     }
 
     //fleetstatus
-         
-    $fleetstatus="Available";
 
-    $vehiculo="";
-    $odometro="";
+    $fleetstatus = "Available";
 
-    $result=sql_select("SELECT tienda.rentworks_almacen 
+    $vehiculo = "";
+    $odometro = "";
+
+    $result = sql_select("SELECT tienda.rentworks_almacen 
     ,producto.codigo_alterno
     ,producto.km
     $campo_add
-    FROM ".$doctabla." 
-    LEFT OUTER JOIN tienda ON (".$doctabla.".id_tienda=tienda.id)
-    LEFT OUTER JOIN producto ON (".$doctabla.".id_producto=producto.id)
-    WHERE ".$doctabla.".id=".$id_doc);
+    FROM " . $doctabla . " 
+    LEFT OUTER JOIN tienda ON (" . $doctabla . ".id_tienda=tienda.id)
+    LEFT OUTER JOIN producto ON (" . $doctabla . ".id_producto=producto.id)
+    WHERE " . $doctabla . ".id=" . $id_doc);
 
-    if ($result!=false){
-        if ($result -> num_rows > 0) { 
-           $row = $result -> fetch_assoc() ; 
-           $locacion_tmp=$row['rentworks_almacen'];
-           $vehiculo=$row['codigo_alterno'];
-           $odometro=$row['km'];
-           $id_producto=$row['id_producto'];
+    if ($result != false) {
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $locacion_tmp = $row['rentworks_almacen'];
+            $vehiculo = $row['codigo_alterno'];
+            $odometro = $row['km'];
+            $id_producto = $row['id_producto'];
             // if ($campo_add<>"") {
             //     $disponibilidad=intval($row['disponibilidad']);
             //     if ($disponibilidad==1) { $fleetstatus="Available"; }
@@ -342,71 +428,71 @@ function rw_cerrar_orden($tipo_doc,$id_doc,$notas,$odocampo=""){
             // }
         }
     }
-    
-    $result_RV=sql_select("SELECT ventas.tipo_ventas_repacion,ventas.id_estado
-    FROM ventas WHERE ventas.id_producto=".$id_producto);            
-    if ($result_RV!=false){
-        if ($result_RV -> num_rows > 0) { 
-           $row_RV = $result_RV -> fetch_assoc() ; 
-           $tipo_ventas_repacion=$row_RV['tipo_ventas_repacion'];
-           $id_estado=$row_RV['id_estado'];
-           //si carro esta en reparacion para venta 
-           if ($tipo_ventas_repacion==1) {
-               $fleetstatus="For Sale";
-           }else{
-               if ($id_estado!=14) { //disponible para venta
-                   $fleetstatus="For Sale";
-               }    
-           }
-        }
-    }  
 
-    if ($odocampo<>"") {
-        $odometro=$odocampo;
+    $result_RV = sql_select("SELECT ventas.tipo_ventas_repacion,ventas.id_estado
+    FROM ventas WHERE ventas.id_producto=" . $id_producto);
+    if ($result_RV != false) {
+        if ($result_RV->num_rows > 0) {
+            $row_RV = $result_RV->fetch_assoc();
+            $tipo_ventas_repacion = $row_RV['tipo_ventas_repacion'];
+            $id_estado = $row_RV['id_estado'];
+            //si carro esta en reparacion para venta 
+            if ($tipo_ventas_repacion == 1) {
+                $fleetstatus = "For Sale";
+            } else {
+                if ($id_estado != 14) { //disponible para venta
+                    $fleetstatus = "For Sale";
+                }
+            }
+        }
+    }
+
+    if ($odocampo <> "") {
+        $odometro = $odocampo;
     }
 
     //locacion    
-    if ($locacion_tmp<>'') {
-        $locacion=$locacion_tmp;
+    if ($locacion_tmp <> '') {
+        $locacion = $locacion_tmp;
     } else {
-        $locacion="OPSPS";
+        $locacion = "OPSPS";
     }
 
     //order ID
-    $order_id="";
-    $result2=sql_select("SELECT id_rw 
+    $order_id = "";
+    $result2 = sql_select("SELECT id_rw 
     from rw_numero_orden
-    WHERE tipo_doc=$tipo_doc AND id_doc=".$id_doc."
+    WHERE tipo_doc=$tipo_doc AND id_doc=" . $id_doc . "
     ORDER BY id desc 
     Limit 1");
 
-    if ($result2!=false){
-        if ($result2 -> num_rows > 0) { 
-           $row2 = $result2 -> fetch_assoc() ; 
-           $order_id=$row2['id_rw'];
+    if ($result2 != false) {
+        if ($result2->num_rows > 0) {
+            $row2 = $result2->fetch_assoc();
+            $order_id = $row2['id_rw'];
         }
     }
-    
+
 
     $rw_post = array();
-    $rw_post['RequestType'] ='CloseRepairOrder';
-    $rw_post['RepairOrderID'] ="$order_id";
-    $rw_post['CurrentOdometer'] ="$odometro";
-    $rw_post['CurrentLocation'] =""; //"$locacion";
-    $rw_post['DateTimeClosed'] = date('Y-m-d')."T".date('H:i');
-    $rw_post['FleetStatus'] ="$fleetstatus"; 
-    $rw_post['Notes'] ="$notas";
-        
+    $rw_post['RequestType'] = 'CloseRepairOrder';
+    $rw_post['RepairOrderID'] = "$order_id";
+    $rw_post['CurrentOdometer'] = "$odometro";
+    $rw_post['CurrentLocation'] = ""; //"$locacion";
+    $rw_post['DateTimeClosed'] = date('Y-m-d') . "T" . date('H:i');
+    $rw_post['FleetStatus'] = "$fleetstatus";
+    $rw_post['Notes'] = "$notas";
 
-    if ($order_id<>"") {
-        $rw_salida=rw_api($rw_post,"repairorder");
-        if ($rw_salida['pcode']==1) {
+
+    if ($order_id <> "") {
+        $rw_salida = rw_api($rw_post, "repairorder");
+        if ($rw_salida['pcode'] == 1) {
 
         } else {
 
         }
     }
-    
+
 
     return $rw_salida;
 
@@ -417,24 +503,25 @@ function rw_cerrar_orden($tipo_doc,$id_doc,$notas,$odocampo=""){
 /** Crear traslado NonRev*
  *  $tipo_doc=
  *  
- */ 
-function rw_crear_traslado($id_doc,$notas,$odocampo=""){
-    
-    $rw_salida['pcode']=0;
-    $rw_salida['pid']="";
-    $rw_salida['pmsg']="Error";
+ */
+function rw_crear_traslado($id_doc, $notas, $odocampo = "")
+{
+
+    $rw_salida['pcode'] = 0;
+    $rw_salida['pid'] = "";
+    $rw_salida['pmsg'] = "Error";
 
 
-  
-    
-    $vehiculo="";
-    $odometro="";
-    $id_tipo_mant="";
-    $tipo_estado="";
-    $id_tipo_traslado="";
 
 
-    $result=sql_select("SELECT orden_traslado.* 
+    $vehiculo = "";
+    $odometro = "";
+    $id_tipo_mant = "";
+    $tipo_estado = "";
+    $id_tipo_traslado = "";
+
+
+    $result = sql_select("SELECT orden_traslado.* 
     ,producto.codigo_alterno,producto.nombre,producto.placa
     ,orden_traslado_estado.nombre AS elestado
     ,l1.nombre AS motorista1
@@ -455,87 +542,87 @@ function rw_crear_traslado($id_doc,$notas,$odocampo=""){
     LEFT OUTER JOIN tienda_agencia t1 ON (orden_traslado.id_tienda_salida=t1.id)
     LEFT OUTER JOIN tienda_agencia t2 ON (orden_traslado.id_tienda_destino=t2.id)
     LEFT OUTER JOIN orden_traslado_tipo ON (orden_traslado.id_tipo_traslado=orden_traslado_tipo.id)
-    WHERE orden_traslado.id=".$id_doc);
+    WHERE orden_traslado.id=" . $id_doc);
 
-    if ($result!=false){
-        if ($result -> num_rows > 0) { 
-           $row = $result -> fetch_assoc() ; 
-           $locacion_tmp=$row['rentworks_tiendasalida'];
-           $locacion_destino=$row['rentworks_tiendaentrada'];
-           $company="";
-           if ($row['tipo_destino']==2) {//proveedor
-                $locacion_destino=$row['rentworks_tiendasalida']; 
-                $company=$row['elproveedor'];
+    if ($result != false) {
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $locacion_tmp = $row['rentworks_tiendasalida'];
+            $locacion_destino = $row['rentworks_tiendaentrada'];
+            $company = "";
+            if ($row['tipo_destino'] == 2) {//proveedor
+                $locacion_destino = $row['rentworks_tiendasalida'];
+                $company = $row['elproveedor'];
             }
-           $vehiculo=$row['codigo_alterno'];
+            $vehiculo = $row['codigo_alterno'];
 
-          
-           
-           $odometro=$row['kilometraje_salida'];
-           $combustible=$row['combustible_salida'];
-           $driver=$row['motorista1'];
-            $notas=$row['observaciones'];
-            $tipo_estado=$row['id_tipo_traslado_lbl'];
-            $id_tipo_traslado=$row['id_tipo_traslado'];
-            
+
+
+            $odometro = $row['kilometraje_salida'];
+            $combustible = $row['combustible_salida'];
+            $driver = $row['motorista1'];
+            $notas = $row['observaciones'];
+            $tipo_estado = $row['id_tipo_traslado_lbl'];
+            $id_tipo_traslado = $row['id_tipo_traslado'];
+
         }
     }
 
-    if ($odocampo<>"") {
-        $odometro=$odocampo;
+    if ($odocampo <> "") {
+        $odometro = $odocampo;
     }
 
 
 
     //locacion    
-    if ($locacion_tmp<>'') {
-        $locacion=$locacion_tmp;
+    if ($locacion_tmp <> '') {
+        $locacion = $locacion_tmp;
     } else {
-        $locacion="OPSPS";
+        $locacion = "OPSPS";
     }
 
     //vehiculo
-    if ($vehiculo<>'') {
+    if ($vehiculo <> '') {
         //convertir codigo a formato de renworks, quitar un digito despues del EA-
-        $vehiculo=substr_replace($vehiculo,'',strpos($vehiculo, '-')+1,1);
+        $vehiculo = substr_replace($vehiculo, '', strpos($vehiculo, '-') + 1, 1);
     }
 
     //Combustible 
-    $fuellevel=rw_combustible_convertir($combustible);
-    
+    $fuellevel = rw_combustible_convertir($combustible);
 
-    
-    
+
+
+
     $rw_post = array();
-    $rw_post['Action'] ='Open';
-    $rw_post['Product'] ='VEHICLES';
-    $rw_post['UnitNumber'] ="$vehiculo";//EA-2004
-    $rw_post['VehicleStatus'] ="$tipo_estado";//'Non-Rev';
+    $rw_post['Action'] = 'Open';
+    $rw_post['Product'] = 'VEHICLES';
+    $rw_post['UnitNumber'] = "$vehiculo";//EA-2004
+    $rw_post['VehicleStatus'] = "$tipo_estado";//'Non-Rev';
 
-    $rw_post['OdometerOut'] ="$odometro";
-    $rw_post['FuelLevelOut'] ="$fuellevel";
+    $rw_post['OdometerOut'] = "$odometro";
+    $rw_post['FuelLevelOut'] = "$fuellevel";
 
-    $rw_post['Company'] ="$company";
+    $rw_post['Company'] = "$company";
 
-    $rw_post['LocationOut'] ="$locacion";
-    $rw_post['LocationDue'] ="$locacion_destino";
-    $rw_post['DateTimeOut'] = date('Y-m-d')."T".date('H:i');
-    $rw_post['DateTimeDue'] = date('Y-m-d')."T".date('H:i');
- 
-      
-    $rw_post['Driver'] ="$driver";
-    $rw_post['DueDetails'] ="$notas";
+    $rw_post['LocationOut'] = "$locacion";
+    $rw_post['LocationDue'] = "$locacion_destino";
+    $rw_post['DateTimeOut'] = date('Y-m-d') . "T" . date('H:i');
+    $rw_post['DateTimeDue'] = date('Y-m-d') . "T" . date('H:i');
 
 
-    $rw_salida=rw_api($rw_post,"NonRev");
-    if ($rw_salida['pcode']==1) {
+    $rw_post['Driver'] = "$driver";
+    $rw_post['DueDetails'] = "$notas";
 
-       if ($rw_salida['pid']<>"") {
-           sql_insert("INSERT INTO rw_numero_traslado SET id_doc=$id_doc, id_rw=".$rw_salida['pid']);
-       }
+
+    $rw_salida = rw_api($rw_post, "NonRev");
+    if ($rw_salida['pcode'] == 1) {
+
+        if ($rw_salida['pid'] <> "") {
+            sql_insert("INSERT INTO rw_numero_traslado SET id_doc=$id_doc, id_rw=" . $rw_salida['pid']);
+        }
 
     } else {
-       
+
     }
 
     return $rw_salida;
@@ -545,22 +632,23 @@ function rw_crear_traslado($id_doc,$notas,$odocampo=""){
 /** cerrar orden traslado NonRev*
  * 
  * 
- */ 
-function rw_cerrar_traslado($id_doc,$notas,$odocampo=""){
-    
-    $rw_salida['pcode']=0;
-    $rw_salida['pid']="";
-    $rw_salida['pmsg']="Error";
+ */
+function rw_cerrar_traslado($id_doc, $notas, $odocampo = "")
+{
 
-    $campo_add="";
+    $rw_salida['pcode'] = 0;
+    $rw_salida['pid'] = "";
+    $rw_salida['pmsg'] = "Error";
 
-    $vehiculo="";
-    $odometro="";
-    $tipo_estado="";
-    $id_tipo_traslado="";
-    $aproveedor=false;
+    $campo_add = "";
 
-    $result=sql_select("SELECT orden_traslado.* 
+    $vehiculo = "";
+    $odometro = "";
+    $tipo_estado = "";
+    $id_tipo_traslado = "";
+    $aproveedor = false;
+
+    $result = sql_select("SELECT orden_traslado.* 
     ,producto.codigo_alterno,producto.nombre,producto.placa
     ,orden_traslado_estado.nombre AS elestado
     ,l1.nombre AS motorista1
@@ -581,67 +669,67 @@ function rw_cerrar_traslado($id_doc,$notas,$odocampo=""){
     LEFT OUTER JOIN tienda_agencia t1 ON (orden_traslado.id_tienda_salida=t1.id)
     LEFT OUTER JOIN tienda_agencia t2 ON (orden_traslado.id_tienda_destino=t2.id)
     LEFT OUTER JOIN orden_traslado_tipo ON (orden_traslado.id_tipo_traslado2=orden_traslado_tipo.id)
-    WHERE orden_traslado.id=".$id_doc);
+    WHERE orden_traslado.id=" . $id_doc);
 
-    if ($result!=false){
-        if ($result -> num_rows > 0) { 
-           $row = $result -> fetch_assoc() ; 
-           $locacion_tmp=$row['rentworks_tiendasalida'];
-           $locacion_destino=$row['rentworks_tiendaentrada'];
-           $company="";
-           if ($row['tipo_destino']==2) {//proveedor
-                $locacion_destino=$row['rentworks_tiendasalida']; 
-                $company=$row['elproveedor'];
-                $aproveedor=true;
+    if ($result != false) {
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $locacion_tmp = $row['rentworks_tiendasalida'];
+            $locacion_destino = $row['rentworks_tiendaentrada'];
+            $company = "";
+            if ($row['tipo_destino'] == 2) {//proveedor
+                $locacion_destino = $row['rentworks_tiendasalida'];
+                $company = $row['elproveedor'];
+                $aproveedor = true;
             }
-           $vehiculo=$row['codigo_alterno'];
+            $vehiculo = $row['codigo_alterno'];
 
-          
-           
-           $odometro=$row['kilometraje_entrada'];
-           $combustible=$row['combustible_entrada'];
-           $driver=$row['motorista1'];
-           $notas=$row['observaciones'].$row['observaciones2'];
-           $tipo_estado=$row['id_tipo_traslado_lbl'];
-           $id_tipo_traslado=$row['id_tipo_traslado'];
+
+
+            $odometro = $row['kilometraje_entrada'];
+            $combustible = $row['combustible_entrada'];
+            $driver = $row['motorista1'];
+            $notas = $row['observaciones'] . $row['observaciones2'];
+            $tipo_estado = $row['id_tipo_traslado_lbl'];
+            $id_tipo_traslado = $row['id_tipo_traslado'];
         }
     }
 
-    if ($odocampo<>"") {
-        $odometro=$odocampo;
+    if ($odocampo <> "") {
+        $odometro = $odocampo;
     }
 
 
 
     //locacion    
-    if ($locacion_tmp<>'') {
-        $locacion=$locacion_tmp;
+    if ($locacion_tmp <> '') {
+        $locacion = $locacion_tmp;
     } else {
-        $locacion="OPSPS";
+        $locacion = "OPSPS";
     }
 
     //vehiculo
-    if ($vehiculo<>'') {
+    if ($vehiculo <> '') {
         //convertir codigo a formato de renworks, quitar un digito despues del EA-
-        $vehiculo=substr_replace($vehiculo,'',strpos($vehiculo, '-')+1,1);
+        $vehiculo = substr_replace($vehiculo, '', strpos($vehiculo, '-') + 1, 1);
     }
 
     //Combustible 
-    $fuellevel=rw_combustible_convertir($combustible);
-    
-    
+    $fuellevel = rw_combustible_convertir($combustible);
+
+
     //order ID
-    $order_id="";
-    $result2=sql_select("SELECT id_rw 
+    $order_id = "";
+    $result2 = sql_select("SELECT id_rw 
     from rw_numero_traslado
-    WHERE id_doc=".$id_doc."
+    WHERE id_doc=" . $id_doc . "
     ORDER BY id desc 
     Limit 1");
 
-    if ($result2!=false){
-        if ($result2 -> num_rows > 0) { 
-           $row2 = $result2 -> fetch_assoc() ; 
-           $order_id=$row2['id_rw'];
+    if ($result2 != false) {
+        if ($result2->num_rows > 0) {
+            $row2 = $result2->fetch_assoc();
+            $order_id = $row2['id_rw'];
         }
     }
 
@@ -656,26 +744,26 @@ function rw_cerrar_traslado($id_doc,$notas,$odocampo=""){
         $tipo_estado='Available';
     }
     */
-    
-    $rw_post = array();
-    $rw_post['Action'] ='Close';
-    $rw_post['TicketNumber'] ="$order_id";
-    $rw_post['VehicleStatus'] ="$tipo_estado";//'Available';
-    $rw_post['LocationIn'] ="$locacion_destino";
-    $rw_post['DateTimeIn'] = date('Y-m-d')."T".date('H:i');
 
-    $rw_post['OdometerIn'] ="$odometro";
-    $rw_post['FuelLevelIn'] ="$fuellevel";
+    $rw_post = array();
+    $rw_post['Action'] = 'Close';
+    $rw_post['TicketNumber'] = "$order_id";
+    $rw_post['VehicleStatus'] = "$tipo_estado";//'Available';
+    $rw_post['LocationIn'] = "$locacion_destino";
+    $rw_post['DateTimeIn'] = date('Y-m-d') . "T" . date('H:i');
+
+    $rw_post['OdometerIn'] = "$odometro";
+    $rw_post['FuelLevelIn'] = "$fuellevel";
 
     //agregado octubre2023
-    $rw_post['DueDetails'] ="$notas";
+    $rw_post['DueDetails'] = "$notas";
 
 
-    $rw_salida=rw_api($rw_post,"NonRev");
-    if ($rw_salida['pcode']==1) {
+    $rw_salida = rw_api($rw_post, "NonRev");
+    if ($rw_salida['pcode'] == 1) {
 
     } else {
-       
+
     }
 
     return $rw_salida;
@@ -683,31 +771,66 @@ function rw_cerrar_traslado($id_doc,$notas,$odocampo=""){
 }
 
 
-function rw_combustible_convertir($combustible){
-    $salida=0;
+function rw_combustible_convertir($combustible)
+{
+    $salida = 0;
 
     switch ($combustible) {
-        case 'E': $salida=0; break;
-        case '1/16': $salida=1; break;
-        case '1/8': $salida=1; break;
-        case '3/16': $salida=2; break;
-        case '1/4': $salida=2; break;
-        case '5/16': $salida=3; break;
-        case '3/8': $salida=3; break;
-        case '7/16': $salida=4; break;
-        case '1/2': $salida=4; break;
-        case '9/16': $salida=5; break;
-        case '5/8': $salida=5; break;
-        case '11/16': $salida=6; break;
-        case '3/4': $salida=6; break;
-        case '13/16': $salida=7; break;
-        case '7/8': $salida=7; break;
-        case '15/16': $salida=8; break;
-        case 'F': $salida=8; break;
+        case 'E':
+            $salida = 0;
+            break;
+        case '1/16':
+            $salida = 1;
+            break;
+        case '1/8':
+            $salida = 1;
+            break;
+        case '3/16':
+            $salida = 2;
+            break;
+        case '1/4':
+            $salida = 2;
+            break;
+        case '5/16':
+            $salida = 3;
+            break;
+        case '3/8':
+            $salida = 3;
+            break;
+        case '7/16':
+            $salida = 4;
+            break;
+        case '1/2':
+            $salida = 4;
+            break;
+        case '9/16':
+            $salida = 5;
+            break;
+        case '5/8':
+            $salida = 5;
+            break;
+        case '11/16':
+            $salida = 6;
+            break;
+        case '3/4':
+            $salida = 6;
+            break;
+        case '13/16':
+            $salida = 7;
+            break;
+        case '7/8':
+            $salida = 7;
+            break;
+        case '15/16':
+            $salida = 8;
+            break;
+        case 'F':
+            $salida = 8;
+            break;
 
     }
 
     return $salida;
 }
-   
+
 ?>

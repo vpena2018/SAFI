@@ -1,11 +1,11 @@
 <?php
 //FECHA                 DEVELOPER                 INCIDENTE
 // 2026-11-04           Moises Gamez              INC-20261104 Se agrego logica solicitada por Alejandra Barahona validar monto reserva.
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
-error_reporting(E_ALL);
+// 2026-11-10           Moises Gamez              INC-20261110 Alejandra solicita que los campos bloquedos por id_pintura=32 se habiliten.
+// 2026-11-12           Moises Gamez              INC-20261112 Alejandra solicita agregar campos de ventas en reparaiones.          
 require_once('include/framework.php');
 require_once('include/helpers.php');
+require('include/ventas/ventas_helpers.php');
 require __DIR__ . '/../vendor/autoload.php';
 use PhpOffice\PhpWord\TemplateProcessor;
 
@@ -38,7 +38,7 @@ function validar_campos_obligatorios($data, $campos, $titulo = 'Faltan campos ob
 /**
  * @return bool|array
  */
-function generarContratoVenta(
+function generarContratoVenta_old(
     int $id_venta,
     string $nombreUsuario,
     string $apellidoUsuario,
@@ -707,7 +707,7 @@ function generarContratoVentaOld(
     }
 }
 
-function anularContratoVenta(
+function anularContratoVenta_old(
     int $id_venta,
     string $usuarioSistema
 ) {
@@ -772,7 +772,7 @@ function anularContratoVenta(
     }
 }
 
-function convertirDocxAPdf(string $docxPath): string
+function convertirDocxAPdf_old(string $docxPath): string
 {
     try {
 
@@ -836,7 +836,7 @@ function convertirDocxAPdf(string $docxPath): string
     }
 }
 
-function descargarVentaPDF($id_venta, $juridico, $soloValidar = false)
+function descargarVentaPDF_old($id_venta, $juridico, $soloValidar = false)
 {
     try {
         appLog('===== descargarVentaPDF INICIO =====');
@@ -1077,7 +1077,7 @@ function descargarVentaPDF($id_venta, $juridico, $soloValidar = false)
     }
 }
 
-function descargarVentaPDFReimpresion($id_contrato, $reimpresion, $juridico, $soloValidar = false)
+function descargarVentaPDFReimpresion_olc($id_contrato, $reimpresion, $juridico, $soloValidar = false)
 {
     try {
         appLog('===== descargarVentaPDF INICIO =====');
@@ -1525,6 +1525,7 @@ if (isset($_REQUEST['a'])) {
 }
 $disable_sec1 = ' ';
 $disable_sec2 = ' ';
+$disable_vencarshop = ' ';
 
 /*
 function registrar_historial_ventas($cid, $id_estado, $nombre, $observaciones = '', $permiso = 0)
@@ -1565,7 +1566,7 @@ if ($accion == "v") {
                 if ($datos_clase) {
                     $clase_car = $datos_clase['clase'];
                     $prima_venta_clase = $datos_clase['monto_reserva'];
-                    echo "Monto minimo de reserva: " . $prima_venta_clase;
+                    //echo "Monto minimo de reserva: " . $prima_venta_clase;
                 }
             }
         }
@@ -1675,6 +1676,20 @@ if ($accion == "g") {
         }
     }
 
+    //Nuevas variables del tipo de venta similar a la pantalla de ventas
+    $venta_cont_cred = intval($_REQUEST['venta_cont_cred']);
+
+    if (tiene_permiso(195)) {
+        if (es_nulo($venta_cont_cred))
+            $verror .= "Debes seleccionar el (Tipo Venta).";
+
+        if ($venta_cont_cred == 2) {
+            $verror .= validar("Financiera", $_REQUEST['id_financiera'], "int", true);
+            $verror .= validar("Estado Financiera", $_REQUEST['id_financiera_estado'], "int", true);
+            $verror .= validar("Asesor Financiera", $_REQUEST['asesor_financiera'], "text", true);
+        }
+    }
+
     // NUEVAS VALIDACIONES DE FECHAS - Ricardo Lagos
     $fecha_asignacion = $_REQUEST['fecha_asignacion'] ?? '';
     $fecha_promesa_taller = $_REQUEST['fecha_promesa_taller'] ?? '';
@@ -1731,7 +1746,7 @@ if ($accion == "g") {
 
     $persona_juridica = intval($_REQUEST['persona_juridica'] ?? 0);
     $precio_venta_raw = $_REQUEST['precio_venta'] ?? '';
-    $prima_venta_raw = $_REQUEST['prima_venta'] ?? '';
+    $prima_venta_raw = $_REQUEST['prima_venta'] ?? 0;
 
     $precio_minimo = intval($_REQUEST['precio_minimo']);
     $precio_maximo = intval($_REQUEST['precio_maximo']);
@@ -1765,17 +1780,17 @@ if ($accion == "g") {
                 $verror = 'Seleccione un cliente.';
             } else if (trim($precio_venta_raw) === '') {
                 $verror = 'Ingrese el precio de venta del vehículo.';
-            } else if (trim($prima_venta_raw) === '') {
+            } else if (((int) trim($prima_venta_raw) <= 0) || ((int) $prima_venta <= 0)) {
                 $verror = 'Ingrese la prima de venta del vehículo.';
             } else if ((float) trim($prima_venta_raw) < (float) $prima_venta_clase) {
                 //si hay datos de historial con permiso 201, entonces no se valida la prima minima de reserva
                 $historial = getDatosHistorial($cid);
-                if ($historial)
+                if ($historial && ((float) trim($prima_venta_raw) >= (float) $prima_venta_clase))
                     $verror = "";
                 else
                     $verror = 'La prima de venta no puede ser menor que la prima mínima de reserva: ' . number_format($prima_venta_clase, 2, '.', ',') . '.';
             } else if ($precio_minimo <= 0 || es_nulo($precio_minimo)) {
-                $verror = 'Ingrese el precio mínimo. ' . $prima_venta_clase;
+                $verror = 'Ingrese el precio mínimo. ';
             } else if ($precio_maximo <= 0 || es_nulo($precio_maximo)) {
                 $verror = 'Ingrese el precio máximo.';
             } else if ($precio_minimo > $precio_maximo) {
@@ -1867,6 +1882,25 @@ if ($accion == "g") {
         if (isset($_REQUEST["valor_extras"])) {
             $sqlcampos .= " , valor_extras =" . GetSQLValue($_REQUEST["valor_extras"], "int");
         }
+
+        //Informacion del tipo de forma pago
+        if (isset($_REQUEST["venta_cont_cred"])) {
+            $sqlcampos .= " , venta_cont_cred =" . GetSQLValue($_REQUEST["venta_cont_cred"], "int");
+        }
+        if ($venta_cont_cred == 2) {
+            if (isset($_REQUEST["id_financiera"])) {
+                $sqlcampos .= " , id_financiera =" . GetSQLValue($_REQUEST["id_financiera"], "int");
+            }
+            if (isset($_REQUEST["id_financiera_estado"])) {
+                $sqlcampos .= " , id_financiera_estado =" . GetSQLValue($_REQUEST["id_financiera_estado"], "int");
+            }
+            if (isset($_REQUEST["asesor_financiera"])) {
+                $sqlcampos .= " , asesor_financiera =" . GetSQLValue($_REQUEST["asesor_financiera"], "text");
+            }
+        } else {
+            $sqlcampos .= " , id_financiera = NULL, id_financiera_estado = NULL, asesor_financiera = NULL";
+        }
+
         //info de contrato
         if ($id_estado == $estado_global_negociacion || $id_estado == 20) {
             $rep_profesion = trim($_REQUEST['representante_legal_profesion'] ?? '');
@@ -1977,8 +2011,10 @@ if ($accion == "g") {
         if ($nuevoregistro == false) {
             //si modifica se guarda el registo del cambio
             $venta_actual = array();
-            $result_actual = sql_select("SELECT id_tienda, kilometraje, id_estado_pintura, id_estado_interior, id_estado_mecanica, observaciones_reparacion, fecha_promesa, 
-                                        fecha_promesa_taller, precio_minimo, precio_maximo, precio_venta, prima_venta, fecha_asignacion, foto, foto_televentas, id_vendedor
+            $result_actual = sql_select("SELECT id_tienda, kilometraje, id_estado_pintura, id_estado_interior, id_estado_mecanica, 
+                                                observaciones_reparacion, fecha_promesa, fecha_promesa_taller, precio_minimo, 
+                                                precio_maximo, precio_venta, prima_venta, fecha_asignacion, foto, foto_televentas, 
+                                                id_vendedor, venta_cont_cred, id_financiera, id_financiera_estado, asesor_financiera
                                          FROM ventas
                                          WHERE id=" . $cid . " LIMIT 1");
             if ($result_actual != false && $result_actual->num_rows > 0) {
@@ -2083,6 +2119,35 @@ if ($accion == "g") {
                 registrar_historial($cid, $estado_global_nuevo, 'Modificacion de Vendedor', $id_vendedor_name);
             }
 
+            $venta_cont_cred_bd = isset($venta_actual['venta_cont_cred']) ? intval($venta_actual['venta_cont_cred']) : 0;
+            if (isset($_REQUEST['venta_cont_cred']) && $venta_cont_cred_bd != intval($_REQUEST['venta_cont_cred'])) {
+                $venta_cont_cred_labels = [1 => 'Contado', 2 => 'Crédito'];
+                $label_viejo = $venta_cont_cred_labels[$venta_cont_cred_bd] ?? $venta_cont_cred_bd;
+                $label_nuevo = $venta_cont_cred_labels[intval($_REQUEST['venta_cont_cred'])] ?? $_REQUEST['venta_cont_cred'];
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Tipo Contado/Crédito', "{$label_viejo} → {$label_nuevo}");
+            }
+
+            //Informacion del tipo de Venta credito o contado
+            $id_financiera_bd = isset($venta_actual['id_financiera']) ? intval($venta_actual['id_financiera']) : 0;
+            if (isset($_REQUEST['id_financiera']) && $id_financiera_bd != intval($_REQUEST['id_financiera'])) {
+                $financiera_name = intval($_REQUEST['id_financiera']) > 0
+                    ? get_dato_sql('financieras', 'nombre', ' where id=' . intval($_REQUEST['id_financiera']))
+                    : 'Ninguna';
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Financiera', $financiera_name);
+            }
+
+            $id_financiera_estado_bd = isset($venta_actual['id_financiera_estado']) ? intval($venta_actual['id_financiera_estado']) : 0;
+            if (isset($_REQUEST['id_financiera_estado']) && $id_financiera_estado_bd != intval($_REQUEST['id_financiera_estado'])) {
+                $financiera_estado_name = intval($_REQUEST['id_financiera_estado']) > 0
+                    ? get_dato_sql('financieras_estados', 'nombre', ' where id=' . intval($_REQUEST['id_financiera_estado']))
+                    : 'Ninguno';
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Estado Financiera', $financiera_estado_name);
+            }
+
+            $asesor_financiera_bd = trim((string) ($venta_actual['asesor_financiera'] ?? ''));
+            if (isset($_REQUEST['asesor_financiera']) && $asesor_financiera_bd !== trim($_REQUEST['asesor_financiera'])) {
+                registrar_historial($cid, $_REQUEST['id_estado'], 'Modificacion de Asesor Financiera', "{$asesor_financiera_bd} → {$_REQUEST['asesor_financiera']}");
+            }
 
             $sql = "update ventas set " . $sqlcampos . " where id=" . $cid . " limit 1";
 
@@ -2206,11 +2271,11 @@ if ($accion == "d") {
     </ul>
 </div>
 
-<div class="maxancho800 mx-auto">
+<div class="col-sm-12 mb-3 mx-auto">
 
-    <div class="tab-content" id="nav-tabContent">
+    <div class="tab-content w-100" id="nav-tabContent">
         <!-- DETALLE  -->
-        <div class="tab-pane fade show active" id="nav_detalle" role="tabpanel">
+        <div class="tab-pane w-100 fade show active" id="nav_detalle" role="tabpanel">
 
 
             <div class="row">
@@ -2428,6 +2493,27 @@ if ($accion == "d") {
                                 } else {
                                     $nacionalidad_venta = "";
                                 }
+                                //Informacion del tipo de venta, contado y credito
+                                if (isset($row['venta_cont_cred'])) {
+                                    $venta_cont_cred = $row['venta_cont_cred'];
+                                } else {
+                                    $venta_cont_cred = 0;
+                                }
+                                if (isset($row['id_financiera'])) {
+                                    $id_financiera = $row['id_financiera'];
+                                } else {
+                                    $id_financiera = 0;
+                                }
+                                if (isset($row['id_estado_financiera'])) {
+                                    $id_estado_financiera = $row['id_estado_financiera'];
+                                } else {
+                                    $id_estado_financiera = 0;
+                                }
+                                if (isset($row['asesor_financiera'])) {
+                                    $asesor_financiera = $row['asesor_financiera'];
+                                } else {
+                                    $asesor_financiera = "";
+                                }
                                 if (isset($row['valor_descuento'])) {
                                     $valor_descuento = $row['valor_descuento'];
                                 } else {
@@ -2485,6 +2571,38 @@ if ($accion == "d") {
                                         $completar = "";
                                         $NombreBotton = 'Guardar';
                                     }
+                                }
+
+                                $carShopPerfil = "";
+                                $carShopPerfil = get_dato_sql("usuario", "grupo_id", " WHERE id=" . $_SESSION["usuario_id"]);
+                                $diff = 0;
+                                if ($id_estado >= 1 and $id_estado < 20) {
+                                    if (!es_nulo($fecha_negociacion)) {
+                                        $neg = date_create($fecha_negociacion);
+                                        $hoy = date_create("now");
+                                        $diff = date_diff($hoy, $neg);
+                                    }
+                                    /*
+                                    if (!tiene_permiso(169)) { //Permiso modificar campos ventas
+                                        $disable_sec1 = ' readonly="readonly" ';
+                                    }*/
+                                } else {
+                                    if ($id_estado == 20) {
+                                        if (tiene_permiso(167)) {
+                                            $disable_sec1 = ' ';
+                                            $disable_sec2 = ' ';
+                                        } else {
+                                            $disable_sec1 = ' disabled="disabled" ';
+                                            $disable_sec2 = ' disabled="disabled" ';
+                                        }
+                                    }
+                                }
+
+                                file_put_contents("ESTADO.txt", 'EStado: ' . $id_estado . ' Permiso: ' . tiene_permiso(195));
+                                //Desabilitar opciones para usuarios que no posean el permiso
+                                if (tiene_permiso(195) && ((int) $id_estado !== 11)) { //Permismo modificar campos
+                                    //$disable_sec2 = ' disabled="disabled" ';
+                                    $disable_vencarshop = ' my-disabled ';
                                 }
 
                                 echo campo("id", ("Codigo"), 'hidden', $id, ' ', '');
@@ -2633,41 +2751,48 @@ if ($accion == "d") {
                                     <!-- <div class="col-md"> -->
                                     <div class="col-md" <?= strpos($disable_sec2_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>
                                         <?php
-                                        if ($id_estado_pintura == 32) {
+                                        /*if ($id_estado_pintura == 32) {
                                             //echo campo("id_estado","Estado",'select2',valores_combobox_db("ventas_estado",$id_estado,"nombre"," where id=11 ",'','...'),' ',' required '.$disable_sec2_lista) ; 
                                             echo campo("id_estado", "Estado", 'select2', valores_combobox_db("ventas_estado", $id_estado, "nombre", " where id=11 ", '', '...'), ' ', ' required');
                                         } else {
                                             echo campo("id_estado", "Estado", 'hidden', $id_estado, '', '', '');
-                                        }
+                                        }*/
+                                        echo campo("id_estado", "Estado", 'select2', valores_combobox_db("ventas_estado", $id_estado, "nombre", " where id=11 ", '', '...'), ' ', ' required');
                                         ?>
                                     </div>
                                     <div class="col-md" <?= strpos($disable_sec2_lista, 'disabled') !== false ? 'style="pointer-events:none;"' : '' ?>>
                                         <?php
+                                        /* --Segun Correo de Alejandra se comenta - 10/11/2026
                                         if ($id_estado_pintura == 32) {
                                             //echo campo("id_vendedor","Vendedorrr",'select2',valores_combobox_db('usuario',$id_vendedor,'nombre',' where activo=1 and grupo_id=18 ','','...'),' ',' required '.$disable_sec2_lista); 
                                             echo campo("id_vendedor", "Vendedor", 'select2', valores_combobox_db('usuario', $id_vendedor, 'nombre', ' where activo=1 and grupo_id=18 ', '', '...'), ' ', ' required');
                                         } else {
                                             echo campo("id_vendedor", "Vendedor", 'hidden', $id_vendedor, '', '', '');
-                                        }
+                                        }*/
+                                        echo campo("id_vendedor", "Vendedor", 'select2', valores_combobox_db('usuario', $id_vendedor, 'nombre', ' where activo=1 and grupo_id=18 ', '', '...'), ' ', ' required');
                                         ?>
                                     </div>
 
                                     <div class="col-md">
                                         <?php
+                                        /* --Segun Correo de Alejandra se comenta - 10/11/2026
                                         if ($id_estado_pintura == 32) {
                                             echo campo("precio_venta", "Precio de Venta", 'number', $precio_venta, ' ', $disable_sec2);
                                         } else {
                                             echo campo("precio_venta", "Precio de Venta", 'hidden', $precio_venta, '', '', '');
-                                        }
+                                        }*/
+                                        echo campo("precio_venta", "Precio de Venta", 'number', $precio_venta, ' ', $disable_sec2);
                                         ?>
                                     </div>
                                     <div class="col-md">
                                         <?php
+                                        /*--Segun Correo de Alejandra se comenta - 10/11/2026
                                         if ($id_estado_pintura == 32) {
                                             echo campo("prima_venta", "Precio de Reserva", 'number', $prima_venta, ' ', $disable_sec2);
                                         } else {
                                             echo campo("prima_venta", "Precio de Reserva", 'hidden', $prima_venta, '', '', '');
-                                        }
+                                        }*/
+                                        echo campo("prima_venta", "Precio de Reserva", 'number', $prima_venta, ' ', $disable_sec2);
                                         ?>
                                     </div>
                                 </div>
@@ -2675,12 +2800,8 @@ if ($accion == "d") {
                                 <div class="row">
                                     <div id="clientediv" style="display:none;" class="col-md-12">
 
-
-
                                         <?php
                                         $nombre_cliente = '';
-
-
 
                                         echo campo("nombre_cliente", "", 'hidden', $nombre_cliente, '', '', '');
                                         //echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1,'get.php?a=2&t=1',$cliente_nombre);
@@ -2692,8 +2813,6 @@ if ($accion == "d") {
                                         }
 
                                         ?>
-
-
 
                                         <div class="row">
                                             <!-- <div class="col-md-6"> -->
@@ -2765,11 +2884,7 @@ if ($accion == "d") {
                                                     $disable_sec2
                                                 ); ?>
                                             </div>
-
                                         </div>
-
-
-
 
                                         <script>
                                             $(document).ready(function () {
@@ -2780,7 +2895,36 @@ if ($accion == "d") {
                                     </div>
                                 </div>
 
+                                <!--Informacion de creditos similar a ventas solicitado por Alejandra-->
+                                <div id="divtipoventa" style="display : none" class="col-md-12">
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <?php echo campo("venta_cont_cred", "Tipo Venta", 'select', valores_combobox_texto(app_tipo_vvehiculo, $venta_cont_cred, 'Seleccionar'), ' ', ' '); ?>
+                                        </div>
+                                    </div>
 
+                                </div>
+
+                                <div id="divcredito" style="display: none;" class="col-md-12">
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                            <?php echo campo("id_financiera", "Financiera", 'select2', valores_combobox_db('financieras', $id_financiera, 'nombre', ' ', '', '...'), ' ', ' required '); ?>
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <?php echo campo("id_financiera_estado", "Estatus Financiera", 'select2', valores_combobox_db('financieras_estados', $id_financiera, 'nombre', ' ', '', '...'), ' ', ' required '); ?>
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <?php echo campo("asesor_financiera", "Asesor Financiera", 'text', $asesor_financiera, ' ', ' '); ?>
+                                        </div>
+                                        <!--
+                                        <div class="col-md-3">
+                                            <?php echo campo("oferta", "Oferta Web", 'checkboxCustom', $oferta, ' ', ' '); ?>
+                                        </div>
+                                        -->
+                                    </div>
+                                </div>
 
                                 <div class="row">
                                     <div class="col-md">
@@ -2851,7 +2995,8 @@ if ($accion == "d") {
                                         <?php if (tiene_permiso(189)) { ?>
                                             <div class="col-sm">
                                                 <a href="javascript:void(0);" id="btnanularContrato" target="_blank"
-                                                    class="btn btn-danger w-100 mb-2" <i class="fas fa-file-pdf"></i> Anular
+                                                    class="btn btn-danger w-100 mb-2" <i class="fas fa-file-pdf"></i>
+                                                    Anular
                                                     contrato
                                                 </a>
                                             </div>
@@ -2887,13 +3032,13 @@ if ($accion == "d") {
         <div class="tab-pane fade " id="nav_historial" role="tabpanel"></div>
 
         <!-- Comprobantes de Pago (banco/fecha/referencia/monto leidos con IA): se carga por AJAX desde
-     ventas_comprobantes_pago.php (programa aparte, el mismo que usa ventas_mant_contrato.php)
-     para no duplicar codigo. Esta pantalla edita registros de la misma tabla "ventas", asi que
-     el "cid" (id de la venta) es el mismo parametro que ese programa ya espera. -->
+         ventas_comprobantes_pago.php (programa aparte, el mismo que usa ventas_mant_contrato.php)
+         para no duplicar codigo. Esta pantalla edita registros de la misma tabla "ventas", asi que
+         el "cid" (id de la venta) es el mismo parametro que ese programa ya espera. -->
         <div class="tab-pane fade " id="nav_comprobantes_pago" role="tabpanel"></div>
 
         <!-- Historial de contratos: mismo programa compartido ventas_contrato_historial.php que usa
-     ventas_mant_contrato.php (solo necesita "cid", el id de la venta). -->
+         ventas_mant_contrato.php (solo necesita "cid", el id de la venta). -->
         <div class="tab-pane fade " id="nav_contratos" role="tabpanel"></div>
 
         <!-- errores -->
@@ -2901,10 +3046,6 @@ if ($accion == "d") {
             <div class="alert alert-warning" role="alert">Debe Guardar el documento para poder continuar con esta
                 sección</div>
         </div>
-
-
-
-
 
         <script>
 
@@ -2915,13 +3056,36 @@ if ($accion == "d") {
 
                 if (valor === 'en negociacion' || valor === 'vendido entregado') {
                     $('#clientediv').slideDown();
+                    $('#divtipoventa').slideDown();
+                    //$('#venta_cont_cred').on('change', toggleFinanciera);
+                    //toggleFinanciera(); // estado inicial al cargar
                 } else {
                     $('#clientediv').slideUp();
+                    $('#divtipoventa').slideUp();
                 }
             }
 
 
             $(function () {
+
+                // Habilita/deshabilita campos de financiera según tipo de venta (1=contado, 2=crédito)
+                function toggleFinanciera() {
+                    var esCredito = $('#venta_cont_cred').val() == '2';
+                    $('#id_financiera, #id_financiera_estado').prop('disabled', !esCredito).trigger('change');
+                    $('#asesor_financiera').prop('disabled', !esCredito);
+                    $('#id_financiera').closest('.col-md').toggle(esCredito);
+                    $('#id_financiera_estado').closest('.col-md').toggle(esCredito);
+                    $('#asesor_financiera').closest('.col-md').toggle(esCredito);
+
+                    if (esCredito) {
+                        $('#divcredito').slideDown();
+                    } else {
+                        $('#divcredito').slideUp();
+                    }
+                }
+
+                $('#venta_cont_cred').on('change', toggleFinanciera);
+                toggleFinanciera(); // estado inicial al cargar
 
                 // Precio base = precio actual + descuento ya aplicado - extras ya aplicados
                 var _precioVentaInit = parseFloat($('#precio_minimo').val()) || 0;

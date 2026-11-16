@@ -644,393 +644,393 @@ if ($accion == "ec") {
 }
 
 try {
-if ($accion == "ec2") { //guardar campo modificado
-  $stud_arr[0]["pcode"] = 0;
-  $stud_arr[0]["pmsg"] = "ERROR";
+  if ($accion == "ec2") { //guardar campo modificado
+    $stud_arr[0]["pcode"] = 0;
+    $stud_arr[0]["pmsg"] = "ERROR";
 
 
-  $elcodigo = "";
-  if (isset($_REQUEST["sid"])) {
-    $elcodigo = intval($_REQUEST["sid"]);
-  }
+    $elcodigo = "";
+    if (isset($_REQUEST["sid"])) {
+      $elcodigo = intval($_REQUEST["sid"]);
+    }
 
 
-  if ($elcodigo <> "") {
-    //Campos
-    $sqlcampos = "";
-    $sqladicional = array();
-    $servicio_auditado = get_dato_sql("servicio", "id_usuario_auditado", " WHERE id=" . $elcodigo);
+    if ($elcodigo <> "") {
+      //Campos
+      $sqlcampos = "";
+      $sqladicional = array();
+      $servicio_auditado = get_dato_sql("servicio", "id_usuario_auditado", " WHERE id=" . $elcodigo);
 
-    //auditado  
-    if (isset($_REQUEST["observaciones_adpc"])) {
-      $obs_adpc = trim((string) $_REQUEST["observaciones_adpc"]);
-      $id_adpc_categoria = isset($_REQUEST["id_adpc_categoria"]) ? intval($_REQUEST["id_adpc_categoria"]) : 0;
-      if (es_nulo($servicio_auditado)) {
-        if ($id_adpc_categoria <= 0 || $obs_adpc == "") {
-          $stud_arr[0]["pmsg"] = "Debe ingresar la Categoría ADPC y las Observaciones ADPC";
-          salida_json($stud_arr);
-          exit;
+      //auditado  
+      if (isset($_REQUEST["observaciones_adpc"])) {
+        $obs_adpc = trim((string) $_REQUEST["observaciones_adpc"]);
+        $id_adpc_categoria = isset($_REQUEST["id_adpc_categoria"]) ? intval($_REQUEST["id_adpc_categoria"]) : 0;
+        if (es_nulo($servicio_auditado)) {
+          if ($id_adpc_categoria <= 0 || $obs_adpc == "") {
+            $stud_arr[0]["pmsg"] = "Debe ingresar la Categoría ADPC y las Observaciones ADPC";
+            salida_json($stud_arr);
+            exit;
+          }
         }
-      }
-      $sqlcampos .= "  fecha_auditado = now()";
-      $sqlcampos .= ", id_adpc_categoria =" . GetSQLValue($id_adpc_categoria, "int");
-      $sqlcampos .= ", observaciones_adpc =" . GetSQLValue($obs_adpc, "text");
-      $sqlcampos .= ", id_usuario_auditado =" . $_SESSION['usuario_id'];
+        $sqlcampos .= "  fecha_auditado = now()";
+        $sqlcampos .= ", id_adpc_categoria =" . GetSQLValue($id_adpc_categoria, "int");
+        $sqlcampos .= ", observaciones_adpc =" . GetSQLValue($obs_adpc, "text");
+        $sqlcampos .= ", id_usuario_auditado =" . $_SESSION['usuario_id'];
 
-      ///Historial 
-      $sqladd1 = "INSERT INTO servicio_historial_estado
+        ///Historial 
+        $sqladd1 = "INSERT INTO servicio_historial_estado
      (id_servicio,  id_usuario, id_proveedor, nombre, fecha, observaciones)
      VALUES ( $elcodigo,  " . $_SESSION['usuario_id'] . ", 0, 'Revision ADPC', NOW(), '')";
-      array_push($sqladicional, $sqladd1);
+        array_push($sqladicional, $sqladd1);
 
-    }
+      }
 
-    //reproceso
-    if (isset($_REQUEST["observaciones_reproceso"])) {
-      $sqlcampos .= "  reproceso = 'R'";
-      $sqlcampos .= ", observaciones_reproceso =" . GetSQLValue($_REQUEST["observaciones_reproceso"], "text");
+      //reproceso
+      if (isset($_REQUEST["observaciones_reproceso"])) {
+        $sqlcampos .= "  reproceso = 'R'";
+        $sqlcampos .= ", observaciones_reproceso =" . GetSQLValue($_REQUEST["observaciones_reproceso"], "text");
 
-      ///Historial 
-      $sqladd1 = "INSERT INTO servicio_historial_estado
+        ///Historial 
+        $sqladd1 = "INSERT INTO servicio_historial_estado
     (id_servicio,  id_usuario, id_proveedor, nombre, fecha, observaciones)
     VALUES ( $elcodigo,  " . $_SESSION['usuario_id'] . ", 0, 'OS en Reproceso', NOW(), '')";
-      array_push($sqladicional, $sqladd1);
+        array_push($sqladicional, $sqladd1);
 
-    }
+      }
 
-    // TECNICOS
-    if (isset($_REQUEST["id_tecnico1"]) and isset($_REQUEST["id_tecnico2"]) and isset($_REQUEST["id_tecnico3"]) and isset($_REQUEST["id_tecnico4"]) and isset($_REQUEST["id_tecnico5"])) {
-      $sqlcampos .= " id_tecnico1 =" . GetSQLValue($_REQUEST["id_tecnico1"], "int");
-      $sqlcampos .= " , id_tecnico2 =" . GetSQLValue($_REQUEST["id_tecnico2"], "int");
-      $sqlcampos .= " , id_tecnico3 =" . GetSQLValue($_REQUEST["id_tecnico3"], "int");
-      $sqlcampos .= " , id_tecnico4 =" . GetSQLValue($_REQUEST["id_tecnico4"], "int");
-      $sqlcampos .= " , id_tecnico5 =" . GetSQLValue($_REQUEST["id_tecnico5"], "int");
-      $fecha_asigna = "";
-      $estado = 0;
+      // TECNICOS
+      if (isset($_REQUEST["id_tecnico1"]) and isset($_REQUEST["id_tecnico2"]) and isset($_REQUEST["id_tecnico3"]) and isset($_REQUEST["id_tecnico4"]) and isset($_REQUEST["id_tecnico5"])) {
+        $sqlcampos .= " id_tecnico1 =" . GetSQLValue($_REQUEST["id_tecnico1"], "int");
+        $sqlcampos .= " , id_tecnico2 =" . GetSQLValue($_REQUEST["id_tecnico2"], "int");
+        $sqlcampos .= " , id_tecnico3 =" . GetSQLValue($_REQUEST["id_tecnico3"], "int");
+        $sqlcampos .= " , id_tecnico4 =" . GetSQLValue($_REQUEST["id_tecnico4"], "int");
+        $sqlcampos .= " , id_tecnico5 =" . GetSQLValue($_REQUEST["id_tecnico5"], "int");
+        $fecha_asigna = "";
+        $estado = 0;
 
-      $result = sql_select("SELECT fecha_hora_asigna,id_estado
+        $result = sql_select("SELECT fecha_hora_asigna,id_estado
           FROM servicio
           WHERE id=$elcodigo limit 1");
 
-      if ($result != false) {
-        if ($result->num_rows > 0) {
-          $row = $result->fetch_assoc();
-          $fecha_asigna = $row["fecha_hora_asigna"];
-          $estado = $row["id_estado"];
-        }
-      }
-
-
-
-      if (es_nulo($fecha_asigna)) {
-        $sqlcampos .= ", fecha_hora_asigna=NOW()";
-      }
-
-      //if ($estado<4) {
-      //////  $sqlcampos.= ", id_estado=4"; //en proceso
-
-      $sqladd1 = "INSERT INTO servicio_historial_estado
-           (id_servicio,  id_usuario, id_proveedor, nombre, fecha, observaciones)
-           VALUES ( $elcodigo,  " . $_SESSION['usuario_id'] . ", 0, 'Asignacion de Mecanico', NOW(), '')";
-      array_push($sqladicional, $sqladd1);
-      // }
-
-
-    }
-
-
-    // ESTADO
-    $enviar_orden_email = false;
-    $enviar_orden_sms = false;
-    $autorizando = false;
-    $completando = false;
-    if (isset($_REQUEST["id_estado"])) {
-
-      //validar 
-      if (intval($_REQUEST["id_estado"]) >= 3 and intval($_REQUEST["id_estado"]) <> 7) {
-
-        // if (es_nulo($_REQUEST["disponibilidad_veh"])) {
-
-        //   $stud_arr[0]["pcode"] = 0;
-        //   $stud_arr[0]["pmsg"] ="Debe seleccionar la Disponibilidad del Vehiculo";
-        //   salida_json($stud_arr);
-        //   exit;
-        // }
-
-        $est_validacion = true;
-        if (intval($_REQUEST["id_estado"]) == 4) {
-          $idestado_actual = intval(get_dato_sql("servicio", "id_estado", "WHERE id=" . $elcodigo));
-          if ($idestado_actual == 7) { //si esta en paro por repuestro permitir regresar a en proceso
-            $est_validacion = false;
+        if ($result != false) {
+          if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $fecha_asigna = $row["fecha_hora_asigna"];
+            $estado = $row["id_estado"];
           }
         }
 
-      } //fin validar
 
-      $sqlcampos .= "  id_estado =" . GetSQLValue($_REQUEST["id_estado"], "int");
-      $observaciones = "";
 
-      if (isset($_REQUEST["observaciones"])) {
-        $observaciones = $conn->real_escape_string($_REQUEST["observaciones"]);
-
-      }
-
-      if (isset($_REQUEST["fecha"])) {
-        if (!es_nulo($_REQUEST["fecha"])) {
-
-          $sqlcampos .= " , fecha_alerta =" . GetSQLValue($_REQUEST["fecha"], "date");
-          $observaciones .= " Fecha Promesa: " . formato_fecha_de_mysql($_REQUEST["fecha"]);
+        if (es_nulo($fecha_asigna)) {
+          $sqlcampos .= ", fecha_hora_asigna=NOW()";
         }
+
+        //if ($estado<4) {
+        //////  $sqlcampos.= ", id_estado=4"; //en proceso
+
+        $sqladd1 = "INSERT INTO servicio_historial_estado
+           (id_servicio,  id_usuario, id_proveedor, nombre, fecha, observaciones)
+           VALUES ( $elcodigo,  " . $_SESSION['usuario_id'] . ", 0, 'Asignacion de Mecanico', NOW(), '')";
+        array_push($sqladicional, $sqladd1);
+        // }
+
+
       }
 
-      if ($_REQUEST["id_estado"] == 3 or $_REQUEST["id_estado"] == "3") {//aprobada
-        // if (!es_nulo($_REQUEST["disponibilidad_veh"])) {$sqlcampos.= " , disponibilidad =".GetSQLValue($_REQUEST["disponibilidad_veh"],"int");}
-        $autorizando = true;
 
-      }
+      // ESTADO
+      $enviar_orden_email = false;
+      $enviar_orden_sms = false;
+      $autorizando = false;
+      $completando = false;
+      if (isset($_REQUEST["id_estado"])) {
 
-      if ($_REQUEST["id_estado"] == 21 or $_REQUEST["id_estado"] == "21") {//realizada
+        //validar 
+        if (intval($_REQUEST["id_estado"]) >= 3 and intval($_REQUEST["id_estado"]) <> 7) {
+
+          // if (es_nulo($_REQUEST["disponibilidad_veh"])) {
+
+          //   $stud_arr[0]["pcode"] = 0;
+          //   $stud_arr[0]["pmsg"] ="Debe seleccionar la Disponibilidad del Vehiculo";
+          //   salida_json($stud_arr);
+          //   exit;
+          // }
+
+          $est_validacion = true;
+          if (intval($_REQUEST["id_estado"]) == 4) {
+            $idestado_actual = intval(get_dato_sql("servicio", "id_estado", "WHERE id=" . $elcodigo));
+            if ($idestado_actual == 7) { //si esta en paro por repuestro permitir regresar a en proceso
+              $est_validacion = false;
+            }
+          }
+
+        } //fin validar
+
+        $sqlcampos .= "  id_estado =" . GetSQLValue($_REQUEST["id_estado"], "int");
+        $observaciones = "";
+
         if (isset($_REQUEST["observaciones"])) {
-          $sqlcampos .= " ,observaciones_realizado =" . GetSQLValue(trim($_REQUEST["observaciones"]), "text");
+          $observaciones = $conn->real_escape_string($_REQUEST["observaciones"]);
+
         }
-      }
 
-      if ($_REQUEST["id_estado"] == 22 or $_REQUEST["id_estado"] == "22") {//completada
-        $sqlcampos .= " , fecha_hora_final =now()";
-        $completando = true;
-        $enviar_orden_email = true;
-        $enviar_orden_sms = true;
-      }
+        if (isset($_REQUEST["fecha"])) {
+          if (!es_nulo($_REQUEST["fecha"])) {
 
-      $sqladd1 = "INSERT INTO servicio_historial_estado
+            $sqlcampos .= " , fecha_alerta =" . GetSQLValue($_REQUEST["fecha"], "date");
+            $observaciones .= " Fecha Promesa: " . formato_fecha_de_mysql($_REQUEST["fecha"]);
+          }
+        }
+
+        if ($_REQUEST["id_estado"] == 3 or $_REQUEST["id_estado"] == "3") {//aprobada
+          // if (!es_nulo($_REQUEST["disponibilidad_veh"])) {$sqlcampos.= " , disponibilidad =".GetSQLValue($_REQUEST["disponibilidad_veh"],"int");}
+          $autorizando = true;
+
+        }
+
+        if ($_REQUEST["id_estado"] == 21 or $_REQUEST["id_estado"] == "21") {//realizada
+          if (isset($_REQUEST["observaciones"])) {
+            $sqlcampos .= " ,observaciones_realizado =" . GetSQLValue(trim($_REQUEST["observaciones"]), "text");
+          }
+        }
+
+        if ($_REQUEST["id_estado"] == 22 or $_REQUEST["id_estado"] == "22") {//completada
+          $sqlcampos .= " , fecha_hora_final =now()";
+          $completando = true;
+          $enviar_orden_email = true;
+          $enviar_orden_sms = true;
+        }
+
+        $sqladd1 = "INSERT INTO servicio_historial_estado
            (id_servicio, id_estado, id_usuario, id_proveedor, nombre, fecha, observaciones)
            VALUES ( $elcodigo, " . intval($_REQUEST["id_estado"]) . ", " . $_SESSION['usuario_id'] . ", 0, 'Modificacion de Estado', NOW(), '$observaciones')";
-      array_push($sqladicional, $sqladd1);
+        array_push($sqladicional, $sqladd1);
 
-    }
-
-
-    //Activo y Inactivo en Estado paro por repuesto
-    if (isset($_REQUEST["estado_paro_por_repuesto"])) {
-      $sqlcampos .= "  estado_paro_por_repuesto =" . GetSQLValue($_REQUEST["estado_paro_por_repuesto"], "text");
-      if ($_REQUEST["estado_paro_por_repuesto"] == 'A') {
-        $estado_paroporrepuesto = 'Activo';
-      } else {
-        $estado_paroporrepuesto = 'Inactivo';
       }
-      ///Historial       
-      $sqladd1 = "INSERT INTO servicio_historial_estado
+
+
+      //Activo y Inactivo en Estado paro por repuesto
+      if (isset($_REQUEST["estado_paro_por_repuesto"])) {
+        $sqlcampos .= "  estado_paro_por_repuesto =" . GetSQLValue($_REQUEST["estado_paro_por_repuesto"], "text");
+        if ($_REQUEST["estado_paro_por_repuesto"] == 'A') {
+          $estado_paroporrepuesto = 'Activo';
+        } else {
+          $estado_paroporrepuesto = 'Inactivo';
+        }
+        ///Historial       
+        $sqladd1 = "INSERT INTO servicio_historial_estado
       (id_servicio,  id_usuario, id_proveedor, nombre, fecha, observaciones)
       VALUES ( $elcodigo,  " . $_SESSION['usuario_id'] . ", 0,'Modificacion de Estado paro por Repuesto', NOW(), '$estado_paroporrepuesto')";
-      array_push($sqladicional, $sqladd1);
+        array_push($sqladicional, $sqladd1);
 
-    }
+      }
 
-    //TALLER
-    if (isset($_REQUEST["tallertmp"])) {
-      $sqlcampos .= "  id_taller =" . GetSQLValue($_REQUEST["tallertmp"], "int");
-      $observaciones = "";
+      //TALLER
+      if (isset($_REQUEST["tallertmp"])) {
+        $sqlcampos .= "  id_taller =" . GetSQLValue($_REQUEST["tallertmp"], "int");
+        $observaciones = "";
 
-      $nombretaller = get_dato_sql('entidad', 'nombre', ' where id=' . intval($_REQUEST["tallertmp"]));
+        $nombretaller = get_dato_sql('entidad', 'nombre', ' where id=' . intval($_REQUEST["tallertmp"]));
 
-      $sqladd1 = "INSERT INTO servicio_historial_estado
+        $sqladd1 = "INSERT INTO servicio_historial_estado
            (id_servicio,  id_usuario, id_proveedor, nombre, fecha, observaciones)
            VALUES ( $elcodigo,  " . $_SESSION['usuario_id'] . ", " . intval($_REQUEST["tallertmp"]) . ", 'Asignacion de Taller', NOW(), '$nombretaller')";
-      array_push($sqladicional, $sqladd1);
+        array_push($sqladicional, $sqladd1);
 
-    }
-
-
+      }
 
 
-    //Tipo revision
-    if (isset($_REQUEST["id_tiprevision"])) {
-      $sqlcampos .= "  id_tipo_revision =" . GetSQLValue($_REQUEST["id_tiprevision"], "int");
-      $observaciones = "";
 
-      $nombretaller = get_dato_sql('servicio_tipo_revision', 'nombre', ' where id=' . intval($_REQUEST["id_tiprevision"]));
 
-      $sqladd1 = "INSERT INTO servicio_historial_estado
+      //Tipo revision
+      if (isset($_REQUEST["id_tiprevision"])) {
+        $sqlcampos .= "  id_tipo_revision =" . GetSQLValue($_REQUEST["id_tiprevision"], "int");
+        $observaciones = "";
+
+        $nombretaller = get_dato_sql('servicio_tipo_revision', 'nombre', ' where id=' . intval($_REQUEST["id_tiprevision"]));
+
+        $sqladd1 = "INSERT INTO servicio_historial_estado
            (id_servicio,  id_usuario, id_proveedor, nombre, fecha, observaciones)
            VALUES ( $elcodigo,  " . $_SESSION['usuario_id'] . ", 0, 'Asignacion de Tipo de Revision', NOW(), '$nombretaller')";
-      array_push($sqladicional, $sqladd1);
+        array_push($sqladicional, $sqladd1);
 
-    }
+      }
 
-    //Tipo  mantenimiento
-    if (isset($_REQUEST["id_tipo_mant"])) {
-      $sqlcampos .= "  id_tipo_mant =" . GetSQLValue($_REQUEST["id_tipo_mant"], "int");
-      $observaciones = "";
+      //Tipo  mantenimiento
+      if (isset($_REQUEST["id_tipo_mant"])) {
+        $sqlcampos .= "  id_tipo_mant =" . GetSQLValue($_REQUEST["id_tipo_mant"], "int");
+        $observaciones = "";
 
-      $nombretipo = get_dato_sql('servicio_tipo_mant', 'nombre', ' where id=' . intval($_REQUEST["id_tipo_mant"]));
+        $nombretipo = get_dato_sql('servicio_tipo_mant', 'nombre', ' where id=' . intval($_REQUEST["id_tipo_mant"]));
 
-      $sqladd1 = "INSERT INTO servicio_historial_estado
+        $sqladd1 = "INSERT INTO servicio_historial_estado
             (id_servicio,  id_usuario, id_proveedor, nombre, fecha, observaciones)
             VALUES ( $elcodigo,  " . $_SESSION['usuario_id'] . ", 0, 'Modificacion de Tipo de Mantenimiento', NOW(), '$nombretipo')";
-      array_push($sqladicional, $sqladd1);
+        array_push($sqladicional, $sqladd1);
 
-    }
+      }
 
-    //OBSERVACIONES
-    if (isset($_REQUEST["observa"])) {
-      $sqlcampos .= "  observaciones =" . GetSQLValue($_REQUEST["observa"], "text");
-      $observaciones = "";
+      //OBSERVACIONES
+      if (isset($_REQUEST["observa"])) {
+        $sqlcampos .= "  observaciones =" . GetSQLValue($_REQUEST["observa"], "text");
+        $observaciones = "";
 
 
-      $sqladd1 = "INSERT INTO servicio_historial_estado
-           (id_maestro,  id_usuario, id_proveedor, nombre, fecha, observaciones)
+        $sqladd1 = "INSERT INTO servicio_historial_estado
+           (id_servicio,  id_usuario, id_proveedor, nombre, fecha, observaciones)
            VALUES ( $elcodigo, " . $_SESSION['usuario_id'] . ", 0, 'Modificacion de Observaciones', NOW(), '$observaciones')";
-      array_push($sqladicional, $sqladd1);
+        array_push($sqladicional, $sqladd1);
 
 
 
-    }
+      }
 
-    //nota operaciones
-    if (isset($_REQUEST["nota_operaciones_tmp"])) {
-      $sqlcampos .= "  nota_operaciones =" . GetSQLValue($_REQUEST["nota_operaciones_tmp"], "text");
-      $observaciones = "";
+      //nota operaciones
+      if (isset($_REQUEST["nota_operaciones_tmp"])) {
+        $sqlcampos .= "  nota_operaciones =" . GetSQLValue($_REQUEST["nota_operaciones_tmp"], "text");
+        $observaciones = "";
 
-      $sqladd1 = "INSERT INTO servicio_historial_estado
+        $sqladd1 = "INSERT INTO servicio_historial_estado
           (id_servicio,  id_usuario, id_proveedor, nombre, fecha, observaciones)
           VALUES ( $elcodigo,  " . $_SESSION['usuario_id'] . ", 0, 'Modificacion de Nota Operaciones', NOW(), '')";
-      array_push($sqladicional, $sqladd1);
-    }
+        array_push($sqladicional, $sqladd1);
+      }
 
-    //Vehiculo
-    if (isset($_REQUEST["id_producto_tmp"])) {
-      $sqlcampos .= "  id_producto =" . GetSQLValue($_REQUEST["id_producto_tmp"], "int");
-      $sqlcampos .= " , placa =" . GetSQLValue($_REQUEST["placa_tmp"], "text");
-      $sqlcampos .= " , chasis =" . GetSQLValue($_REQUEST["chasis_tmp"], "text");
-      $observaciones = "";
+      //Vehiculo
+      if (isset($_REQUEST["id_producto_tmp"])) {
+        $sqlcampos .= "  id_producto =" . GetSQLValue($_REQUEST["id_producto_tmp"], "int");
+        $sqlcampos .= " , placa =" . GetSQLValue($_REQUEST["placa_tmp"], "text");
+        $sqlcampos .= " , chasis =" . GetSQLValue($_REQUEST["chasis_tmp"], "text");
+        $observaciones = "";
 
 
-      $sqladd1 = "INSERT INTO servicio_historial_estado
+        $sqladd1 = "INSERT INTO servicio_historial_estado
            (id_servicio,  id_usuario, id_proveedor, nombre, fecha, observaciones)
            VALUES ( $elcodigo,  " . $_SESSION['usuario_id'] . ", 0, 'Modificar Vehiculo', NOW(), '')";
-      array_push($sqladicional, $sqladd1);
+        array_push($sqladicional, $sqladd1);
 
-    }
+      }
 
-    //kilometraje
-    if (isset($_REQUEST["kilometraje"])) {
-      $sqlcampos .= "  kilometraje =" . GetSQLValue($_REQUEST["kilometraje"], "int");
-      $observaciones = intval($_REQUEST["kilometraje"]);
+      //kilometraje
+      if (isset($_REQUEST["kilometraje"])) {
+        $sqlcampos .= "  kilometraje =" . GetSQLValue($_REQUEST["kilometraje"], "int");
+        $observaciones = intval($_REQUEST["kilometraje"]);
 
-      $sqladd1 = "INSERT INTO servicio_historial_estado
+        $sqladd1 = "INSERT INTO servicio_historial_estado
           (id_servicio,  id_usuario, id_proveedor, nombre, fecha, observaciones)
           VALUES ( $elcodigo,  " . $_SESSION['usuario_id'] . ", 0, 'Modificacion de Kilometraje', NOW(), $observaciones)";
-      array_push($sqladicional, $sqladd1);
-    }
+        array_push($sqladicional, $sqladd1);
+      }
 
-    //cliente
-    if (isset($_REQUEST["clientetmp"])) {
-      $sqlcampos .= "  cliente_id =" . GetSQLValue($_REQUEST["clientetmp"], "int");
-      $observaciones = "";
+      //cliente
+      if (isset($_REQUEST["clientetmp"])) {
+        $sqlcampos .= "  cliente_id =" . GetSQLValue($_REQUEST["clientetmp"], "int");
+        $observaciones = "";
 
-      $nombrecliente = get_dato_sql('entidad', 'nombre', ' where id=' . intval($_REQUEST["clientetmp"]));
+        $nombrecliente = get_dato_sql('entidad', 'nombre', ' where id=' . intval($_REQUEST["clientetmp"]));
 
-      $sqladd1 = "INSERT INTO servicio_historial_estado
+        $sqladd1 = "INSERT INTO servicio_historial_estado
              (id_servicio,  id_usuario, id_proveedor, nombre, fecha, observaciones)
              VALUES ( $elcodigo,  " . $_SESSION['usuario_id'] . ", " . intval($_REQUEST["clientetmp"]) . ", 'Modificar cliente', NOW(), '$nombrecliente')";
-      array_push($sqladicional, $sqladd1);
+        array_push($sqladicional, $sqladd1);
 
-    }
+      }
 
-    //  pagina_permiso(115);//Modificar encabezao
+      //  pagina_permiso(115);//Modificar encabezao
 
-    //  $result = sql_select("SELECT nota_operaciones
-    //    FROM servicio
-    //    WHERE id=$sid limit 1");
+      //  $result = sql_select("SELECT nota_operaciones
+      //    FROM servicio
+      //    WHERE id=$sid limit 1");
 
-    //    if ($result!=false){
-    //        if ($result -> num_rows > 0) { 
-    //           $row = $result -> fetch_assoc() ; 
-    //          $salida.= campo('nota_operaciones_tmp', $etiqueta,'text',$row["nota_operaciones"],' ',' required ',''); 
-    //         }
-    //    }
-
-
+      //    if ($result!=false){
+      //        if ($result -> num_rows > 0) { 
+      //           $row = $result -> fetch_assoc() ; 
+      //          $salida.= campo('nota_operaciones_tmp', $etiqueta,'text',$row["nota_operaciones"],' ',' required ',''); 
+      //         }
+      //    }
 
 
-    if ($sqlcampos <> '') {
-      $sql = "update servicio  set " . $sqlcampos . " where id=" . $elcodigo . ' LIMIT 1';
-      $result = sql_update($sql);
-      $cid = $elcodigo;
 
-      if ($result != false) {
 
-        // //adicionales
-        foreach ($sqladicional as $sqldetadd) {
-          sql_insert($sqldetadd);
-        }
+      if ($sqlcampos <> '') {
+        $sql = "update servicio  set " . $sqlcampos . " where id=" . $elcodigo . ' LIMIT 1';
+        $result = sql_update($sql);
+        $cid = $elcodigo;
 
-        $stud_arr[0]["pcode"] = 1;
-        $stud_arr[0]["pmsg"] = "Guardado";
-        $stud_arr[0]["pcid"] = $cid;
+        if ($result != false) {
 
-        if ($enviar_orden_sms == true) {
+          // //adicionales
+          foreach ($sqladicional as $sqldetadd) {
+            sql_insert($sqldetadd);
+          }
 
-          //obtener codigo de vehiculo y celular de cliente
-          $sql = "SELECT producto.codigo_alterno
+          $stud_arr[0]["pcode"] = 1;
+          $stud_arr[0]["pmsg"] = "Guardado";
+          $stud_arr[0]["pcid"] = $cid;
+
+          if ($enviar_orden_sms == true) {
+
+            //obtener codigo de vehiculo y celular de cliente
+            $sql = "SELECT producto.codigo_alterno
               ,inspeccion.cliente_contacto_telefono        
               FROM servicio
               LEFT OUTER JOIN producto ON (servicio.id_producto=producto.id) 
               LEFT OUTER JOIN inspeccion ON (servicio.id_inspeccion=inspeccion.id)
               WHERE servicio.id=$elcodigo 
               LIMIT 1";
-          $resultsms = sql_select($sql);
+            $resultsms = sql_select($sql);
 
-          if ($resultsms->num_rows > 0) {
-            $rowsms = $resultsms->fetch_assoc();
+            if ($resultsms->num_rows > 0) {
+              $rowsms = $resultsms->fetch_assoc();
 
-            //$sms_mensaje="HERTZ Estimado cliente. Los trabajos realizados al vehículo ".$rowsms["codigo_alterno"]." han sido finalizados y se encuentra listo para la entrega, te esperamos en el taller para su retiro";          
-            $sms_mensaje = "HERTZ Estimado cliente el vehículo " . $rowsms["codigo_alterno"] . " ya terminó los trabajos de taller. En este momento, el auto se encuentra en el área de lavado. En aproximadamente 40 minutos podrá pasar a recogerlo.";
-            $sms_numero = trim($rowsms["cliente_contacto_telefono"]);
-            $sms_numero = str_replace('-', '', $sms_numero);
-            $sms_numero = str_replace(' ', '', $sms_numero);
-            $smsenviado = 0;
+              //$sms_mensaje="HERTZ Estimado cliente. Los trabajos realizados al vehículo ".$rowsms["codigo_alterno"]." han sido finalizados y se encuentra listo para la entrega, te esperamos en el taller para su retiro";          
+              $sms_mensaje = "HERTZ Estimado cliente el vehículo " . $rowsms["codigo_alterno"] . " ya terminó los trabajos de taller. En este momento, el auto se encuentra en el área de lavado. En aproximadamente 40 minutos podrá pasar a recogerlo.";
+              $sms_numero = trim($rowsms["cliente_contacto_telefono"]);
+              $sms_numero = str_replace('-', '', $sms_numero);
+              $sms_numero = str_replace(' ', '', $sms_numero);
+              $smsenviado = 0;
 
-            if (strlen($sms_numero) == 8) {
-              require_once('include/sms_api.php');
+              if (strlen($sms_numero) == 8) {
+                require_once('include/sms_api.php');
+              }
+
+
             }
 
+          }
+          //******** API Rentworks *******/
+          /*
+          if ($autorizando==true) { 
+            require_once ('include/rentworks_api.php');
+            $rw_salida=rw_crear_orden(1,$cid,"");
+          }
+          */
+          if ($completando == true) {
+            require_once('include/rentworks_api.php');
+            $rw_salida = rw_cerrar_orden(1, $cid, "");
+          }
+          //******** API Rentworks fin. ******/
 
+          if ($enviar_orden_email == true) {
+            require_once('correo_servicio_pdf.php');
           }
 
-        }
-        //******** API Rentworks *******/
-        /*
-        if ($autorizando==true) { 
-          require_once ('include/rentworks_api.php');
-          $rw_salida=rw_crear_orden(1,$cid,"");
-        }
-        */
-        if ($completando == true) {
-          require_once('include/rentworks_api.php');
-          $rw_salida = rw_cerrar_orden(1, $cid, "");
-        }
-        //******** API Rentworks fin. ******/
-
-        if ($enviar_orden_email == true) {
-          require_once('correo_servicio_pdf.php');
-        }
 
 
-
+        }
       }
+
+
+
+
     }
 
-
-
+    salida_json($stud_arr);
+    exit;
 
   }
-
-  salida_json($stud_arr);
-  exit;
-
-}
-}catch (Exception $e) {
+} catch (Exception $e) {
   $stud_arr[0]["pcode"] = 0;
   $stud_arr[0]["pmsg"] = "ERROR: " . $e->getMessage() . " | Line: " . $e->getLine();
   salida_json($stud_arr);
@@ -1039,139 +1039,139 @@ if ($accion == "ec2") { //guardar campo modificado
 
 
 // guardar Datos    ############################  
-try{
-if ($accion == "g") {
-  //sleep(3);
-  $stud_arr[0]["pcode"] = 0;
-  $stud_arr[0]["pmsg"] = "ERROR ";
-
-
-  $salida = "";
-  $sqldetalle = array();
-  $Subtotal = 0;
-  $Subtotal_e = 0;
-  $Isv = 0;
-  $Descuento = 0;
-  $Total = 0;
-
-
-  //Validar
-  $verror = "";
-
-  if ($verror == "") {
-
-    $elcodigo = '';
-    if (isset($_REQUEST["id"])) {
-      $elcodigo = intval($_REQUEST["id"]);
-    }
-    if (es_nulo($elcodigo)) {
-      $nuevoreg = true;
-    } else {
-      $nuevoreg = false;
-    }
-
-    //Campos
-    $sqlcampos = "";
-    $sqlcampos_detalle = "";
-    if (isset($_REQUEST["id_tipo_mant"])) {
-      $sqlcampos .= "  id_tipo_mant =" . GetSQLValue($_REQUEST["id_tipo_mant"], "int");
-    }
-    if (isset($_REQUEST["id_inspeccion"])) {
-      $sqlcampos .= " , id_inspeccion =" . GetSQLValue($_REQUEST["id_inspeccion"], "int");
-    }
-    if (isset($_REQUEST["id_tipo_revision"])) {
-      $sqlcampos .= " , id_tipo_revision =" . GetSQLValue($_REQUEST["id_tipo_revision"], "int");
-    }
-    if (isset($_REQUEST["tipo_servicio"])) {
-      $sqlcampos .= " , tipo_servicio =" . GetSQLValue($_REQUEST["tipo_servicio"], "int");
-    }
-
-    if (isset($_REQUEST["numero_alterno"])) {
-      $sqlcampos .= " , numero_alterno =" . GetSQLValue($_REQUEST["numero_alterno"], "text");
-    }
-    if (isset($_REQUEST["id_tecnico1"])) {
-      $sqlcampos .= " , id_tecnico1 =" . GetSQLValue($_REQUEST["id_tecnico1"], "int");
-    }
-    if (isset($_REQUEST["id_tecnico2"])) {
-      $sqlcampos .= " , id_tecnico2 =" . GetSQLValue($_REQUEST["id_tecnico2"], "int");
-    }
-    if (isset($_REQUEST["id_tecnico3"])) {
-      $sqlcampos .= " , id_tecnico3 =" . GetSQLValue($_REQUEST["id_tecnico3"], "int");
-    }
-    if (isset($_REQUEST["id_tecnico4"])) {
-      $sqlcampos .= " , id_tecnico4 =" . GetSQLValue($_REQUEST["id_tecnico4"], "int");
-    }
-    if (isset($_REQUEST["id_tecnico5"])) {
-      $sqlcampos .= " , id_tecnico5 =" . GetSQLValue($_REQUEST["id_tecnico5"], "int");
-    }
-
-    if (isset($_REQUEST["fecha_hora_ingreso"])) {
-      $sqlcampos .= " , fecha_hora_ingreso =" . GetSQLValue($_REQUEST["fecha_hora_ingreso"], "text");
-    }
-    if (isset($_REQUEST["fecha_hora_asigna"])) {
-      $sqlcampos .= " , fecha_hora_asigna =" . GetSQLValue($_REQUEST["fecha_hora_asigna"], "text");
-    }
-    if (isset($_REQUEST["fecha_hora_promesa"])) {
-      $sqlcampos .= " , fecha_hora_promesa =" . GetSQLValue($_REQUEST["fecha_hora_promesa"], "text");
-    }
-    if (isset($_REQUEST["fecha_hora_final"])) {
-      $sqlcampos .= " , fecha_hora_final =" . GetSQLValue($_REQUEST["fecha_hora_final"], "text");
-    }
-    if (isset($_REQUEST["cliente_id"])) {
-      $sqlcampos .= " , cliente_id =" . GetSQLValue($_REQUEST["cliente_id"], "int");
-    }
-    if (isset($_REQUEST["id_producto"])) {
-      $sqlcampos .= " , id_producto =" . GetSQLValue($_REQUEST["id_producto"], "int");
-    }
-    if (isset($_REQUEST["observaciones"])) {
-      $sqlcampos .= " , observaciones =" . GetSQLValue($_REQUEST["observaciones"], "text");
-    }
-    if (isset($_REQUEST["estado_paro_por_repuesto"])) {
-      $sqlcampos .= " , estado_paro_por_repuesto =" . GetSQLValue($_REQUEST["estado_paro_por_repuesto"], "text");
-    }
-
-    if ($nuevoreg == true) {
-      //Crear nuevo     
-      $sqlcampos .= " , fecha =NOW(), hora =NOW()";
-      $sqlcampos .= " , id_usuario =" . $_SESSION["usuario_id"];
-      $sqlcampos .= " , id_tienda =" . $_SESSION['tienda_id'];
-      $sqlcampos .= " , id_estado =1";
-      $sqlcampos .= " , numero =" . GetSQLValue(get_dato_sql('servicio', "IFNULL((max(numero)+1),1)", " "), "int"); //where id_tienda=".$_SESSION['tienda_id']
-      $sql = "insert into servicio set " . $sqlcampos . " ";
-
-      $result = sql_insert($sql);
-      $cid = $result; //last insert id 
-
-    } else {
-      //actualizar
-      $sql = "update servicio  set " . $sqlcampos . " where id=" . $elcodigo . " LIMIT 1";
-      $result = sql_update($sql);
-      $cid = $elcodigo;
-    }
-
-    if ($result != false) {
-
-      // //Detalle
-      // foreach( $sqldetalle as $sqldet ) {
-      //   sql_update(str_replace(":codigo", $cid, $sqldet));
-      //   }	
-
-      $stud_arr[0]["pcode"] = 1;
-      $stud_arr[0]["pmsg"] = "Guardado";
-      $stud_arr[0]["pcid"] = $cid;
-    }
-
-  } else {
+try {
+  if ($accion == "g") {
+    //sleep(3);
     $stud_arr[0]["pcode"] = 0;
-    $stud_arr[0]["pmsg"] = $verror;
-    $stud_arr[0]["pcid"] = 0;
-  }
+    $stud_arr[0]["pmsg"] = "ERROR ";
 
-  salida_json($stud_arr);
-  exit;
 
-} //  fin guardar datos
-}catch (Exception $e) {
+    $salida = "";
+    $sqldetalle = array();
+    $Subtotal = 0;
+    $Subtotal_e = 0;
+    $Isv = 0;
+    $Descuento = 0;
+    $Total = 0;
+
+
+    //Validar
+    $verror = "";
+
+    if ($verror == "") {
+
+      $elcodigo = '';
+      if (isset($_REQUEST["id"])) {
+        $elcodigo = intval($_REQUEST["id"]);
+      }
+      if (es_nulo($elcodigo)) {
+        $nuevoreg = true;
+      } else {
+        $nuevoreg = false;
+      }
+
+      //Campos
+      $sqlcampos = "";
+      $sqlcampos_detalle = "";
+      if (isset($_REQUEST["id_tipo_mant"])) {
+        $sqlcampos .= "  id_tipo_mant =" . GetSQLValue($_REQUEST["id_tipo_mant"], "int");
+      }
+      if (isset($_REQUEST["id_inspeccion"])) {
+        $sqlcampos .= " , id_inspeccion =" . GetSQLValue($_REQUEST["id_inspeccion"], "int");
+      }
+      if (isset($_REQUEST["id_tipo_revision"])) {
+        $sqlcampos .= " , id_tipo_revision =" . GetSQLValue($_REQUEST["id_tipo_revision"], "int");
+      }
+      if (isset($_REQUEST["tipo_servicio"])) {
+        $sqlcampos .= " , tipo_servicio =" . GetSQLValue($_REQUEST["tipo_servicio"], "int");
+      }
+
+      if (isset($_REQUEST["numero_alterno"])) {
+        $sqlcampos .= " , numero_alterno =" . GetSQLValue($_REQUEST["numero_alterno"], "text");
+      }
+      if (isset($_REQUEST["id_tecnico1"])) {
+        $sqlcampos .= " , id_tecnico1 =" . GetSQLValue($_REQUEST["id_tecnico1"], "int");
+      }
+      if (isset($_REQUEST["id_tecnico2"])) {
+        $sqlcampos .= " , id_tecnico2 =" . GetSQLValue($_REQUEST["id_tecnico2"], "int");
+      }
+      if (isset($_REQUEST["id_tecnico3"])) {
+        $sqlcampos .= " , id_tecnico3 =" . GetSQLValue($_REQUEST["id_tecnico3"], "int");
+      }
+      if (isset($_REQUEST["id_tecnico4"])) {
+        $sqlcampos .= " , id_tecnico4 =" . GetSQLValue($_REQUEST["id_tecnico4"], "int");
+      }
+      if (isset($_REQUEST["id_tecnico5"])) {
+        $sqlcampos .= " , id_tecnico5 =" . GetSQLValue($_REQUEST["id_tecnico5"], "int");
+      }
+
+      if (isset($_REQUEST["fecha_hora_ingreso"])) {
+        $sqlcampos .= " , fecha_hora_ingreso =" . GetSQLValue($_REQUEST["fecha_hora_ingreso"], "text");
+      }
+      if (isset($_REQUEST["fecha_hora_asigna"])) {
+        $sqlcampos .= " , fecha_hora_asigna =" . GetSQLValue($_REQUEST["fecha_hora_asigna"], "text");
+      }
+      if (isset($_REQUEST["fecha_hora_promesa"])) {
+        $sqlcampos .= " , fecha_hora_promesa =" . GetSQLValue($_REQUEST["fecha_hora_promesa"], "text");
+      }
+      if (isset($_REQUEST["fecha_hora_final"])) {
+        $sqlcampos .= " , fecha_hora_final =" . GetSQLValue($_REQUEST["fecha_hora_final"], "text");
+      }
+      if (isset($_REQUEST["cliente_id"])) {
+        $sqlcampos .= " , cliente_id =" . GetSQLValue($_REQUEST["cliente_id"], "int");
+      }
+      if (isset($_REQUEST["id_producto"])) {
+        $sqlcampos .= " , id_producto =" . GetSQLValue($_REQUEST["id_producto"], "int");
+      }
+      if (isset($_REQUEST["observaciones"])) {
+        $sqlcampos .= " , observaciones =" . GetSQLValue($_REQUEST["observaciones"], "text");
+      }
+      if (isset($_REQUEST["estado_paro_por_repuesto"])) {
+        $sqlcampos .= " , estado_paro_por_repuesto =" . GetSQLValue($_REQUEST["estado_paro_por_repuesto"], "text");
+      }
+
+      if ($nuevoreg == true) {
+        //Crear nuevo     
+        $sqlcampos .= " , fecha =NOW(), hora =NOW()";
+        $sqlcampos .= " , id_usuario =" . $_SESSION["usuario_id"];
+        $sqlcampos .= " , id_tienda =" . $_SESSION['tienda_id'];
+        $sqlcampos .= " , id_estado =1";
+        $sqlcampos .= " , numero =" . GetSQLValue(get_dato_sql('servicio', "IFNULL((max(numero)+1),1)", " "), "int"); //where id_tienda=".$_SESSION['tienda_id']
+        $sql = "insert into servicio set " . $sqlcampos . " ";
+
+        $result = sql_insert($sql);
+        $cid = $result; //last insert id 
+
+      } else {
+        //actualizar
+        $sql = "update servicio  set " . $sqlcampos . " where id=" . $elcodigo . " LIMIT 1";
+        $result = sql_update($sql);
+        $cid = $elcodigo;
+      }
+
+      if ($result != false) {
+
+        // //Detalle
+        // foreach( $sqldetalle as $sqldet ) {
+        //   sql_update(str_replace(":codigo", $cid, $sqldet));
+        //   }	
+
+        $stud_arr[0]["pcode"] = 1;
+        $stud_arr[0]["pmsg"] = "Guardado";
+        $stud_arr[0]["pcid"] = $cid;
+      }
+
+    } else {
+      $stud_arr[0]["pcode"] = 0;
+      $stud_arr[0]["pmsg"] = $verror;
+      $stud_arr[0]["pcid"] = 0;
+    }
+
+    salida_json($stud_arr);
+    exit;
+
+  } //  fin guardar datos
+} catch (Exception $e) {
   $stud_arr[0]["pcode"] = 0;
   $stud_arr[0]["pmsg"] = "ERROR: " . $e->getMessage() . " | Line: " . $e->getLine();
   salida_json($stud_arr);
@@ -1661,7 +1661,7 @@ if (!es_nulo($id_estado)) {
               </div>
 
             </div>
-          <?php
+            <?php
           }
           ?>
 

@@ -63,6 +63,8 @@ if (!isset($_REQUEST['a'])) {
 }
 $cid = 0;
 $id_estado = 0;
+$id_producto = 0;
+
 if (isset($_REQUEST['cid'])) {
     $cid = intval($_REQUEST['cid']);
 }
@@ -72,7 +74,14 @@ if (isset($_REQUEST['id_estado'])) {
     //$id_estado = 0;
     $id_estado = intval(get_dato_sql('ventas', 'id_estado', ' where id=' . intval($cid))) ?? 0;
 }
-
+if (isset($_REQUEST['id_producto'])) {
+    $id_producto = intval($_REQUEST['id_producto']);
+    $producto = getProducto($id_producto);
+    /*if ($producto) {
+        echo "<p class='text-secondary'> Suba aqui los comprobantes de venta: " . $producto['codigo_alterno'] . ' - ' . $producto['nombre'] . '</p>';
+    }*/
+}
+file_put_contents("idproducto.txt", 'Idprod: ' . $id_producto);
 // Arma el HTML del contador + tabla de comprobantes registrados. Se usa tanto en la
 // vista completa como en la accion "tabla" (refresco parcial, sin recargar el widget
 // de subida ni el modal, para no perder una cola de archivos que se este subiendo).
@@ -124,6 +133,8 @@ function html_tabla_comprobantes($cid)
                         <th>Referencia</th>
                         <th class="text-right">Monto</th>
                         <th>Creado por</th>
+                        <th>Fecha Registro</th>
+                        <th>Dias</th>
                         <th class="text-center">Acciones</th>
                     </tr></thead><tbody>';
         foreach ($comprobantes as $c) {
@@ -154,6 +165,8 @@ function html_tabla_comprobantes($cid)
                 . '<td><span class="text-monospace">' . htmlspecialchars($c['referencia']) . '</span></td>'
                 . '<td class="text-right font-weight-bold">L ' . number_format((float) $c['monto'], 2) . '</td>'
                 . '<td>' . htmlspecialchars($c['usuario_nombre'] ?? '') . '</td>'
+                . '<td>' . formato_fecha_de_mysql($c['fecha_registro'] ?? '') . '</td>'
+                . '<td class="text-center">' . htmlspecialchars($c['dias'] ?? '') . '</td>'
                 // Mismo permiso (168) que se usa para "Borrar" en la pestaña "Fotos de Comprobante de Pago".
                 // Editar banco/fecha/referencia/monto despues de guardado: mismo permiso (168) que Borrar.
                 . '<td class="text-center text-nowrap">' . ($puede_modificar
@@ -259,6 +272,7 @@ if ($accion == 'extraer_comprobante') {
     }
 
     $ia = extraer_datos_comprobante_ia($ruta_archivo);
+    //file_put_contents("IA.txt", 'Datos de test: ' . $ia['banco'] . ', ' . $ia['referencia'] . ', ' . $ia['monto'] . ', ' . $ia['success']);
 
     // Aunque la IA falle o lea datos incompletos, se responde pcode=1 (no es un error del
     // sistema) para que el usuario pueda completar/corregir los campos manualmente.
@@ -291,6 +305,7 @@ if ($accion == 'guardar_comprobante') {
     $stud_arr[0]["pmsg"] = "ERROR";
 
     $cid = intval($_REQUEST['id_venta'] ?? 0);
+    $id_producto = intval($_REQUEST['id_producto'] ?? 0);
     $archivo = sanear_string($_REQUEST['archivo'] ?? '');
     $banco = trim($_REQUEST['banco'] ?? '');
     $fecha_form = trim($_REQUEST['fecha'] ?? '');       // formato de la sesion (dd/mm/yyyy)
@@ -298,6 +313,8 @@ if ($accion == 'guardar_comprobante') {
     $monto = trim($_REQUEST['monto'] ?? '');
     $origen = ($_REQUEST['origen'] ?? '') === 'ia' ? 'ia' : 'manual';
     $ia_raw = $_REQUEST['ia_raw'] ?? '';
+
+    //file_put_contents("idproducto.txt", 'Idprod: ' . $id_producto);
 
     // El boton de subir esta oculto en pantalla cuando la venta ya no admite comprobantes, pero
     // eso es solo ayuda visual -se puede saltar mandando la peticion directo-, asi que se vuelve
@@ -356,7 +373,7 @@ if ($accion == 'guardar_comprobante') {
     }
 
     $id_usuario = intval($_SESSION['usuario_id']);
-    $nuevo_id = guardar_comprobante_pago($cid, $archivo, $banco, $fecha_mysql, $referencia, $monto, $origen, $ia_raw, $id_usuario);
+    $nuevo_id = guardar_comprobante_pago($cid, $archivo, $banco, $fecha_mysql, $referencia, $monto, $origen, $ia_raw, $id_usuario, $id_producto);
 
     if ($nuevo_id) {
         // Registro en el historial de la venta (misma tabla/estructura que registrar_historial_ventas()
@@ -648,9 +665,6 @@ $tipo_ventas_reparacion = get_dato_sql('ventas', 'tipo_ventas_reparacion', ' whe
 $foto = get_dato_sql('ventas', 'foto', ' where id=' . $cid);
 ?>
 
-<p class="text-muted">
-    Suba aqui los comprobantes de pago de esta venta
-</p>
 
 <div class="row mb-3">
     <div class="col-md" id="archivocomprobante">
@@ -1050,10 +1064,10 @@ $foto = get_dato_sql('ventas', 'foto', ' where id=' . $cid);
     function comprobante_pedir_datos(archivo) {
 
         var cid = $('#id').val();
-
+        var id_producto = $('#id_producto').val();
         cargando_ia(true, 'Leyendo el comprobante de pago...');
         $.ajax({
-            url: 'ventas_comprobantes_pago.php?a=extraer_comprobante',
+            url: 'ventas_comprobantes_pago.php?a=extraer_comprobante' + '&id_producto=' + id_producto,
             type: 'POST',
             dataType: 'json',
             data: { archivo: archivo },
@@ -1173,8 +1187,9 @@ $foto = get_dato_sql('ventas', 'foto', ' where id=' . $cid);
         // esta llamada puede tardar unos segundos -showLoaderOnConfirm ya deja ver un spinner en
         // el boton de Guardar mientras tanto, no hace falta el overlay de cargando_ia() aca-.
         return new Promise(function (resolve) {
+            var id_producto = $('#id_producto').val();
             $.ajax({
-                url: 'ventas_comprobantes_pago.php?a=guardar_comprobante',
+                url: 'ventas_comprobantes_pago.php?a=guardar_comprobante' + '&id_producto=' + id_producto,
                 type: 'POST',
                 dataType: 'json',
                 data: $('#forma_comprobante_ia').serialize(),

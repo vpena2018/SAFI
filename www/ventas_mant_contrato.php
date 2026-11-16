@@ -1421,6 +1421,7 @@ if ($accion == "g") {
     $precio_maximo = intval($_REQUEST['precio_maximo']);
     $venta_cont_cred = intval($_REQUEST['venta_cont_cred']);
 
+
     if ($venta_cont_cred == 2) {
         $verror .= validar("Financiera", $_REQUEST['id_financiera'], "int", true);
         $verror .= validar("Estado Financiera", $_REQUEST['id_financiera_estado'], "int", true);
@@ -1445,8 +1446,8 @@ if ($accion == "g") {
     $carShopPerfil = get_dato_sql("usuario", "grupo_id", " WHERE id=" . $_SESSION["usuario_id"]);
     $id_estado = intval($_REQUEST['id_estado']);
     $precio_venta = intval($_REQUEST['precio_venta']);
-    $prima_venta = intval($_REQUEST['prima_venta']);
-    $prima_raw = $_REQUEST['prima_venta'] ?? '';
+    $prima_venta = intval($_REQUEST['prima_venta']) ?? 0;
+    $prima_raw = $_REQUEST['prima_venta'] ?? 0;
     $descuento_aplicado = isset($_REQUEST['descuento_aplicado']) ? intval($_REQUEST['descuento_aplicado']) : 0;
 
     $persona_juridica = intval($_REQUEST['persona_juridica']);
@@ -1512,8 +1513,8 @@ if ($accion == "g") {
             $verror .= 'Ingrese el precio de venta del vehículo. <br>';
         }
 
-        // Prima: puede ser 0, pero no vacía
-        if (trim((string) $prima_raw) === '') {
+        // Prima: debe ser igual o mayor al parametro de reserva
+        if ((trim((string) $prima_raw) === '') || ((float) $prima_raw <= 0)) {
             $verror .= 'Ingrese la prima de venta del vehículo. ';
         }
 
@@ -1523,7 +1524,10 @@ if ($accion == "g") {
                 if ((float) trim($prima_raw) < $prima_venta_registrada && !tiene_permiso(201))
                     $verror = "Estas llevando la prima de venta a un valor menor al que ya se habia registrado anteriormente: " . number_format($prima_venta_registrada, 2, '.', ',') . ". <br>";
                 else
-                    $verror = "";
+                    if (trim($prima_raw) < (float) $prima_venta_clase)
+                        $verror = "La prima venta que estas registrando es menor al de reserva; " . number_format($prima_venta_clase, 2, '.', ',') . '. <br>';
+                    else
+                        $verror = "";
             } else
                 $verror .= 'La prima de venta no puede ser menor que la prima mínima de reserva: ' . number_format($prima_venta_clase, 2, '.', ',') . '. <br>';
         }
@@ -2325,13 +2329,11 @@ if ($accion == "g") {
     </ul>
 </div>
 
-<div class="maxancho800 mx-auto">
+<div class="col-sm-12 mb-3 mx-auto">
 
     <div class="tab-content" id="nav-tabContent">
         <!-- DETALLE  -->
         <div class="tab-pane fade show active" id="nav_detalle" role="tabpanel">
-
-
             <div class="row">
                 <div class="col">
                     <div class="form-group">
@@ -2713,24 +2715,20 @@ if ($accion == "g") {
                                         <?php echo campo("prima_venta", "Precio de Reserva", 'number', $prima_venta, ' ', $disable_sec2); ?>
                                     </div>
 
+                                    <!--Informacion del Cliente HTML -->
                                     <div id="clientediv" style="display:none;" class="col-md-12">
-
                                         <?php
                                         $nombre_cliente = '';
                                         echo campo("nombre_cliente", "", 'hidden', $nombre_cliente, '', '', '');
 
-
-                                        //echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1,'get.php?a=2&t=1',$cliente_nombre);
+                                        //echo campo("cliente_id","Cliente",'select2ajax',$cliente_id,'class=" "','" '.$disable_sec1,'get.php?a=2&t=1',$cliente_nombre);                                        
                                         
-
                                         //echo valores_combobox_array($opciones, 'T02', 'Seleccione una opción');
                                         if ($nacionalidad_venta == '') {
                                             $nacionalidad_venta = 'hondureño';
                                         }
 
                                         ?>
-
-
 
                                         <div class="row">
                                             <div class="col-md-6">
@@ -3063,8 +3061,6 @@ if ($accion == "g") {
                     }
                 );
             });
-
-
 
             $('#btnContrato').on('click', function (e) {
                 e.preventDefault();
@@ -3400,8 +3396,6 @@ if ($accion == "g") {
         }
 
 
-
-
         function abrir_hoja() {
             hinspeccion = $('#id_inspeccion').val();
             $('#ModalWindow2').modal('hide');
@@ -3623,8 +3617,9 @@ if ($accion == "g") {
             if (eltab == 'nav_comprobantes_pago') {
                 var cid = $('#id').val();
                 var id_estado = $('#id_estado').val();
+                var id_producto = $('#id_producto').val();
                 if (cid > 0) {
-                    $('#nav_comprobantes_pago').load('ventas_comprobantes_pago.php?cid=' + cid + '&id_estado=' + id_estado);
+                    $('#nav_comprobantes_pago').load('ventas_comprobantes_pago.php?cid=' + cid + '&id_estado=' + id_estado + '&id_producto=' + id_producto);
                 }
             }
 

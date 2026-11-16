@@ -1,4 +1,7 @@
 <?php
+//FECHA                DEVELOPER                    DESCRIPCION
+//2026-11-11           Moises Gamez                 Se cambio string año, por una captura de fecha desde php.
+
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
@@ -393,6 +396,7 @@ if (isset($_REQUEST["a"])) {
     <link href="plugins/sweetalert2/sweetalert2.min.css" rel="stylesheet">
     <link href="css/app2.css" rel="stylesheet">
     <link href="css/index.css" rel="stylesheet">
+
 </head>
 
 <body>
@@ -407,7 +411,7 @@ if (isset($_REQUEST["a"])) {
                     <hr>
                 </div>
 
-                <p class="login-box-msg">Ingrese sus datos</p>
+                <p class="login-box-msg">INICIO DE SESION</p>
 
                 <div class="form-label-group">
                     <input type="text" id="user" name="user" class="form-control" placeholder="" autocomplete="off"
@@ -463,7 +467,13 @@ if (isset($_REQUEST["a"])) {
 
 
 
-        <p class="mt-5 mb-3 text-muted text-center">&copy; 2024</p>
+        <p class="mt-5 mb-1 text-muted text-center">&copy;
+            <?php $year = date("Y");
+            echo ".::INGLOSA::. " . $year; ?>
+        </p>
+        <p class="mt-1 mb-3 text-muted text-center">RESPALDO GARANTIA E INNOVACION
+        </p>
+
 
     </form>
 

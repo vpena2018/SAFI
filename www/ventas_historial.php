@@ -32,9 +32,9 @@ order by ventas_historial_estado.id desc");
 ?>
 
 <div class="row">
-    <div class="table-responsive ">
-        <table id="tabla" data-url="ventas_vehiculos_ver.php?a=1" data-page="0" class="table table-striped   table-sm"
-            style="display: block;width:100%;height: 500px; overflow-y: scroll;">
+    <div class="col" style="height: 500px; overflow-y: scroll;">
+        <table id="tabla" data-url="ventas_vehiculos_ver.php?a=1" class="table table-striped table-sm dataTable"
+            role="grid">
             <thead class="">
                 <tr>
                     <th>Fecha / Hora</th>
@@ -67,7 +67,6 @@ order by ventas_historial_estado.id desc");
             </tbody>
 
         </table>
-
     </div>
 </div>
 <p>&nbsp;</p>

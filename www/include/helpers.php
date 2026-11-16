@@ -74,6 +74,29 @@ function getNacionalidades()
     ];
 }
 
+//funcion que nos ayuda a setear un maximo de cadena a mostrar
+function MaxLengthCadena(string $cadena, int $length)
+{
+    if ($cadena !== '' && $length > 0) {
+        $len = strlen(trim($cadena));
+        if ($len > $length)
+            $len = $length;
+        return substr($cadena, 0, $len);
+    }
+    return '';
+}
+
+//funcion que devuelve un array de tipos desplazamientos para lista despegable
+function getTipoDesplazamientos()
+{
+    return [
+        ['valor' => '', 'texto' => '...'],
+        ['valor' => 'INTERNO', 'texto' => 'INTERNO'],
+        ['valor' => 'EXTERNO', 'texto' => 'EXTERNO'],
+        ['valor' => 'VENTA_CARSHOP', 'texto' => 'VENTA CARSHOP'],
+    ];
+}
+
 function appLog(string $message): void
 {
     //return; // Desactivar logs en producción
@@ -184,6 +207,61 @@ function getDatosHistorial($cid, $permiso = 201)
     return null;
 }
 
+function getProducto($id_producto)
+{
+    $sql = "SELECT id, codigo_alterno, nombre, marca, modelo, color, 
+                   cilindrada, serie, placa, tipo_vehiculo 
+            FROM producto WHERE id = $id_producto limit 1";
+
+    $res = sql_select($sql);
+
+    if ($res && $row = $res->fetch_assoc()) {
+        return [
+            'id' => $row['id'],
+            'codigo_alterno' => $row['codigo_alterno'],
+            'nombre' => $row['nombre'],
+            'marca' => $row['marca'],
+            'modelo' => $row['modelo'],
+            'color' => $row['color'],
+            'cilindrada' => $row['cilindrada'],
+            'serie' => $row['serie'],
+            'placa' => $row['placa'],
+            'tipo_vehiculo' => $row['tipo_vehiculo']
+        ];
+    }
+
+    return null;
+
+}
+
+//Funcion que devuelve el listado de correos a enviar segun perfil
+function getListaCorreosPerfil($id_perfil)
+{
+    // 1. Sanitizar el ID para prevenir Inyección SQL (asumiendo que es un entero)
+    $id_perfil = (int) $id_perfil;
+
+    $sql = "SELECT email FROM usuario 
+            WHERE activo = 1 
+            AND perfil_tecnico = $id_perfil";
+
+    $res = sql_select($sql);
+    $correos = [];
+
+    // Verificamos que $res tenga datos 
+    if ($res) {
+        // Si sql_select retorna un mysqli_result:
+        while ($row = $res->fetch_assoc()) {
+            $email = trim($row["email"] ?? '');
+            if ($email !== '') {
+                $correos[] = $email;
+            }
+        }
+    }
+
+    // Unimos los correos con ';' sin dejar un punto y coma al final
+    return implode(';', $correos);
+}
+
 //Funcion obtiene las clases basadas en el id de la clase.
 function getDatosClase($clase)
 {
@@ -265,6 +343,42 @@ function updateComprobantePago($cid): bool
             WHERE id_venta = $cid and activo = 1";
 
     return sql_update($sql);
+}
+
+//Obtener informacion en arreglo del usuario basado en su ID.
+function getUsuario($idusuario)
+{
+    try {
+        $sql = "SELECT id, usuario, grupo_id, tienda_id, nombre, email, telefono 
+            FROM usuario WHERE id = $idusuario AND activo = 1 LIMIT 1";
+        $res = sql_select($sql);
+        if ($res && $row = $res->fetch_assoc()) {
+            return [
+                'id' => (int) $row['id'],
+                'usuario' => $row['usuario'],
+                'grupo_id' => (int) $row['grupo_id'],
+                'tienda_id' => (int) $row['tienda_id'],
+                'nombre' => $row['nombre'],
+                'email' => $row['email'],
+                'telefono' => $row['telefono']
+            ];
+        }
+        return null;
+    } catch (Exception $e) {
+        bitacora_sistema("try_execute_query.", $e->getMessage() . ' : ' . $sql);
+    }
+}
+
+//para validar numeros de un tamaño pasado desde parametros
+function validateNumberBySize(string $input, int $size): bool
+{
+    // Ensure size is a positive integer to avoid invalid regex patterns
+    if ($size <= 0) {
+        return false;
+    }
+
+    // Dynamically inject the size into the regular expression
+    return preg_match('/\b\d{' . intval($size) . '}\b/', $input) === 1;
 }
 
 ?>

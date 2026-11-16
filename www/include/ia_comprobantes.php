@@ -28,6 +28,8 @@
 // resto de la funcionalidad -guardar y validar duplicados- funciona igual.
 // ==============================================================================
 
+require_once('include/helpers.php');
+
 if (!defined('app_openai_api_key')) {
     if (file_exists(__DIR__ . '/openai_key.php')) {
         require_once(__DIR__ . '/openai_key.php');
@@ -540,57 +542,61 @@ function ia_comprobantes_media_type($ruta_archivo)
  */
 function ia_comprobantes_llamar_api($payload)
 {
+    try {
 
-    $ch = curl_init('https://api.openai.com/v1/chat/completions');
+        $ch = curl_init('https://api.openai.com/v1/chat/completions');
 
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => json_encode($payload),
-        CURLOPT_HTTPHEADER => [
-            'content-type: application/json',
-            'Authorization: Bearer ' . app_openai_api_key,
-        ],
-        CURLOPT_TIMEOUT => 45,
-    ]);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_HTTPHEADER => [
+                'content-type: application/json',
+                'Authorization: Bearer ' . app_openai_api_key,
+            ],
+            CURLOPT_TIMEOUT => 45,
+        ]);
 
-    // En algunos entornos de Windows (XAMPP / servidor embebido de PHP) no hay un paquete de
-    // certificados raiz configurado en php.ini, y curl no puede validar el certificado SSL de
-    // la API (error "unable to get local issuer certificate"). Para no depender de esa
-    // configuracion del servidor, se incluye un paquete de certificados con el proyecto mismo.
-    // No se desactiva la verificacion SSL (seria inseguro); solo se le indica a curl donde
-    // encontrar los certificados confiables.
-    $cacert = __DIR__ . '/cacert.pem';
-    if (file_exists($cacert)) {
-        curl_setopt($ch, CURLOPT_CAINFO, $cacert);
+        // En algunos entornos de Windows (XAMPP / servidor embebido de PHP) no hay un paquete de
+        // certificados raiz configurado en php.ini, y curl no puede validar el certificado SSL de
+        // la API (error "unable to get local issuer certificate"). Para no depender de esa
+        // configuracion del servidor, se incluye un paquete de certificados con el proyecto mismo.
+        // No se desactiva la verificacion SSL (seria inseguro); solo se le indica a curl donde
+        // encontrar los certificados confiables.
+        $cacert = __DIR__ . '/cacert.pem';
+        if (file_exists($cacert)) {
+            curl_setopt($ch, CURLOPT_CAINFO, $cacert);
+        }
+
+        $body = curl_exec($ch);
+        $curl_error = curl_error($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($body === false) {
+            ia_comprobantes_log('Error de conexion (cURL) a la API de OpenAI: ' . $curl_error);
+            return ['success' => false, 'error' => 'No se pudo conectar con la API de IA: ' . $curl_error, 'raw' => ''];
+        }
+
+        $json = json_decode($body, true);
+
+        if ($http_code !== 200 || !is_array($json)) {
+            $msg = is_array($json) && isset($json['error']['message']) ? $json['error']['message'] : ('HTTP ' . $http_code);
+            ia_comprobantes_log('La API de OpenAI respondio con error, HTTP ' . $http_code . ': ' . $msg);
+            return ['success' => false, 'error' => 'La API de IA respondio con error: ' . $msg, 'raw' => $body];
+        }
+
+        // La respuesta de /v1/chat/completions trae el texto en choices[0].message.content
+        $texto = $json['choices'][0]['message']['content'] ?? '';
+
+        if ($texto === '') {
+            return ['success' => false, 'error' => 'La IA no devolvio texto en la respuesta.', 'raw' => $body];
+        }
+
+        return ['success' => true, 'error' => null, 'texto' => $texto];
+    } catch (Exception $e) {
+        return ['success' => true, 'error' => $e->getMessage(), 'texto' => $texto];
     }
-
-    $body = curl_exec($ch);
-    $curl_error = curl_error($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($body === false) {
-        ia_comprobantes_log('Error de conexion (cURL) a la API de OpenAI: ' . $curl_error);
-        return ['success' => false, 'error' => 'No se pudo conectar con la API de IA: ' . $curl_error, 'raw' => ''];
-    }
-
-    $json = json_decode($body, true);
-
-    if ($http_code !== 200 || !is_array($json)) {
-        $msg = is_array($json) && isset($json['error']['message']) ? $json['error']['message'] : ('HTTP ' . $http_code);
-        ia_comprobantes_log('La API de OpenAI respondio con error, HTTP ' . $http_code . ': ' . $msg);
-        return ['success' => false, 'error' => 'La API de IA respondio con error: ' . $msg, 'raw' => $body];
-    }
-
-    // La respuesta de /v1/chat/completions trae el texto en choices[0].message.content
-    $texto = $json['choices'][0]['message']['content'] ?? '';
-
-    if ($texto === '') {
-        return ['success' => false, 'error' => 'La IA no devolvio texto en la respuesta.', 'raw' => $body];
-    }
-
-    return ['success' => true, 'error' => null, 'texto' => $texto];
 }
 
 
@@ -654,11 +660,16 @@ function buscar_comprobante_pago_duplicado($banco, $fecha_mysql, $referencia, $m
  *
  * @return int|false Id del nuevo registro, o false si fallo el insert.
  */
-function guardar_comprobante_pago($id_venta, $archivo, $banco, $fecha_mysql, $referencia, $monto, $origen_datos, $ia_raw, $id_usuario)
+function guardar_comprobante_pago($id_venta, $archivo, $banco, $fecha_mysql, $referencia, $monto, $origen_datos, $ia_raw, $id_usuario, $id_producto)
 {
+    $codigo_carro = "";
+    $carro = getProducto($id_producto);
+
+    if ($carro)
+        $codigo_carro = $carro["codigo_alterno"];
 
     $sql = "INSERT INTO ventas_comprobantes_pago
-                (id_venta, archivo, banco, fecha_comprobante, referencia, monto, origen_datos, ia_respuesta_raw, id_usuario, fecha_registro, activo)
+                (id_venta, archivo, banco, fecha_comprobante, referencia, monto, origen_datos, ia_respuesta_raw, id_usuario, fecha_registro, activo, id_producto)
             VALUES (
                 " . intval($id_venta) . ",
                 " . GetSQLValue($archivo, 'text') . ",
@@ -668,9 +679,10 @@ function guardar_comprobante_pago($id_venta, $archivo, $banco, $fecha_mysql, $re
                 " . GetSQLValue(round(floatval($monto), 2), 'double') . ",
                 " . GetSQLValue($origen_datos === 'ia' ? 'ia' : 'manual', 'text') . ",
                 " . GetSQLValue($ia_raw, 'text') . ",
-                " . intval($id_usuario) . ",
+                " . intval($id_usuario) . ",                
                 NOW(),
-                1
+                1,
+                " . GetSQLValue($codigo_carro, 'text') . "
             )";
 
     return sql_insert($sql);
@@ -704,7 +716,11 @@ function guardar_archivo_recibo($id_comprobante, $id_venta, $archivo_recibo)
 function listar_comprobantes_pago_venta($id_venta)
 {
     $filas = [];
-    $result = sql_select("SELECT ventas_comprobantes_pago.*, usuario.usuario AS usuario_nombre
+    $result = sql_select("SELECT ventas_comprobantes_pago.*, usuario.usuario AS usuario_nombre,
+                            case 
+                                when ventas_comprobantes_pago.archivo_recibo IS NULL then datediff(CURRENT_DATE(),fecha_registro)
+                            ELSE 0
+                            END dias
                            FROM ventas_comprobantes_pago
                            LEFT OUTER JOIN usuario ON (ventas_comprobantes_pago.id_usuario = usuario.id)
                            WHERE ventas_comprobantes_pago.id_venta = " . intval($id_venta) . "

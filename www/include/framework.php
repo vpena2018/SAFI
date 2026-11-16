@@ -10,6 +10,7 @@
 //FECHA                 DEVELOPER                  INCIDENTE
 // 2026-10-28            Moises Gamez              INC-20261028 Se creo log bitacora de errores de base de datos
 // 2026-11-04            Moises Gamez              INC-20261104 Se corrigio deprecated function trim with null values, (string)
+// 2026-11-09            Moises Gamez              INC-20261109 Se agrego funcion de bitacora y tabla en DB.
 
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
@@ -1573,7 +1574,7 @@ function campo_upload_foto_ventas($nombre, $etiqueta, $tipo, $valor, $adicional,
 
             $salida .= '<div class="row"> 
                
-               <div id="colbtn_' . $nombre . '" class="col-sm-4">
+               <div id="colbtn_' . $nombre . '" class="col-sm-5">
                <span class="btn btn-secondary fileinput-button">
                <i class="fa fa-cloud-upload-alt"></i>
                <span>Subir Foto</span>
@@ -1582,24 +1583,22 @@ function campo_upload_foto_ventas($nombre, $etiqueta, $tipo, $valor, $adicional,
                </div>
                
                <input id="' . $nombre . '" name="' . $nombre . '" value="' . $valor . '"  type="hidden"  />
-               
-               <div class=" col-sm-4">
+               <div class= " row">
+               <div class=" col-sm-5">
                    <div id="progress_' . $nombre . '" class="progress">
                        <div class="progress-bar progress-bar-success"></div>
                    </div>
                   
                    <div id="files_' . $nombre . '" ></div>
                    
-                   <div class="form-check mt-2 ' . ($principal ? 'd-none' : '') . '">
+                   <div class="form-check mt-2  w-100 d-block ' . ($principal ? 'd-none' : '') . '">
                         <input class="form-check-input is-main" type="checkbox" value="1" id="is_main_' . $nombre . '">
                         <label class="form-check-label" for="is_main_' . $nombre . '">
                             Foto de portada
                         </label>
                     </div>
-
-
                </div>
-               
+               </div>
                
      
            </div>
@@ -1663,7 +1662,7 @@ function campo_upload_foto_ventas($nombre, $etiqueta, $tipo, $valor, $adicional,
                                     //    $('#lk$nombre').html(file.name);
                                     //console.log(file.name, '$nombre'); 
                                     
-                                    //insp_guardar_foto_ventas(file.name,'$nombre',isMain);
+                                    insp_guardar_foto_ventas(file.name,'$nombre',isMain);
                                     insp_guardar_foto(file.name,'$nombre',isMain);
          ";
 
@@ -2431,9 +2430,6 @@ function get_porcentajes_sistema()
 
     }
 
-
-
-
 }
 
 
@@ -2577,9 +2573,6 @@ function foto_reducir_tamano($archivo)
 
 function borrar_foto_directorio($cid, $cod, $arch, $tipo)
 {
-
-
-
     $filtro = "";
     $filename = "";
     if ($cod == "") {
@@ -2696,7 +2689,6 @@ function borrar_foto_directorio2($cid, $cod, $arch, $tipo)
 
             return true;
 
-
         }
     } catch (\Exception $e) {
         file_put_contents(app_logs_folder . date("Y-m-d") . "_Framework.log", $e->getMessage() . PHP_EOL, FILE_APPEND);
@@ -2705,8 +2697,6 @@ function borrar_foto_directorio2($cid, $cod, $arch, $tipo)
 
     return true;
 }
-
-
 
 function get_array_tiendas()
 {
@@ -2754,8 +2744,6 @@ function get_array_talleres()
     return $salida;
 }
 
-
-
 function get_array_horario()
 {
     global $conn;
@@ -2777,7 +2765,6 @@ function get_array_horario()
 
     return $salida;
 }
-
 
 function dia_de_semana($dia)
 {
@@ -2804,7 +2791,6 @@ function dia_de_semana($dia)
         case 6:
             $salida = "Sabado";
             break;
-
     }
     return $salida;
 }
@@ -2827,6 +2813,17 @@ function logDatabaseError(Throwable $e, string $text): void
 
     // Append to the file (FILE_APPEND adds to the end, LOCK_EX prevents concurrent write issues)
     file_put_contents($filename, $logEntry, FILE_APPEND | LOCK_EX);
+}
+
+//Funcion de bitacora en bases de datos.
+function bitacora_sistema(string $pantalla, string $mensaje): void
+{
+    try {
+        $sql = "insert into bitacora_fallos(pantalla, mensaje) values ( '$pantalla', '$mensaje' )";
+        sql_insert($sql);
+    } catch (Exception $e) {
+        logDatabaseError($e, "$pantalla --> $mensaje");
+    }
 }
 
 
